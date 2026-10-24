@@ -57,19 +57,15 @@
       "Bash(curl:*)",
       "Bash(rm:*)",
       "Edit(./contracts/**)",
-      "Write(./contracts/**)",
       "Edit(./docs/PRD.md)",
-      "Write(./docs/PRD.md)",
       "Edit(./CLAUDE.md)",
-      "Edit(./.claude/**)",
-      "Write(./.claude/**)"
+      "Edit(./.claude/**)"
     ],
     "deny": [
       "Read(./.env)",
       "Read(./**/.env)",
       "Read(./secrets/**)",
       "Edit(./.env)",
-      "Write(./.env)",
       "Bash(cat .env:*)",
       "Bash(git push --force:*)",
       "Bash(git push -f:*)",
@@ -81,13 +77,9 @@
       "Bash(apt:*)",
       "Bash(apt-get:*)",
       "Edit(//var/www/moodle/**)",
-      "Write(//var/www/moodle/**)",
       "Edit(//var/www/html/**)",
-      "Write(//var/www/html/**)",
       "Edit(//usr/share/bigbluebutton/**)",
-      "Write(//usr/share/bigbluebutton/**)",
-      "Edit(//usr/local/bigbluebutton/**)",
-      "Write(//usr/local/bigbluebutton/**)"
+      "Edit(//usr/local/bigbluebutton/**)"
     ]
   },
   "hooks": {
@@ -97,8 +89,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "for p in python3 python; do if \"$p\" -c '' >/dev/null 2>&1; then exec \"$p\" \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard.py\"; fi; done; echo 'LearnOps guard: no working python found' >&2; exit 0",
-            "timeout": 10
+            "command": "for p in python3 python; do if \"$p\" -c '' >/dev/null 2>&1; then exec \"$p\" \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard.py\"; fi; done; echo 'LearnOps guard: no working python found' >&2; exit 2",
+            "timeout": 10,
+            "onFailure": "block"
           }
         ]
       }

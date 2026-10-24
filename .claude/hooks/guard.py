@@ -5,7 +5,9 @@ Blocks:  secrets written into files or commands; edits to .env; edits to Moodle/
          `git commit --no-verify`.
 Asks:    edits to contracts/ and docs/PRD.md (they follow PRD §B.0).
 Reads the hook event as JSON on stdin and answers with a JSON decision on stdout.
-Never raises: on any internal error it allows the action and lets normal permissions apply.
+Fails closed: on any internal error it blocks the action (exit code 2) and says why.
+Limit: it sees only what a tool call contains. A secret built while a command runs is caught
+later by pre-commit, CI and GitHub push protection.
 """
 
 import json
@@ -120,5 +122,7 @@ if __name__ == "__main__":
         main()
     except SystemExit:
         raise
-    except Exception:
-        sys.exit(0)
+    except Exception as exc:
+        # Fail closed: a guard that cannot decide must not silently allow the action.
+        print(f"LearnOps guard error: {exc!r}. Action blocked.", file=sys.stderr)
+        sys.exit(2)

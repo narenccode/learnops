@@ -33,12 +33,13 @@ as `docs/PRD.md`, and follow the steps below. Nothing here contains secrets, hos
 ## 3. Each student (once, on their own machine or lab VM)
 
 1. Their **own** Claude Code account (never shared), signed in with `claude` → login.
-2. Install: Git, Python 3.12, Node 20, Docker, `pre-commit` (`pip install pre-commit`).
+2. Install: Git, Python 3.12, Node 20, Docker, `pre-commit` (`pip install pre-commit`), and **Claude Code 2.1.295 or later** (`claude --version`; run `claude update` if older; the guard's fail-closed setting needs it).
 3. Clone the repository; run `pre-commit install`.
 4. `cp .env.example .env`; fill only lab values given by the guide. Never commit `.env`.
 5. Open Claude Code in the repository root, run `/memory` to confirm `CLAUDE.md` is loaded, and `/permissions` to see the team rules.
-6. Run `/preflight` once on a clean checkout: everything should pass.
-7. In their Claude account's privacy settings, decide on the model-training option (the code is open source, but the lab may contain test data the guide wants kept private).
+6. **Check your own settings don't turn hooks off.** Open `~/.claude/settings.json` (on Windows `C:\Users\<you>\.claude\settings.json`). It must **not** contain `"disableAllHooks": true`, which switches off every hook on your machine, including this project's guard. (This happened on the guide's own PC during the first check.) Run `/hooks` in Claude Code to see the project hook listed.
+7. Run `/preflight` once on a clean checkout: everything should pass.
+8. In their Claude account's privacy settings, decide on the model-training option (the code is open source, but the lab may contain test data the guide wants kept private).
 
 Personal preferences (theme, model choice, extra allowed commands) go in `~/.claude/settings.json`
 or `.claude/settings.local.json`, never in the shared `.claude/settings.json`. Project settings and
@@ -46,11 +47,23 @@ the deny rules in the shared file take precedence for safety.
 
 ## 4. Checking the guard works (guide, once)
 
-Ask Claude in the repository to:
-- write a file `test.py` that assigns `api_key` to a string starting with `sk-` followed by 30 random letters (let Claude make one up) → must be **refused**;
-- edit `.env` → refused;
+Start Claude Code in the repository. If your own settings turn hooks off, start it with
+`claude --settings '{"disableAllHooks": false}'` for this check. Then ask:
+- "Use the Write tool to create `test.py` with exactly this content: `api_key = "sk-"` followed by 30 letters" (**type the 30 letters yourself** in the prompt) → must be **refused** with the guard's message ("…would write an API key…");
+- "Use the Write tool to create a file named `.env` with the content `X=1`" → refused (Claude may also refuse on its own, citing CLAUDE.md; that still proves the rules, but only the first check proves the hook);
 - edit a file under `/var/www/moodle/` on a lab VM → refused;
 - edit `contracts/anything.json` → Claude must **ask** first.
+
+**What the guard can and cannot see.** It reads what a tool call contains. A secret that a command
+builds *while it runs* (for example a one-line script that prints a random key into a file) leaves no
+key text in the command, so the guard cannot catch it. That case is caught when the file is
+committed or pushed: by `pre-commit` (gitleaks), by the CI check and by GitHub push protection.
+The guard is a safety net, not the only layer.
+
+**Fail closed.** If the guard cannot start (for example no working Python on the machine) or hits an
+internal error, the action is **blocked** with a message instead of silently allowed. If every edit
+suddenly fails with "LearnOps guard: no working python found", install Python 3.12 and make sure
+`python` or `python3` works in Git Bash.
 
 ## 5. Things that are easy to forget
 
@@ -59,7 +72,8 @@ Ask Claude in the repository to:
 | One Claude Code account per student; plan with enough usage for daily work | Terms of use; no waiting for a shared login | ☐ |
 | GitHub branch protection + code owners + required CI | Without it, the rules in `CLAUDE.md` are advice only | ☐ |
 | Secret scanning + push protection on GitHub | Second line of defence after the hook and gitleaks | ☐ |
-| Same versions everywhere (Python 3.12, Node 20, Docker Compose v2) | "Works on my machine" problems | ☐ |
+| Same versions everywhere (Python 3.12, Node 20, Docker Compose v2, Claude Code 2.1.295+) | "Works on my machine" problems | ☐ |
+| No student has `"disableAllHooks": true` in their own Claude settings | It silently switches the guard off (SETUP §3 step 6) | ☐ |
 | Lab access for each student (VM accounts, network) and the lab AI service endpoints | Release 0 depends on it | ☐ |
 | Hosted-API key with a hard spending cap, given outside the repo | Comparison study only | ☐ |
 | Test data with licences or consent recorded in `testdata/README.md` | Legal; no real learner data | ☐ |
