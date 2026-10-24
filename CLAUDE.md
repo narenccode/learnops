@@ -69,6 +69,8 @@ introduce another language, framework or database. Ask the guide first if you th
 1. **Contracts, then design.** Contracts (PRD Part B) are drafted and cross-reviewed first. Then each
    module gets a design document, `docs/design/<module>.md`, from `docs/design/TEMPLATE.md`. Draft it
    with `/design-doc <module>`. The developer owns it and must be able to explain every section.
+   Before asking a reviewer, run `/review-design <module>` on it and fix the blocking items; the peer
+   reviewer and the guide run it too for a first-pass check (it never approves anything).
 2. **Approval gate.** The document goes `Draft` → `In review` (peer reviewer) → `Approved`. **Only the
    guide sets `Approved`.** Feature code for a module starts only when its design document says
    `**Status:** Approved`. Release 0 foundation work (contracts, shared libraries, CI, test data) may

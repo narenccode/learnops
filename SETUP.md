@@ -16,6 +16,7 @@ as `docs/PRD.md`, and follow the steps below. Nothing here contains secrets, hos
 | `.claude/commands/contract-change.md` | `/contract-change`: the PRD §B.0 process | Yes |
 | `.claude/commands/release-check.md` | `/release-check N`: the PRD §D2 freeze checklist | Yes |
 | `.claude/commands/design-doc.md` | `/design-doc <module>`: draft a module's design document (no code) | Yes |
+| `.claude/commands/review-design.md` | `/review-design <module>`: read-only first-pass review of a design document against the PRD, contracts and template, as a one-page verdict (the guide approves, never the command) | Yes |
 | `.claude/commands/implement.md` | `/implement <FR-id>`: plan, test-first build and hand-over of one requirement, with an approved-design check | Yes |
 | `docs/design/TEMPLATE.md` | The design-document template every module copies to `docs/design/<module>.md` | Yes |
 | `docs/GETTING-STARTED.md` | Step-by-step handout for the students: links, setup, rules, first tasks per student, troubleshooting. Names are left out (the repository is public); keep it current | Yes |
@@ -82,7 +83,7 @@ suddenly fails with "LearnOps guard: no working python found", install Python 3.
 | Hosted-API key with a hard spending cap, given outside the repo | Comparison study only | ☐ |
 | Test data with licences or consent recorded in `testdata/README.md` | Legal; no real learner data | ☐ |
 | A shared issue board (labels: module, release) | Tracking and traceability | ☐ |
-| A short onboarding session: PRD walkthrough, `CLAUDE.md`, the five commands (`/preflight`, `/contract-change`, `/release-check`, `/design-doc`, `/implement`) | Students follow the rules only if they know them | ☐ |
+| A short onboarding session: PRD walkthrough, `CLAUDE.md`, the six commands (`/preflight`, `/contract-change`, `/release-check`, `/design-doc`, `/review-design`, `/implement`) | Students follow the rules only if they know them | ☐ |
 | You set `**Status:** Approved` in each design document yourself (a convention, not enforced by GitHub) | `/implement` stops until it sees that line | ☐ |
 | Agreement that students don't add MCP servers or new tools without the guide | Keeps every environment the same | ☐ |
 | Who updates this kit (the guide), and how changes are announced | Rules drift otherwise | ☐ |

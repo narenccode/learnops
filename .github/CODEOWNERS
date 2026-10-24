@@ -1,11 +1,15 @@
-# Code owners. "Require review from Code Owners" is on for main: one approval from any listed owner
-# (other than the author) is enough. Each module has its owner, a peer reviewer from another module,
-# and the guide. Rules files are owned by the guide only.
+# Code owners. "Require review from Code Owners" is on for main: for every changed path, one approval
+# from any listed owner (other than the author) is enough. The LAST matching line wins.
+# Each module has its owner, a peer reviewer from another module, and the guide.
 # Student 1 = Akshita21-09 · Student 2 = shraddha0103 · Student 3 = Harshithamanjunatha
 # Student 4 = vnaags · Guide = narenccode
 # Peer pairs: Studio <-> Checker (Students 1 and 2), Grading <-> Video (Students 3 and 4).
 
-*                       @narenccode
+# Everything not listed below (routine root-level files: dependency manifests, Dockerfiles, compose
+# files, README, editor and version settings, lab setup notes). Two students co-own these so small
+# changes never wait for the guide.
+*                       @shraddha0103 @Akshita21-09 @narenccode
+
 /modules/studio/        @Akshita21-09 @shraddha0103 @narenccode
 /modules/checker/       @shraddha0103 @Akshita21-09 @narenccode
 /modules/grading/       @Harshithamanjunatha @vnaags @narenccode
@@ -19,6 +23,14 @@
 /tests/                 @shraddha0103 @Akshita21-09 @Harshithamanjunatha @vnaags @narenccode
 /testdata/              @Akshita21-09 @shraddha0103 @Harshithamanjunatha @vnaags @narenccode
 /docs/                  @Akshita21-09 @shraddha0103 @Harshithamanjunatha @vnaags @narenccode
+
+# Guide only: security, licence and rules files. These override the default above, so a student
+# cannot weaken the secret scan, the ignore rules or the licence with a peer approval alone.
+/.gitignore             @narenccode
+/.gitattributes         @narenccode
+/.pre-commit-config.yaml @narenccode
+/LICENSE                @narenccode
+/SETUP.md               @narenccode
 /docs/PRD.md            @narenccode
 /CLAUDE.md              @narenccode
 /.claude/               @narenccode
