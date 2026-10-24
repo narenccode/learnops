@@ -15,6 +15,9 @@ as `docs/PRD.md`, and follow the steps below. Nothing here contains secrets, hos
 | `.claude/commands/preflight.md` | `/preflight`: all checks before a pull request | Yes |
 | `.claude/commands/contract-change.md` | `/contract-change`: the PRD §B.0 process | Yes |
 | `.claude/commands/release-check.md` | `/release-check N`: the PRD §D2 freeze checklist | Yes |
+| `.claude/commands/design-doc.md` | `/design-doc <module>`: draft a module's design document (no code) | Yes |
+| `.claude/commands/implement.md` | `/implement <FR-id>`: plan, test-first build and hand-over of one requirement, with an approved-design check | Yes |
+| `docs/design/TEMPLATE.md` | The design-document template every module copies to `docs/design/<module>.md` | Yes |
 | `.gitignore`, `.editorconfig`, `.python-version`, `.nvmrc` | Hygiene and pinned versions (Python 3.12, Node 20) | Yes |
 | `.env.example` | Every configuration variable, with placeholders | Yes |
 | `.pre-commit-config.yaml` | Lint, format, private-key and secret scan (gitleaks), no commits to `main` | Yes |
@@ -78,6 +81,7 @@ suddenly fails with "LearnOps guard: no working python found", install Python 3.
 | Hosted-API key with a hard spending cap, given outside the repo | Comparison study only | ☐ |
 | Test data with licences or consent recorded in `testdata/README.md` | Legal; no real learner data | ☐ |
 | A shared issue board (labels: module, release) | Tracking and traceability | ☐ |
-| A short onboarding session: PRD walkthrough, `CLAUDE.md`, the three commands | Students follow the rules only if they know them | ☐ |
+| A short onboarding session: PRD walkthrough, `CLAUDE.md`, the five commands (`/preflight`, `/contract-change`, `/release-check`, `/design-doc`, `/implement`) | Students follow the rules only if they know them | ☐ |
+| You set `**Status:** Approved` in each design document yourself (a convention, not enforced by GitHub) | `/implement` stops until it sees that line | ☐ |
 | Agreement that students don't add MCP servers or new tools without the guide | Keeps every environment the same | ☐ |
 | Who updates this kit (the guide), and how changes are announced | Rules drift otherwise | ☐ |

@@ -64,6 +64,21 @@ introduce another language, framework or database. Ask the guide first if you th
 - Logs: structured JSON; never log secrets, tokens, or file contents.
 - Database changes only through versioned, reversible migrations.
 
+## 6a. Workflow: design first, then build
+
+1. **Contracts, then design.** Contracts (PRD Part B) are drafted and cross-reviewed first. Then each
+   module gets a design document, `docs/design/<module>.md`, from `docs/design/TEMPLATE.md`. Draft it
+   with `/design-doc <module>`. The developer owns it and must be able to explain every section.
+2. **Approval gate.** The document goes `Draft` → `In review` (peer reviewer) → `Approved`. **Only the
+   guide sets `Approved`.** Feature code for a module starts only when its design document says
+   `**Status:** Approved`. Release 0 foundation work (contracts, shared libraries, CI, test data) may
+   start earlier.
+3. **Build one requirement at a time** with `/implement <requirement id>`: plan, developer's go,
+   tests first, implementation, `/preflight`, then a pull request. Do not batch unrelated requirements.
+4. Use plan mode for anything larger than a small fix, and have the developer read and approve the plan.
+5. Literature and references: AI tools can invent citations. Open and verify every reference before it
+   goes into a document or presentation.
+
 ## 7. Definition of done (every pull request)
 
 1. The requirement IDs it implements are in the PR title or description (e.g. `FR-S-03`).
@@ -72,6 +87,7 @@ introduce another language, framework or database. Ask the guide first if you th
 4. README / `.env.example` updated if behaviour or configuration changed.
 5. Reviewed and approved by a member of **another** module; the reviewer runs the tests.
 6. No contract changed, or changed through `/contract-change`.
+7. The module's design document is `Approved`, or the work is Release 0 foundation work the guide has allowed.
 
 ## 8. How Claude Code should work in this repo
 
