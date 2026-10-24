@@ -18,6 +18,7 @@ as `docs/PRD.md`, and follow the steps below. Nothing here contains secrets, hos
 | `.claude/commands/design-doc.md` | `/design-doc <module>`: draft a module's design document (no code) | Yes |
 | `.claude/commands/implement.md` | `/implement <FR-id>`: plan, test-first build and hand-over of one requirement, with an approved-design check | Yes |
 | `docs/design/TEMPLATE.md` | The design-document template every module copies to `docs/design/<module>.md` | Yes |
+| `docs/GETTING-STARTED.md` | Step-by-step handout for the students: links, setup, rules, first tasks per student, troubleshooting. Names are left out (the repository is public); keep it current | Yes |
 | `.gitignore`, `.editorconfig`, `.python-version`, `.nvmrc` | Hygiene and pinned versions (Python 3.12, Node 20) | Yes |
 | `.env.example` | Every configuration variable, with placeholders | Yes |
 | `.pre-commit-config.yaml` | Lint, format, private-key and secret scan (gitleaks), no commits to `main` | Yes |
