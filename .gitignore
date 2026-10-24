@@ -1,0 +1,47 @@
+# Secrets and local config — never commit
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+.claude/settings.local.json
+CLAUDE.local.md
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+.coverage
+htmlcov/
+
+# Node / front end
+node_modules/
+dist/
+build/
+coverage/
+
+# Media and large test data (download with testdata scripts; licences in testdata/README.md)
+*.mp4
+*.mov
+*.mkv
+*.webm
+*.mbz
+testdata/media/
+testdata/downloads/
+
+# Test and tool output
+playwright-report/
+test-results/
+artifacts/
+*.log
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

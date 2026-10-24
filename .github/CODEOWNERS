@@ -1,0 +1,19 @@
+# Code owners. Turn on "Require review from Code Owners" in branch protection for main.
+# Student 1 = Akshita21-09 · Student 2 = shraddha0103 · Student 3 = Harshithamanjunatha
+# Student 4 = vnaags · Guide = narenccode
+
+*                       @narenccode
+/modules/studio/        @Akshita21-09 @narenccode
+/modules/checker/       @shraddha0103 @narenccode
+/modules/grading/       @Harshithamanjunatha @narenccode
+/modules/video/         @vnaags @narenccode
+/libs/lti/              @shraddha0103 @narenccode
+/libs/moodle_ws/        @Harshithamanjunatha @narenccode
+/libs/model_interface/  @Harshithamanjunatha @narenccode
+/libs/media_paths/      @vnaags @narenccode
+/libs/contracts/        @Akshita21-09 @shraddha0103 @Harshithamanjunatha @vnaags @narenccode
+/contracts/             @Akshita21-09 @shraddha0103 @Harshithamanjunatha @vnaags @narenccode
+/docs/PRD.md            @narenccode
+/CLAUDE.md              @narenccode
+/.claude/               @narenccode
+/.github/               @narenccode

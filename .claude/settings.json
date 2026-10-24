@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "defaultMode": "default",
+    "allow": [
+      "Bash(git status)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(git switch:*)",
+      "Bash(git checkout -b:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)",
+      "Bash(pytest:*)",
+      "Bash(python -m pytest:*)",
+      "Bash(ruff:*)",
+      "Bash(mypy:*)",
+      "Bash(pre-commit run:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npm run test:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm test:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx eslint:*)",
+      "Bash(npx prettier:*)",
+      "Bash(docker compose ps:*)",
+      "Bash(docker compose logs:*)",
+      "Bash(docker compose config:*)",
+      "Bash(ffprobe:*)",
+      "WebFetch(domain:docs.moodle.org)",
+      "WebFetch(domain:moodledev.io)",
+      "WebFetch(domain:docs.bigbluebutton.org)",
+      "WebFetch(domain:h5p.org)",
+      "WebFetch(domain:www.imsglobal.org)",
+      "WebFetch(domain:fastapi.tiangolo.com)",
+      "WebFetch(domain:react.dev)",
+      "WebFetch(domain:playwright.dev)",
+      "WebFetch(domain:tus.io)",
+      "WebFetch(domain:www.postgresql.org)",
+      "WebFetch(domain:docs.python.org)"
+    ],
+    "ask": [
+      "Bash(git push:*)",
+      "Bash(git merge:*)",
+      "Bash(git rebase:*)",
+      "Bash(git reset:*)",
+      "Bash(git restore:*)",
+      "Bash(pip install:*)",
+      "Bash(uv add:*)",
+      "Bash(npm install:*)",
+      "Bash(docker compose up:*)",
+      "Bash(docker compose down:*)",
+      "Bash(docker run:*)",
+      "Bash(curl:*)",
+      "Bash(rm:*)",
+      "Edit(./contracts/**)",
+      "Write(./contracts/**)",
+      "Edit(./docs/PRD.md)",
+      "Write(./docs/PRD.md)",
+      "Edit(./CLAUDE.md)",
+      "Edit(./.claude/**)",
+      "Write(./.claude/**)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./**/.env)",
+      "Read(./secrets/**)",
+      "Edit(./.env)",
+      "Write(./.env)",
+      "Bash(cat .env:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git push origin main:*)",
+      "Bash(git push origin HEAD:main:*)",
+      "Bash(git commit --no-verify:*)",
+      "Bash(rm -rf /:*)",
+      "Bash(sudo:*)",
+      "Bash(apt:*)",
+      "Bash(apt-get:*)",
+      "Edit(//var/www/moodle/**)",
+      "Write(//var/www/moodle/**)",
+      "Edit(//var/www/html/**)",
+      "Write(//var/www/html/**)",
+      "Edit(//usr/share/bigbluebutton/**)",
+      "Write(//usr/share/bigbluebutton/**)",
+      "Edit(//usr/local/bigbluebutton/**)",
+      "Write(//usr/local/bigbluebutton/**)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit|NotebookEdit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "for p in python3 python; do if \"$p\" -c '' >/dev/null 2>&1; then exec \"$p\" \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard.py\"; fi; done; echo 'LearnOps guard: no working python found' >&2; exit 0",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

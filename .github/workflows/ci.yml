@@ -1,0 +1,39 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  checks:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Pre-commit (format, lint, secret scan)
+        run: |
+          pip install pre-commit
+          SKIP=no-commit-to-branch pre-commit run --all-files
+
+      - name: Install Python dependencies
+        run: |
+          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+
+      - name: Type check shared libraries
+        run: |
+          if [ -d libs ] && ls libs/*/ >/dev/null 2>&1; then pip install mypy && mypy libs; fi
+
+      - name: Validate contract examples
+        run: |
+          if [ -f libs/contracts/validate_examples.py ]; then python libs/contracts/validate_examples.py; fi
+
+      - name: Unit tests
+        run: |
+          if ls -d modules/*/tests libs/*/tests >/dev/null 2>&1; then pip install pytest && pytest -q; fi
