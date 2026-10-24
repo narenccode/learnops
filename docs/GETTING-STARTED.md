@@ -183,7 +183,7 @@ Read in this order. Make a list of anything unclear and send it to your guide (�
 
 1. **Contracts first, then design.** Draft your contracts, review each other's, then write your design document.
 2. **Draft your design document with `/design-doc <module>`.** Claude shows an outline first. Read it, correct it, then let it write. **You own the document**: you must be able to explain every line to your reviewer and your guide.
-3. **Design approval.** Your document goes `Draft` → `In review` (your peer) → `Approved`. **Only your guide sets `Approved`.**
+3. **Design approval.** Your document goes `Draft` → `In review` (your peer) → `Approved`. **Only your guide sets `Approved`.** Before you ask your peer to look at it, run `/review-design <module>` on your own document and fix the blocking items it lists; your peer and your guide will run it too.
 4. **Build one requirement at a time with `/implement <FR-id>`.** It stops if your design document is not approved. Release 0 foundation work (contracts, shared libraries, CI, test data) is allowed earlier when your guide says so.
 5. **Use plan mode** for anything bigger than a small fix, and read the plan before approving it.
 6. **Never trust a reference Claude gives you.** AI tools invent citations. Open and verify every reference before it goes into a document or the presentation.
