@@ -1,18 +1,24 @@
-# Code owners. Turn on "Require review from Code Owners" in branch protection for main.
+# Code owners. "Require review from Code Owners" is on for main: one approval from any listed owner
+# (other than the author) is enough. Each module has its owner, a peer reviewer from another module,
+# and the guide. Rules files are owned by the guide only.
 # Student 1 = Akshita21-09 · Student 2 = shraddha0103 · Student 3 = Harshithamanjunatha
 # Student 4 = vnaags · Guide = narenccode
+# Peer pairs: Studio <-> Checker (Students 1 and 2), Grading <-> Video (Students 3 and 4).
 
 *                       @narenccode
-/modules/studio/        @Akshita21-09 @narenccode
-/modules/checker/       @shraddha0103 @narenccode
-/modules/grading/       @Harshithamanjunatha @narenccode
-/modules/video/         @vnaags @narenccode
-/libs/lti/              @shraddha0103 @narenccode
-/libs/moodle_ws/        @Harshithamanjunatha @narenccode
-/libs/model_interface/  @Harshithamanjunatha @narenccode
-/libs/media_paths/      @vnaags @narenccode
+/modules/studio/        @Akshita21-09 @shraddha0103 @narenccode
+/modules/checker/       @shraddha0103 @Akshita21-09 @narenccode
+/modules/grading/       @Harshithamanjunatha @vnaags @narenccode
+/modules/video/         @vnaags @Harshithamanjunatha @narenccode
+/libs/lti/              @shraddha0103 @Akshita21-09 @narenccode
+/libs/moodle_ws/        @Harshithamanjunatha @vnaags @narenccode
+/libs/model_interface/  @Harshithamanjunatha @vnaags @narenccode
+/libs/media_paths/      @vnaags @Harshithamanjunatha @narenccode
 /libs/contracts/        @Akshita21-09 @shraddha0103 @Harshithamanjunatha @vnaags @narenccode
 /contracts/             @Akshita21-09 @shraddha0103 @Harshithamanjunatha @vnaags @narenccode
+/tests/                 @shraddha0103 @Akshita21-09 @Harshithamanjunatha @vnaags @narenccode
+/testdata/              @Akshita21-09 @shraddha0103 @Harshithamanjunatha @vnaags @narenccode
+/docs/                  @Akshita21-09 @shraddha0103 @Harshithamanjunatha @vnaags @narenccode
 /docs/PRD.md            @narenccode
 /CLAUDE.md              @narenccode
 /.claude/               @narenccode
