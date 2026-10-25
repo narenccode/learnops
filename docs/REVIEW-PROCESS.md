@@ -296,7 +296,10 @@ The guide did nothing. If at 15:01 the label had been `rule-violation`, Maya wou
 | **Squash and merge is grey** | Something is still missing. Read the box above the button: it lists what (a check, the peer approval, the bot) |
 | **My peer approved, but the label is still `awaiting-peer`** | Wait two minutes and refresh the page. If nothing changes, tell the guide |
 | **My peer's approval disappeared** | You pushed after they approved. That is a safety rule. Ask them to approve again |
-| **The bot says a thing that is wrong** | Check it carefully. If you are sure, reply in a comment on the PR with your evidence. The guide reads those |
+| **The bot blocks me and I am sure it is wrong** | Do not argue with it and do not try to trick it. At the bottom of your PR write a comment that starts with `@narenccode` and says: which bot item, why you think it is wrong, and your evidence (a PRD line or a test result). The guide is emailed and will either tell you what to change or approve the merge by hand. Keep working on something else meanwhile |
+| **The bot says "No tests" or "traceability not updated" but my change only renames or tidies code** | In your PR description add a line `Refactor only: <one sentence on what you changed and why behaviour is the same>`. The bot then treats those two items as advice, and your reviewer must agree with your claim |
+| **The bot comment says "The bot hit an internal error"** | It is the bot's fault, not yours. The guide has already been told. Carry on; the guide will reply or approve the merge by hand |
+| **The bot says "AI review unavailable"** | The AI service is down or out of credit. The guide has been told. If you do not hear back within a day, write a comment starting `@narenccode` |
 | **`git push` says I cannot push to `main`** | Correct, nobody can. Make a branch (Step 1) and push that |
 | **`git commit` fails and says files were modified** | Normal. A check tidied your files. Run `git add` on them again and repeat the `git commit` |
 | **`git push` is rejected: "non-fast-forward" or "fetch first"** | Someone changed the branch. Run `git pull` and push again. If unsure, ask Claude (prompt below) before doing anything else |

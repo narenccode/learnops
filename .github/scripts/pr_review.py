@@ -217,7 +217,15 @@ def ask_model(
                 del payload["response_format"]  # some models do not support JSON mode
             elif error.code not in (429, 500, 502, 503, 504):
                 break
-        except (urllib.error.URLError, TimeoutError, KeyError, ValueError) as error:
+        except (
+            urllib.error.URLError,
+            TimeoutError,
+            KeyError,
+            IndexError,
+            TypeError,
+            AttributeError,
+            ValueError,
+        ) as error:
             last = type(error).__name__
     raise AIError(f"model call failed ({last})")
 
@@ -314,7 +322,9 @@ def decide(
         )
     try:
         findings += run_ai()
-    except AIError as error:
+    except (
+        Exception
+    ) as error:  # any failure of the AI step must reach the guide, not crash the run
         findings.append(
             Finding(
                 "judgement",
@@ -493,6 +503,29 @@ def main() -> int:
     ) as error:  # a checker bug must not block merging forever: the guide can bypass
         print(f"::warning::pr_review failed: {error}")
         if not args.dry_run:
+            try:  # say so on the PR: a silent failure would leave the students stuck and confused
+                who = rules_mod.guide_of(
+                    rules_mod.parse_codeowners(
+                        git("show", f"{base}:.github/CODEOWNERS", check=False)
+                    )
+                )
+                apology = (
+                    f"{rules_mod.MARKER}\n### Automated review: **Needs your judgement**\n\n"
+                    "**Next step:** Do not wait on the bot. It hit an internal error, and the guide has "
+                    "been told. Keep working; the guide will reply or approve this pull request by hand.\n\n"
+                    f"<!-- verdict:needs-judgement -->"
+                )
+                rules_mod.post(repo, number, "needs-judgement", apology)
+                if who:
+                    gh(
+                        "api",
+                        f"repos/{repo}/issues/{number}/comments",
+                        "-f",
+                        f"body=@{who} the review bot failed on this pull request ({type(error).__name__}). "
+                        "Your decision is needed.",
+                    )
+            except Exception as inner:
+                print(f"::warning::could not explain the failure on the PR: {inner}")
             try:
                 set_status(repo, sha, "failure", "Bot error: the guide decides", page)
             except Exception as inner:
