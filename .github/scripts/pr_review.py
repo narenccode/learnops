@@ -192,7 +192,7 @@ def ask_model(
             {"role": "user", "content": user},
         ],
         "temperature": 0,
-        "max_tokens": 2000,
+        "max_tokens": 6000,
         "response_format": {"type": "json_object"},
     }
     last = "no attempt"
@@ -209,8 +209,25 @@ def ask_model(
         try:
             with urllib.request.urlopen(request, timeout=120) as response:
                 data = json.load(response)
-            text = data["choices"][0]["message"]["content"]
-            return parse_json(text), data.get("usage", {})
+            choice = data["choices"][0]
+            text = (choice.get("message") or {}).get("content") or ""
+            usage = data.get("usage", {})
+            reason = choice.get("finish_reason", "?")
+            detail = (
+                f"finish_reason={reason}, {usage.get('completion_tokens', '?')} output "
+                f"tokens, {len(text)} characters"
+            )
+            if not text.strip():
+                last = f"empty answer ({detail})"
+                payload.pop("response_format", None)  # JSON mode can return nothing
+                continue
+            try:
+                return parse_json(text), usage
+            except ValueError:
+                last = f"unreadable answer ({detail})"
+                if reason == "length":
+                    break  # cut off by the limit: asking again gives the same answer
+                continue
         except urllib.error.HTTPError as error:
             last = f"HTTP {error.code}"
             if error.code == 400 and "response_format" in payload:
@@ -328,7 +345,7 @@ def decide(
         findings.append(
             Finding(
                 "judgement",
-                f"AI review unavailable ({neutralise(error, 120)}); the guide decides.",
+                f"AI review unavailable ({neutralise(error, 220)}); the guide decides.",
             )
         )
         return (
@@ -350,6 +367,12 @@ VERDICT_TEXT = {
     "awaiting-peer": "Waiting for one peer approval",
     "ready-to-merge": "Peer approved, bot review passed: may merge",
 }
+
+
+def event_from_pr(repo: str, number: int) -> dict:
+    """Build the same event shape from the API, for a manual re-run (after an outage, say)."""
+    pr = json.loads(gh("api", f"repos/{repo}/pulls/{number}"))
+    return {"pull_request": pr, "repository": {"full_name": repo}}
 
 
 def notification(
@@ -385,7 +408,10 @@ def set_status(repo: str, sha: str, state: str, text: str, url: str) -> None:
 def main() -> int:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    parser.add_argument("--event", required=True)
+    parser.add_argument("--event", help="GitHub event JSON (pull_request)")
+    parser.add_argument(
+        "--pr", type=int, help="re-run the review for this PR number (manual run)"
+    )
     parser.add_argument("--base")
     parser.add_argument("--head", default="HEAD")
     parser.add_argument(
@@ -396,8 +422,14 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    with open(args.event, encoding="utf-8") as handle:
-        event = json.load(handle)
+    if args.pr:
+        repo_name = os.environ.get("GITHUB_REPOSITORY", "")
+        event = event_from_pr(repo_name, args.pr)
+    elif args.event:
+        with open(args.event, encoding="utf-8") as handle:
+            event = json.load(handle)
+    else:
+        parser.error("give --event or --pr")
     pr = event["pull_request"]
     repo, number, sha = (
         event["repository"]["full_name"],
@@ -435,10 +467,14 @@ def main() -> int:
         found = AI_RUNS.search(old_body)
         runs = int(found.group(1)) if found else 0
         usage: dict = {}
+        attempted = (
+            False  # a failed call still costs money, so it counts toward the cap
+        )
         model = os.environ.get("DEEPSEEK_MODEL", "?")
 
         def run_ai() -> list[Finding]:
-            nonlocal usage
+            nonlocal usage, attempted
+            attempted = True
             diff, cut = read_diff(base, args.head)
             prd = git("show", f"{base}:docs/PRD.md", check=False)
             design = any(p.startswith("docs/design/") for p in ctx.files)
@@ -496,8 +532,8 @@ def main() -> int:
             step=rules_mod.next_step(label, peer, others),
             help_url=f"https://github.com/{repo}/blob/main/docs/REVIEW-PROCESS.md",
         )
-        if ai_called or found:
-            body += f"\n<!-- ai-runs:{runs + (1 if ai_called else 0)} -->"
+        if attempted or found:
+            body += f"\n<!-- ai-runs:{runs + (1 if attempted else 0)} -->"
     except (
         Exception
     ) as error:  # a checker bug must not block merging forever: the guide can bypass
