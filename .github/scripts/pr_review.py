@@ -195,6 +195,12 @@ def ask_model(
         "max_tokens": 6000,
         "response_format": {"type": "json_object"},
     }
+    # DeepSeek's flash model "thinks" by default and the hidden reasoning eats max_tokens, which cut
+    # real answers off (seen on PR 6). Switch it off; DEEPSEEK_EXTRA_BODY overrides or empties this.
+    extra = json.loads(
+        env.get("DEEPSEEK_EXTRA_BODY", '{"thinking": {"type": "disabled"}}') or "{}"
+    )
+    payload.update(extra)
     last = "no attempt"
     for attempt, delay in enumerate((0, 3, 10)):
         time.sleep(delay)
@@ -230,8 +236,13 @@ def ask_model(
                 continue
         except urllib.error.HTTPError as error:
             last = f"HTTP {error.code}"
-            if error.code == 400 and "response_format" in payload:
-                del payload["response_format"]  # some models do not support JSON mode
+            if error.code == 400 and (
+                extra.keys() & payload.keys() or "response_format" in payload
+            ):
+                # an option the provider rejects: drop the extras first, then JSON mode, then ask plainly
+                for name in list(extra) or ["response_format"]:
+                    payload.pop(name, None)
+                extra = {}
             elif error.code not in (429, 500, 502, 503, 504):
                 break
         except (
