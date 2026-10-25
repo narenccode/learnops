@@ -66,11 +66,20 @@ def latest_reviews(lines: list[dict]) -> dict[str, str]:
 def reviewers(
     state: dict[str, str], ctx: rules_mod.Context
 ) -> tuple[set[str], set[str]]:
-    """(approvers, requesters) among owners of the changed paths, never the author."""
+    """(approvers, requesters) among owners of the changed paths, never the author.
+
+    Like GitHub's code-owner rule, every changed path needs an approval from one of its owners;
+    until that holds, `approvers` is empty.
+    """
     parsed = rules_mod.parse_codeowners(ctx.codeowners)
+    author = ctx.author.lower()
     owners = {o for p in ctx.files for o in rules_mod.owners_of(parsed, p)}
-    owners.discard(ctx.author.lower())
-    approvers = {u for u, s in state.items() if s == "APPROVED" and u in owners}
+    owners.discard(author)
+    approved = {u for u, s in state.items() if s == "APPROVED"}
+    covered = all(
+        approved & (set(rules_mod.owners_of(parsed, p)) - {author}) for p in ctx.files
+    )
+    approvers = {u for u in approved if u in owners} if covered else set()
     requesters = {
         u for u, s in state.items() if s == "CHANGES_REQUESTED" and u in owners
     }
@@ -333,17 +342,20 @@ VERDICT_TEXT = {
 }
 
 
-def notification(label: str, author: str, peer: str, guide: str) -> str:
+def notification(
+    label: str, author: str, peer: str, guide: str, others: tuple[str, ...] = ()
+) -> str:
     """The short comment that actually notifies people when the verdict changes."""
     title = rules_mod.VERDICTS[label][0]
     text = (
         f"@{author} the review status is now **{title}**. {rules_mod.next_step(label)}"
     )
     if label == "awaiting-peer" and peer:
-        text = (
-            f"@{author} the rule checks passed. @{peer}, please review this pull request; "
-            "the AI review runs right after you approve."
-        )
+        text = f"@{author} the rule checks passed. @{peer}, please review this pull request."
+        if others:
+            names = ", ".join("@​" + o for o in others)
+            text += f" If you are busy, any one of {names} can approve instead."
+        text += " The AI review runs right after one approval."
     if label in ("rule-violation", "needs-judgement") and guide:
         text += f" @{guide}: your decision is needed."
     return text + " Details are in the bot comment above."
@@ -453,6 +465,10 @@ def main() -> int:
         )
         parsed_rules = rules_mod.parse_codeowners(ctx.codeowners)
         peer = rules_mod.peer_of(parsed_rules, ctx.author)
+        eligible = rules_mod.eligible_reviewers(
+            parsed_rules, sorted(ctx.files), ctx.author, guide
+        )
+        others = tuple(o for o in eligible if o != peer)
         previous = rules_mod.VERDICT_MARK.search(old_body)
         intro = ""
         if approvers:
@@ -467,7 +483,7 @@ def main() -> int:
             sha,
             intro=intro,
             footer=footer,
-            step=rules_mod.next_step(label, peer),
+            step=rules_mod.next_step(label, peer, others),
             help_url=f"https://github.com/{repo}/blob/main/docs/REVIEW-PROCESS.md",
         )
         if ai_called or found:
@@ -499,7 +515,7 @@ def main() -> int:
                     "api",
                     f"repos/{repo}/issues/{number}/comments",
                     "-f",
-                    f"body={notification(label, ctx.author, peer, guide)}",
+                    f"body={notification(label, ctx.author, peer, guide, others)}",
                 )
             except Exception as error:
                 print(f"::warning::could not notify: {error}")
