@@ -171,6 +171,7 @@ Read in this order. Make a list of anything unclear and send it to your guide (Â
 - Commit messages start with the requirement ID when there is one, e.g. `FR-S-03: validate marking table`.
 - Every pull request: requirement IDs listed, `/preflight` passing, tests added, `docs/traceability.md` updated, your peer reviewer approved. The reviewer **runs the tests**, not just reads the code.
 - Merge with **Squash and merge** only.
+- **The rule-check bot.** Within a minute of opening or updating a pull request, a bot comments with a verdict and adds a label: `ready-for-guide`, `needs-rework`, `rule-violation` or `needs-judgement`. Fix the items it lists and push again (editing the description also re-checks). It checks rules only (requirement IDs, contracts, design-document status, tests, secrets), not code quality, and it never approves anything: **peer review and the guide's decision are still required.** Draft pull requests are skipped, so open one as a draft while you are still working.
 
 ### Contracts (PRD Part B)
 - Until Release 0 is frozen, each owner creates their contract files in `contracts/` through a normal pull request that **all four of you approve**. Claude Code will ask permission before it touches `contracts/`; approve it when that is really your intention.

@@ -83,6 +83,7 @@ suddenly fails with "LearnOps guard: no working python found", install Python 3.
 | Hosted-API key with a hard spending cap, given outside the repo | Comparison study only | ☐ |
 | Test data with licences or consent recorded in `testdata/README.md` | Legal; no real learner data | ☐ |
 | A shared issue board (labels: module, release) | Tracking and traceability | ☐ |
+| Rule-check bot (`.github/workflows/pr-review.yml`): after the first run it creates the four verdict labels itself; bookmark `is:pr is:open label:ready-for-guide`; it is not a required check | One look for the guide instead of reading every PR | ☐ |
 | A short onboarding session: PRD walkthrough, `CLAUDE.md`, the six commands (`/preflight`, `/contract-change`, `/release-check`, `/design-doc`, `/review-design`, `/implement`) | Students follow the rules only if they know them | ☐ |
 | You set `**Status:** Approved` in each design document yourself (a convention, not enforced by GitHub) | `/implement` stops until it sees that line | ☐ |
 | Agreement that students don't add MCP servers or new tools without the guide | Keeps every environment the same | ☐ |
