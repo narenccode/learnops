@@ -149,6 +149,7 @@ The grey Draft tag disappears. The bot starts within a minute.
 3. A coloured **label** also appears on the right side of the page, under **Labels**. Part 7 explains each.
 4. If the comment lists problems under **Fix before merging**: fix them on your computer, then `git add`,
    `git commit` and `git push`. **The bot re-checks by itself** within a minute and updates its comment. You do not click anything.
+   **Fix everything the comment lists first, then push once.** Do not push after every small fix (see the rule in Part 10).
 
 Part 5 shows a real comment with each part explained.
 
@@ -315,6 +316,7 @@ The guide did nothing. If at 15:01 the label had been `rule-violation`, Maya wou
 - Never push to `main`. Always use a branch and a PR.
 - Open the PR as a draft; click **Ready for review** only when finished.
 - One piece of work per PR. Small is easier to review.
+- **Push in sizeable batches, not tiny changes.** While your PR is a draft, push as often as you like: nothing is checked. After you click **Ready for review**, every push removes your peer's approval and starts a new AI review. So collect your fixes, check them yourself with `/preflight`, and push once. If you find a small mistake after your peer approved, fix it together with the next real change when you can, instead of pushing one line.
 - **You** are responsible for your code. The bot and the AI can be wrong or miss things. Read every comment and test your change yourself.
 - Your PR title, description and code are sent to an AI service called DeepSeek. The repository is public and uses test data only. **Never put passwords, keys or real learner data in a PR.**
 - Design documents are marked `Approved` only by the guide.
