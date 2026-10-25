@@ -209,3 +209,41 @@ def test_ask_model_parses_response(monkeypatch):
         "s", "u", env={"DEEPSEEK_API_KEY": "k", "DEEPSEEK_MODEL": "m"}
     )
     assert data == {"blocking": []} and usage == {"prompt_tokens": 5}
+
+
+# ----------------------------------------------------------- notifications
+
+
+RULES = r.parse_codeowners(
+    "/modules/studio/ @s1 @s2 @guide\n/modules/checker/ @s2 @s1 @guide\n"
+    "/modules/grading/ @s3 @s4 @guide\n/docs/ @s1 @s2 @s3 @s4 @guide\n/CLAUDE.md @guide\n"
+)
+
+
+def test_peer_is_second_owner_of_the_authors_module():
+    assert r.peer_of(RULES, "S1") == "s2"
+    assert r.peer_of(RULES, "s3") == "s4"
+    assert r.peer_of(RULES, "stranger") == ""
+
+
+def test_next_step_covers_every_verdict_and_never_pings():
+    for label in r.VERDICTS:
+        assert r.next_step(label, "s2")
+    assert "@s2" not in r.next_step("awaiting-peer", "s2")  # zero-width mark inside
+
+
+def test_notification_pings_author_peer_and_guide_only_where_needed():
+    ready = v.notification("ready-to-merge", "s1", "s2", "guide")
+    assert "@s1" in ready and "@guide" not in ready and "@s2" not in ready
+    waiting = v.notification("awaiting-peer", "s1", "s2", "guide")
+    assert "@s1" in waiting and "@s2" in waiting and "@guide" not in waiting
+    stuck = v.notification("rule-violation", "s1", "s2", "guide")
+    assert "@guide" in stuck and "decision" in stuck
+    assert r.MARKER not in ready  # must never be mistaken for the main comment
+
+
+def test_render_ends_with_verdict_marker_and_next_step():
+    text = r.render("needs-rework", [], "abcdef1", step=r.next_step("needs-rework"))
+    assert "**Next step:**" in text
+    found = r.VERDICT_MARK.search(text)
+    assert found and found.group(1) == "needs-rework"

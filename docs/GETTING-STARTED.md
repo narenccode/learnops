@@ -135,10 +135,10 @@ git commit -m "Design document skeleton for <module>"
 git push -u origin <module>/design-doc-skeleton
 ```
 
-Git prints a link. Open it, click **Create pull request**, and fill in the checklist. Then:
-1. wait for the **checks** to turn green;
-2. ask your **peer reviewer** to review;
-3. when they approve, click **Squash and merge**.
+Git prints a link. Open it, click the small arrow next to **Create pull request**, choose **Create draft pull request**, and fill in the checklist. Keep it a draft while you fill in the document (the review bot skips drafts). When it is ready:
+1. click **Ready for review** and wait for the **checks** to turn green;
+2. do what the bot's **Next step** line says (usually: ask your **peer reviewer** to review);
+3. when the label is `ready-to-merge`, click **Squash and merge**.
 
 You cannot push to `main` directly: it is protected, on purpose.
 
@@ -171,7 +171,15 @@ Read in this order. Make a list of anything unclear and send it to your guide (Â
 - Commit messages start with the requirement ID when there is one, e.g. `FR-S-03: validate marking table`.
 - Every pull request: requirement IDs listed, `/preflight` passing, tests added, `docs/traceability.md` updated, your peer reviewer approved. The reviewer **runs the tests**, not just reads the code.
 - Merge with **Squash and merge** only.
-- **The review bot.** It works in two steps and comments on your pull request each time. (1) Within a minute of opening or updating it, it checks the rules (requirement IDs, contracts, design-document status, tests, secrets) and adds a label. Fix what it lists and push again; editing the description also re-checks. (2) After **one** peer who owns the changed files approves, it runs an AI review of the diff and reports problems and better ways. Labels: `awaiting-peer` (rules passed, waiting for the peer), `needs-rework` (fix and push), `rule-violation` and `needs-judgement` (the guide decides), `ready-to-merge` (peer approved and the bot passed: you squash-merge). Your peer approves first, so ask them early. The bot never approves or merges, and its AI can be wrong or miss things: **read your peer's comments and the bot's comments, and test the change yourself.** Open a **draft** pull request while you are still working; drafts are skipped.
+- **The review bot (read this box once).**
+  - Open a **draft** pull request while you work (the bot skips drafts). Click **Ready for review** when you are done.
+  - Within a minute the bot comments and adds a label. Do what its **Next step** line says.
+  - `needs-rework`: fix the listed items and push; it re-checks by itself.
+  - `awaiting-peer`: ask your peer reviewer to approve; the AI review runs right after.
+  - `ready-to-merge`: **Squash and merge**.
+  - `rule-violation` or `needs-judgement`: do not merge; the guide decides.
+  - Keep GitHub email notifications on for this repository (Watch â†’ Participating is enough): that is how the bot reaches you.
+  - The bot never approves or merges, and its AI can be wrong or miss things. Read it, then test the change yourself.
 
 ### Contracts (PRD Part B)
 - Until Release 0 is frozen, each owner creates their contract files in `contracts/` through a normal pull request that **all four of you approve**. Claude Code will ask permission before it touches `contracts/`; approve it when that is really your intention.
