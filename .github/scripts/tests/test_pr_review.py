@@ -372,3 +372,89 @@ def test_unexpected_crash_is_explained_on_the_pr_and_the_guide_is_pinged(
     assert "Do not wait on the bot" in flat  # explained on the PR
     assert "@guide the review bot failed" in flat  # guide pinged
     assert "state=failure" in flat  # and the status says so
+
+
+# ----------------------------------------- real-world AI answers found by testing
+
+
+def _api(monkeypatch, answers):
+    """answers: list of (payload dict) returned one per call; records the request bodies."""
+    sent = []
+
+    class Response:
+        def __init__(self, body):
+            self.body = body
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def read(self, *a):
+            return json.dumps(self.body).encode()
+
+    def fake(request, timeout=0):
+        sent.append(json.loads(request.data))
+        return Response(answers[min(len(sent), len(answers)) - 1])
+
+    monkeypatch.setattr(v.urllib.request, "urlopen", fake)
+    monkeypatch.setattr(v.time, "sleep", lambda s: None)
+    return sent
+
+
+ENV = {"DEEPSEEK_API_KEY": "k", "DEEPSEEK_MODEL": "m"}
+
+
+def _answer(text, reason="stop", tokens=100):
+    return {
+        "choices": [{"message": {"content": text}, "finish_reason": reason}],
+        "usage": {"completion_tokens": tokens},
+    }
+
+
+def test_empty_answer_is_retried_without_json_mode_and_can_succeed(monkeypatch):
+    sent = _api(monkeypatch, [_answer("", tokens=0), _answer('{"blocking": []}')])
+    data, _ = v.ask_model("s", "u", ENV)
+    assert data == {"blocking": []}
+    assert "response_format" in sent[0] and "response_format" not in sent[1]
+
+
+def test_cut_off_answer_names_the_cause_and_stops_retrying(monkeypatch):
+    sent = _api(
+        monkeypatch,
+        [_answer('{"blocking": [{"issue": "x', reason="length", tokens=6000)],
+    )
+    with pytest.raises(v.AIError) as caught:
+        v.ask_model("s", "u", ENV)
+    assert "finish_reason=length" in str(caught.value) and len(sent) == 1
+
+
+def test_persistent_empty_answer_reports_why(monkeypatch):
+    _api(monkeypatch, [_answer("", tokens=2000, reason="length")])
+    with pytest.raises(v.AIError) as caught:
+        v.ask_model("s", "u", ENV)
+    assert "empty answer" in str(caught.value) and "2000 output tokens" in str(
+        caught.value
+    )
+
+
+def test_answer_limit_leaves_room_for_a_long_review(monkeypatch):
+    sent = _api(monkeypatch, [_answer('{"blocking": []}')])
+    v.ask_model("s", "u", ENV)
+    assert sent[0]["max_tokens"] >= 4000
+
+
+def test_manual_rerun_builds_the_same_event_from_the_api(monkeypatch):
+    pr = {
+        "number": 6,
+        "user": {"login": "s1"},
+        "head": {"sha": "abc"},
+        "base": {"ref": "main"},
+    }
+    monkeypatch.setattr(v, "gh", lambda *a, check=True: json.dumps(pr))
+    event = v.event_from_pr("o/r", 6)
+    assert (
+        event["pull_request"]["number"] == 6
+        and event["repository"]["full_name"] == "o/r"
+    )

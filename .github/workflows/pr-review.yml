@@ -4,11 +4,18 @@ name: pr-review
 # The result is one comment, one label and the commit status `guide-bot`. When that status is a
 # required check on `main`, a pull request cannot be merged before the bot has reviewed it.
 # The bot never approves, merges or closes anything.
+# Manual run: Actions -> pr-review -> Run workflow -> PR number (use it after an AI outage or a fix).
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, edited]
   pull_request_review:
     types: [submitted, dismissed]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: "Pull request number to review again"
+        required: true
+        type: number
 
 permissions:
   contents: read
@@ -17,21 +24,23 @@ permissions:
   statuses: write
 
 concurrency:
-  group: pr-review-${{ github.event.pull_request.number }}
+  group: pr-review-${{ github.event.pull_request.number || inputs.pr }}
   cancel-in-progress: true
 
 jobs:
   review:
     # Draft PRs are skipped; PRs from forks and from Dependabot get a read-only token.
     if: >-
-      github.event.pull_request.draft == false &&
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.pull_request.draft == false &&
       github.event.pull_request.head.repo.full_name == github.repository &&
-      github.actor != 'dependabot[bot]'
+      github.actor != 'dependabot[bot]')
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/pull/{0}/merge', inputs.pr) || '' }}
 
       - uses: actions/setup-python@v5
         with:
@@ -42,4 +51,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           DEEPSEEK_MODEL: ${{ vars.DEEPSEEK_MODEL }}
-        run: python .github/scripts/pr_review.py --event "$GITHUB_EVENT_PATH"
+          PR_NUMBER: ${{ inputs.pr }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            python .github/scripts/pr_review.py --pr "$PR_NUMBER"
+          else
+            python .github/scripts/pr_review.py --event "$GITHUB_EVENT_PATH"
+          fi
