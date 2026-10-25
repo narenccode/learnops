@@ -464,36 +464,14 @@ def gh(*args: str, check: bool = True) -> str:
 
 
 def post(repo: str, number: int, verdict: str, body: str) -> None:
-    for name, (_, color, description) in VERDICTS.items():
-        gh(
-            "label",
-            "create",
-            name,
-            "--color",
-            color,
-            "--description",
-            description,
-            "--force",
-            "--repo",
-            repo,
-            check=False,
-        )
-    for name in VERDICTS:
-        if name != verdict:
-            gh(
-                "api",
-                "-X",
-                "DELETE",
-                f"repos/{repo}/issues/{number}/labels/{name}",
-                check=False,
-            )
-    gh("pr", "edit", str(number), "--add-label", verdict, "--repo", repo)
+    """Comment first (the part that matters), then label; a label failure must not lose the comment."""
+    bot = "github-actions[bot]"
     existing = gh(
         "api",
         "--paginate",
         f"repos/{repo}/issues/{number}/comments",
         "--jq",
-        f'.[] | select(.body | contains("{MARKER}")) | .id',
+        f'.[] | select(.user.login == "{bot}" and (.body | contains("{MARKER}"))) | .id',
     ).split()
     if existing:
         gh(
@@ -506,6 +484,34 @@ def post(repo: str, number: int, verdict: str, body: str) -> None:
         )
     else:
         gh("api", f"repos/{repo}/issues/{number}/comments", "-f", f"body={body}")
+    try:
+        for name, (_, color, description) in VERDICTS.items():
+            gh(
+                "label",
+                "create",
+                name,
+                "--color",
+                color,
+                "--description",
+                description,
+                "--force",
+                "--repo",
+                repo,
+                check=False,
+            )
+        for name in VERDICTS:
+            if name != verdict:
+                gh(
+                    "api",
+                    "-X",
+                    "DELETE",
+                    f"repos/{repo}/issues/{number}/labels/{name}",
+                    check=False,
+                )
+        # REST, not `gh pr edit`: that uses GraphQL, which the Actions token can be refused.
+        gh("api", f"repos/{repo}/issues/{number}/labels", "-f", f"labels[]={verdict}")
+    except Exception as error:
+        print(f"::warning::comment posted but the label failed: {error}")
 
 
 def main() -> int:
@@ -532,7 +538,11 @@ def main() -> int:
             return 0
         findings = evaluate(ctx)
         verdict = verdict_of(findings)
-        body = render(verdict, findings, git("rev-parse", args.head).strip())
+        body = render(
+            verdict,
+            findings,
+            pr.get("head", {}).get("sha") or git("rev-parse", args.head).strip(),
+        )
     except Exception as error:  # never block a PR because the checker failed
         print(f"::warning::pr_rules failed: {error}")
         return 0

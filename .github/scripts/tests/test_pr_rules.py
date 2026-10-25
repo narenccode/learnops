@@ -206,3 +206,37 @@ def test_render_has_marker_and_sections():
     f = [r.Finding("violation", "bad", "PRD C-04"), r.Finding("advice", "meh")]
     text = r.render("rule-violation", f, "abcdef123")
     assert text.startswith(r.MARKER) and "Rule violation" in text and "abcdef1" in text
+
+
+def test_post_comments_first_and_survives_label_failure(monkeypatch):
+    calls = []
+
+    def fake_gh(*args, check=True):
+        calls.append(args)
+        if args[:2] == ("api", "--paginate"):
+            return ""
+        if "labels[]=ready-for-guide" in args:
+            raise RuntimeError("refused")
+        return ""
+
+    monkeypatch.setattr(r, "gh", fake_gh)
+    r.post("o/r", 7, "ready-for-guide", "body")
+    posted = [c for c in calls if c[0] == "api" and "body=body" in c]
+    assert posted, "comment must be posted"
+    assert calls.index(posted[0]) < next(
+        i for i, c in enumerate(calls) if c[:2] == ("label", "create")
+    )
+    assert not any(c[:2] == ("pr", "edit") for c in calls)
+
+
+def test_post_updates_existing_bot_comment(monkeypatch):
+    calls = []
+
+    def fake_gh(*args, check=True):
+        calls.append(args)
+        return "123\n" if args[:2] == ("api", "--paginate") else ""
+
+    monkeypatch.setattr(r, "gh", fake_gh)
+    r.post("o/r", 7, "needs-rework", "body")
+    assert any("PATCH" in c and "repos/o/r/issues/comments/123" in c for c in calls)
+    assert 'user.login == "github-actions[bot]"' in " ".join(calls[0])
