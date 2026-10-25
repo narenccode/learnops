@@ -171,16 +171,7 @@ Read in this order. Make a list of anything unclear and send it to your guide (Â
 - Commit messages start with the requirement ID when there is one, e.g. `FR-S-03: validate marking table`.
 - Every pull request: requirement IDs listed, `/preflight` passing, tests added, `docs/traceability.md` updated, your peer reviewer approved. The reviewer **runs the tests**, not just reads the code.
 - Merge with **Squash and merge** only.
-- **The review bot (read this box once).**
-  - Open a **draft** pull request while you work (the bot skips drafts). Click **Ready for review** when you are done.
-  - Within a minute the bot comments and adds a label. Do what its **Next step** line says.
-  - `needs-rework`: fix the listed items and push; it re-checks by itself.
-  - `awaiting-peer`: ask your peer reviewer to approve; the AI review runs right after.
-  - `ready-to-merge`: **Squash and merge**.
-  - `rule-violation` or `needs-judgement`: do not merge; the guide decides.
-  - If a pull request waits too long, the bot reminds you or your peer by @mention. You do not need to chase anyone.
-  - Keep GitHub email notifications on for this repository (Watch â†’ Participating is enough): that is how the bot reaches you.
-  - The bot never approves or merges, and its AI can be wrong or miss things. Read it, then test the change yourself.
+- **The review bot.** Open a **draft** PR while you work, click **Ready for review** when done, do what the bot's **Next step** line says, get one peer's approval, and merge when the label is `ready-to-merge`. Read [docs/REVIEW-PROCESS.md](REVIEW-PROCESS.md) once: it has the steps, the labels, and prompts for your Claude Code. Keep GitHub email notifications on for this repository.
 
 ### Contracts (PRD Part B)
 - Until Release 0 is frozen, each owner creates their contract files in `contracts/` through a normal pull request that **all four of you approve**. Claude Code will ask permission before it touches `contracts/`; approve it when that is really your intention.

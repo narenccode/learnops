@@ -247,3 +247,9 @@ def test_render_ends_with_verdict_marker_and_next_step():
     assert "**Next step:**" in text
     found = r.VERDICT_MARK.search(text)
     assert found and found.group(1) == "needs-rework"
+
+
+def test_render_links_to_the_process_page_when_given():
+    text = r.render("needs-rework", [], "abcdef1", help_url="https://example.org/p.md")
+    assert "[How the review works](https://example.org/p.md)" in text
+    assert "How the review works" not in r.render("needs-rework", [], "abcdef1")
