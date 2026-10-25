@@ -468,6 +468,7 @@ def main() -> int:
             intro=intro,
             footer=footer,
             step=rules_mod.next_step(label, peer),
+            help_url=f"https://github.com/{repo}/blob/main/docs/REVIEW-PROCESS.md",
         )
         if ai_called or found:
             body += f"\n<!-- ai-runs:{runs + (1 if ai_called else 0)} -->"

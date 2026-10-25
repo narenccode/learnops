@@ -413,6 +413,7 @@ def render(
     intro: str = "",
     footer: str = "",
     step: str = "",
+    help_url: str = "",
 ) -> str:
     title = VERDICTS[verdict][0]
     sections = [
@@ -443,6 +444,8 @@ def render(
     lines.append(
         f"<sub>Checked commit `{sha[:7]}`; re-checked on every push, review or description edit.</sub>"
     )
+    if help_url:
+        lines.append(f"<sub>[How the review works]({help_url})</sub>")
     lines.append(f"<!-- verdict:{verdict} -->")
     return "\n".join(lines)
 
