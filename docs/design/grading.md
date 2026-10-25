@@ -451,7 +451,7 @@ Versions: latest release on PyPI on 2026-10-25. Licences: read from PyPI metadat
 | Alembic | 1.20.1 | MIT (PyPI; `LICENSE`) | Reversible migrations, one tool for the repository (Q36) | Plain SQL files with up and down steps |
 | Docker SDK for Python (`docker`) | 7.2.0 | Apache-2.0 (PyPI; `LICENSE`) | Sandbox control on the sandbox host | docker CLI |
 | PyYAML | 6.0.3 | MIT (PyPI; `LICENSE`) | Check config (§4.3c) | JSON |
-| git (sandbox image only, never on a worker host) | unresolved: pinned with the image digest | GPL-2.0 (`COPYING`): **not in the C-11 list** (Q56) | `repo_clone` | — |
+| Dulwich (pure-Python Git; sandbox image only, never on a worker host) | 1.2.19 (PyPI 2026-10-26) | Apache-2.0 OR GPL-2.0-or-later (PyPI; `COPYING`): used under Apache-2.0. Only runtime dependency on Python 3.12: urllib3 2.8.0, MIT (PyPI; `LICENSE.txt`) | `repo_clone` (§9.2) | GNU git executable: rejected, GPL-2.0 is not in C-11 (Q56) |
 
 ## 9. Security and privacy
 
@@ -481,7 +481,7 @@ Required by the PRD (PRD §C3.5, SEC-04, module rule 2): one container per submi
 
 **Steps** (proposed):
 1. **Create.** From a pinned check image: read-only root filesystem; non-root user; all Linux capabilities dropped and no-new-privileges set; the default seccomp profile; CPU limited to 2 and memory to 2 GB with swap equal to memory; a process-count limit (stops fork bombs); one size-capped writable work directory; a stdout cap; labels with job id and creation time.
-2. **Clone.** The only step with network access. The container is attached to a dedicated clone network. The host firewall allows egress from that network only to the configured git hosts (`GRADING_CLONE_ALLOWED_HOSTS`) over HTTPS and denies loopback, private, link-local and cloud-metadata ranges. Enforcement is by destination IP at the firewall, so DNS tricks and redirects cannot reach internal addresses. git runs with only the https protocol allowed, redirects restricted, submodules, LFS and hooks disabled, a shallow clone, and size and time caps (lab: exact options confirmed against the pinned git version). A host not on the allow-list fails `repo_clone` with reason `host_not_allowed`.
+2. **Clone.** The only step with network access. The container is attached to a dedicated clone network. The host firewall allows egress from that network only to the configured git hosts (`GRADING_CLONE_ALLOWED_HOSTS`) over HTTPS and denies loopback, private, link-local and cloud-metadata ranges. Enforcement is by destination IP at the firewall, so DNS tricks and redirects cannot reach internal addresses. The image's fixed helper clones with Dulwich (§8), not the git executable: it accepts only `https://` URLs (no ssh, `git://`, `file://` or local paths), calls `clone` with `depth=1` and `recurse_submodules=False`, a clean environment and no user Git config; Dulwich's `clone` runs no hooks (read in its source); no LFS or filter drivers; size and time caps (lab: confirm redirect and filter behaviour against the pinned version). A host not on the allow-list fails `repo_clone` with reason `host_not_allowed`.
 3. **Cut the network.** After the clone the container is detached from every network. The worker verifies this from the host side (the container's network list is empty) and runs a probe that must fail. If the cut or the verification fails, the run stops with `error` and the container is destroyed. The in-container runner is not trusted to report this.
 4. **Fingerprints and file checks.** Compute similarity fingerprints (§3.1), then run `repo_file`, `readme_sections` and `word_count` with a fixed read-only helper from the image; paths are resolved and checked so they cannot leave the work directory, including through symlinks. README text for excerpts is read here (§9.5).
 5. **`command:<name>` checks last,** each as a separate exec with its own time budget. Only a command defined in the course's check config runs, never a command taken from the repository. Pass or fail comes from the exit code observed by the worker on the host, never from text the command prints.
@@ -719,7 +719,7 @@ Test data to produce: fake-Moodle recordings, malicious and tampering repositori
 | Q49 | [F6] Similarity method and thresholds (§3.1); cohort size limit | no | Guide |
 | Q50 | [F7] Moodle semantics policy (§4.1): submitted only, groups unsupported, points only, suspended skipped | yes | Guide, lab |
 | Q51 to Q55 | [F8 to F12] Worker health through a heartbeat table (adjusts OPS-03); best-effort excerpt scrubbing; fake Moodle built only from lab recordings; work breakdown in §13 with the review gate before PR 18; literature reduced to topics until opened | no | Guide and owner |
-| Q56 | git (GPL-2.0) is not in the C-11 licence list; is an unmodified git binary inside the sandbox image acceptable, or is another clone method needed? | no | Guide |
+| Q56 | Resolved by design (proposed): clone with Dulwich under its Apache-2.0 option instead of the GPL-2.0 git executable (§8, §9.2); guide confirms the licence choice | yes (redirect and filter behaviour) | Guide |
 
 ### 12.1 Literature survey
 
