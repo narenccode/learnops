@@ -156,7 +156,7 @@ Part 5 shows a real comment with each part explained.
 
 1. On your PR page, look at the right side under **Reviewers**. Several names may be listed (GitHub adds everyone who owns the files you changed). Your peer reviewer is one of them.
 2. Tell your peer in your team chat: "My PR is ready: [link to your PR]". (The bot also reminds them by name if nothing happens for two days.)
-3. They review it (Part 6 shows how) and approve. **One approval is enough.**
+3. They review it (Part 6 shows how) and approve. **One approval from one person is enough.** For design documents and other shared files in `docs/`, **any teammate who is free** can do it; it does not have to be your usual peer. For code inside a module, the approval must come from your peer reviewer (or the guide). The bot's **Next step** line tells you who can approve your PR.
 4. **If you push new commits after they approved,** GitHub removes their approval (a safety rule). Ask them to look at the new changes and approve again.
 
 ### Step 8. Wait for the AI advice, if the label asks (github.com)
@@ -257,7 +257,7 @@ The label is on the right side of the PR page, under **Labels**. It is your sign
 
 | Label | Meaning | What you do |
 |---|---|---|
-| `awaiting-peer` | The rule check passed | Ask your peer to review (Step 7) |
+| `awaiting-peer` | The rule check passed | Ask a teammate who can approve to review (Step 7) |
 | `needs-rework` | Something must be fixed | Read the bot comment, fix, push |
 | `ready-to-merge` | Your peer approved and the bot is satisfied | **Squash and merge** (Step 9) |
 | `rule-violation` | A project rule is broken | **Do not merge.** The guide decides and will reply |

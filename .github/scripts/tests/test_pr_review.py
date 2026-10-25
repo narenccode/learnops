@@ -253,3 +253,43 @@ def test_render_links_to_the_process_page_when_given():
     text = r.render("needs-rework", [], "abcdef1", help_url="https://example.org/p.md")
     assert "[How the review works](https://example.org/p.md)" in text
     assert "How the review works" not in r.render("needs-rework", [], "abcdef1")
+
+
+# ------------------------------------------------- who may review (any free person)
+
+SHARED = r.parse_codeowners(
+    "*  @s2 @s1 @guide\n/modules/studio/ @s1 @s2 @guide\n"
+    "/docs/ @s1 @s2 @s3 @s4 @guide\n/CLAUDE.md @guide\n"
+)
+
+
+def test_docs_can_be_reviewed_by_anyone_free_but_module_code_only_by_the_pair():
+    docs = r.eligible_reviewers(SHARED, ["docs/design/studio.md"], "S1", "guide")
+    assert docs == ["s2", "s3", "s4"]
+    code = r.eligible_reviewers(SHARED, ["modules/studio/app.py"], "s1", "guide")
+    assert code == ["s2"]
+    mixed = r.eligible_reviewers(
+        SHARED, ["docs/x.md", "modules/studio/a.py"], "s1", "guide"
+    )
+    assert mixed == ["s2"]
+
+
+def test_next_step_names_the_usual_peer_and_the_others_without_pinging():
+    text = r.next_step("awaiting-peer", "s2", ("s3", "s4"))
+    assert "anyone free" in text and "One approval is enough" in text
+    assert "@s3" not in text and "@​s3" in text
+    assert "anyone free" not in r.next_step("awaiting-peer", "s2", ())
+
+
+def test_notification_pings_only_the_usual_peer():
+    text = v.notification("awaiting-peer", "s1", "s2", "guide", ("s3", "s4"))
+    assert "@s2," in text and "@s3" not in text and "any one of" in text
+
+
+def test_bot_needs_every_path_covered_by_an_approval():
+    c = ctx(["docs/x.md", "modules/studio/a.py"])
+    c.codeowners = "*  @s2 @s1 @guide\n/modules/studio/ @s1 @s2 @guide\n/docs/ @s1 @s2 @s3 @s4 @guide\n"
+    approvers, _ = v.reviewers({"s3": "APPROVED"}, c)
+    assert approvers == set()  # s3 may approve docs but not the module code
+    approvers, _ = v.reviewers({"s2": "APPROVED"}, c)
+    assert approvers == {"s2"}

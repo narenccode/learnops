@@ -393,15 +393,31 @@ def peer_of(rules: list[tuple[str, list[str]]], author: str) -> str:
     return ""
 
 
-def next_step(verdict: str, peer: str = "") -> str:
+def eligible_reviewers(
+    rules: list[tuple[str, list[str]]], paths: list[str], author: str, guide: str
+) -> list[str]:
+    """Owners who can approve ALL changed paths on their own (never the author or the guide)."""
+    sets = [set(owners_of(rules, p)) for p in paths] or [set()]
+    return sorted(set.intersection(*sets) - {author.lower(), guide})
+
+
+def next_step(verdict: str, peer: str = "", others: tuple[str, ...] = ()) -> str:
     """One plain sentence telling the team what to do now (mentions are neutralised)."""
-    who = f" (@​{peer})" if peer else ""
+    quiet = "@​"
+    if peer and others:
+        review = (
+            f"Ask a teammate to review and approve: your usual peer ({quiet}{peer}) "
+            f"or anyone free of {', '.join(quiet + o for o in others)}. One approval is enough. "
+        )
+    elif peer:
+        review = f"Ask your peer reviewer ({quiet}{peer}) to review and approve. "
+    else:
+        review = "Ask a teammate to review and approve. "
     return {
         "needs-rework": "Fix the items listed in the bot comment and push. The bot re-checks by itself.",
         "rule-violation": "Do not merge. The guide will decide.",
         "needs-judgement": "Do not merge. The guide will decide.",
-        "awaiting-peer": f"Ask your peer reviewer{who} to review and approve. "
-        "The AI review runs right after.",
+        "awaiting-peer": review + "The AI review runs right after.",
         "ready-to-merge": "Squash-merge it.",
     }[verdict]
 
