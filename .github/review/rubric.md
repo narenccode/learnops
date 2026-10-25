@@ -29,6 +29,10 @@ Review against these rules (PRD §A7 and CLAUDE.md):
     of the module's releases appears, approach is consistent with the PRD chapter and contracts,
     no claim about Moodle or BigBlueButton behaviour that the PRD does not support or list as an open
     question for the lab.
+    Read the document's Status line. If it is `Draft`, the document is work in progress: report unfilled
+    template sections and placeholder rows as "advice", never as "blocking"; use "blocking" only for
+    statements that are written and contradict the PRD or break a rule above. If it is `In review`,
+    every unfilled section or missing requirement is "blocking".
 
 Rules for your answer:
 - Report only what you can see in the diff or the PRD excerpts. If something needs the lab, the

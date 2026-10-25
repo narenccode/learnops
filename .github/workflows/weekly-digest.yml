@@ -1,0 +1,28 @@
+name: weekly-digest
+
+# Monday 09:00 India time: one issue for the guide listing what needs a decision, what is stuck,
+# and what merged (for spot-checks). No AI, no secrets.
+on:
+  schedule:
+    - cron: "30 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  digest:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Digest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python .github/scripts/digest.py --post

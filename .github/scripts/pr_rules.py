@@ -381,8 +381,38 @@ def verdict_of(findings: list[Finding]) -> str:
     return "ready-to-merge"
 
 
+VERDICT_MARK = re.compile(r"<!-- verdict:([a-z-]+) -->")
+
+
+def peer_of(rules: list[tuple[str, list[str]]], author: str) -> str:
+    """The author's peer reviewer: second owner of the module or library the author owns."""
+    for pattern, owners in rules:
+        if pattern.startswith(("/modules/", "/libs/")) and len(owners) > 1:
+            if owners[0] == author.lower():
+                return owners[1]
+    return ""
+
+
+def next_step(verdict: str, peer: str = "") -> str:
+    """One plain sentence telling the team what to do now (mentions are neutralised)."""
+    who = f" (@​{peer})" if peer else ""
+    return {
+        "needs-rework": "Fix the items listed in the bot comment and push. The bot re-checks by itself.",
+        "rule-violation": "Do not merge. The guide will decide.",
+        "needs-judgement": "Do not merge. The guide will decide.",
+        "awaiting-peer": f"Ask your peer reviewer{who} to review and approve. "
+        "The AI review runs right after.",
+        "ready-to-merge": "Squash-merge it.",
+    }[verdict]
+
+
 def render(
-    verdict: str, findings: list[Finding], sha: str, intro: str = "", footer: str = ""
+    verdict: str,
+    findings: list[Finding],
+    sha: str,
+    intro: str = "",
+    footer: str = "",
+    step: str = "",
 ) -> str:
     title = VERDICTS[verdict][0]
     sections = [
@@ -393,6 +423,8 @@ def render(
         ("unverified", "Could not verify"),
     ]
     lines = [MARKER, f"### Automated review: **{title}**", ""]
+    if step:
+        lines += [f"**Next step:** {step}", ""]
     if intro:
         lines += [intro, ""]
     for level, heading in sections:
@@ -406,12 +438,12 @@ def render(
     if not findings:
         lines += ["No problems found.", ""]
     lines.append(
-        footer
-        or "_Rules only. Peer review and the guide's decision are still required._"
+        f"<sub>{footer or 'Rules only. Peer review is always required.'}</sub>"
     )
     lines.append(
-        f"_Checked commit `{sha[:7]}`; re-checked on every push, review or description edit._"
+        f"<sub>Checked commit `{sha[:7]}`; re-checked on every push, review or description edit.</sub>"
     )
+    lines.append(f"<!-- verdict:{verdict} -->")
     return "\n".join(lines)
 
 

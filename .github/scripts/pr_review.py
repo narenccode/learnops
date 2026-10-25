@@ -333,6 +333,22 @@ VERDICT_TEXT = {
 }
 
 
+def notification(label: str, author: str, peer: str, guide: str) -> str:
+    """The short comment that actually notifies people when the verdict changes."""
+    title = rules_mod.VERDICTS[label][0]
+    text = (
+        f"@{author} the review status is now **{title}**. {rules_mod.next_step(label)}"
+    )
+    if label == "awaiting-peer" and peer:
+        text = (
+            f"@{author} the rule checks passed. @{peer}, please review this pull request; "
+            "the AI review runs right after you approve."
+        )
+    if label in ("rule-violation", "needs-judgement") and guide:
+        text += f" @{guide}: your decision is needed."
+    return text + " Details are in the bot comment above."
+
+
 def set_status(repo: str, sha: str, state: str, text: str, url: str) -> None:
     gh(
         "api", f"repos/{repo}/statuses/{sha}",
@@ -428,13 +444,16 @@ def main() -> int:
             rule_findings, approvers, requesters, run_ai, runs
         )
         footer = (
-            f"_AI review: {model}, {usage.get('prompt_tokens', '?')} in / {usage.get('completion_tokens', '?')} out tokens. "
-            "It reports findings only; the guide stays responsible and spot-checks merged PRs._"
+            f"AI review: {model}, {usage.get('prompt_tokens', '?')} in / {usage.get('completion_tokens', '?')} out tokens. "
+            "It reports findings only; a person stays responsible."
             if ai_called
-            else "_The AI review did not run (see above). Peer review is always required._"
+            else "The AI review did not run (see above). Peer review is always required."
             if approvers
-            else "_No AI review yet: it runs after one peer approval. Peer review is always required._"
+            else "No AI review yet: it runs after one peer approval. Peer review is always required."
         )
+        parsed_rules = rules_mod.parse_codeowners(ctx.codeowners)
+        peer = rules_mod.peer_of(parsed_rules, ctx.author)
+        previous = rules_mod.VERDICT_MARK.search(old_body)
         intro = ""
         if approvers:
             intro = (
@@ -442,7 +461,14 @@ def main() -> int:
                 + ", ".join(f"@​{u}" for u in sorted(approvers))
                 + "."
             )
-        body = rules_mod.render(label, findings, sha, intro=intro, footer=footer)
+        body = rules_mod.render(
+            label,
+            findings,
+            sha,
+            intro=intro,
+            footer=footer,
+            step=rules_mod.next_step(label, peer),
+        )
         if ai_called or found:
             body += f"\n<!-- ai-runs:{runs + (1 if ai_called else 0)} -->"
     except (
@@ -466,6 +492,16 @@ def main() -> int:
             set_status(repo, sha, state_name, text, page)
         except Exception as error:
             print(f"::warning::could not set status: {error}")
+        if not previous or previous.group(1) != label:
+            try:  # edits to the main comment send no email, so a changed verdict gets its own short ping
+                gh(
+                    "api",
+                    f"repos/{repo}/issues/{number}/comments",
+                    "-f",
+                    f"body={notification(label, ctx.author, peer, guide)}",
+                )
+            except Exception as error:
+                print(f"::warning::could not notify: {error}")
     return 0
 
 
