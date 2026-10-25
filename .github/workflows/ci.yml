@@ -37,3 +37,7 @@ jobs:
       - name: Unit tests
         run: |
           if ls -d modules/*/tests libs/*/tests >/dev/null 2>&1; then pip install pytest && pytest -q; fi
+
+      - name: Tests for the CI scripts
+        run: |
+          if [ -d .github/scripts/tests ]; then pip install pytest && pytest -q .github/scripts/tests; fi
