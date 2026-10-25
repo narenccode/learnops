@@ -239,3 +239,9 @@ def test_post_updates_existing_bot_comment(monkeypatch):
     r.post("o/r", 7, "needs-rework", "body")
     assert any("PATCH" in c and "repos/o/r/issues/comments/123" in c for c in calls)
     assert 'user.login == "github-actions[bot]"' in " ".join(calls[0])
+
+
+def test_plain_text_fields_without_bold_are_accepted():
+    body = "Requirements: N/A\n\nRelease: Release 2 (core)\n\nModule: studio\n"
+    f = r.evaluate(ctx(["docs/x.md"], body=body))
+    assert not any("Module" in x.message or "Release" in x.message for x in f)

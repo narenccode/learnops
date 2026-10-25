@@ -354,7 +354,7 @@ def evaluate(ctx: Context) -> list[Finding]:
                 f"{unchecked} checklist box(es) unticked: tick them or write N/A.",
             )
         )
-    module_field = re.search(r"\*\*Module:\*\*[ \t]*(\S+)", stripped)
+    module_field = re.search(r"Module:(?:\*\*)?[ \t]*([^\s*]\S*)", stripped)
     if not module_field or module_field.group(1).lower().strip(",") not in (
         *MODULES,
         "libs",
@@ -362,11 +362,11 @@ def evaluate(ctx: Context) -> list[Finding]:
         out.append(
             Finding(
                 "advice",
-                "Fill in `**Module:**` (studio, checker, grading, video or libs).",
+                "Fill in `Module:` (studio, checker, grading, video or libs).",
             )
         )
-    if not re.search(r"\*\*Release:\*\*[ \t]*\S", stripped):
-        out.append(Finding("advice", "Fill in `**Release:**`."))
+    if not re.search(r"Release:(?:\*\*)?[ \t]*[^\s*]", stripped):
+        out.append(Finding("advice", "Fill in `Release:`."))
     return out
 
 
