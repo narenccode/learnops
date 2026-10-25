@@ -44,10 +44,15 @@ VERDICTS = {
         "fbca04",
         "A call only the guide can make",
     ),
-    "ready-for-guide": (
-        "Ready for guide",
+    "awaiting-peer": (
+        "Waiting for the peer review",
+        "c5def5",
+        "Rules passed: one peer approval is next",
+    ),
+    "ready-to-merge": (
+        "Ready to merge",
         "0e8a16",
-        "No known issues: peer review, then guide",
+        "Peer approved and the bot review passed: the author may squash-merge",
     ),
 }
 
@@ -373,18 +378,23 @@ def verdict_of(findings: list[Finding]) -> str:
         return "needs-rework"
     if "judgement" in levels:
         return "needs-judgement"
-    return "ready-for-guide"
+    return "ready-to-merge"
 
 
-def render(verdict: str, findings: list[Finding], sha: str) -> str:
+def render(
+    verdict: str, findings: list[Finding], sha: str, intro: str = "", footer: str = ""
+) -> str:
     title = VERDICTS[verdict][0]
     sections = [
         ("violation", "Rule violations (the guide decides: reject or rework)"),
-        ("rework", "Fix before review"),
+        ("rework", "Fix before merging"),
         ("judgement", "Needs the guide's judgement"),
-        ("advice", "Advice"),
+        ("advice", "Better ways to do it (advice)"),
+        ("unverified", "Could not verify"),
     ]
-    lines = [MARKER, f"### Automated rule check: **{title}**", ""]
+    lines = [MARKER, f"### Automated review: **{title}**", ""]
+    if intro:
+        lines += [intro, ""]
     for level, heading in sections:
         items = [f for f in findings if f.level == level]
         if items:
@@ -394,10 +404,13 @@ def render(verdict: str, findings: list[Finding], sha: str) -> str:
             ]
             lines.append("")
     if not findings:
-        lines += ["No rule problems found.", ""]
+        lines += ["No problems found.", ""]
     lines.append(
-        "_Rules only: this bot does not review code quality. Peer review and the guide's decision "
-        f"are still required. Checked commit `{sha[:7]}`; it re-checks on every push or description edit._"
+        footer
+        or "_Rules only. Peer review and the guide's decision are still required._"
+    )
+    lines.append(
+        f"_Checked commit `{sha[:7]}`; re-checked on every push, review or description edit._"
     )
     return "\n".join(lines)
 
@@ -463,22 +476,35 @@ def gh(*args: str, check: bool = True) -> str:
     return result.stdout
 
 
-def post(repo: str, number: int, verdict: str, body: str) -> None:
-    """Comment first (the part that matters), then label; a label failure must not lose the comment."""
-    bot = "github-actions[bot]"
-    existing = gh(
+BOT = "github-actions[bot]"
+
+
+def find_bot_comment(repo: str, number: int) -> tuple[str, str]:
+    """(comment id, body) of the bot's verdict comment, or ("", "")."""
+    out = gh(
         "api",
         "--paginate",
         f"repos/{repo}/issues/{number}/comments",
         "--jq",
-        f'.[] | select(.user.login == "{bot}" and (.body | contains("{MARKER}"))) | .id',
-    ).split()
-    if existing:
+        f'.[] | select(.user.login == "{BOT}" and (.body | contains("{MARKER}"))) | {{id: .id, body: .body}}',
+        check=False,
+    )
+    for line in out.splitlines():
+        if line.strip():
+            item = json.loads(line)
+            return str(item["id"]), item["body"]
+    return "", ""
+
+
+def post(repo: str, number: int, verdict: str, body: str) -> None:
+    """Comment first (the part that matters), then label; a label failure must not lose the comment."""
+    comment_id, _ = find_bot_comment(repo, number)
+    if comment_id:
         gh(
             "api",
             "-X",
             "PATCH",
-            f"repos/{repo}/issues/comments/{existing[0]}",
+            f"repos/{repo}/issues/comments/{comment_id}",
             "-f",
             f"body={body}",
         )
@@ -515,6 +541,7 @@ def post(repo: str, number: int, verdict: str, body: str) -> None:
 
 
 def main() -> int:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument(
         "--event", required=True, help="GitHub event JSON (pull_request)"

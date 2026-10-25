@@ -1,22 +1,27 @@
 name: pr-review
 
-# Rule checks on every pull request: one verdict comment and one label. Not a required check, so
-# a failure here never blocks a merge. It never approves, merges or closes anything.
+# Review on the guide's behalf. Rules run on every update; after ONE peer approval an AI review runs.
+# The result is one comment, one label and the commit status `guide-bot`. When that status is a
+# required check on `main`, a pull request cannot be merged before the bot has reviewed it.
+# The bot never approves, merges or closes anything.
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, edited]
+  pull_request_review:
+    types: [submitted, dismissed]
 
 permissions:
   contents: read
   pull-requests: write
   issues: write
+  statuses: write
 
 concurrency:
   group: pr-review-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
-  rules:
+  review:
     # Draft PRs are skipped; PRs from forks and from Dependabot get a read-only token.
     if: >-
       github.event.pull_request.draft == false &&
@@ -32,7 +37,9 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Rule checks
+      - name: Review
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python .github/scripts/pr_rules.py --event "$GITHUB_EVENT_PATH" --post
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          DEEPSEEK_MODEL: ${{ vars.DEEPSEEK_MODEL }}
+        run: python .github/scripts/pr_review.py --event "$GITHUB_EVENT_PATH"

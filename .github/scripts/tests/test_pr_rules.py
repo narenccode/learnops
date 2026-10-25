@@ -44,7 +44,7 @@ def levels(findings):
 
 def test_clean_docs_pr_is_ready():
     f = r.evaluate(ctx(["docs/design/studio.md"]))
-    assert r.verdict_of(f) == "ready-for-guide"
+    assert r.verdict_of(f) == "ready-to-merge"
 
 
 def test_feature_code_complete_pr_is_ready():
@@ -53,7 +53,7 @@ def test_feature_code_complete_pr_is_ready():
         "modules/studio/tests/test_app.py",
         "docs/traceability.md",
     ]
-    assert r.verdict_of(r.evaluate(ctx(files))) == "ready-for-guide"
+    assert r.verdict_of(r.evaluate(ctx(files))) == "ready-to-merge"
 
 
 def test_contract_change_without_process_is_violation():
@@ -73,7 +73,7 @@ def test_contract_change_with_process_needs_judgement():
 
 def test_guide_edit_of_prd_not_flagged():
     f = r.evaluate(ctx(["docs/PRD.md"], author="guide"))
-    assert r.verdict_of(f) == "ready-for-guide"
+    assert r.verdict_of(f) == "ready-to-merge"
 
 
 def test_student_touching_guide_only_file_needs_judgement():
@@ -175,7 +175,7 @@ def test_other_modules_file_is_advice_only():
 def test_oversize_pr_needs_rework_and_lockfile_ignored():
     c = ctx(["docs/a.md", "package-lock.json"])
     c.numstat = {"docs/a.md": 500, "package-lock.json": 9000}
-    assert r.verdict_of(r.evaluate(c)) == "ready-for-guide"
+    assert r.verdict_of(r.evaluate(c)) == "ready-to-merge"
     c.numstat["docs/a.md"] = 900
     assert r.verdict_of(r.evaluate(c)) == "needs-rework"
 
@@ -185,7 +185,7 @@ def test_malformed_and_unticked_boxes_are_advice():
     f = r.evaluate(ctx(["docs/x.md"], body=body))
     messages = " ".join(x.message for x in f)
     assert "malformed" in messages and "unticked" in messages
-    assert r.verdict_of(f) == "ready-for-guide"
+    assert r.verdict_of(f) == "ready-to-merge"
 
 
 def test_template_comments_do_not_count_as_filled():
@@ -213,19 +213,16 @@ def test_post_comments_first_and_survives_label_failure(monkeypatch):
 
     def fake_gh(*args, check=True):
         calls.append(args)
-        if args[:2] == ("api", "--paginate"):
-            return ""
-        if "labels[]=ready-for-guide" in args:
+        if "labels[]=ready-to-merge" in args:
             raise RuntimeError("refused")
         return ""
 
     monkeypatch.setattr(r, "gh", fake_gh)
-    r.post("o/r", 7, "ready-for-guide", "body")
+    r.post("o/r", 7, "ready-to-merge", "body")
     posted = [c for c in calls if c[0] == "api" and "body=body" in c]
     assert posted, "comment must be posted"
-    assert calls.index(posted[0]) < next(
-        i for i, c in enumerate(calls) if c[:2] == ("label", "create")
-    )
+    first_label = next(i for i, c in enumerate(calls) if c[:2] == ("label", "create"))
+    assert calls.index(posted[0]) < first_label
     assert not any(c[:2] == ("pr", "edit") for c in calls)
 
 
@@ -234,7 +231,9 @@ def test_post_updates_existing_bot_comment(monkeypatch):
 
     def fake_gh(*args, check=True):
         calls.append(args)
-        return "123\n" if args[:2] == ("api", "--paginate") else ""
+        if args[:2] == ("api", "--paginate"):
+            return '{"id": 123, "body": "old"}\n'
+        return ""
 
     monkeypatch.setattr(r, "gh", fake_gh)
     r.post("o/r", 7, "needs-rework", "body")
