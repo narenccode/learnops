@@ -245,3 +245,45 @@ def test_plain_text_fields_without_bold_are_accepted():
     body = "Requirements: N/A\n\nRelease: Release 2 (core)\n\nModule: studio\n"
     f = r.evaluate(ctx(["docs/x.md"], body=body))
     assert not any("Module" in x.message or "Release" in x.message for x in f)
+
+
+# ------------------------------------------- legitimate PRs must not be blocked wrongly
+
+
+def test_lower_case_requirement_id_is_accepted():
+    files = ["modules/studio/a.py", "modules/studio/tests/t.py", "docs/traceability.md"]
+    f = r.evaluate(
+        ctx(files, title="add fr-s-03 check", body=GOOD_BODY.replace("FR-S-03", ""))
+    )
+    assert r.verdict_of(f) == "ready-to-merge"
+
+
+def test_config_and_template_files_do_not_need_tests():
+    f = r.evaluate(
+        ctx(["modules/studio/Dockerfile", "modules/studio/templates/a.html"])
+    )
+    assert r.verdict_of(f) == "ready-to-merge"
+
+
+def test_refactor_only_turns_missing_tests_into_advice():
+    body = GOOD_BODY + "\nRefactor only: renames, no behaviour change."
+    f = r.evaluate(ctx(["modules/studio/app.py"], body=body))
+    assert r.verdict_of(f) == "ready-to-merge"
+    assert sum("Refactor only" in x.message or "you wrote" in x.message for x in f) == 2
+    assert r.verdict_of(r.evaluate(ctx(["modules/studio/app.py"]))) == "needs-rework"
+
+
+def test_test_data_does_not_count_towards_the_size_limit():
+    c = ctx(["testdata/big.json", "docs/a.md"])
+    c.numstat = {"testdata/big.json": 5000, "docs/a.md": 10}
+    assert r.verdict_of(r.evaluate(c)) == "ready-to-merge"
+
+
+def test_fake_password_in_a_test_is_fine_but_real_key_formats_are_not():
+    files = ["modules/studio/tests/t.py", "modules/studio/a.py", "docs/traceability.md"]
+    fake = {"modules/studio/tests/t.py": ['password = "dummy-password-123"']}
+    assert r.verdict_of(r.evaluate(ctx(files, added=fake))) == "ready-to-merge"
+    real = {"modules/studio/tests/t.py": ["k = 'sk-" + "a" * 30 + "'"]}
+    assert r.verdict_of(r.evaluate(ctx(files, added=real))) == "rule-violation"
+    code = {"modules/studio/a.py": ['password = "dummy-password-123"']}
+    assert r.verdict_of(r.evaluate(ctx(files, added=code))) == "rule-violation"

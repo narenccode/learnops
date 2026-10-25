@@ -72,8 +72,12 @@ SECRET_PATTERNS = [
 PROTECTED_DIRS = ("/var/www/moodle", "/var/www/html", "/usr/share/bigbluebutton")
 MEDIA_URL = re.compile(r"https?://\S+\.(?:mp4|m4v|webm|vtt|m3u8|mpd)\b", re.IGNORECASE)
 REQ_ID = re.compile(
-    r"\b(?:FR-[A-Z]{1,2}-\d{2}|OPS-\d{2}|SEC-\d{2}|EXT-\d{2}|UI-\d{2}|C-\d{2}|G-\d{1,2})\b"
+    r"\b(?:FR-[A-Z]{1,2}-\d{2}|OPS-\d{2}|SEC-\d{2}|EXT-\d{2}|UI-\d{2}|C-\d{2}|G-\d{1,2})\b",
+    re.IGNORECASE,
 )
+CODE_EXT = (".py", ".ts", ".tsx", ".js", ".jsx")
+REFACTOR_ONLY = re.compile(r"refactor only\s*:", re.IGNORECASE)
+WEAK_SECRET = "a hard-coded secret value"  # not applied to tests and test data
 
 
 @dataclass
@@ -159,7 +163,7 @@ def evaluate(ctx: Context) -> list[Finding]:
     code = feature + lib_code
 
     # Requirement IDs
-    ids = set(REQ_ID.findall(text))
+    ids = {i.upper() for i in REQ_ID.findall(text)}
     if code and not ids:
         out.append(
             Finding(
@@ -255,18 +259,29 @@ def evaluate(ctx: Context) -> list[Finding]:
             )
 
     # Tests and traceability for feature code
-    if feature and not any(is_test(p) for p in paths):
+    # Only real source files need tests; configuration, templates and docs do not.
+    sources = [p for p in feature if p.endswith(CODE_EXT)]
+    # A refactor changes no behaviour: the author says so, and the peer and the AI check the claim.
+    level = "advice" if REFACTOR_ONLY.search(text) else "rework"
+    note = (
+        " (you wrote 'Refactor only'; your reviewer must agree)"
+        if level == "advice"
+        else ""
+    )
+    if sources and not any(is_test(p) for p in paths):
         out.append(
             Finding(
-                "rework",
-                "Feature code without any test file in this PR.",
+                level,
+                "Source code without any test file in this PR." + note,
                 "CLAUDE.md §7.2",
             )
         )
-    if feature and "docs/traceability.md" not in ctx.files:
+    if sources and "docs/traceability.md" not in ctx.files:
         out.append(
             Finding(
-                "rework", "docs/traceability.md not updated.", "CLAUDE.md §7.3, PRD §E4"
+                level,
+                "docs/traceability.md not updated." + note,
+                "CLAUDE.md §7.3, PRD §E4",
             )
         )
 
@@ -300,6 +315,8 @@ def evaluate(ctx: Context) -> list[Finding]:
             continue  # the detector's own patterns
         joined = "\n".join(lines)
         for pattern, label in SECRET_PATTERNS:
+            if label == WEAK_SECRET and (is_test(path) or path.startswith("testdata/")):
+                continue  # fake passwords in tests are normal; real key formats are still caught
             if pattern.search(joined):
                 out.append(
                     Finding(
@@ -327,7 +344,9 @@ def evaluate(ctx: Context) -> list[Finding]:
 
     # Size
     total = sum(
-        n for p, n in ctx.numstat.items() if p.rsplit("/", 1)[-1] not in LOCKFILES
+        n
+        for p, n in ctx.numstat.items()
+        if p.rsplit("/", 1)[-1] not in LOCKFILES and not p.startswith("testdata/")
     )
     if total > SIZE_LIMIT:
         out.append(

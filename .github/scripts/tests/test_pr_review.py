@@ -293,3 +293,82 @@ def test_bot_needs_every_path_covered_by_an_approval():
     assert approvers == set()  # s3 may approve docs but not the module code
     approvers, _ = v.reviewers({"s2": "APPROVED"}, c)
     assert approvers == {"s2"}
+
+
+# ------------------------------------------------ the AI step must never crash the run
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        b'{"choices": []}',
+        b'{"choices": [{"message": null}]}',
+        b'{"choices": "x"}',
+        b"[]",
+        b"<html>",
+    ],
+)
+def test_odd_api_answers_become_a_guide_decision_not_a_crash(monkeypatch, payload):
+    class Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def read(self, *a):
+            return payload
+
+    monkeypatch.setattr(v.urllib.request, "urlopen", lambda *a, **k: Response())
+    monkeypatch.setattr(v.time, "sleep", lambda s: None)
+    env = {"DEEPSEEK_API_KEY": "k", "DEEPSEEK_MODEL": "m"}
+
+    def run_ai():
+        v.ask_model("s", "u", env)
+        return []
+
+    label, state, *_ = v.decide([], {"s2"}, set(), run_ai, 0)
+    assert (label, state) == ("needs-judgement", "failure")
+
+
+def test_any_exception_in_the_ai_step_reaches_the_guide():
+    def boom():
+        raise RuntimeError("bug")
+
+    label, state, _, findings, called = v.decide([], {"s2"}, set(), boom, 0)
+    assert (label, state, called) == ("needs-judgement", "failure", False)
+
+
+def test_unexpected_crash_is_explained_on_the_pr_and_the_guide_is_pinged(
+    monkeypatch, tmp_path
+):
+    event = {
+        "pull_request": {
+            "number": 9,
+            "head": {"sha": "abc1234"},
+            "base": {"ref": "main"},
+            "draft": False,
+        },
+        "repository": {"full_name": "o/r"},
+    }
+    path = tmp_path / "event.json"
+    path.write_text(json.dumps(event))
+    calls = []
+
+    def fake_gh(*args, check=True):
+        calls.append(args)
+        return ""
+
+    def broken_collect(*a, **k):
+        raise RuntimeError("unexpected")
+
+    monkeypatch.setattr(v, "gh", fake_gh)
+    monkeypatch.setattr(r, "gh", fake_gh)
+    monkeypatch.setattr(r, "collect", broken_collect)
+    monkeypatch.setattr(v, "git", lambda *a, check=True: "/CLAUDE.md @guide\n")
+    monkeypatch.setattr(sys, "argv", ["pr_review.py", "--event", str(path)])
+    assert v.main() == 0
+    flat = " ".join(" ".join(c) for c in calls)
+    assert "Do not wait on the bot" in flat  # explained on the PR
+    assert "@guide the review bot failed" in flat  # guide pinged
+    assert "state=failure" in flat  # and the status says so
