@@ -512,3 +512,32 @@ def test_provider_that_rejects_options_is_asked_again_plainly(monkeypatch):
         and "response_format" in sent[1]
     )
     assert "response_format" not in sent[2]
+
+
+# ----------------------------------------------------- tuning: one ping per verdict change
+
+
+def test_ping_decision_uses_the_comment_as_it_is_now(monkeypatch):
+    monkeypatch.setattr(
+        r, "find_bot_comment", lambda repo, n: ("1", "x <!-- verdict:needs-rework -->")
+    )
+    assert v.should_notify("o/r", 1, "ready-to-merge") is True
+    assert (
+        v.should_notify("o/r", 1, "needs-rework") is False
+    )  # an overlapping run already posted it
+    monkeypatch.setattr(r, "find_bot_comment", lambda repo, n: ("", ""))
+    assert v.should_notify("o/r", 1, "awaiting-peer") is True  # first comment on the PR
+
+
+def test_ping_is_sent_if_the_comment_cannot_be_read(monkeypatch):
+    def boom(repo, n):
+        raise RuntimeError("api down")
+
+    monkeypatch.setattr(r, "find_bot_comment", boom)
+    assert v.should_notify("o/r", 1, "needs-rework") is True
+
+
+def test_the_cap_allows_a_long_review_cycle():
+    assert v.MAX_AI_RUNS >= 20
+    label, *_ = v.decide([], {"s2"}, set(), lambda: [], v.MAX_AI_RUNS - 1)
+    assert label == "ready-to-merge"

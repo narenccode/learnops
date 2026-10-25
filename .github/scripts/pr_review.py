@@ -32,7 +32,9 @@ import pr_rules as rules_mod
 from pr_rules import Finding, git, gh
 
 STATUS_CONTEXT = "guide-bot"
-MAX_AI_RUNS = 8  # per pull request: the cost cap
+MAX_AI_RUNS = (
+    20  # per pull request: the cost cap (a long design document is pushed many times)
+)
 DIFF_LIMIT = 60_000  # characters sent to the model
 ITEM_LIMIT = 10
 TEXT_LIMIT = 300
@@ -380,6 +382,16 @@ VERDICT_TEXT = {
 }
 
 
+def should_notify(repo: str, number: int, label: str) -> bool:
+    """True when the verdict on the PR is not yet `label` (read fresh, just before posting)."""
+    try:
+        _, body = rules_mod.find_bot_comment(repo, number)
+    except Exception:
+        return True
+    previous = rules_mod.VERDICT_MARK.search(body)
+    return not previous or previous.group(1) != label
+
+
 def event_from_pr(repo: str, number: int) -> dict:
     """Build the same event shape from the API, for a manual re-run (after an outage, say)."""
     pr = json.loads(gh("api", f"repos/{repo}/pulls/{number}"))
@@ -526,7 +538,6 @@ def main() -> int:
             parsed_rules, sorted(ctx.files), ctx.author, guide
         )
         others = tuple(o for o in eligible if o != peer)
-        previous = rules_mod.VERDICT_MARK.search(old_body)
         intro = ""
         if approvers:
             intro = (
@@ -581,6 +592,9 @@ def main() -> int:
     print(body)
     print(f"\nlabel: {label}   status: {state_name} ({text})")
     if not args.dry_run:
+        # decide about the ping from the comment as it is NOW, not as it was when this run began:
+        # a slow AI call lets an overlapping run post first, which caused duplicate pings
+        notify = should_notify(repo, number, label)
         try:
             rules_mod.post(repo, number, label, body)
         except Exception as error:
@@ -589,7 +603,7 @@ def main() -> int:
             set_status(repo, sha, state_name, text, page)
         except Exception as error:
             print(f"::warning::could not set status: {error}")
-        if not previous or previous.group(1) != label:
+        if notify:
             try:  # edits to the main comment send no email, so a changed verdict gets its own short ping
                 gh(
                     "api",
