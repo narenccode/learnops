@@ -178,6 +178,7 @@ Read in this order. Make a list of anything unclear and send it to your guide (Â
   - `awaiting-peer`: ask your peer reviewer to approve; the AI review runs right after.
   - `ready-to-merge`: **Squash and merge**.
   - `rule-violation` or `needs-judgement`: do not merge; the guide decides.
+  - If a pull request waits too long, the bot reminds you or your peer by @mention. You do not need to chase anyone.
   - Keep GitHub email notifications on for this repository (Watch â†’ Participating is enough): that is how the bot reaches you.
   - The bot never approves or merges, and its AI can be wrong or miss things. Read it, then test the change yourself.
 
