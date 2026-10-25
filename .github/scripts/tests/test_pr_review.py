@@ -458,3 +458,57 @@ def test_manual_rerun_builds_the_same_event_from_the_api(monkeypatch):
         event["pull_request"]["number"] == 6
         and event["repository"]["full_name"] == "o/r"
     )
+
+
+# ------------------------------------------------------- hidden reasoning must not eat the answer
+
+
+def test_thinking_is_switched_off_by_default(monkeypatch):
+    sent = _api(monkeypatch, [_answer('{"blocking": []}')])
+    v.ask_model("s", "u", ENV)
+    assert sent[0]["thinking"] == {"type": "disabled"}
+
+
+def test_extra_body_can_be_changed_or_emptied(monkeypatch):
+    sent = _api(monkeypatch, [_answer('{"blocking": []}')])
+    v.ask_model("s", "u", {**ENV, "DEEPSEEK_EXTRA_BODY": '{"reasoning_effort": "low"}'})
+    assert "thinking" not in sent[0] and sent[0]["reasoning_effort"] == "low"
+    sent = _api(monkeypatch, [_answer('{"blocking": []}')])
+    v.ask_model("s", "u", {**ENV, "DEEPSEEK_EXTRA_BODY": ""})
+    assert "thinking" not in sent[0]
+
+
+def test_provider_that_rejects_options_is_asked_again_plainly(monkeypatch):
+    import io
+    import urllib.error
+
+    sent = []
+
+    def fake(request, timeout=0):
+        body = json.loads(request.data)
+        sent.append(body)
+        if "thinking" in body or "response_format" in body:
+            raise urllib.error.HTTPError("u", 400, "bad", {}, io.BytesIO(b"{}"))
+
+        class Response:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+
+            def read(self, *a):
+                return json.dumps(_answer('{"blocking": []}')).encode()
+
+        return Response()
+
+    monkeypatch.setattr(v.urllib.request, "urlopen", fake)
+    monkeypatch.setattr(v.time, "sleep", lambda s: None)
+    data, _ = v.ask_model("s", "u", ENV)
+    assert data == {"blocking": []}
+    assert (
+        "thinking" in sent[0]
+        and "thinking" not in sent[1]
+        and "response_format" in sent[1]
+    )
+    assert "response_format" not in sent[2]
