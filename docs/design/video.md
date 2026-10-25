@@ -63,7 +63,7 @@ flowchart LR
         Q -->|feeds| WORKER
     end
     LTI --> SVC
-    BBB["BigBlueButton 3.0<br/>(unmodified)"] -->|recordings (API)| M4
+    BBB["BigBlueButton 3.0<br/>(unmodified)"] -->|"recordings (API)"| M4
     M4 --> MI["libs/model_interface<br/>(B5: LLM + speech)"]
     MI --> AI["AI providers<br/>local (lab) or hosted API"]
     M4 -->|storage adapter| MEDIA[("Media store<br/>local folder or S3-compatible<br/>(path template B6)")]
