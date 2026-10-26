@@ -92,7 +92,7 @@ flowchart LR
 | Contract | Provided / used | Fields or functions I rely on | Change needed? |
 |---|---|---|---|
 | B6 Media paths and lesson manifest | Provided (owner: Student 4) [§B.0] | Path templates `courses/{course_slug}/{module_nn}-{module_slug}/{lesson_nn}-{lesson_slug}/` and `courses/{course_slug}/live-{cohort}/{nn}-{topic_slug}/`; slugs lowercase ASCII, hyphens, immutable; numbers zero-padded to two digits [§B6.1]. Lesson-folder files [§B6.2]. Manifest fields `schema`, `course_slug`, `lesson_id`, `title`, `duration_s`, `tracks` (`role`, `file`, `height`), `captions` (`lang`, `file`), `transcript`, `chapters`, `slides`, `cues`, `summary`, `source` (`kind`, `uploaded_by`, `original_name`), `processing` (`pipeline_version`, `completed_at`); all paths relative to the lesson folder; reserved roles `camera`, `screen`; a v1 reader ignores roles it doesn't play [§B6.3]. `media_signing.sign(relative_path, ttl_seconds=3600)`; implementations `none`, `hmac`, `s3`; the baseline pipeline never calls it [§B6.4] | none (after Release 0: additive only, via `/contract-change`).|
-| B3 LTI 1.3 launch | Used | Claims `sub`, `name`, `email` (if shared), `roles`, `context` (course id, title), `resource_link`, `deployment_id`; role mapping (Instructor → Mentor, Administrator → Administrator, Learner refused by baseline tools); session bound to (`sub`, context id), expires after 2 h idle; `shared.course_link` [§B3] | none. 
+| B3 LTI 1.3 launch | Used | Claims `sub`, `name`, `email` (if shared), `roles`, `context` (course id, title), `resource_link`, `deployment_id`; role mapping (Instructor → Mentor, Administrator → Administrator, Learner refused by baseline tools); session bound to (`sub`, context id), expires after 2 h idle; `shared.course_link` [§B3] | none.
 | B5 Model and speech interface | Used | `model.run(task, inputs, output_schema)` → `result.data`, `result.meta` [§B5.1]; on invalid output one retry, then a clear error [§B5.2]; prompts are versioned files in `/libs/model_interface/prompts/`; every call logs `meta` to `shared.model_calls` [§B5.3]; `speech.transcribe(audio_path, language="en")` → `segments` (`start`, `end`, `text`, `words`), `meta` [§B5.4] | none.
 | B7 H5P practice output | Used, R5 only [§C4.6] | Standard `.h5p` file plus `course.yaml` entry (`type: h5p`, `idnumber`, `graded: false`); never graded; video checkpoints as a separate activity (default) and as `cues.json` entries [§B7] | none |
 | B8.5 Lecture videos | Provided (owner: Student 4) [§B8] | ≥ 5 Indian-English technical lectures (≥ 3 h total) with reference transcripts; recorded with written consent or openly licensed (licence verified and recorded) | none.
@@ -103,7 +103,7 @@ No contract change is proposed. Every module validates contract data it reads an
 
 ## 5. Data model
 
-Tables in schema `video` named by PRD §C4.5: `video.lesson`, `video.upload`, `video.job`, `video.step`. 
+Tables in schema `video` named by PRD §C4.5: `video.lesson`, `video.upload`, `video.job`, `video.step`.
 
 - Audit entries (who, what, when, course) for every state-changing operation go to `shared.audit_log` [OPS-06].
 - The LTI context id is mapped to the Moodle course id and stored in `shared.course_link` [§B3].
@@ -123,7 +123,7 @@ Tables in schema `video` named by PRD §C4.5: `video.lesson`, `video.upload`, `v
 | `GET /health` | Status and version [OPS-03] |
 | Login initiation, launch (redirect), JWKS | LTI 1.3 endpoints, one registration per tool [§B3] | Moodle |
 
-The pages in §3 (upload, status, lesson detail) serve mentors for their own course's lessons and administrators for all courses [§A5]. 
+The pages in §3 (upload, status, lesson detail) serve mentors for their own course's lessons and administrators for all courses [§A5].
 
 Rules: a launch with any role not listed is refused with a clear message; a user sees only data for the course they launched from, except administrators [§A5]. Learner launches are refused by the baseline tools [EXT-07]. Authorisation on every request from the LTI session: role + course context [SEC-02]. CSRF protection on all state-changing web requests [SEC-09].
 
@@ -176,7 +176,7 @@ The PRD fixes the stack but not library versions or licences.
 | React + TypeScript | Front end, static build [§A10] | none (stack fixed) |
 | PostgreSQL | 16 [§A10] | Database [§A10] | none (stack fixed) |
 | ffmpeg | Media processing [§A10] | none (stack fixed) |
-| LTI 1.3 library | Chosen and recorded in Release 0 [§A10, App-C 6] | Must be compatible [§A10] | LTI launches | 
+| LTI 1.3 library | Chosen and recorded in Release 0 [§A10, App-C 6] | Must be compatible [§A10] | LTI launches |
 | Playwright (Python) | Browser tests [§A10] | none (stack fixed) |
 | Docker + Docker Compose | Containers [§A10] | none (stack fixed) |
 
@@ -202,7 +202,7 @@ Other handling:
 - **Test data only:** test data only (§B8) [C-07]; B8.5 lectures are recorded with written consent or openly licensed; no real learner data in any set [§B8].
 - **Untrusted input:** uploads, handled as SEC-05.
 
-**For `docs/data-map.md`** 
+**For `docs/data-map.md`**
 
 | Data item | Stored where | Sent to | Kept for | Why |
 |---|---|---|---|---|
@@ -272,7 +272,7 @@ One requirement (or one tightly related group) per pull request. Feature work st
 | 1 | B6 contract: schema and at least one valid example | B6 (contract) | — | **Release 0** [§D1, §B.0]. Owner: Student 4. Frozen at the end of Release 0 |
 | 2 | `media_paths` shared library, including B6.4 with the `none` implementation | B6.4 | — | **Release 0** [§D1, §B6.4] |
 | 3 | B8.5 lecture videos | B8.5 | — | **Release 0** test data [§D1] |
-| 4 | Appendix C verification of items that concern the video pipeline | App-C #4, #7, #8 | Lab | **Release 0**; results in `docs/decisions/` [App-C]. 
+| 4 | Appendix C verification of items that concern the video pipeline | App-C #4, #7, #8 | Lab | **Release 0**; results in `docs/decisions/` [App-C].
 | 5 | Resumable upload | FR-V-01 | Release 0 | Release 3 |
 | 6 | Upload form | FR-V-02 | Release 0 | Release 3 |
 | 7 | Transcode and poster | FR-V-03 | Release 0 | Release 3 |
