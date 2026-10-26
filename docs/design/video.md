@@ -48,7 +48,7 @@ Release 3 also includes a harness smoke test for this module [§D1]. The integra
 
 ## 3. Architecture
 
-The diagram shows only the components and flows named in PRD §A8, §A10, §C4.5, OPS-10 and FR-V-12. Which part of the module polls BigBlueButton, and how the parts inside the module exchange work, are open.
+The diagram shows only the components and flows named in PRD §A8, §A10, §C4.5, OPS-10 and FR-V-12. Which part of the module polls BigBlueButton, and how the parts inside the module exchange work, are open (OQ-19, OQ-20).
 
 ```mermaid
 flowchart LR
@@ -85,7 +85,7 @@ flowchart LR
 - **Model interface:** all AI calls through the model interface, all speech-to-text through the speech interface [C-10].
 - **Media store:** through the storage adapter [FR-V-12]; relative paths only [C-08].
 
-**Worker on a separate host [OPS-10]:** workers can be deployed on a different host from the web services by configuration alone.
+**Worker on a separate host [OPS-10]:** workers can be deployed on a different host from the web services by configuration alone. How files are shared across hosts is OQ-21.
 
 ## 4. Contracts
 
@@ -103,14 +103,14 @@ No contract change is proposed. Every module validates contract data it reads an
 
 ## 5. Data model
 
-Tables in schema `video` named by PRD §C4.5: `video.lesson`, `video.upload`, `video.job`, `video.step`.
+Tables in schema `video` named by PRD §C4.5: `video.lesson`, `video.upload`, `video.job`, `video.step`. Their columns, keys and states are OQ-22.
 
 - Audit entries (who, what, when, course) for every state-changing operation go to `shared.audit_log` [OPS-06].
 - The LTI context id is mapped to the Moodle course id and stored in `shared.course_link` [§B3].
 - Model and speech call metadata are logged to `shared.model_calls` by the model interface [§B5.3].
 - **Migrations:** versioned and reversible [OPS-07].
 - **Relative vs absolute:** any media URL stored by a tool is a relative path, never a full fixed URL [C-08]; all manifest paths are relative to the lesson folder [§B6.3].
-- **Backup and restore:** a documented procedure for the tool database and media store [OPS-08] .
+- **Backup and restore:** a documented procedure for the tool database and media store [OPS-08] (OQ-28).
 - **Personal data:** no personal data beyond what LTI provides (name, email if shared, role) [SEC-06]; the manifest records `source.uploaded_by` as the LTI `sub` [§B6.3].
 - Tables `video.watch` and `video.cue_response` belong to the extension track (Release 6) [§C6.5] and are not part of this module's baseline.
 
@@ -123,7 +123,7 @@ Tables in schema `video` named by PRD §C4.5: `video.lesson`, `video.upload`, `v
 | `GET /health` | Status and version [OPS-03] | TO DECIDE |
 | Login initiation, launch (redirect), JWKS | LTI 1.3 endpoints, one registration per tool [§B3] | Moodle |
 
-The pages in §3 (upload, status, lesson detail) serve mentors for their own course's lessons and administrators for all courses [§A5].
+The pages in §3 (upload, status, lesson detail) serve mentors for their own course's lessons and administrators for all courses [§A5]. Their routes and payloads are OQ-30.
 
 Rules: a launch with any role not listed is refused with a clear message; a user sees only data for the course they launched from, except administrators [§A5]. Learner launches are refused by the baseline tools [EXT-07]. Authorisation on every request from the LTI session: role + course context [SEC-02]. CSRF protection on all state-changing web requests [SEC-09].
 
@@ -134,6 +134,8 @@ Every CLI supports `--dry-run` (prints intended changes, changes nothing), `--ch
 | Command | Purpose | Source |
 |---|---|---|
 | Retention CLI | Lists and, with confirmation, removes lessons older than a configurable age (default off) | FR-V-15 |
+
+Command names, other commands (for example the administrator's re-run in §C4.2) and the undo for each are OQ-31; the undo for lesson removal is also OQ-5.
 
 ### Configuration (all through environment variables; `.env.example` lists every variable with a safe default or a placeholder [OPS-02])
 
@@ -149,7 +151,7 @@ Every CLI supports `--dry-run` (prints intended changes, changes nothing), `--ch
 | BigBlueButton shared secret | — (secret; environment only) | FR-V-09, C-06 |
 | Model provider and model | — | `MODEL_PROVIDER`, `MODEL_NAME` [§B5.2] (owned by `libs/model_interface`) |
 
-FR-V-01 sets a maximum file size of 4 GB; No variable has been added to `.env.example` by this document.
+FR-V-01 sets a maximum file size of 4 GB; whether that limit is configurable is OQ-43. Variable names and the defaults marked "—" are OQ-32. No variable has been added to `.env.example` by this document.
 
 ## 7. Key decisions and alternatives
 
@@ -168,7 +170,7 @@ Only decisions the PRD itself makes are listed; they are fixed by the PRD, so no
 
 ## 8. Libraries and licences
 
-The PRD fixes the stack but not library versions or licences.
+The PRD fixes the stack but not library versions or licences (OQ-36).
 
 | Library | Pinned version | Licence | Why needed | Alternative |
 |---|---|---|---|---|
@@ -199,10 +201,10 @@ Licences must be MIT, BSD or Apache-2.0 (LGPL only as an unmodified library): PR
 Other handling:
 - **Secrets and logs:** no secrets in the repository; configuration through environment variables [C-06]. Logs are structured JSON with request id, user (LTI `sub`), course (LTI context id) and action; no secrets or file contents [OPS-04].
 - **Learner role:** refused by baseline tools [EXT-07].
-- **Test data only:** test data only (§B8) [C-07]; B8.5 lectures are recorded with written consent or openly licensed; no real learner data in any set [§B8].
-- **Untrusted input:** uploads, handled as SEC-05.
+- **Test data only:** test data only (§B8) [C-07]; B8.5 lectures are recorded with written consent or openly licensed; no real learner data in any set [§B8] (OQ-6).
+- **Untrusted input:** uploads, handled as SEC-05 (OQ-35).
 
-**For `docs/data-map.md`**
+**For `docs/data-map.md`** (every data item stored or sent, where, for how long, and why [§E6]; open details in OQ-34):
 
 | Data item | Stored where | Sent to | Kept for | Why |
 |---|---|---|---|---|
@@ -214,7 +216,7 @@ Other handling:
 
 ## 10. Error handling
 
-Messages say what happened and what to do next, in plain English [UI-05]. All user-facing strings live in one place in the module [UI-07]. Behaviours are from PRD §C4.8.
+Messages say what happened and what to do next, in plain English [UI-05]. All user-facing strings live in one place in the module [UI-07]. Behaviours are from PRD §C4.8 and the sections given; message texts and the remaining cases are OQ-33.
 
 | Situation | Behaviour | Recovery |
 |---|---|---|
@@ -236,7 +238,7 @@ Messages say what happened and what to do next, in plain English [UI-05]. All us
 | Integration (harness) | Module smoke test in the harness [§D1, §E1]; restore + role tests + module smoke tests on fresh Moodle 4.5 and 5.3 sites every release [§E2] | Proposed: B8.5 lecture videos with reference transcripts [§B8.5]; a recording from a lab course on the lab BigBlueButton [§C4.7] | Proposed: FR-V-01, FR-V-03, FR-V-04, FR-V-05, FR-V-07, FR-V-08, FR-V-09 (§C4.7 criteria 1–5) |
 | End-to-end | Mentor flows in a real browser [§E1]; pasted snippet plays with captions in a Moodle Page on 4.5 and 5.3 [§C4.7] | Lab Moodle sites [§A11] | FR-V-13 |
 
-**Acceptance criteria (PRD §C4.7) and how each is shown** :
+**Acceptance criteria (PRD §C4.7) and how each is shown** (test methods and data are OQ-38):
 
 | Criterion | Demonstration |
 |---|---|
@@ -249,7 +251,7 @@ Messages say what happened and what to do next, in plain English [UI-05]. All us
 
 Final demonstration [§E5, step 3]: a lecture is uploaded from the browser (with an interruption); a live class runs on BigBlueButton and is recorded; both appear with captions, chapters and slide index; the snippet plays in a Moodle Page.
 
-**Metrics (PRD §C4.9)** — processing time per minute of video; word error rate; upload success rate; manual chapter edits per lesson. Numbers come from logs or recorded sessions, never estimates; each measurement states the data set, method, date and who measured [§E3].
+**Metrics (PRD §C4.9)** — processing time per minute of video; word error rate; upload success rate; manual chapter edits per lesson. Numbers come from logs or recorded sessions, never estimates; each measurement states the data set, method, date and who measured [§E3]. The method and the person measuring each metric are OQ-40.
 
 Traceability: every FR is mapped to test(s), demonstration step and Bloom level in `docs/traceability.md`, updated in every pull request that adds or changes an FR [§E4].
 
@@ -265,7 +267,7 @@ Project risks from PRD Appendix D that apply to this module:
 
 ## 13. Work breakdown
 
-One requirement (or one tightly related group) per pull request. Feature work starts only when this document says `Status: Approved`. Items marked "Release 0" are foundation work the PRD places in Release 0 [§D1] and may start earlier. Release 3 depends on Release 0; Release 5 depends on Releases 2 and 3 [§D1].
+One requirement (or one tightly related group) per pull request. Feature work starts only when this document says `Status: Approved`. Items marked "Release 0" are foundation work the PRD places in Release 0 [§D1] and may start earlier. Release 3 depends on Release 0; Release 5 depends on Releases 2 and 3 [§D1]. The order of pull requests within Release 3 is OQ-41.
 
 | Order | Pull request | Requirements | Depends on | Notes |
 |---|---|---|---|---|
