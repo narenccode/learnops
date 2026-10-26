@@ -271,6 +271,14 @@ def parse_json(text: str) -> dict:
     return value
 
 
+def risk_from_ai(result: dict) -> tuple[str, str]:
+    """("low"|"high", reason). Anything missing or odd counts as high: when in doubt, high."""
+    risk = result.get("risk")
+    if isinstance(risk, dict) and risk.get("level") in ("low", "high"):
+        return risk["level"], neutralise(risk.get("reason", ""), 160)
+    return "high", "the AI did not rate the risk"
+
+
 def findings_from_ai(result: dict) -> list[Finding]:
     """Validate the model's answer; anything unexpected is dropped, never trusted."""
     out: list[Finding] = []
@@ -315,8 +323,16 @@ def decide(
     requesters: set[str],
     run_ai,
     ai_runs: int,
+    floor: str = "high",
+    floor_reasons: list[str] | None = None,
+    info: dict | None = None,
 ) -> tuple[str, str, str, list[Finding], bool]:
-    """-> (label, commit-status state, status text, findings, ai_called). Pure: no network."""
+    """-> (label, commit-status state, status text, findings, ai_called). Pure: no network.
+
+    `floor` is the risk the fixed rules give the PR; unknown means high. `info` receives the final
+    risk and its reason for the comment.
+    """
+    floor_reasons = floor_reasons or []
     findings = list(rule_findings)
     label = rules_mod.verdict_of(findings)
     if requesters:
@@ -350,30 +366,59 @@ def decide(
             findings,
             False,
         )
+    info = info if info is not None else {}
     try:
-        findings += run_ai()
-    except (
-        Exception
-    ) as error:  # any failure of the AI step must reach the guide, not crash the run
+        result = run_ai()
+    except Exception as error:  # an AI failure must never crash the run
+        info.update(risk=floor, reason="; ".join(floor_reasons))
+        if floor == "high":  # a risky change must not go unreviewed: the guide decides
+            findings.append(
+                Finding(
+                    "judgement",
+                    f"AI review unavailable ({neutralise(error, 220)}); the guide decides.",
+                )
+            )
+            return (
+                "needs-judgement",
+                "failure",
+                VERDICT_TEXT["needs-judgement"],
+                findings,
+                False,
+            )
+        # a low-risk change just waits: the retry job asks the AI again by itself
         findings.append(
             Finding(
-                "judgement",
-                f"AI review unavailable ({neutralise(error, 220)}); the guide decides.",
+                "advice",
+                f"The AI review was unavailable ({neutralise(error, 220)}). It is tried again automatically.",
             )
         )
         return (
-            "needs-judgement",
-            "failure",
-            VERDICT_TEXT["needs-judgement"],
+            "awaiting-ai",
+            "pending",
+            VERDICT_TEXT["awaiting-ai"],
             findings,
             False,
         )
+    # the AI may raise the risk, never lower it below the fixed rules' floor
+    ai_findings, ai_risk, ai_reason = (
+        result if isinstance(result, tuple) else (result, "high", "")
+    )
+    risk = "high" if "high" in (floor, ai_risk) else "low"
+    reasons = floor_reasons + ([ai_reason] if ai_risk == "high" and ai_reason else [])
+    info.update(risk=risk, reason="; ".join(reasons))
+    if risk == "low":  # a low-risk change does not need the guide for a judgement call
+        ai_findings = [
+            Finding("advice", f.message) if f.level == "judgement" else f
+            for f in ai_findings
+        ]
+    findings += ai_findings
     label = rules_mod.verdict_of(findings)
     state = "success" if label == "ready-to-merge" else "failure"
     return label, state, VERDICT_TEXT[label], findings, True
 
 
 VERDICT_TEXT = {
+    "awaiting-ai": "Waiting for the AI review: retried automatically",
     "rule-violation": "Rule violation: the guide decides",
     "needs-rework": "Needs rework: see the bot comment",
     "needs-judgement": "Needs the guide's judgement",
@@ -495,7 +540,7 @@ def main() -> int:
         )
         model = os.environ.get("DEEPSEEK_MODEL", "?")
 
-        def run_ai() -> list[Finding]:
+        def run_ai() -> tuple[list[Finding], str, str]:
             nonlocal usage, attempted
             attempted = True
             diff, cut = read_diff(base, args.head)
@@ -519,10 +564,21 @@ def main() -> int:
                         f"The AI saw only the first {DIFF_LIMIT} characters of the diff.",
                     )
                 )
-            return found_items
+            ai_risk, ai_reason = risk_from_ai(result)
+            return found_items, ai_risk, ai_reason
 
+        parsed_rules = rules_mod.parse_codeowners(ctx.codeowners)
+        floor, floor_reasons = rules_mod.rules_risk(ctx, parsed_rules, guide)
+        risk_info: dict = {}
         label, state_name, text, findings, ai_called = decide(
-            rule_findings, approvers, requesters, run_ai, runs
+            rule_findings,
+            approvers,
+            requesters,
+            run_ai,
+            runs,
+            floor,
+            floor_reasons,
+            risk_info,
         )
         footer = (
             f"AI review: {model}, {usage.get('prompt_tokens', '?')} in / {usage.get('completion_tokens', '?')} out tokens. "
@@ -532,7 +588,6 @@ def main() -> int:
             if approvers
             else "No AI review yet: it runs after one peer approval. Peer review is always required."
         )
-        parsed_rules = rules_mod.parse_codeowners(ctx.codeowners)
         peer = rules_mod.peer_of(parsed_rules, ctx.author)
         eligible = rules_mod.eligible_reviewers(
             parsed_rules, sorted(ctx.files), ctx.author, guide
@@ -553,6 +608,7 @@ def main() -> int:
             footer=footer,
             step=rules_mod.next_step(label, peer, others),
             help_url=f"https://github.com/{repo}/blob/main/docs/REVIEW-PROCESS.md",
+            risk=(risk_info["risk"], risk_info["reason"]) if risk_info else None,
         )
         if attempted or found:
             body += f"\n<!-- ai-runs:{runs + (1 if attempted else 0)} -->"
@@ -603,7 +659,9 @@ def main() -> int:
             set_status(repo, sha, state_name, text, page)
         except Exception as error:
             print(f"::warning::could not set status: {error}")
-        if notify:
+        if (
+            notify and label != "awaiting-ai"
+        ):  # a retry is automatic: nobody needs an email
             try:  # edits to the main comment send no email, so a changed verdict gets its own short ping
                 gh(
                     "api",

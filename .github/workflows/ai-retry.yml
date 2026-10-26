@@ -1,0 +1,26 @@
+name: ai-retry
+
+# Every 30 minutes: ask the AI again for pull requests that were waiting only because the AI was
+# unavailable (label `awaiting-ai`). No AI call here; it just starts the normal review run.
+# Each attempt counts toward the per-PR limit, so this cannot loop for ever.
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+  actions: write
+
+jobs:
+  retry:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Re-run the review where the AI was unavailable
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for n in $(gh pr list --repo "$GITHUB_REPOSITORY" --state open --label awaiting-ai --json number --jq '.[].number' | head -5); do
+            gh workflow run pr-review.yml --repo "$GITHUB_REPOSITORY" -f pr="$n"
+          done

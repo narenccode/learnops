@@ -541,3 +541,127 @@ def test_the_cap_allows_a_long_review_cycle():
     assert v.MAX_AI_RUNS >= 20
     label, *_ = v.decide([], {"s2"}, set(), lambda: [], v.MAX_AI_RUNS - 1)
     assert label == "ready-to-merge"
+
+
+# ------------------------------------------------ risk: merge when it all passes, call the guide on doubt
+
+RISK_RULES = r.parse_codeowners(
+    "*  @s2 @s1 @guide\n/modules/studio/ @s1 @s2 @guide\n/docs/ @s1 @s2 @s3 @s4 @guide\n"
+    "/contracts/ @s1 @s2 @s3 @s4 @guide\n/CLAUDE.md @guide\n/.github/ @guide\n"
+)
+
+
+def risk_of(files, added=None, numstat=None):
+    c = ctx(files)
+    c.added = added or {}
+    c.numstat = numstat or {f: 10 for f in files}
+    return r.rules_risk(c, RISK_RULES, "guide")
+
+
+def test_fixed_rules_set_the_risk_floor():
+    assert risk_of(["docs/design/studio.md"])[0] == "low"
+    assert risk_of(["modules/studio/app.py", "modules/studio/tests/t.py"])[0] == "low"
+    for risky in (
+        [".github/workflows/x.yml"],
+        ["contracts/a.json"],
+        ["modules/studio/auth.py"],
+        ["modules/studio/lti_launch.py"],
+        ["modules/studio/requirements.txt"],
+        ["modules/studio/migrations/0002.sql"],
+        ["modules/studio/Dockerfile"],
+    ):
+        assert risk_of(risky)[0] == "high", risky
+    assert risk_of(["docs/x.md"], numstat={"docs/x.md": 500})[0] == "high"
+    approved = {"docs/design/studio.md": ["**Status:** Approved"]}
+    assert risk_of(["docs/design/studio.md"], added=approved)[0] == "high"
+    assert "multiple" not in str(risk_of(["modules/studio/multiple_choice.py"]))
+
+
+def test_risk_from_the_ai_defaults_to_high_when_missing_or_odd():
+    assert v.risk_from_ai({"risk": {"level": "low", "reason": "docs only"}}) == (
+        "low",
+        "docs only",
+    )
+    for odd in (
+        {},
+        {"risk": "low"},
+        {"risk": {"level": "medium"}},
+        {"risk": None},
+        {"risk": []},
+    ):
+        assert v.risk_from_ai(odd)[0] == "high"
+
+
+def _ai(findings, level, reason=""):
+    return lambda: (findings, level, reason)
+
+
+def test_low_risk_ai_questions_become_advice_and_the_pr_merges():
+    q = [r.Finding("judgement", "is this big?"), r.Finding("advice", "rename x")]
+    info = {}
+    label, state, _, findings, _ = v.decide(
+        [], {"s2"}, set(), _ai(q, "low"), 0, "low", [], info
+    )
+    assert (label, state, info["risk"]) == ("ready-to-merge", "success", "low")
+    assert all(f.level != "judgement" for f in findings)
+
+
+def test_high_risk_with_nothing_wrong_still_merges():
+    label, state, _, _, _ = v.decide(
+        [], {"s2"}, set(), _ai([], "high", "login code"), 0, "low", []
+    )
+    assert (label, state) == ("ready-to-merge", "success")
+    label, state, *_ = v.decide(
+        [], {"s2"}, set(), _ai([], "low"), 0, "high", ["guide-only file"]
+    )
+    assert (label, state) == ("ready-to-merge", "success")
+
+
+def test_high_risk_with_an_open_question_calls_the_guide():
+    q = [r.Finding("judgement", "this changes token storage")]
+    info = {}
+    label, state, *_ = v.decide(
+        [], {"s2"}, set(), _ai(q, "high", "tokens"), 0, "low", [], info
+    )
+    assert (label, state) == ("needs-judgement", "failure")
+    assert info["risk"] == "high" and "tokens" in info["reason"]
+    label, *_ = v.decide(
+        [], {"s2"}, set(), _ai(q, "low"), 0, "high", ["a large change"]
+    )
+    assert label == "needs-judgement"  # the AI cannot lower the rules' floor
+
+
+def test_blocking_items_go_back_to_the_students_whatever_the_risk():
+    b = [r.Finding("rework", "bug in x")]
+    for floor in ("low", "high"):
+        label, *_ = v.decide([], {"s2"}, set(), _ai(b, "high"), 0, floor, [])
+        assert label == "needs-rework"
+
+
+def test_ai_outage_waits_for_low_risk_and_calls_the_guide_for_high_risk():
+    def down():
+        raise v.AIError("HTTP 503")
+
+    label, state, _, findings, called = v.decide([], {"s2"}, set(), down, 0, "low", [])
+    assert (label, state, called) == ("awaiting-ai", "pending", False)
+    assert "tried again automatically" in findings[-1].message
+    label, state, *_ = v.decide([], {"s2"}, set(), down, 0, "high", ["guide-only file"])
+    assert (label, state) == ("needs-judgement", "failure")
+
+
+def test_old_style_ai_results_count_as_high_risk():
+    q = [r.Finding("judgement", "x")]
+    label, *_ = v.decide([], {"s2"}, set(), lambda: q, 0)
+    assert label == "needs-judgement"
+
+
+def test_comment_shows_the_risk_and_marker_and_awaiting_ai_text():
+    text = r.render("ready-to-merge", [], "abcdef1", risk=("high", "login code"))
+    assert "**Risk:** high (login code)" in text and "<!-- risk:high -->" in text
+    assert r.RISK_MARK.search(text).group(1) == "high"
+    assert "tries again by itself" in r.next_step("awaiting-ai")
+    assert "awaiting-ai" in r.VERDICTS
+
+
+def test_awaiting_ai_never_pings_the_guide():
+    assert "@guide" not in v.notification("awaiting-ai", "s1", "s2", "guide")

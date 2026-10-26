@@ -49,3 +49,13 @@ def test_guides_own_merged_prs_are_not_in_the_spot_check():
     mine["author"] = {"login": "Guide"}
     text = d.build([], [mine, pr(8, ["ready-to-merge"])], NOW, guide="guide")
     assert "spot-check 1" in text and "#7" not in text
+
+
+def test_merged_high_risk_prs_are_flagged_for_the_spot_check():
+    p = pr(9, ["ready-to-merge"])
+    p["risk"] = "high"
+    text = d.build([], [p], NOW)
+    assert "`high risk`" in text
+    low = pr(10, ["ready-to-merge"])
+    low["risk"] = "low"
+    assert "high risk" not in d.build([], [low], NOW)
