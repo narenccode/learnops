@@ -11,8 +11,6 @@ status is `Approved` (foundation work listed in §13 under "Release 0" is allowe
 
 > Reading key: the design content is taken from `docs/PRD.md` (section given in brackets); the
 > structure follows `docs/design/TEMPLATE.md`. This document makes no design choices of its own.
-> Anything the PRD does not settle, and every contradiction found in the PRD, is collected in
-> **Open questions** at the end and referenced in the text as OQ-n.
 
 ## 1. Purpose and scope
 
@@ -257,7 +255,7 @@ Final demonstration [§E5, step 3]: a lecture is uploaded from the browser (with
 
 Traceability: every FR is mapped to test(s), demonstration step and Bloom level in `docs/traceability.md`, updated in every pull request that adds or changes an FR [§E4].
 
-## 12. Risks and open questions
+## 12. Risks :
 
 Project risks from PRD Appendix D that apply to this module:
 
@@ -266,8 +264,6 @@ Project risks from PRD Appendix D that apply to this module:
 | 1 | Lab downtime | OQ-45 | VM images backed up; tools rebuildable with `docker compose` [App-D] |
 | 2 | Contract drift between modules | OQ-45 | Freeze at Release 0; B.0 change rule; contract tests in CI [App-D] |
 | 3 | Scope pressure | OQ-45 | Releases are independent; stretch only after Releases 1–4 [App-D] |
-
-All open questions, including the PRD Appendix C items (OQ-8 to OQ-12, OQ-44) and the contradictions found in the PRD (OQ-1 to OQ-7), are collected in **Open questions** at the end of this document.
 
 ## 13. Work breakdown
 
@@ -302,94 +298,3 @@ One requirement (or one tightly related group) per pull request. Feature work st
 - [ ] Owner: I understand and can explain every section.
 - [ ] Peer reviewer: checked against the PRD chapter and the contracts; comments resolved.
 - [ ] Guide: approved (sets `Status: Approved`).
-
-## Open questions
-
-Each question names what is missing or contradictory and the PRD references involved. None is
-resolved in this document.
-
-### Contradictions in the PRD
-
-| # | Question | PRD references |
-|---|---|---|
-| OQ-1 | Captions, chapters and summaries are AI output, which must stay a draft until a mentor approves it. Yet a BigBlueButton recording must appear "without manual steps", and the snippet makes captions visible to learners. What counts as mentor approval for these outputs? | C-09; FR-V-04…06, FR-V-09, FR-V-13; §C4.2; §C4.7 |
-| OQ-2 | EXT-08 says the pipeline produces `cues.json` "now", but the only requirement that creates cue entries (FR-V-14) is Release 5. Is `cues.json` expected in Release 3? | EXT-08; FR-V-14; §B6.2 |
-| OQ-3 | `poster.jpg` is a required lesson file, but the B6.3 manifest has no field for it. Should the manifest list the poster (before the Release 0 freeze)? | §B6.2; §B6.3; §B.0 |
-| OQ-4 | B3 says the LTI context is mapped to the Moodle course through web services (B4), but B4 is listed as used only by M2 and M3. Which component does this mapping for the video pipeline, and does SEC-03 apply to it? | §B3; §B4; §B.0; SEC-03 |
-| OQ-5 | Every CLI must have a documented undo, but the retention CLI removes lesson folders. What is the documented undo for a removal? | C-05; OPS-05; FR-V-15; OPS-08 |
-| OQ-6 | The root `CLAUDE.md` says never add real recordings, while B8.5 requires recorded lectures (with consent or an open licence) and AC-5 needs a recorded lab class. `CLAUDE.md` says the PRD wins; please confirm which recordings are allowed as test data. | §B8.5; C-07; §C4.7; root `CLAUDE.md` rule 4 |
-| OQ-7 | FR-V-02 accepts `camera` and `screen` tracks that are "not processed beyond validation", and FR-V-01 accepts mp4, mov, mkv and webm, but B6.2 names these files `camera.mp4` and `screen.mp4`. What happens to a non-mp4 camera or screen track? | FR-V-01; FR-V-02; §B6.2 |
-
-### Release 0 verification (PRD Appendix C)
-
-| # | Question | PRD references |
-|---|---|---|
-| OQ-8 | Which recording metadata fields does Moodle's BigBlueButton activity set (for course and cohort mapping), and where is the video-format output published? | App-C 4; FR-V-09 |
-| OQ-9 | Which LTI 1.3 library is chosen, and what is its licence? | App-C 6; §A10; C-11 |
-| OQ-10 | What is the caption word-error-rate target, from a first baseline run? | App-C 7; G-6 |
-| OQ-11 | Is the licence or consent recorded for every B8.5 video? | App-C 8; §B8.5 |
-| OQ-12 | Which AI features does Moodle 5.3 itself provide (for example captions or summaries), so the pipeline doesn't duplicate them? | App-C 9 |
-| OQ-44 | Who verifies App-C #6 (LTI library) and App-C #9 (Moodle 5.3 AI features)? The PRD does not assign them to Student 4 or to the video module. | App-C 6; App-C 9; §B.0; App-A |
-
-### Paths and contract
-
-| # | Question | PRD references |
-|---|---|---|
-| OQ-13 | Where does `course_slug` come from for a lesson path? The LTI launch and `shared.course_link` give a Moodle course id, not a slug. | FR-V-02; §B6.1; §B3 |
-| OQ-14 | What does "module" in the upload form mean (for example a Moodle section or week), and where do `module_nn` and `module_slug` come from? | FR-V-02; §B6.1 |
-| OQ-15 | For a live-class recording, where do `{cohort}`, `{nn}` and `{topic_slug}` come from, and what is the manifest `lesson_id`? | FR-V-09; §B6.1; §B6.3 |
-| OQ-16 | Which values may manifest `source.kind` take besides `upload` (for example for BigBlueButton recordings), and are other `source` fields needed? | §B6.3 |
-| OQ-17 | What are the B6 schema file name(s) and example files, and do `chapters.json`, `slides.json`, `cues.json` and `transcript.en.json` get their own schemas? | §B.0; §B6.2; §B6.3 |
-| OQ-18 | How does the relative path in the embed snippet become a playable URL inside a Moodle Page, given that only relative paths may be stored and the baseline never calls the signing interface? | FR-V-13; C-08; §A8; §B6.4 |
-
-### Architecture and data
-
-| # | Question | PRD references |
-|---|---|---|
-| OQ-19 | What job-queue mechanism is used, within the fixed stack? | §C4.5; OPS-10; §A10 |
-| OQ-20 | Which component polls BigBlueButton, how often, and with what back-off? | FR-V-09; §C4.8; OPS-10 |
-| OQ-21 | When workers run on a different host, how do they reach raw uploads and the media store? | OPS-10; FR-V-12; SEC-05 |
-| OQ-22 | What are the columns, keys and state values of `video.lesson`, `video.upload`, `video.job` and `video.step`, which processing steps exist, and which component writes `lesson.json` and performs re-processing? | §C4.5; FR-V-08; FR-V-10; FR-V-11 |
-| OQ-23 | Where exactly are raw uploads stored before processing (outside any web root)? | SEC-05; FR-V-15 |
-| OQ-24 | Is retry only manual (from the status page), or are failed steps also retried automatically? With what limits? | FR-V-10; §C4.8 |
-| OQ-25 | When a lesson is re-processed, are mentor-edited chapter titles kept or regenerated? | FR-V-05; FR-V-11 |
-| OQ-26 | When is transcoding "needed" (which source formats are used as-is), and which frame becomes `poster.jpg`? | FR-V-03; §B6.2 |
-| OQ-27 | Does the speech service accept a 90-minute recording and which audio format does it expect? Which `model.run` task names and prompts are used for chapters and summary, and who adds them to `libs/model_interface`? | §B5.1; §B5.3; §B5.4; FR-V-04…06 |
-| OQ-28 | What is the backup and restore procedure for the `video` schema and the media store? | OPS-08 |
-| OQ-29 | Do worker containers need their own `GET /health`, or only the web service? | OPS-03; OPS-10 |
-
-### Interfaces and configuration
-
-| # | Question | PRD references |
-|---|---|---|
-| OQ-30 | What are the web routes and payloads for upload, status, lesson detail, chapter edit, retry and snippet, and which roles may call `GET /health`? | §C4.4; §A5; SEC-02; OPS-03 |
-| OQ-31 | What are the CLI command names, which commands exist besides retention (for example the administrator's re-run), and what is the documented undo for each? | C-05; OPS-05; §C4.2; FR-V-11; FR-V-15 |
-| OQ-32 | What are the environment variable names, and the defaults for the storage backend and for the summary, `360p` and BigBlueButton-intake feature flags? | OPS-02; EXT-05; FR-V-06; FR-V-12; §B6.2 |
-| OQ-33 | What are the exact user-facing messages, and what happens when the model or speech provider, the storage or the database is unavailable? | UI-05; §C4.8 |
-| OQ-43 | Is the 4 GB maximum file size a configurable setting (environment variable), or a fixed limit? | FR-V-01; OPS-02; SEC-05 |
-| OQ-46 | When the model interface returns a clear error after its one retry (invalid output), does the processing step show as failed with retry on the status page, or is something else expected? | §B5.2; FR-V-10; §C4.8 |
-
-### Security and privacy
-
-| # | Question | PRD references |
-|---|---|---|
-| OQ-34 | For the data map: where is extracted audio kept and for how long, exactly what is sent to a hosted AI provider, and how long is the uploader's `sub` kept? | §E6; SEC-07; §B5.2; §B5.4 |
-| OQ-35 | Beyond SEC-05, how is processing of untrusted uploaded media contained? | SEC-05; OPS-10 |
-| OQ-36 | Which library versions are pinned, which tus implementation is used, and which ffmpeg build satisfies the licence rule? | §A10; C-11; FR-V-01 |
-
-### Tests and measurement
-
-| # | Question | PRD references |
-|---|---|---|
-| OQ-37 | When does the 30-minute clock start: for uploads, when the upload completes? For BigBlueButton, when the recording is published or when the pipeline first sees it? | G-7; §C4.7 |
-| OQ-38 | How is each acceptance criterion tested (for example the 100 MB-limited proxy setup and the forced interruption), and with which data? | §C4.7; §E1 |
-| OQ-39 | Which test data and which requirement IDs belong to the unit and integration levels? | §E1; §B8 |
-| OQ-40 | For each metric, what is the measurement method and who measures it? | §C4.9; §E3 |
-
-### Planning
-
-| # | Question | PRD references |
-|---|---|---|
-| OQ-41 | In what order should the Release 3 pull requests be built? | §D1 |
-| OQ-42 | What is the detailed design of the checkpoint questions (FR-V-14), to be written before Release 5 work starts? | FR-V-14; §C5; §B7 |
-| OQ-45 | Which of the Appendix D risks that apply to this module (lab downtime, contract drift, scope pressure) need the lab to address? The PRD does not say. | App-D; §A11 |
