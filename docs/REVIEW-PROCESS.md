@@ -260,11 +260,18 @@ The label is on the right side of the PR page, under **Labels**. It is your sign
 |---|---|---|
 | `awaiting-peer` | The rule check passed | Ask a teammate who can approve to review (Step 7) |
 | `needs-rework` | Something must be fixed | Read the bot comment, fix, push |
+| `awaiting-ai` | The AI service was unavailable | Nothing. The bot tries again by itself every 30 minutes |
 | `ready-to-merge` | Your peer approved and the bot is satisfied | **Squash and merge** (Step 9) |
 | `rule-violation` | A project rule is broken | **Do not merge.** The guide decides and will reply |
 | `needs-judgement` | A decision only the guide can make | **Do not merge.** The guide will reply |
 
 Normal order for a good PR: `awaiting-peer` → `ready-to-merge`.
+
+**Risk.** The bot also rates every PR **low** or **high** risk and shows it near the top of its comment. A high
+risk rating does **not** stop a merge by itself: if the rules pass, your peer approved, the AI found no problem
+and the checks are green, you may merge a high-risk PR too. The guide is called in only when a high-risk PR has
+something unresolved (an open question from the AI, or the AI could not review it). For low-risk PRs the AI's
+open questions are shown as advice and never need the guide.
 
 ---
 

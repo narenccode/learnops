@@ -49,6 +49,11 @@ VERDICTS = {
         "c5def5",
         "Rules passed: one peer approval is next",
     ),
+    "awaiting-ai": (
+        "Waiting for the AI review",
+        "d4c5f9",
+        "The AI was unavailable; the bot retries by itself",
+    ),
     "ready-to-merge": (
         "Ready to merge",
         "0e8a16",
@@ -400,6 +405,54 @@ def verdict_of(findings: list[Finding]) -> str:
     return "ready-to-merge"
 
 
+RISK_MARK = re.compile(r"<!-- risk:(low|high) -->")
+SENSITIVE_NAME = re.compile(
+    r"(^|[/_.\-])(auth|login|token|secret|crypto|password|upload|sandbox|lti|session|permission)",
+    re.IGNORECASE,
+)
+DEPENDENCY_FILES = (
+    "requirements",
+    "pyproject.toml",
+    "package.json",
+    "package-lock",
+    "poetry.lock",
+    "dockerfile",
+    "docker-compose",
+    "compose.y",
+)
+
+
+def rules_risk(
+    ctx: "Context", rules: list[tuple[str, list[str]]], guide: str
+) -> tuple[str, list[str]]:
+    """Risk floor from fixed rules: ("high"|"low", reasons). The AI may raise it, never lower it."""
+    reasons: list[str] = []
+    for path in sorted(ctx.files):
+        name = path.rsplit("/", 1)[-1].lower()
+        if owners_of(rules, path) == [guide]:
+            reasons.append(f"guide-only file {path}")
+        elif path.startswith(("contracts/", "libs/contracts/")):
+            reasons.append(f"contract file {path}")
+        if any(d in name for d in DEPENDENCY_FILES):
+            reasons.append(f"dependencies or container setup in {path}")
+        if "/migrations/" in "/" + path:
+            reasons.append(f"database migration {path}")
+        if (
+            not is_test(path)
+            and path.endswith(CODE_EXT)
+            and SENSITIVE_NAME.search(path)
+        ):
+            reasons.append(f"security-sensitive code {path}")
+    for path, lines in ctx.added.items():
+        if path.startswith("docs/design/") and any(
+            re.search(r"\*\*Status:\*\*\s*Approved", ln) for ln in lines
+        ):
+            reasons.append(f"{path} is set to Approved")
+    if sum(ctx.numstat.values()) > SIZE_LIMIT // 2:
+        reasons.append("a large change")
+    return ("high" if reasons else "low"), reasons[:3]
+
+
 VERDICT_MARK = re.compile(r"<!-- verdict:([a-z-]+) -->")
 
 
@@ -437,6 +490,8 @@ def next_step(verdict: str, peer: str = "", others: tuple[str, ...] = ()) -> str
         "rule-violation": "Do not merge. The guide will decide.",
         "needs-judgement": "Do not merge. The guide will decide.",
         "awaiting-peer": review + "The AI review runs right after.",
+        "awaiting-ai": "The AI review is not available right now. The bot tries again "
+        "by itself; you do not need to do anything.",
         "ready-to-merge": "Squash-merge it.",
     }[verdict]
 
@@ -449,6 +504,7 @@ def render(
     footer: str = "",
     step: str = "",
     help_url: str = "",
+    risk: tuple[str, str] | None = None,
 ) -> str:
     title = VERDICTS[verdict][0]
     sections = [
@@ -461,6 +517,9 @@ def render(
     lines = [MARKER, f"### Automated review: **{title}**", ""]
     if step:
         lines += [f"**Next step:** {step}", ""]
+    if risk:
+        why = f" ({risk[1]})" if risk[1] else ""
+        lines += [f"**Risk:** {risk[0]}{why}", ""]
     if intro:
         lines += [intro, ""]
     for level, heading in sections:
@@ -481,6 +540,8 @@ def render(
     )
     if help_url:
         lines.append(f"<sub>[How the review works]({help_url})</sub>")
+    if risk:
+        lines.append(f"<!-- risk:{risk[0]} -->")
     lines.append(f"<!-- verdict:{verdict} -->")
     return "\n".join(lines)
 

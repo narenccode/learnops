@@ -39,12 +39,22 @@ Rules for your answer:
   running system or files not shown, put it under "unverified", never under "blocking".
 - "blocking" = a rule above is broken or the code is wrong; give the file and a precise reason.
 - "advice" = a better way to do it that is worth considering but does not stop the merge.
-- "judgement" = a call only the guide can make (scope, risk, trade-off).
+- "judgement" = a call only the guide can make (scope, risk, trade-off). Use it SPARINGLY: never for
+  the size of a document, style, or anything the author and reviewer can decide themselves.
 - Be specific and short (one or two sentences per item). Prefer few strong items over many weak
   ones. If the pull request is fine, return empty lists.
+
+Also rate the RISK of merging this pull request:
+- "high" if it touches security or login code, tokens or keys, file upload, running other people's code,
+  database structure that cannot be undone, new libraries or licences, contracts or the PRD, the rules and
+  CI files, Moodle or BigBlueButton behaviour, or if you are unsure.
+- "low" for documentation, drafts of design documents, tests and test data, and small changes inside one
+  module that are covered by tests.
+When in doubt, answer "high". Give a reason in one short sentence.
 
 Answer with ONE JSON object and nothing else, exactly in this shape:
 {"blocking": [{"file": "path", "issue": "text", "ref": "PRD or rule reference"}],
  "advice": [{"file": "path", "issue": "text"}],
  "judgement": [{"issue": "text"}],
- "unverified": [{"issue": "text"}]}
+ "unverified": [{"issue": "text"}],
+ "risk": {"level": "low or high", "reason": "one short sentence"}}

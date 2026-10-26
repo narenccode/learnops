@@ -69,6 +69,8 @@ def build(
             if "ready-to-merge" in labels(p)
             else " **merged without a green bot verdict: look at this one**"
         )
+        if p.get("risk") == "high":
+            flag += " `high risk`"
         out.append(line(p, flag))
     if not merged:
         out.append("Nothing merged.")
@@ -110,6 +112,14 @@ def fetch(repo: str, since: datetime) -> tuple[list[dict], list[dict]]:
             fields,
         )
     )
+    for pr in (
+        merged
+    ):  # the bot writes the risk it judged into its comment as a hidden marker
+        found = gh(
+            "api", f"repos/{repo}/issues/{pr['number']}/comments", "--jq",
+            f'[.[] | select(.user.login == "{rules_mod.BOT}") | .body | capture("<!-- risk:(?<r>low|high) -->").r] | last // ""',
+        ).strip()  # fmt: skip
+        pr["risk"] = found.strip('"')
     return open_prs, merged
 
 
