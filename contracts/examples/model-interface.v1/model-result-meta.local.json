@@ -1,0 +1,9 @@
+{
+  "provider": "local",
+  "model": "example-local-model",
+  "input_tokens": 812,
+  "output_tokens": 164,
+  "latency_ms": 2350,
+  "cost_estimate": 0,
+  "prompt_version": "grade_draft/v1"
+}

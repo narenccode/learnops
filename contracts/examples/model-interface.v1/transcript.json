@@ -1,0 +1,34 @@
+{
+  "segments": [
+    {
+      "start": 0.0,
+      "end": 2.4,
+      "text": "Welcome to week one.",
+      "words": [
+        { "start": 0.0, "end": 0.6, "word": "Welcome" },
+        { "start": 0.6, "end": 0.8, "word": "to" },
+        { "start": 0.8, "end": 1.3, "word": "week" },
+        { "start": 1.3, "end": 2.4, "word": "one." }
+      ]
+    },
+    {
+      "start": 2.9,
+      "end": 5.6,
+      "text": "Today we create a repository.",
+      "words": [
+        { "start": 2.9, "end": 3.4, "word": "Today" },
+        { "start": 3.4, "end": 3.6, "word": "we" },
+        { "start": 3.6, "end": 4.1, "word": "create" },
+        { "start": 4.1, "end": 4.2, "word": "a" },
+        { "start": 4.2, "end": 5.6, "word": "repository." }
+      ]
+    }
+  ],
+  "meta": {
+    "provider": "local",
+    "model": "example-speech-model",
+    "duration_s": 6.0,
+    "latency_ms": 910,
+    "cost_estimate": 0
+  }
+}

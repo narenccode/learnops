@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:learnops:contract:model-interface:v1",
+  "title": "LearnOps model and speech interface (B5, v1)",
+  "description": "The data that crosses the shared model and speech interface (PRD B5): the meta record of a language-model call (result.meta, B5.1) and a transcript returned by the speech interface (B5.4). A document is one of the two. result.data is not described here: its shape is the output_schema of the task that was called (B5.1).",
+  "$comment": "Unknown fields are allowed on purpose: after Release 0 contracts change only by adding optional fields and readers ignore unknown fields (PRD B.0, EXT-02). NOT expressible in JSON Schema, so NOT enforced here: result.data matches the task's output_schema (B5.1); invalid structured output gets one retry and then a clear error, never a partial result (B5.2); provider and model are chosen by MODEL_PROVIDER and MODEL_NAME and keys come from environment variables only (B5.2); prompts are versioned files in libs/model_interface/prompts/ (B5.3); every call's meta is logged to shared.model_calls with no raw learner content (B5.3); a segment or word ends at or after its start, and segments are in time order (B5.4).",
+  "oneOf": [
+    { "$ref": "#/$defs/model_result_meta" },
+    { "$ref": "#/$defs/transcript" }
+  ],
+  "$defs": {
+    "provider": {
+      "enum": ["local", "hosted"],
+      "description": "local: the lab endpoint; hosted: one hosted API through the provider's official SDK (PRD B5.2, B5.4)."
+    },
+    "model_name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The model that answered, as configured by MODEL_NAME (PRD B5.2)."
+    },
+    "count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "milliseconds": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "seconds": {
+      "type": "number",
+      "minimum": 0
+    },
+    "cost": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Estimated cost of the call. The local provider reports 0."
+    },
+    "model_result_meta": {
+      "type": "object",
+      "description": "result.meta of one model.run call (PRD B5.1); the record logged to shared.model_calls (B5.3).",
+      "required": [
+        "provider",
+        "model",
+        "input_tokens",
+        "output_tokens",
+        "latency_ms",
+        "cost_estimate",
+        "prompt_version"
+      ],
+      "properties": {
+        "provider": { "$ref": "#/$defs/provider" },
+        "model": { "$ref": "#/$defs/model_name" },
+        "input_tokens": { "$ref": "#/$defs/count" },
+        "output_tokens": { "$ref": "#/$defs/count" },
+        "latency_ms": { "$ref": "#/$defs/milliseconds" },
+        "cost_estimate": { "$ref": "#/$defs/cost" },
+        "prompt_version": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Version of the prompt file used (PRD B5.3)."
+        }
+      }
+    },
+    "transcript": {
+      "type": "object",
+      "description": "Return value of speech.transcribe(audio_path, language) (PRD B5.4).",
+      "required": ["segments", "meta"],
+      "properties": {
+        "segments": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/transcript_segment" }
+        },
+        "meta": { "$ref": "#/$defs/transcript_meta" }
+      }
+    },
+    "transcript_segment": {
+      "type": "object",
+      "required": ["start", "end", "text", "words"],
+      "properties": {
+        "start": { "$ref": "#/$defs/seconds" },
+        "end": { "$ref": "#/$defs/seconds" },
+        "text": { "type": "string" },
+        "words": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/transcript_word" }
+        }
+      }
+    },
+    "transcript_word": {
+      "type": "object",
+      "required": ["start", "end", "word"],
+      "properties": {
+        "start": { "$ref": "#/$defs/seconds" },
+        "end": { "$ref": "#/$defs/seconds" },
+        "word": { "type": "string", "minLength": 1 }
+      }
+    },
+    "transcript_meta": {
+      "type": "object",
+      "description": "transcript.meta (PRD B5.4).",
+      "required": ["provider", "model", "duration_s", "latency_ms", "cost_estimate"],
+      "properties": {
+        "provider": { "$ref": "#/$defs/provider" },
+        "model": { "$ref": "#/$defs/model_name" },
+        "duration_s": {
+          "$ref": "#/$defs/seconds",
+          "description": "Length of the audio."
+        },
+        "latency_ms": { "$ref": "#/$defs/milliseconds" },
+        "cost_estimate": { "$ref": "#/$defs/cost" }
+      }
+    }
+  }
+}
