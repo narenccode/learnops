@@ -158,7 +158,7 @@ Part 5 shows a real comment with each part explained.
 1. On your PR page, look at the right side under **Reviewers**. Several names may be listed (GitHub adds everyone who owns the files you changed). Your peer reviewer is one of them.
 2. Tell your peer in your team chat: "My PR is ready: [link to your PR]". (The bot also reminds them by name if nothing happens for two days.)
 3. They review it (Part 6 shows how) and approve. **One approval from one person is enough.** For design documents and other shared files in `docs/`, **any teammate who is free** can do it; it does not have to be your usual peer. For code inside a module, the approval must come from your peer reviewer (or the guide). The bot's **Next step** line tells you who can approve your PR.
-4. **If you push new commits after they approved,** GitHub removes their approval (a safety rule). Ask them to look at the new changes and approve again.
+4. **If you push new commits after they approved,** their approval stays. The bot and the tests check the new version again, and the AI reviews it again. If you change something big after the approval, tell your peer so they can look at it.
 
 ### Step 8. Wait for the AI advice, if the label asks (github.com)
 
@@ -303,7 +303,7 @@ The guide did nothing. If at 15:01 the label had been `rule-violation`, Maya wou
 | **No bot comment after 5 minutes** | Is the PR still a draft? (Look for the grey Draft tag. Click **Ready for review**.) If it is not a draft, tell the guide |
 | **Squash and merge is grey** | Something is still missing. Read the box above the button: it lists what (a check, the peer approval, the bot) |
 | **My peer approved, but the label is still `awaiting-peer`** | Wait two minutes and refresh the page. If nothing changes, tell the guide |
-| **My peer's approval disappeared** | You pushed after they approved. That is a safety rule. Ask them to approve again |
+| **My peer approved, but the label went back to `needs-rework`** | You pushed after the approval and the bot or the AI found a problem in the new version. Fix it and push; the approval stays, so you do not need another review |
 | **The bot blocks me and I am sure it is wrong** | Do not argue with it and do not try to trick it. At the bottom of your PR write a comment that starts with `@narenccode` and says: which bot item, why you think it is wrong, and your evidence (a PRD line or a test result). The guide is emailed and will either tell you what to change or approve the merge by hand. Keep working on something else meanwhile |
 | **The bot says "No tests" or "traceability not updated" but my change only renames or tidies code** | In your PR description add a line `Refactor only: <one sentence on what you changed and why behaviour is the same>`. The bot then treats those two items as advice, and your reviewer must agree with your claim |
 | **The bot comment says "The bot hit an internal error"** | It is the bot's fault, not yours. The guide has already been told. Carry on; the guide will reply or approve the merge by hand |
@@ -323,7 +323,7 @@ The guide did nothing. If at 15:01 the label had been `rule-violation`, Maya wou
 - Never push to `main`. Always use a branch and a PR.
 - Open the PR as a draft; click **Ready for review** only when finished.
 - One piece of work per PR. Small is easier to review.
-- **Push in sizeable batches, not tiny changes.** While your PR is a draft, push as often as you like: nothing is checked. After you click **Ready for review**, every push removes your peer's approval and starts a new AI review. So collect your fixes, check them yourself with `/preflight`, and push once. If you find a small mistake after your peer approved, fix it together with the next real change when you can, instead of pushing one line.
+- **Push in sizeable batches, not tiny changes.** While your PR is a draft, push as often as you like: nothing is checked. After you click **Ready for review**, every push starts a new round of checks and a new AI review (each one costs a little money and time). So collect your fixes, check them yourself with `/preflight`, and push once. Your peer's approval stays after a push.
 - **You** are responsible for your code. The bot and the AI can be wrong or miss things. Read every comment and test your change yourself.
 - Your PR title, description and code are sent to an AI service called DeepSeek. The repository is public and uses test data only. **Never put passwords, keys or real learner data in a PR.**
 - Design documents are marked `Approved` only by the guide.

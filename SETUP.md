@@ -31,7 +31,7 @@ as `docs/PRD.md`, and follow the steps below. Nothing here contains secrets, hos
 1. Create the GitHub repository (public, Apache-2.0 licence file, README).
 2. Copy the kit; add `docs/PRD.md`; create empty `docs/design/`, `docs/decisions/`, `docs/traceability.md`, `docs/data-map.md`, `testdata/README.md`.
 3. `.github/CODEOWNERS` already has the team's GitHub usernames; update it if the team changes.
-4. Branch protection on `main`: pull request required; 1 approval; **require review from code owners**; status check `ci` must pass; no force pushes; no deletions; include administrators.
+4. Branch protection on `main`: pull request required; 1 approval; **require review from code owners**; status check `ci` must pass; no force pushes; no deletions; admin bypass for pull requests only. "Dismiss stale approvals when new commits are pushed" is OFF on purpose: the bot re-checks every push, so one peer approval stays valid.
 5. Turn on GitHub **secret scanning** and **push protection**.
 6. Add the students as collaborators (write access, not admin).
 
