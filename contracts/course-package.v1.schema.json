@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:learnops:contract:course-package:v1",
+  "title": "LearnOps course package (B1, v1)",
+  "description": "The parsed content of course.yaml in a course package (PRD B1.1). Markdown bodies and assets sit beside it and are not described here. This schema checks structure only; rules that need a view of the whole course (PRD B1.2, B1.3, B1.4) are listed under $comment and are enforced by validator code, not by this file.",
+  "$comment": "Unknown fields are allowed on purpose: after Release 0 contracts change only by adding optional fields and readers ignore unknown fields (PRD B.0, EXT-02). NOT expressible in JSON Schema, so NOT enforced here: B1.2 rule 1 (exactly one guide Page and one task Assignment per week), rule 2 (week N unlocks when the week N-1 task is submitted; unlock.after must name an earlier activity), rule 3 (graded points sum to total_points), rule 5 (completion tracking on for every activity used in an unlock rule), rule 6 (idnumbers unique within the course and never reused); B1.3 (marking table inside the assignment body: markers, columns, points sum, allowed Check values); B1.4 (protected idnumbers other than the two defaults, and section numbers that collide with the configurable protected_section). start_date is checked for calendar validity only when the validator is run with a format checker; the pattern guarantees the YYYY-MM-DD shape either way.",
+  "type": "object",
+  "required": ["schema", "course", "sections"],
+  "properties": {
+    "schema": {
+      "const": "learnops.course/v1",
+      "description": "Contract name and version."
+    },
+    "course": { "$ref": "#/$defs/course" },
+    "sections": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/section" }
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*(?![\\s\\S])",
+      "description": "Lowercase ASCII letters and digits separated by single hyphens (PRD B1.1 slug, B1.2 rule 6 idnumber). The end anchor is (?![\\s\\S]) instead of $ because Python's $ also matches before a trailing newline."
+    },
+    "idnumber": {
+      "allOf": [
+        { "$ref": "#/$defs/identifier" },
+        {
+          "not": { "enum": ["final-project", "course-feedback"] },
+          "description": "Default protected idnumbers (PRD B1.4). They are owned by the course template and must never appear in a package, in either mode. Extra protected idnumbers a site configures are checked by validator code."
+        }
+      ]
+    },
+    "points": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "relative_path": {
+      "type": "string",
+      "pattern": "^(?![A-Za-z][A-Za-z0-9+.-]*:)(?!/)(?!(?:.*/)?\\.\\.(?:/|(?![\\s\\S])))[^\\\\\\n]+(?![\\s\\S])",
+      "description": "Path inside the package folder, with forward slashes. Not a URL, not absolute, no '..' segment (PRD C-08 spirit: relative paths only)."
+    },
+    "course": {
+      "type": "object",
+      "required": ["shortname", "fullname", "slug", "mode"],
+      "properties": {
+        "shortname": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable; matches the Moodle course shortname."
+        },
+        "fullname": {
+          "type": "string",
+          "minLength": 1
+        },
+        "slug": {
+          "$ref": "#/$defs/identifier",
+          "description": "Immutable; media paths use it (PRD B1.1)."
+        },
+        "total_points": {
+          "$ref": "#/$defs/points",
+          "default": 100,
+          "description": "Graded points across the course sum to this (PRD B1.2 rule 3; default 100)."
+        },
+        "mode": {
+          "enum": ["full", "sections-only"],
+          "description": "full generates a whole course; sections-only generates only the listed week sections for merging into a template course (PRD B1.4)."
+        }
+      }
+    },
+    "section": {
+      "type": "object",
+      "required": ["number", "title", "idnumber", "activities"],
+      "properties": {
+        "number": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "idnumber": { "$ref": "#/$defs/idnumber" },
+        "unlock": { "$ref": "#/$defs/unlock" },
+        "activities": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/activity" }
+        }
+      }
+    },
+    "unlock": {
+      "type": "object",
+      "properties": {
+        "after": {
+          "oneOf": [{ "$ref": "#/$defs/identifier" }, { "type": "null" }],
+          "description": "idnumber of the activity that must be complete (submitted) first; null for the first week."
+        },
+        "start_date": {
+          "type": ["string", "null"],
+          "format": "date",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}(?![\\s\\S])",
+          "description": "Optional ISO date (YYYY-MM-DD). Keep it quoted in YAML so it stays a string."
+        }
+      }
+    },
+    "activity": {
+      "type": "object",
+      "required": ["type", "idnumber", "title"],
+      "properties": {
+        "type": {
+          "enum": ["page", "assignment", "url", "label", "h5p"]
+        },
+        "idnumber": { "$ref": "#/$defs/idnumber" },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "body": {
+          "$ref": "#/$defs/relative_path",
+          "description": "Markdown file for the activity. For an assignment it must contain a marking table (PRD B1.3)."
+        },
+        "points": { "$ref": "#/$defs/points" },
+        "submission": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["onlinetext", "file"] }
+        },
+        "completion": {
+          "enum": ["submit"],
+          "description": "submit: the activity is complete when the learner submits (PRD B1.2 rule 2)."
+        },
+        "graded": {
+          "type": "boolean"
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "page" } }, "required": ["type"] },
+          "then": { "required": ["body"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "assignment" } }, "required": ["type"] },
+          "then": { "required": ["body", "points", "submission", "completion"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "h5p" } }, "required": ["type"] },
+          "then": {
+            "required": ["graded"],
+            "properties": { "graded": { "const": false } },
+            "description": "H5P practice is never graded (PRD B7)."
+          }
+        }
+      ]
+    }
+  }
+}
