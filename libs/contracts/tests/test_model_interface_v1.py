@@ -5,6 +5,8 @@ AUTOMATED here (structure only, by contracts/model-interface.v1.schema.json):
   * every example validates, both against the whole schema and against its own definition;
   * the fields PRD B5.1 names for result.meta and B5.4 names for transcript.segments,
     words and transcript.meta are required, with their types, minimums and the provider enum;
+  * required is not the same as non-null: token counts and cost_estimate may be null
+    ("not known") but may not be left out; everything else rejects null;
   * unknown fields are accepted (PRD B.0, EXT-02);
   * a document that is neither a meta record nor a transcript is rejected.
 
@@ -42,8 +44,14 @@ SCHEMA_ID = "urn:learnops:contract:model-interface:v1"
 EXAMPLE_DEFS = {
     "model-result-meta.local.json": "model_result_meta",
     "model-result-meta.hosted.json": "model_result_meta",
+    "model-result-meta.fake.json": "model_result_meta",
+    "model-result-meta.unknown-usage.json": "model_result_meta",
     "transcript.json": "transcript",
+    "transcript.unknown-cost.json": "transcript",
 }
+META_EXAMPLES = sorted(
+    n for n, kind in EXAMPLE_DEFS.items() if kind == "model_result_meta"
+)
 
 Doc = dict[str, Any]
 Loc = tuple[str | int, ...]
@@ -194,13 +202,28 @@ def test_example_is_valid_against_its_definition(
     assert messages(check, load_example(name)) == []
 
 
-def test_examples_cover_both_providers() -> None:
-    providers = {
-        load_example(name)["provider"]
+def test_examples_cover_every_provider() -> None:
+    providers = {load_example(name)["provider"] for name in META_EXAMPLES}
+    assert providers == {"local", "hosted", "fake"}
+
+
+def test_examples_show_known_and_unknown_usage() -> None:
+    """Unknown usage is written as null, so a reader never mistakes it for 0."""
+    metas = [load_example(name) for name in META_EXAMPLES]
+    for field in ("input_tokens", "output_tokens", "cost_estimate"):
+        values = [m[field] for m in metas]
+        assert None in values, field
+        assert any(isinstance(v, int | float) and v > 0 for v in values), field
+
+
+def test_transcript_examples_show_known_and_unknown_cost() -> None:
+    costs = [
+        load_example(name)["meta"]["cost_estimate"]
         for name, kind in EXAMPLE_DEFS.items()
-        if kind == "model_result_meta"
-    }
-    assert providers == {"local", "hosted"}
+        if kind == "transcript"
+    ]
+    assert None in costs
+    assert any(isinstance(c, int | float) for c in costs)
 
 
 # --- invalid: required fields --------------------------------------------------------------
@@ -256,23 +279,28 @@ META_BAD = [
     bad("provider is unknown", ("provider",), "other", "enum"),
     bad("provider has wrong case", ("provider",), "Local", "enum"),
     bad("provider is a number", ("provider",), 1, "enum"),
-    bad("provider fake is not in v1", ("provider",), "fake", "enum"),
+    bad("provider is null", ("provider",), None, "enum"),
+    bad("provider is empty", ("provider",), "", "enum"),
     bad("model is empty", ("model",), "", "minLength"),
     bad("model is a number", ("model",), 7, "type"),
+    bad("model is null", ("model",), None, "type"),
     bad("input_tokens is a string", ("input_tokens",), "812", "type"),
     bad("input_tokens is fractional", ("input_tokens",), 8.5, "type"),
     bad("input_tokens is negative", ("input_tokens",), -1, "minimum"),
     bad("input_tokens is boolean", ("input_tokens",), True, "type"),
-    bad("input_tokens is null", ("input_tokens",), None, "type"),
     bad("output_tokens is negative", ("output_tokens",), -1, "minimum"),
     bad("output_tokens is a string", ("output_tokens",), "164", "type"),
+    bad("output_tokens is fractional", ("output_tokens",), 1.5, "type"),
+    bad("output_tokens is boolean", ("output_tokens",), False, "type"),
     bad("latency_ms is fractional", ("latency_ms",), 12.5, "type"),
     bad("latency_ms is negative", ("latency_ms",), -3, "minimum"),
+    bad("latency_ms is null", ("latency_ms",), None, "type"),
     bad("cost_estimate is negative", ("cost_estimate",), -0.01, "minimum"),
     bad("cost_estimate is a string", ("cost_estimate",), "free", "type"),
-    bad("cost_estimate is null", ("cost_estimate",), None, "type"),
+    bad("cost_estimate is boolean", ("cost_estimate",), False, "type"),
     bad("prompt_version is empty", ("prompt_version",), "", "minLength"),
     bad("prompt_version is a number", ("prompt_version",), 1, "type"),
+    bad("prompt_version is null", ("prompt_version",), None, "type"),
 ]
 
 
@@ -301,8 +329,11 @@ TRANSCRIPT_BAD = [
     bad("meta model is empty", TMETA + ("model",), "", "minLength"),
     bad("duration_s is negative", TMETA + ("duration_s",), -6.0, "minimum"),
     bad("duration_s is a string", TMETA + ("duration_s",), "6", "type"),
+    bad("duration_s is null", TMETA + ("duration_s",), None, "type"),
     bad("meta latency_ms is fractional", TMETA + ("latency_ms",), 1.5, "type"),
     bad("meta cost_estimate is negative", TMETA + ("cost_estimate",), -1, "minimum"),
+    bad("meta cost_estimate is a string", TMETA + ("cost_estimate",), "0", "type"),
+    bad("meta provider is null", TMETA + ("provider",), None, "enum"),
 ]
 
 
@@ -338,7 +369,13 @@ META_ACCEPTED = [
     Accepted("unknown field in meta", set_at(("future",), {"a": 1})),
     Accepted("zero tokens", set_at(("output_tokens",), 0)),
     Accepted("whole-number cost", set_at(("cost_estimate",), 1)),
+    Accepted("zero cost (known to be free)", set_at(("cost_estimate",), 0)),
+    Accepted("unknown cost is null", set_at(("cost_estimate",), None)),
+    Accepted("unknown input_tokens is null", set_at(("input_tokens",), None)),
+    Accepted("unknown output_tokens is null", set_at(("output_tokens",), None)),
     Accepted("hosted provider", set_at(("provider",), "hosted")),
+    Accepted("fake provider (tests only)", set_at(("provider",), "fake")),
+    Accepted("free-form prompt_version", set_at(("prompt_version",), "2026-10-28")),
 ]
 
 
@@ -364,6 +401,8 @@ TRANSCRIPT_ACCEPTED = [
     Accepted("empty segment text", set_at(SEGMENT + ("text",), "")),
     Accepted("integer seconds", set_at(SEGMENT + ("start",), 0)),
     Accepted("hosted provider", set_at(TMETA + ("provider",), "hosted")),
+    Accepted("fake provider (tests only)", set_at(TMETA + ("provider",), "fake")),
+    Accepted("unknown cost is null", set_at(TMETA + ("cost_estimate",), None)),
     Accepted("non-ASCII word", set_at(WORD + ("word",), "namaste—é")),
 ]
 

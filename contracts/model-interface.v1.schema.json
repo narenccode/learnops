@@ -3,37 +3,40 @@
   "$id": "urn:learnops:contract:model-interface:v1",
   "title": "LearnOps model and speech interface (B5, v1)",
   "description": "The data that crosses the shared model and speech interface (PRD B5): the meta record of a language-model call (result.meta, B5.1) and a transcript returned by the speech interface (B5.4). A document is one of the two. result.data is not described here: its shape is the output_schema of the task that was called (B5.1).",
-  "$comment": "Unknown fields are allowed on purpose: after Release 0 contracts change only by adding optional fields and readers ignore unknown fields (PRD B.0, EXT-02). NOT expressible in JSON Schema, so NOT enforced here: result.data matches the task's output_schema (B5.1); invalid structured output gets one retry and then a clear error, never a partial result (B5.2); provider and model are chosen by MODEL_PROVIDER and MODEL_NAME and keys come from environment variables only (B5.2); prompts are versioned files in libs/model_interface/prompts/ (B5.3); every call's meta is logged to shared.model_calls with no raw learner content (B5.3); a segment or word ends at or after its start, and segments are in time order (B5.4).",
+  "$comment": "Unknown fields are allowed on purpose: after Release 0 contracts change only by adding optional fields and readers ignore unknown fields (PRD B.0, EXT-02). Required is not the same as non-null: every field PRD B5.1 and B5.4 name is required, and a few of them may hold null to say 'not known' (token counts, cost_estimate). UNRESOLVED, not decided here: the unit or currency of cost_estimate (the PRD names none); the time unit of segment and word start/end (seconds is a schema choice); whether 'fake' stays in the provider list (PRD B5.2 names only local and hosted). NOT expressible in JSON Schema, so NOT enforced here: result.data matches the task's output_schema (B5.1); invalid structured output gets one retry and then a clear error, never a partial result (B5.2); provider and model are chosen by MODEL_PROVIDER and MODEL_NAME and keys come from environment variables only (B5.2); prompts are versioned files in libs/model_interface/prompts/ (B5.3); every call's meta is logged to shared.model_calls with no raw learner content (B5.3); a segment or word ends at or after its start, and segments are in time order (B5.4).",
   "oneOf": [
     { "$ref": "#/$defs/model_result_meta" },
     { "$ref": "#/$defs/transcript" }
   ],
   "$defs": {
     "provider": {
-      "enum": ["local", "hosted"],
-      "description": "local: the lab endpoint; hosted: one hosted API through the provider's official SDK (PRD B5.2, B5.4)."
+      "enum": ["local", "hosted", "fake"],
+      "description": "local: the lab endpoint; hosted: one hosted API through the provider's official SDK (PRD B5.2, B5.4). fake: a deterministic test-only provider that calls no model (GETTING-STARTED section 6 asks for one; not named in PRD B5.2, so pending the guide's confirmation). Real deployments use local or hosted only."
     },
     "model_name": {
       "type": "string",
       "minLength": 1,
       "description": "The model that answered, as configured by MODEL_NAME (PRD B5.2)."
     },
-    "count": {
-      "type": "integer",
-      "minimum": 0
+    "token_count": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "Number of tokens, or null when the provider does not report token usage. Never 0 for 'unknown'."
     },
     "milliseconds": {
       "type": "integer",
-      "minimum": 0
+      "minimum": 0,
+      "description": "Milliseconds (the unit is in the PRD field name latency_ms)."
     },
     "seconds": {
       "type": "number",
-      "minimum": 0
+      "minimum": 0,
+      "description": "Seconds. The PRD names the unit only for duration_s; for segment and word start/end it is a schema choice."
     },
     "cost": {
-      "type": "number",
+      "type": ["number", "null"],
       "minimum": 0,
-      "description": "Estimated cost of the call. The local provider reports 0."
+      "description": "Estimated cost of the call, or null when it is unknown or cannot be calculated. Unknown cost is never reported as 0. Unit or currency: not specified by the PRD (unresolved)."
     },
     "model_result_meta": {
       "type": "object",
@@ -50,14 +53,14 @@
       "properties": {
         "provider": { "$ref": "#/$defs/provider" },
         "model": { "$ref": "#/$defs/model_name" },
-        "input_tokens": { "$ref": "#/$defs/count" },
-        "output_tokens": { "$ref": "#/$defs/count" },
+        "input_tokens": { "$ref": "#/$defs/token_count" },
+        "output_tokens": { "$ref": "#/$defs/token_count" },
         "latency_ms": { "$ref": "#/$defs/milliseconds" },
         "cost_estimate": { "$ref": "#/$defs/cost" },
         "prompt_version": {
           "type": "string",
           "minLength": 1,
-          "description": "Version of the prompt file used (PRD B5.3)."
+          "description": "Version of the prompt file used (PRD B5.3). Required, never null or empty: every model.run call uses a versioned prompt. Free-form; the PRD sets no format."
         }
       }
     },
