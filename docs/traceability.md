@@ -67,3 +67,29 @@ Left out because the PRD does not establish the mapping:
 - **C1.7 "a package containing a protected idnumber is rejected with a clear message".** The schema
   rejects the two default idnumbers; the user-facing message is not tested.
 - **Requirement IDs for the contract work itself.** None in the PRD.
+
+## B4 Moodle web-services contract (v1), Release 0 foundation
+
+File: `contracts/moodle-ws.v1.md`. **Contract work only, draft, not verified on any Moodle site.**
+
+FR-G-01 ("Fetch assignments, the marking table and submissions … through B4") and FR-G-06 ("Write
+only approved drafts to Moodle via B4"), both Release 4, are deliberately not in the table above. They
+need `libs/moodle_ws` and the grading module, which do not exist yet.
+
+### Enforced by automated tests
+
+Nothing yet. The contract is Markdown only, so CI validates no schema and no example. Whether B4
+also gets a JSON Schema and an example (PRD §B.0 rule 1) is open question Q1 for the guide.
+
+### Documented but not automatically enforced
+
+| Rule | PRD |
+|---|---|
+| Only the functions listed in the contract are called | B4 |
+| One service account per site, with a token restricted to those functions and minimum capabilities | B4, SEC-03 |
+| The token is stored only in the environment | SEC-03, C-06 |
+| A grade write uses workflow state `readyforrelease`, never `released`; only approved drafts are written | B4, C-09 |
+| Each function exists with the parameters used on Moodle 4.5 and 5.3 (all 10 lab checks are still open) | B4, App-C 1 |
+
+Open, not decided by the contract: Q1 (schema or not), Q24 (one token variable per site), Q37
+(normalized models, allow-list, error classes), and when the lab Moodle sites are available.
