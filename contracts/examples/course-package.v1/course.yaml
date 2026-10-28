@@ -1,0 +1,46 @@
+# Valid example for contracts/course-package.v1.schema.json (PRD B1).
+# Fictional content for contract testing only. It is not the B8.2 sample course.
+schema: learnops.course/v1
+course:
+  shortname: DEMO-AI-101
+  fullname: "Build an AI Assistant"
+  slug: build-ai-assistant
+  total_points: 100
+  mode: full
+sections:
+  - number: 1
+    title: "Week 1 — Set up your tools"
+    idnumber: wk-01
+    unlock:
+      after: null
+      start_date: null
+    activities:
+      - type: page
+        idnumber: wk-01-guide
+        title: "Week 1 guide"
+        body: weeks/01-guide.md
+      - type: assignment
+        idnumber: wk-01-task
+        title: "Week 1 task"
+        body: weeks/01-task.md
+        points: 50
+        submission: [onlinetext, file]
+        completion: submit
+  - number: 2
+    title: "Week 2 — Extend your assistant"
+    idnumber: wk-02
+    unlock:
+      after: wk-01-task
+      start_date: "2026-02-09"
+    activities:
+      - type: page
+        idnumber: wk-02-guide
+        title: "Week 2 guide"
+        body: weeks/02-guide.md
+      - type: assignment
+        idnumber: wk-02-task
+        title: "Week 2 task"
+        body: weeks/02-task.md
+        points: 50
+        submission: [onlinetext, file]
+        completion: submit
