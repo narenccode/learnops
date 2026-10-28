@@ -1,0 +1,17 @@
+{
+  "segments": [
+    {
+      "start": 612.0,
+      "end": 613.2,
+      "text": "",
+      "words": []
+    }
+  ],
+  "meta": {
+    "provider": "local",
+    "model": "example-speech-model",
+    "duration_s": 615.0,
+    "latency_ms": 5200,
+    "cost_estimate": 0
+  }
+}

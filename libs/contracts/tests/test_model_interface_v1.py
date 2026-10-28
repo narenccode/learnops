@@ -8,7 +8,8 @@ AUTOMATED here (structure only, by contracts/model-interface.v1.schema.json):
   * required is not the same as non-null: token counts and cost_estimate may be null
     ("not known") but may not be left out; everything else rejects null;
   * unknown fields are accepted (PRD B.0, EXT-02);
-  * a document that is neither a meta record nor a transcript is rejected.
+  * a document that is neither a meta record nor a transcript, or is both, is rejected;
+  * the transcript examples cover silent audio, a segment without words and one without text.
 
 NOT automated here, and therefore NOT claimed as enforced (the schema's $comment lists them):
   * result.data matches the task's output_schema (B5.1);
@@ -37,18 +38,27 @@ from referencing import Registry, Resource
 
 ROOT = Path(__file__).resolve().parents[3]
 SCHEMA_PATH = ROOT / "contracts" / "model-interface.v1.schema.json"
-EXAMPLES = ROOT / "contracts" / "examples" / "model-interface.v1"
+EXAMPLES = ROOT / "contracts" / "examples"
+# Flat layout, one file per case: contracts/examples/model-interface.v1.<case>.json (Student 2's
+# validator convention). Invalid documents live in this file, never in the examples folder.
+EXAMPLE_GLOB = "model-interface.v1.*.json"
 SCHEMA_ID = "urn:learnops:contract:model-interface:v1"
 
 # Each example file and the definition it is an instance of.
 EXAMPLE_DEFS = {
-    "model-result-meta.local.json": "model_result_meta",
-    "model-result-meta.hosted.json": "model_result_meta",
-    "model-result-meta.fake.json": "model_result_meta",
-    "model-result-meta.unknown-usage.json": "model_result_meta",
-    "transcript.json": "transcript",
-    "transcript.unknown-cost.json": "transcript",
+    "model-interface.v1.meta-local.json": "model_result_meta",
+    "model-interface.v1.meta-hosted.json": "model_result_meta",
+    "model-interface.v1.meta-fake.json": "model_result_meta",
+    "model-interface.v1.meta-unknown-usage.json": "model_result_meta",
+    "model-interface.v1.transcript.json": "transcript",
+    "model-interface.v1.transcript-unknown-cost.json": "transcript",
+    "model-interface.v1.transcript-empty.json": "transcript",
+    "model-interface.v1.transcript-empty-words.json": "transcript",
+    "model-interface.v1.transcript-empty-text.json": "transcript",
 }
+TRANSCRIPT_EXAMPLES = sorted(
+    n for n, kind in EXAMPLE_DEFS.items() if kind == "transcript"
+)
 META_EXAMPLES = sorted(
     n for n, kind in EXAMPLE_DEFS.items() if kind == "model_result_meta"
 )
@@ -166,12 +176,12 @@ def transcript_validator(registry: Registry[Any]) -> Draft202012Validator:
 
 @pytest.fixture
 def meta() -> Doc:
-    return copy.deepcopy(load_example("model-result-meta.local.json"))
+    return copy.deepcopy(load_example("model-interface.v1.meta-local.json"))
 
 
 @pytest.fixture
 def transcript() -> Doc:
-    return copy.deepcopy(load_example("transcript.json"))
+    return copy.deepcopy(load_example("model-interface.v1.transcript.json"))
 
 
 # --- the schema and the examples -----------------------------------------------------------
@@ -184,7 +194,7 @@ def test_schema_is_a_valid_draft_2020_12_schema(schema: dict[str, Any]) -> None:
 
 
 def test_every_example_file_is_listed() -> None:
-    assert sorted(p.name for p in EXAMPLES.glob("*.json")) == sorted(EXAMPLE_DEFS)
+    assert sorted(p.name for p in EXAMPLES.glob(EXAMPLE_GLOB)) == sorted(EXAMPLE_DEFS)
 
 
 @pytest.mark.parametrize("name", sorted(EXAMPLE_DEFS))
@@ -218,12 +228,19 @@ def test_examples_show_known_and_unknown_usage() -> None:
 
 def test_transcript_examples_show_known_and_unknown_cost() -> None:
     costs = [
-        load_example(name)["meta"]["cost_estimate"]
-        for name, kind in EXAMPLE_DEFS.items()
-        if kind == "transcript"
+        load_example(name)["meta"]["cost_estimate"] for name in TRANSCRIPT_EXAMPLES
     ]
     assert None in costs
     assert any(isinstance(c, int | float) for c in costs)
+
+
+def test_transcript_examples_cover_the_empty_cases() -> None:
+    """Student 4: silent audio, a segment without word timings, and a segment without text."""
+    docs = [load_example(name) for name in TRANSCRIPT_EXAMPLES]
+    segments = [s for d in docs for s in d["segments"]]
+    assert any(d["segments"] == [] for d in docs)
+    assert any(s["words"] == [] and s["text"] for s in segments)
+    assert any(s["text"] == "" for s in segments)
 
 
 # --- invalid: required fields --------------------------------------------------------------
@@ -356,6 +373,14 @@ def test_document_that_is_neither_kind_is_rejected(
     assert ((), "oneOf") in error_keys(validator, value)
 
 
+def test_document_that_is_both_kinds_is_rejected(
+    validator: Draft202012Validator, meta: Doc, transcript: Doc
+) -> None:
+    """Without a discriminator field, oneOf is what keeps the two kinds apart."""
+    both = {**meta, **transcript}
+    assert ((), "oneOf") in error_keys(validator, both)
+
+
 # --- valid variations: the schema must NOT reject these ------------------------------------
 
 
@@ -376,6 +401,11 @@ META_ACCEPTED = [
     Accepted("hosted provider", set_at(("provider",), "hosted")),
     Accepted("fake provider (tests only)", set_at(("provider",), "fake")),
     Accepted("free-form prompt_version", set_at(("prompt_version",), "2026-10-28")),
+    # Q38 proposals (grading design 4.2): accepted as optional unknown fields, never required.
+    Accepted("input_hash (Q38)", set_at(("input_hash",), "sha256:0f1e2d")),
+    Accepted("temperature (Q38)", set_at(("temperature",), 0.2)),
+    Accepted("seed (Q38)", set_at(("seed",), 7)),
+    Accepted("cost_known (Q38)", set_at(("cost_known",), False)),
 ]
 
 
@@ -404,6 +434,8 @@ TRANSCRIPT_ACCEPTED = [
     Accepted("fake provider (tests only)", set_at(TMETA + ("provider",), "fake")),
     Accepted("unknown cost is null", set_at(TMETA + ("cost_estimate",), None)),
     Accepted("non-ASCII word", set_at(WORD + ("word",), "namaste—é")),
+    # Student 4 proposal: an optional language field, accepted but not defined or required.
+    Accepted("language in meta (proposal)", set_at(TMETA + ("language",), "en")),
 ]
 
 

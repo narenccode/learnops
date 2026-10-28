@@ -70,8 +70,8 @@ Left out because the PRD does not establish the mapping:
 
 ## B5 model and speech interface contract (v1), Release 0 foundation
 
-Files: `contracts/model-interface.v1.schema.json`, `contracts/examples/model-interface.v1/`,
-`libs/contracts/tests/test_model_interface_v1.py`. **Contract work only.**
+Files: `contracts/model-interface.v1.schema.json`, `contracts/examples/model-interface.v1.*.json`
+(flat, one file per case), `libs/contracts/tests/test_model_interface_v1.py`. **Contract work only.**
 
 FR-M-01 ("Shared model interface library (B5.1–B5.3)", R0) and FR-M-02 ("Speech interface library
 (B5.4)", R0) are deliberately not in the table above. The tests below check only the data shapes the
@@ -91,7 +91,9 @@ Structure only. Test names are in `test_model_interface_v1.py`.
 | Token counts and `cost_estimate` are required but may be `null` ("not known") | B5.1, B5.4 (fields); null: Student 1 proposal | `test_meta_missing_required_field_is_rejected`, `test_meta_valid_variation_is_accepted`, `test_transcript_valid_variation_is_accepted`, `test_examples_show_known_and_unknown_usage`, `test_transcript_examples_show_known_and_unknown_cost` |
 | A transcript has `segments` (start, end, text, words) and `meta`; each word has start, end, word | B5.4 | `test_transcript_missing_required_field_is_rejected`, `test_transcript_wrong_type_or_value_is_rejected` |
 | `transcript.meta` has provider, model, `duration_s`, `latency_ms`, `cost_estimate` | B5.4 | same two tests |
-| A document is either a meta record or a transcript | B5 | `test_document_that_is_neither_kind_is_rejected` |
+| A document is either a meta record or a transcript, never neither and never both | B5 | `test_document_that_is_neither_kind_is_rejected`, `test_document_that_is_both_kinds_is_rejected` |
+| Silent audio (`segments: []`), a segment without word timings (`words: []`) and a segment with empty `text` are valid, and examples show each | B5.4 (shape); empty cases: Student 4 | `test_transcript_valid_variation_is_accepted`, `test_transcript_examples_cover_the_empty_cases` |
+| Optional additions are accepted but not required: `input_hash`, `temperature`, `seed`, `cost_known` (Q38) and a transcript `language` (Student 4 proposal) | B.0 rule 2 | `test_meta_valid_variation_is_accepted`, `test_transcript_valid_variation_is_accepted` |
 | Unknown fields are accepted | B.0 rule 2, EXT-02 | `test_meta_valid_variation_is_accepted`, `test_transcript_valid_variation_is_accepted` |
 | The schema is valid, and every example validates (all three providers covered) | B.0 rule 1 | `test_schema_is_a_valid_draft_2020_12_schema`, `test_example_is_valid_against_the_whole_schema`, `test_example_is_valid_against_its_definition`, `test_every_example_file_is_listed`, `test_examples_cover_every_provider` |
 
@@ -101,7 +103,8 @@ contract reviewers):
 - token counts and `latency_ms` are non-negative integers;
 - seconds and `cost_estimate` are non-negative numbers;
 - `model`, `prompt_version` and `word` are non-empty strings; `prompt_version` has no set format;
-- empty `segments`, empty `words` and empty segment `text` are allowed.
+- empty `segments`, empty `words` and empty segment `text` are allowed (asked for by Student 4, see
+  below).
 
 From Student 1's consumer review (Module 1), applied here but **not in the PRD text** and not yet
 confirmed by the guide or the other B5 consumer, Module 4 (Student 4; PRD B.0 lists B5 as used by
@@ -113,11 +116,30 @@ M1, M3, M4):
   `hosted`; GETTING-STARTED §6 asks for "a fake provider for tests". If the guide keeps it, PRD B5.2
   needs a matching sentence (B.0 rule 3).
 
+From Student 2's review (example validator compatibility), applied here; not yet confirmed by the
+guide:
+- examples are flat files `contracts/examples/model-interface.v1.<case>.json`, each valid against
+  the whole schema; invalid documents live only in the test file;
+- no `additionalProperties: false`, so unknown fields stay accepted;
+- **not adopted:** a required `const` discriminator field on each document kind. The PRD names no
+  such field for `result.meta` or the transcript, and making one required would add a field every
+  producer must write. The two kinds stay apart through `oneOf` and their different required
+  fields (tested above). Left as an open proposal.
+
+From Student 4's review (Module 4, speech), applied here; not yet confirmed by the guide:
+- `words` stays required and may be empty; `segments` may be empty; segment `text` may be empty.
+  Student 4 owns B6, whose B6.2 describes `transcript.en.json` as "Segments with word timings".
+- segment and word `start`/`end` are numbers of seconds from the start of the original audio file,
+  also when the speech service processes it in chunks (documented in the schema).
+- an optional `language` field is a proposal only: accepted as an unknown field, not defined or
+  required.
+
 Open, not decided by the schema:
 - the unit or currency of `cost_estimate` (the PRD names none);
-- the time unit of segment and word `start`/`end` (seconds is a schema choice; only `duration_s`
-  names its unit);
-- whether `words` may be empty, given B6.2 "Segments with word timings" (Student 4).
+- keeping `fake` as a provider value (guide);
+- a required discriminator field (Student 2 proposal, not adopted);
+- defining types for the Q38 fields and for `language` (guide; Q38);
+- guide confirmation of all consumer-review changes above.
 
 ### Documented but not automatically enforced
 
@@ -132,5 +154,6 @@ lists them too.
 | Prompts are versioned files in `libs/model_interface/prompts/` | B5.3 |
 | Every call logs `meta` to `shared.model_calls`, with no raw learner content | B5.3 |
 | A segment or word ends at or after its start; segments are in time order | B5.4 |
+| Segment and word times count from the start of the original audio file, also when it was processed in chunks (the schema sees only numbers) | Student 4 feedback, pending the guide; B5.4 gives no unit |
 | An unknown cost is reported as `null`, never as 0, and is never summed or budgeted as 0 (the schema accepts both 0 and `null`; only the library can tell which is true) | Proposal (Student 1); B5.1 names `cost_estimate` but not unknown values |
 | The `fake` provider is used only in tests and is never configured in the lab or production (the schema cannot tell where a call ran) | Proposal (Student 1; GETTING-STARTED §6); not in B5.2, pending the guide |
