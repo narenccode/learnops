@@ -1,0 +1,11 @@
+# Development and CI dependencies (installed by .github/workflows/ci.yml).
+# Pinned. Update deliberately, in their own pull request. Licences are checked (CLAUDE.md §2.10).
+# Versions for pytest, jsonschema and PyYAML follow docs/design/studio.md.
+
+pytest==9.1.1                      # MIT
+jsonschema==4.26.0                 # MIT. Validates contract documents against contracts/*.schema.json
+PyYAML==6.0.3                      # MIT. Reads course.yaml in the B1 course package
+
+# Type stubs so that `mypy libs` (CI) can check code that imports the libraries above.
+types-PyYAML==6.0.12.20260906      # Apache-2.0 (typeshed)
+types-jsonschema==4.26.0.20261006  # Apache-2.0 (typeshed)
