@@ -152,7 +152,7 @@ This is an engineering choice, not a claim from the literature; the §12.1 entri
 
 | Contract | Provided / used | Fields or functions I rely on | Change needed? |
 |---|---|---|---|
-| B4 Moodle web-services usage | Provided (`contracts/moodle-ws.v1.md`) | Function list in §4.1 | Created in Release 0. Proposed additions: JSON Schema file, normalized models, error classes (§4.1, Q1, Q37) |
+| B4 Moodle web-services usage | Provided (`contracts/moodle-ws.v1.md`) | Function list in §4.1 | Created in Release 0. Guide (PR #27): Markdown rules plus `moodle-ws.v1.schema.json` and the allow-list example `examples/moodle-ws.v1.functions.json` (Q1); normalized models and error classes are library documentation, not contract text (Q37) |
 | B5 Model and speech interface | Provided (`contracts/model-interface.v1.schema.json`) | `model.run`, `result.data`, `result.meta`, `speech.transcribe`, `transcript.segments`, `transcript.meta` | Created in Release 0. Proposed additive items in §4.2 (registry rule, error types, optional `meta` fields) (Q38) |
 | B1.3 Marking table | Used | `<!-- marking-table v1 -->` markers; columns Criterion, Points, Full marks when, Check; `—` means judgement only; `data-marking-table="v1"` in the HTML rendering | Proposed: criterion key rule and argument formats (§4.3, Q39) |
 | B1.1 Course package | Used (read only) | `submission: [onlinetext, file]` on assignments | Proposed: submission-content rule (§4.3, Q6, Q32) |
@@ -183,11 +183,11 @@ need, in the courses where it is enrolled for grading.
 
 - **Parameters.** The PRD names only the `workflowstate` parameter and "feedback comments". Every other parameter name, field name and response shape is recorded in the contract file only after it has been checked on both lab sites (lab). If a name differs, the replacement is recorded in §B4, as the PRD requires.
 - **Capabilities.** The PRD gives no list. The minimum capabilities are worked out on the lab sites and recorded in the contract file, and SEC-03 then refers to that list (lab).
-- **Allow-list driven by the contract** (proposed): `contracts/moodle-ws.v1.schema.json` holds a manifest of allowed functions (name, purpose, used by, verified on 4.5, verified on 5.3, verified parameters). `libs/moodle_ws` builds its allow-list from that manifest and refuses any other function, and any workflow state other than `readyforrelease` in a grade write. A CI test checks that code and manifest agree. This is a second guard behind the restricted external service.
-- **Normalized models** (proposed): the contract is what `libs/moodle_ws` returns, not Moodle's raw responses: `CourseV1`, `AssignmentV1` (idnumber, name, description_html, max_grade, grading type, marking_workflow_enabled, submission_types), `SubmissionV1` (learner_ref, version_snapshot, online_text, file_refs), `SubmissionStatusV1`, `GradeStateV1` (grade, workflow_state, released flag, grader_ref, modified), `GradeWriteRequestV1`, `GradeWriteResultV1`. Field names are LearnOps's own. A field Moodle does not provide on a version is absent and the client raises `NotSupported` when a caller needs it. Every Moodle response is validated into these models; a response that does not parse is `UnexpectedResponse`, never partial data.
-- **Error classes** (proposed): `MoodleUnreachable`, `TokenInvalid`, `PermissionDenied`, `UnexpectedResponse`, `NotSupported`.
-- **Token** (PRD SEC-03, C-06): environment only, one per site: `MOODLE45_WS_TOKEN` and `MOODLE53_WS_TOKEN`. `.env.example` currently has one `MOODLE_WS_TOKEN` (with a comment saying one per site in real deployments), while B4 asks for one account per site (Q24). `libs/moodle_ws` redacts tokens from every logged URL, exception message and error shown in the UI; request URLs are never logged in full. (lab) If the file download accepts the token in a header, use that instead of a URL parameter.
-- **Format** (guide): `contracts/CLAUDE.md` names B4 as a Markdown file. PRD §B.0 rule 1 says every contract has a JSON Schema and at least one example. Proposal: keep the Markdown file as the human text and add the schema file above (Q1).
+- **Allow-list driven by the contract** (guide's decision on Q1, PR #27): `contracts/examples/moodle-ws.v1.functions.json` (schema `contracts/moodle-ws.v1.schema.json`) lists the allowed functions with the parameters used and, only where a name differs on a Moodle version, the replacement name. It holds **no verification state**; lab results go to `docs/decisions/`. `libs/moodle_ws` (proposed) builds its allow-list from that example and refuses any other function, and any workflow state other than `readyforrelease` in a grade write. A CI test checks that code and example agree once the library exists. This is a second guard behind the restricted external service.
+- **Normalized models** (proposed; library documentation, **not contract text**, guide's decision on Q37): `libs/moodle_ws` returns these, not Moodle's raw responses: `CourseV1`, `AssignmentV1` (idnumber, name, description_html, max_grade, grading type, marking_workflow_enabled, submission_types), `SubmissionV1` (learner_ref, version_snapshot, online_text, file_refs), `SubmissionStatusV1`, `GradeStateV1` (grade, workflow_state, released flag, grader_ref, modified), `GradeWriteRequestV1`, `GradeWriteResultV1`. Field names are LearnOps's own. A field Moodle does not provide on a version is absent and the client raises `NotSupported` when a caller needs it. Every Moodle response is validated into these models; a response that does not parse is `UnexpectedResponse`, never partial data.
+- **Error classes** (proposed; library documentation, not contract text, Q37): `MoodleUnreachable`, `TokenInvalid`, `PermissionDenied`, `UnexpectedResponse`, `NotSupported`.
+- **Token** (PRD SEC-03, C-06): environment only, one per site: `MOODLE45_WS_TOKEN` and `MOODLE53_WS_TOKEN`. `.env.example` lists both with placeholders, and the old single `MOODLE_WS_TOKEN` is removed (guide's decision on Q24, PR #27). `libs/moodle_ws` redacts tokens from every logged URL, exception message and error shown in the UI; request URLs are never logged in full. (lab) If the file download accepts the token in a header, use that instead of a URL parameter.
+- **Format** (guide's decision on Q1, PR #27): `contracts/moodle-ws.v1.md` stays the normative rules text; `contracts/moodle-ws.v1.schema.json` and the example above give the allow-list in machine-readable form, as PRD §B.0 rule 1 asks. `contracts/CLAUDE.md` lists all three files.
 - **Traceability:** see §2 note (Q7).
 
 **Moodle semantics policy** (proposed; every point confirmed in the lab before it is relied on):
@@ -389,7 +389,7 @@ Variables are listed here; adding them to `.env.example` is a separate step by t
 |---|---|---|
 | `DATABASE_URL` | placeholder | yes |
 | `MOODLE45_URL`, `MOODLE53_URL` | placeholder | yes |
-| `MOODLE45_WS_TOKEN`, `MOODLE53_WS_TOKEN` | placeholder | to add (proposed); replace `MOODLE_WS_TOKEN` (Q24) |
+| `MOODLE45_WS_TOKEN`, `MOODLE53_WS_TOKEN` | placeholder | yes (replace `MOODLE_WS_TOKEN`; guide's decision on Q24) |
 | `LTI_ISSUER`, `LTI_CLIENT_ID`, `LTI_DEPLOYMENT_ID`, `LTI_PRIVATE_KEY_PATH` | placeholder | yes |
 | `MODEL_PROVIDER`, `MODEL_NAME`, `MODEL_LOCAL_URL`, `MODEL_HOSTED_API_KEY` | local in the lab | yes |
 | `SPEECH_PROVIDER`, `SPEECH_LOCAL_URL`, `SPEECH_HOSTED_API_KEY` | local in the lab | yes |
@@ -669,10 +669,10 @@ Test data to produce: fake-Moodle recordings, malicious and tampering repositori
 | R6 | Lab or AI services not ready (PRD A15.1) | yes | Release 0 work uses fake providers and fixtures |
 | R7 | The PRD itself is marked "Draft. Becomes binding when the guide approves it." | no | Guide; this document follows the current text |
 | R8 | A grade becomes visible early or overwrites a teacher's grade | yes | §10.1 preconditions, read-back and compare-and-set; lab verification |
-| R9 | Contracts freeze before B1, B4 and B5 gaps are closed | no | Settle §4.3 items before the Release 0 freeze (Q32, Q37 to Q39, Q41) |
-| Q1 | B4 is a Markdown file (`contracts/CLAUDE.md`), but PRD §B.0 rule 1 asks for a JSON Schema and an example for every contract | no | Guide; proposal in §4.1 |
+| R9 | Contracts freeze before B1, B4 and B5 gaps are closed | no | Settle §4.3 items before the Release 0 freeze (Q32, Q38, Q39, Q41) |
+| Q1 | B4 is a Markdown file (`contracts/CLAUDE.md`), but PRD §B.0 rule 1 asks for a JSON Schema and an example for every contract | no | **Decided** by the guide (PR #27): Markdown rules plus a small schema and one allow-list example, no verified flags (§4.1) |
 | Q2 | Where the sandbox host runs | yes | Guide; see Q22, Q23 |
-| Q3 | One service account per site (B4) but one `MOODLE_WS_TOKEN` in `.env.example` | yes | Guide; see Q24 |
+| Q3 | One service account per site (B4) but one token variable in `.env.example` | yes | **Decided** with Q24 |
 | Q4 | Confirm the reading of "one container per submission; no network after the clone step" (§7) | no | Guide |
 | Q5 | "One band" (G-5, §C3.7) is not defined | no | Guide; proposal in §11.2 (Q44) |
 | Q6 | Where a submission carries its repository URL, demo link and report (B1.1 allows `onlinetext` and `file`; `http_ok:demo_url` has no defined source) | yes | Guide and Student 1; proposal in §4.3a (Q32) |
@@ -698,7 +698,7 @@ Test data to produce: fake-Moodle recordings, malicious and tampering repositori
 |---|---|---|---|
 | Q22 | [D1] Sandbox worker on the sandbox host with the local Docker socket and no remote Docker API (alternative: remote API with mutual TLS) | no | Guide; recommended: local socket |
 | Q23 | [D2] Dedicated sandbox VM; amend A11, OPS-01, SEC-04 (§12.2) | yes | Guide |
-| Q24 | [D7] One Moodle token per site (`MOODLE45_WS_TOKEN`, `MOODLE53_WS_TOKEN`); change `.env.example` | no | Guide and `.env.example` owners |
+| Q24 | [D7] One Moodle token per site (`MOODLE45_WS_TOKEN`, `MOODLE53_WS_TOKEN`); change `.env.example` | no | **Decided** by the guide (PR #27); `.env.example` changed in the B4 pull request |
 | Q25 | [D4] Whole-number scores; cap fraction when a required check fails, taken from the B8.4 pilot | no | Guide |
 | Q26 | [D3] If no B4 function exposes the marking-workflow setting: block all writes, or add a function to B4 | yes | Guide; lab result decides |
 | Q27 | [D6] Dependency policy for `command:`: pre-baked images, no package mirror in v1 | no | Guide |
@@ -709,7 +709,7 @@ Test data to produce: fake-Moodle recordings, malicious and tampering repositori
 | Q34 | [E3] Store capped excerpts (amends "no full report text"); retention days | no | Guide |
 | Q35 | [E4, E4b] Tool opens in a new window; Administrator means any course through its own launch | yes | Guide and Student 2 |
 | Q36 | [E5, E9] One migration tool chosen by Student 2; per-schema ownership; document `shared.course_link`; identity scheme in §5.1 | no | Student 2 and guide |
-| Q37, Q38 | [E6, E7] B4 as Markdown plus JSON Schema with normalized models; B5 additions in §4.2 | no | Guide; reviewers Students 1 and 4 |
+| Q38 | [E7] B5 additions in §4.2 | no | Guide; reviewers Students 1 and 4. (Q37, B4 models as contract text, was decided by the guide in PR #27: not contract text; see §4.1) |
 | Q39 | [E8] Parser ownership: format by Student 1, implementation in `libs/contracts`, imported by Module 3 | no | Guide, Students 1 and 2 |
 | Q40 | Not used (number skipped; kept so later numbers and references stay unchanged) | — | — |
 | Q41 | [E10] One model call per submission version | no | Guide |
@@ -740,7 +740,7 @@ The PRD is not edited by this document. These are the changes the proposals abov
 | C-05 | A written grade can be reverted only before release; documented in the README | §10.1 |
 | B1.1, B1.3, B1 | Submission-content rule, argument formats, criterion key rule, check-config schema; `command:setup` wording to match the dependency policy | §4.3, §9.2 |
 | EXT-09 | The marking-table parser lives in `libs/contracts` | §4.3b |
-| B4 | Normalized models, JSON Schema, error classes | §4.1 |
+| B4 | None needed for Q1 and Q37 (decided in PR #27). If a function name differs on a Moodle version, the PRD B4 text changes in the same pull request as the replacement (guide) | §4.1 |
 | B5.1 to B5.3 | Registry rule, error types, retry rules, optional `meta` fields, fake behaviour, speech file handling | §4.2 |
 | §C3.5 | Additional grading tables; similarity method summary; Moodle semantics policy | §5.2, §3.1, §4.1 |
 | A5, B3 | "Administrator: all courses" means any course through its own launch; record the launch container | §6.1 |

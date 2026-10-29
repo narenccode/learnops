@@ -21,8 +21,9 @@ From PRD §B4:
 
 From PRD SEC-03 and C-06:
 - The token is stored only in the environment, never in the repository, logs or error messages.
-- `.env.example` currently documents one variable, `MOODLE_WS_TOKEN`, with the comment "one per site
-  in real deployments". The variable names for one token per site are not decided (Q24).
+- One token variable per site: `MOODLE45_WS_TOKEN` and `MOODLE53_WS_TOKEN` (guide's decision on
+  Q24, PR #27). `.env.example` lists both with placeholders only. The old single `MOODLE_WS_TOKEN`
+  is removed.
 
 ## 2. Functions
 
@@ -46,6 +47,32 @@ version (PRD §B4).
 
 No parameter name, field name or response shape is listed here unless the PRD names it. The others
 are added only after they are checked on both lab sites.
+
+**Gap in the PRD:** PRD §B4 says `mod_assign_save_grade` is called with "feedback comments" but
+names no parameter for them. No name is guessed; it is added after lab check 1.
+
+## 2a. Machine-readable allow-list
+
+Guide's decision on Q1 (PR #27): this Markdown file stays the normative rules text, and a small
+schema plus one example list the allowed functions in machine-readable form.
+
+| File | Content |
+|---|---|
+| `contracts/moodle-ws.v1.schema.json` | Shape of the allow-list |
+| `contracts/examples/moodle-ws.v1.functions.json` | The functions of §2, each with the parameters LearnOps sends and, only where a name differs on a Moodle version, the replacement name |
+
+Rules for the allow-list:
+- It holds **no verification state**. Lab results go to `docs/decisions/`, and the "Verified"
+  columns in §2 above stay "no" until those records exist. The schema refuses any field whose name
+  contains "verif".
+- Its function names equal the PRD §B4 list and the §2 table; a test checks both.
+- `parameters` lists only names the PRD gives. An empty list means **not yet determined** (lab
+  check 1), not "no parameters".
+- If a name differs on a Moodle version, the replacement goes into `replacements` **and** the PRD
+  §B4 text changes in the same pull request (guide, PR #27). None is recorded yet.
+- The file download in §2 is not a web-services function, so it is not in the allow-list.
+- `libs/moodle_ws` (not written yet) builds its allow-list from this example and must refuse any
+  other function, so the contract and the code cannot drift apart.
 
 ## 3. Draft rule
 
@@ -83,20 +110,16 @@ Item 1 is PRD App-C item 1. Items 2 to 10 come from `docs/design/grading.md` §4
 
 ## 6. Open questions
 
-Not decided. This file does not settle them.
+Not decided. This file does not settle it.
 
 | Question | Who decides |
 |---|---|
-| **Q1.** Is this contract Markdown only, or Markdown plus a JSON Schema and an example? PRD §B.0 rule 1 asks every contract for "a JSON Schema in `/contracts`, with at least one valid example file"; `contracts/CLAUDE.md` names this contract `moodle-ws.v1.md`. Proposal: keep this file and add a minimal schema listing only the PRD §B4 functions, their per-version verification, and the `readyforrelease` rule. No schema, example or test exists until this is answered. | Guide |
-| **Q24.** One token variable per site (proposed: `MOODLE45_WS_TOKEN`, `MOODLE53_WS_TOKEN`) instead of the single `MOODLE_WS_TOKEN` in `.env.example` | Guide and `.env.example` owners |
-| **Q37.** Whether this contract also defines what `libs/moodle_ws` returns: normalized models, an allow-list manifest that the library checks against, and error classes | Guide; reviewed by Student 2 (Module 2 uses B4) |
-| **Lab access.** When the Moodle 4.5 and 5.3 lab sites are available. All checks in §5 wait for them, and B4 is frozen at the end of Release 0 | Guide |
+| **Lab access.** When the Moodle 4.5 and 5.3 lab sites are available. All checks in §5 wait for them. B4 can be merged as a draft before that, but it cannot be frozen at the end of Release 0 until the checks pass (guide, PR #27) | Guide |
 
-**Proposals, not contract text.** `docs/design/grading.md` §4.1 proposes these:
-- normalized models (`CourseV1`, `AssignmentV1`, `SubmissionV1`, `SubmissionStatusV1`, `GradeStateV1`,
-  `GradeWriteRequestV1`, `GradeWriteResultV1`);
-- a machine-readable allow-list of the functions in §2;
-- the error classes `MoodleUnreachable`, `TokenInvalid`, `PermissionDenied`, `UnexpectedResponse` and
-  `NotSupported`.
-
-They become part of B4 only if Q1 and Q37 are answered yes, before the Release 0 freeze.
+**Decided by the guide (PR #27, 2026-10-29):**
+- **Q1:** Markdown for the rules plus a small JSON Schema and one example listing the allowed
+  functions (§2a). No verified flags in them.
+- **Q24:** `MOODLE45_WS_TOKEN` and `MOODLE53_WS_TOKEN`; `MOODLE_WS_TOKEN` removed (§1).
+- **Q37:** what `libs/moodle_ws` returns (normalized models), how it enforces the allow-list, and
+  its error classes are **not contract text**. They are documented in `docs/design/grading.md`
+  §4.1 and, later, in the library's documentation.
