@@ -1,0 +1,20 @@
+{
+  "schema": "learnops.lesson/v1",
+  "course_slug": "build-ai-assistant",
+  "lesson_id": "01-setup/02-install-python",
+  "title": "Install Python",
+  "duration_s": 742,
+  "tracks": [{ "role": "main", "file": "720p.mp4", "height": 720 }],
+  "captions": [{ "lang": "en", "file": "captions.en.vtt" }],
+  "transcript": "transcript.en.json",
+  "chapters": "chapters.json",
+  "source": {
+    "kind": "upload",
+    "uploaded_by": "test-mentor-sub-0001",
+    "original_name": "install-python.mov"
+  },
+  "processing": {
+    "pipeline_version": "1.0.0",
+    "completed_at": "2026-10-29T10:15:00Z"
+  }
+}
