@@ -1,0 +1,37 @@
+# PROVISIONAL author's expected outcome. NOT a reference grade: no scores.
+# Rubric: B1 contract example wk-01-task (not B8.2).
+schema: learnops.testdata.b8-4.expected-outcome/v1
+submission_id: s005
+rubric: b1-example-wk-01-task
+provisional: true
+criteria:
+  - criterion: Working demo
+    checks:
+      - check: http_ok:demo_url
+        expected: fail
+        reason: hosting.demo_stub is none, so nothing answers at the demo link.
+    judgement: does_not_meet
+    rationale: The report itself says the demo was not put online.
+  - criterion: Code quality
+    checks:
+      - check: repo_file:README.md
+        expected: fail
+        reason: The repository clones but has no README.md.
+      - check: command:setup
+        expected: undetermined
+        reason: >-
+          No check config defines "setup" yet (design §4.3c, Q33), so its result cannot be
+          predicted.
+    judgement: does_not_meet
+    rationale: No README, so setup is not explained; the code answers only two fixed strings.
+  - criterion: Reflection
+    checks:
+      - check: word_count:200
+        expected: fail
+        reason: >-
+          report.md is far below 200 words under the PROVISIONAL counting rule (whitespace-separated
+          tokens of the whole file).
+    judgement: does_not_meet
+    rationale: >-
+      Short and general. It mentions one thing that did not work (publishing) without saying
+      why, and nothing specific that worked.

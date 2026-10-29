@@ -1,0 +1,11 @@
+# PROVISIONAL pilot submission. Fictional; written for this project.
+# Deliberate near-duplicate of s001 (renamed identifiers, reworded report) for the similarity flag.
+schema: learnops.testdata.b8-4.submission/v1
+id: s003
+repository_url: https://git.lab.invalid/learner-03/tool-library-helper.git
+demo_url: https://demo.lab.invalid/learner-03/
+report: report.md
+repo_dir: repo
+hosting:
+  publish_repo: true
+  demo_stub: answers
