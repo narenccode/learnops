@@ -17,8 +17,9 @@ status is `Approved` (foundation work listed in §13 under "Release 0" is allowe
 | (proposed) | A design choice made in this document; not in the PRD; open to review |
 | (lab) | Must be verified on the lab Moodle 4.5 and 5.3 sites before it is relied on (PRD App-C) |
 | (guide) | Needs a decision or approval from the guide; listed in §12 |
+| (provisional) | A working assumption the design proceeds on while a guide decision is open; listed in §12.3 with what changes if the guide decides otherwise. It is not a decision and not an approval |
 
-Nothing labelled (proposed), (lab) or (guide) is a fact about Moodle or the PRD. No statement in this
+Nothing labelled (proposed), (lab), (guide) or (provisional) is a fact about Moodle or the PRD. No statement in this
 document has been checked against a live Moodle, Moodle's own documentation, or any literature source.
 
 **Revision note.** This revision applies a pre-implementation review in three groups: critical
@@ -26,6 +27,21 @@ blockers (§4.1, §5, §9, §10.1), integration (§4, §5, §6.1, §12, §13) an
 implementation (§6.2 to §6.4, §10, §11, §13). Every new statement is (proposed), (lab) or (guide).
 New open decisions are Q22 to Q55 in §12 (Q40 is not used); proposed PRD amendments are in §12.2. Nothing is approved
 and no test has been written or run.
+
+**Revision note (sandbox design, Release 0).** This revision expands the sandbox design (§9.2) into
+subsections: a two-stage lifecycle (clone stage, then a run stage created with no network), container
+and daemon settings, network rules, limits and timeout behaviour, result collection through restricted
+database functions, cleanup and recovery, a threat model, residual risks and operational dependencies.
+Matching changes are in §3, §3.1, §5.3, §6.3, §7, §10.2, §11.1, §11.5, §12, §12.2 and §13. Every new
+statement is (proposed), (lab), (guide) or (provisional). New open decisions are Q57 to Q66; new tests are T43 to
+T56. The conflict between SEC-04 ("no network") and §C3.5 ("no network after the clone step") is
+recorded as Q57 and is not resolved by this document. No container, image or host has been built or
+run.
+
+**Revision note (provisional assumptions).** So that design work does not stall on open guide
+decisions, each of Q57 to Q66 now has a (provisional) working assumption in §12.3. The design follows
+the more conservative option wherever a choice exists. None of these assumptions is a guide decision.
+Each stays open until the guide answers. No security control has been tested on a real host.
 
 ## 1. Purpose and scope
 
@@ -96,9 +112,11 @@ flowchart LR
  WRITE -- "preconditions, save draft grade readyforrelease, read-back (B4)" --> MOODLE
  DRAFT -- "model.run (B5)<br/>libs/model_interface" --> AI["AI provider<br/>local or hosted"]
  subgraph SBH["Sandbox host (dedicated VM): no other LearnOps service (SEC-04)"]
-  SBW["sandbox worker + reaper"] -- "local Docker socket" --> C1["container per submission"]
+  SBW["sandbox worker + reaper"] -- "local Docker socket" --> CA["stage A: clone container<br/>(no learner code runs)"]
+  SBW -- "local Docker socket" --> CB["stage B: run container<br/>network none"]
+  CA -- "per-job work volume" --> CB
  end
- C1 -- "clone step only: allow-listed git hosts" --> GIT["git hosts"]
+ CA -- "clone only: allow-listed git hosts" --> GIT["git hosts"]
 ```
 
 Parts (PRD OPS-10: heavy work never runs inside a web request):
@@ -138,7 +156,7 @@ the local Docker socket, so no Docker API is exposed on any network (Q22, Q23). 
 ### 3.1 Similarity method (FR-G-04) (proposed, guide)
 
 This is an engineering choice, not a claim from the literature; the §12.1 entries stay unverified.
-- **Code fingerprints** are computed inside the sandbox, after the network is cut and before any `command:` check. Only fingerprints are stored; no learner repository is cloned or parsed outside a sandbox.
+- **Code fingerprints** are computed inside the sandbox, in the run stage (created with no network, §9.2.2) and before any `command:` check. Only fingerprints are stored; no learner repository is cloned or parsed outside a sandbox.
 - **Files considered:** source and text files only. Excluded: `.git`, vendored or generated directories, lock files, binaries, files above a size cap, and files whose content hash is in the course's starter-code list (carried in the check config, §4.3).
 - **Tokenization** is language-agnostic in v1: strip comments by simple per-extension rules; replace identifiers, string literals and numbers by placeholders; keep keywords and operators by a fixed set.
 - **Fingerprints:** k-gram hashes selected by a windowed minimum rule (winnowing style); `k` and window are configuration and recorded as `method_version`. Each stores hash, file path and line number so the UI shows matched file and line ranges without storing source.
@@ -325,7 +343,7 @@ shared.audit_log, shared.course_link    -- owned by Module 2, used not changed (
 
 - **What is stored.** Check evidence (size-capped, marked `learner_originated`), capped excerpts (§9.5), fingerprints and references. No submission files and no cloned repositories are stored. Cloned repositories exist only inside the sandbox and are destroyed with it. A retention job removes expired excerpts, fingerprints and check evidence after `GRADING_RETENTION_DAYS` (the guide sets the value, Q34).
 - **Migrations.** Versioned, each with an up and a down step (PRD OPS-07), each run in one transaction. The down step drops only what its up step created. A migration touches only objects in the grading schema; the shared schema is owned by Module 2 (`course_link`, `audit_log`) and Module 3 (`model_calls`). One migration tool for the whole repository, chosen by Module 2 (Q36). Shared migrations run before module migrations.
-- **Roles.** Application role: read and write on its own schema, read-only on `shared.course_link`, insert-only on `shared.audit_log` and `shared.model_calls`. Sandbox-host role (§9.2): select and update on `check` jobs, insert on `submission_check`, `similarity_fingerprint` and README rows of `submission_excerpt`; nothing else.
+- **Roles.** Application role: read and write on its own schema, read-only on `shared.course_link`, insert-only on `shared.audit_log` and `shared.model_calls`. Sandbox-host role (§9.2.6, revised, Q62): no table grants at all; `EXECUTE` only on a small set of `SECURITY DEFINER` functions that claim a `check` job, extend its lease, and submit its results (`submission_check`, `similarity_fingerprint` and README rows of `submission_excerpt`) under the job's lease token; nothing else.
 - **Media paths.** Not used by this module. Any stored file path is relative (PRD C-08).
 
 ### 5.4 Submission version and state machine
@@ -397,8 +415,12 @@ Variables are listed here; adding them to `.env.example` is a separate step by t
 | `GRADING_JOB_LEASE_S`, `GRADING_JOB_MAX_ATTEMPTS`, `GRADING_WORKER_CONCURRENCY` | 120, 5, 2 | to add (proposed) |
 | `GRADING_CHECKS_DIR`, `GRADING_CLONE_ALLOWED_HOSTS` | placeholder | to add (proposed) |
 | `GRADING_SANDBOX_DATABASE_URL` (restricted role) | placeholder | to add (proposed) |
-| `GRADING_SANDBOX_CPUS`, `GRADING_SANDBOX_MEMORY`, `GRADING_SANDBOX_TIMEOUT_S` | 2, 2g, 600 (PRD §C3.5) | to add (proposed) |
+| `GRADING_SANDBOX_CPUS`, `GRADING_SANDBOX_MEMORY`, `GRADING_SANDBOX_TIMEOUT_S` | 2, 2g, 600 (PRD §C3.5; what the 600 s covers is Q58) | to add (proposed) |
 | `GRADING_SANDBOX_PIDS`, `GRADING_SANDBOX_WORKDIR_MB`, `GRADING_SANDBOX_OUTPUT_KB`, `GRADING_SANDBOX_MAX_CONCURRENT`, `GRADING_CHECK_TIMEOUT_S` | 256, 512, 64, 2, to be set | to add (proposed) |
+| `GRADING_SANDBOX_CLONE_TIMEOUT_S`, `GRADING_SANDBOX_CLONE_MAX_MB` | 120, 200 (part of the 600 s total, Q58) | to add (proposed) |
+| `GRADING_SANDBOX_NOFILE`, `GRADING_SANDBOX_TMPFS_MB`, `GRADING_SANDBOX_REAPER_GRACE_S` | 1024, 64, 120 | to add (proposed) |
+| `GRADING_SANDBOX_RUNTIME` (feature flag: `runc`; `runsc` only if Q61 approves it) | `runc` | to add (proposed) |
+| `GRADING_SANDBOX_IMAGE_DIGESTS` (path to the list of allowed check-image digests, §9.2.1; digests are not secrets) | placeholder path | to add (proposed; provisional, Q63) |
 | `GRADING_HTTP_OK_TIMEOUT_S` | 10 (PRD §C3.5) | to add (proposed) |
 | `GRADING_HTTP_OK_MAX_REDIRECTS`, `GRADING_HTTP_OK_MAX_BYTES` | 3, to be set | to add (proposed) |
 | `GRADING_EXCERPT_MAX_CHARS_REPORT`, `GRADING_EXCERPT_MAX_CHARS_README` | 8000, 4000 | to add (proposed) |
@@ -423,9 +445,11 @@ Every decision here is (proposed). Each will be recorded in `docs/decisions/` wh
 | Decision | Alternatives considered | Why this one | Record |
 |---|---|---|---|
 | Job queue in PostgreSQL (SKIP LOCKED, lease, heartbeat) | Redis + a task library; a separate broker | The stack is fixed (PRD §A10); one less service to run and secure | `NNNN-grading-jobqueue.md` |
-| One container per submission: clone with network, then detach the network before any check runs | Separate clone container, then a run container | Reads PRD §C3.5 literally ("one container per submission; no network after the clone step"); the guide confirms the reading (Q4) | `NNNN-sandbox-lifecycle.md` |
+| Two stages per submission (revised): a clone container that runs no learner code, then a run container created with network mode `none`; both serve only that one submission (§9.2.2) | One container: clone with network, then detach the network before any check runs (the earlier proposal) | Learner code never runs in a container that was ever attached to a network; no detach step that can fail or race; satisfies §C3.5 for the run stage. Whether a clone stage with network is allowed under SEC-04 is not decided here (Q57); the reading of "one container per submission" needs the guide (Q4, Q66) | `NNNN-sandbox-lifecycle.md` |
 | Sandbox worker runs on the sandbox host with the local Docker socket | Remote Docker API with mutual TLS | No network-exposed Docker API at all; fewer moving parts (Q22) | `NNNN-sandbox-host.md` |
-| Docker with hardening options (§9.2), independent review before use | gVisor, Firecracker or another stronger runtime | No new tool without the guide's approval (root `CLAUDE.md` §8); stronger runtimes stay an option (Q16) | `NNNN-sandbox-runtime.md` |
+| Docker with hardening options (§9.2.3) inside a dedicated VM, independent review before use; evaluate gVisor for the run stage behind a feature flag (§9.2.9) | gVisor, Kata Containers or Firecracker as the only option now | No new tool without the guide's approval (root `CLAUDE.md` §8); Docker alone is not treated as a complete isolation boundary, so the VM is required whatever the runtime; the evaluation itself needs approval (Q16, Q61) | `NNNN-sandbox-runtime.md` |
+| Sandbox host reaches the database only through `SECURITY DEFINER` functions with a lease token | Table grants to a restricted role (the earlier proposal) | A compromised sandbox host can then touch only the jobs it holds a lease on, and cannot read or change other tables (Q62) | `NNNN-sandbox-host.md` |
+| Per-job work volume with a fixed size and inode cap (§9.2.5) | tmpfs (counts against the 2 GB memory limit); a container storage quota (needs a specific filesystem) | Hard size and inode limits that do not reduce the memory the learner's code gets (Q59) | `NNNN-sandbox-lifecycle.md` |
 | Clone egress limited to allow-listed git hosts by destination IP at the host firewall | Checking the URL in the worker only | A URL check can be bypassed by redirects and DNS; the firewall cannot | `NNNN-sandbox-egress.md` |
 | Overall grade = sum computed in code | Ask the model for a total | FR-G-03 defines the total as the sum; code cannot get arithmetic wrong | in this document |
 | Score each criterion with evidence attached; criteria with no machine check get a judgement-only draft | One holistic score per submission | Module rule 4: no score without evidence | in this document |
@@ -471,27 +495,210 @@ Versions: latest release on PyPI on 2026-10-25. Licences: read from PyPI metadat
 
 ### 9.2 Sandbox for untrusted learner code
 
-Required by the PRD (PRD §C3.5, SEC-04, module rule 2): one container per submission; no network after the clone step; non-root; 2 CPU, 2 GB RAM, 10-minute limit; read-only base image; destroyed after the run; on a host with no other LearnOps service. Learner code is never run anywhere else, including a developer's own machine. Docker alone is not accepted as proof of isolation: the design below is reviewed by someone outside the module before any learner code runs on any machine (Q30).
+**Required by the PRD** (these are requirements, not design choices; PRD §C3.5, SEC-04, §C3.7, App-D, module rule 2):
 
-**Host** (proposed; guide, lab):
-- A dedicated disposable VM that runs no other LearnOps service, holds no LearnOps secrets other than its restricted database credential, and has a deny-by-default firewall (Q22, Q23).
-- The sandbox worker runs on that host and uses the local Docker socket. The Docker API is never exposed to a network, the web service, or any container.
-- The worker reaches only the database, through a restricted role (§5.3). Check jobs carry everything the worker needs (repository URL, resolved commands, image key, limits), so the sandbox host reads no files from the tools host.
-- Outbound network from the host is only what the clone step allows.
+| Requirement | Source |
+|---|---|
+| Untrusted learner code runs only in an isolated sandbox, never anywhere else (including a developer's own machine) | (PRD) SEC-04; module rule 2 |
+| One container per submission | (PRD) §C3.5 |
+| No network after the clone step | (PRD) §C3.5 |
+| No network (SEC-04 states no clone exception) | (PRD) SEC-04; see the conflict note below |
+| Non-root | (PRD) SEC-04, §C3.5 |
+| 2 CPU, 2 GB RAM, 10-minute limit | (PRD) §C3.5; SEC-04 says "CPU/memory/time limits" |
+| Read-only base image | (PRD) SEC-04, §C3.5. Required, not "where feasible" |
+| Destroyed after each run | (PRD) SEC-04, §C3.5 |
+| On a host that runs no other LearnOps service | (PRD) SEC-04, §C3.5 |
+| Runs in a worker fed by the job queue, never in a web request | (PRD) OPS-10 |
+| A malicious test repository (network attempt, fork bomb, write outside the work directory) is contained **and reported** | (PRD) §C3.7, App-D |
 
-**Steps** (proposed):
-1. **Create.** From a pinned check image: read-only root filesystem; non-root user; all Linux capabilities dropped and no-new-privileges set; the default seccomp profile; CPU limited to 2 and memory to 2 GB with swap equal to memory; a process-count limit (stops fork bombs); one size-capped writable work directory; a stdout cap; labels with job id and creation time.
-2. **Clone.** The only step with network access. The container is attached to a dedicated clone network. The host firewall allows egress from that network only to the configured git hosts (`GRADING_CLONE_ALLOWED_HOSTS`) over HTTPS and denies loopback, private, link-local and cloud-metadata ranges. Enforcement is by destination IP at the firewall, so DNS tricks and redirects cannot reach internal addresses. The image's fixed helper clones with Dulwich (§8), not the git executable: it accepts only `https://` URLs (no ssh, `git://`, `file://` or local paths), calls `clone` with `depth=1` and `recurse_submodules=False`, a clean environment and no user Git config; Dulwich's `clone` runs no hooks (read in its source); no LFS or filter drivers; size and time caps (lab: confirm redirect and filter behaviour against the pinned version). A host not on the allow-list fails `repo_clone` with reason `host_not_allowed`.
-3. **Cut the network.** After the clone the container is detached from every network. The worker verifies this from the host side (the container's network list is empty) and runs a probe that must fail. If the cut or the verification fails, the run stops with `error` and the container is destroyed. The in-container runner is not trusted to report this.
-4. **Fingerprints and file checks.** Compute similarity fingerprints (§3.1), then run `repo_file`, `readme_sections` and `word_count` with a fixed read-only helper from the image; paths are resolved and checked so they cannot leave the work directory, including through symlinks. README text for excerpts is read here (§9.5).
-5. **`command:<name>` checks last,** each as a separate exec with its own time budget. Only a command defined in the course's check config runs, never a command taken from the repository. Pass or fail comes from the exit code observed by the worker on the host, never from text the command prints.
-6. **Kill.** A hard kill at 10 minutes wall time, plus a container-side timeout, plus the reaper below.
-7. **Destroy.** The container and its work directory are removed after the run, on success, failure or timeout.
-8. **Report.** Results come back through the worker's exec output, not through a file in the learner-writable directory, as short size-capped evidence marked `learner_originated`. Learner output is never logged in full. A blocked action (network attempt, process limit hit, write refused, timeout) is recorded as a check result, so it is reported (PRD §C3.7, criterion 4).
+**PRD conflict, not resolved here (Q57).** SEC-04 says "no network"; §C3.5 says "no network after the
+clone step". The two-stage design below keeps the stage that runs learner code without any network in
+both readings, but it still has a clone stage with network. Whether that clone stage is allowed under
+SEC-04 is for the guide. If the guide reads SEC-04 strictly, the fallback is that the repository
+arrives as an archive file through Moodle instead of a URL, which changes the submission-content rule
+(§4.3a, Q32) and the `repo_clone` check; this document does not adopt that fallback.
 
-**Limits and housekeeping** (proposed; starting values tuned in the lab): process limit, work-directory size and output cap (§6.3); a per-check time budget in addition to the 10-minute total; a maximum number of concurrent containers; a reaper that removes any labelled container older than the limit plus a grace period and any work directory without a live container.
+**Working assumption while Q57 is open** (provisional, §12.3). Learner code never runs in a container
+that has, or ever had, a network. That meets both readings for every stage that runs learner code. A
+clone stage with network is kept, but only in a separate container that runs no learner code. Its
+egress goes only to the lab git server, by IP, over HTTPS, and it is destroyed before stage B starts.
+Stage B takes its input only from the work volume and does not depend on how the repository got
+there. If the guide reads SEC-04 strictly, only stage A is replaced by an archive import, and the rest
+of §9.2 stays the same. The conflict itself is still open and is listed for a PRD amendment (§12.2).
 
-A dependency policy applies to `command:` checks: no package can be installed after the network is cut, so check images are pre-baked per course with dependencies already present, chosen by the `image` key in the check config; no package mirror in v1 (Q27). The PRD's example `command:setup` ("Repo builds") must be read with this policy (§12.2).
+**Isolation boundary.** Docker is not treated as a complete isolation boundary: containers share the
+host kernel (§9.2.9). The design layers controls: a dedicated VM (the main boundary), a hardened
+container runtime configuration, network denial, resource limits, and a restricted path back to the
+database. The whole of §9.2 is reviewed by someone outside the module before any learner code,
+including the malicious test repositories, runs on any machine (Q30, Q64). Stronger runtimes are
+evaluated only with the guide's approval (Q16, Q61).
+
+#### 9.2.1 Host (proposed; guide, lab)
+
+- A dedicated disposable VM that runs no other LearnOps service, holds no LearnOps secrets other than its restricted database credential, and has a deny-by-default firewall (Q22, Q23). Swap is off, so learner data in memory is never written to swap.
+- The sandbox worker runs on that host and uses the local Docker socket. The Docker API is never exposed to a network, the web service, or any container; the socket is never mounted into a container.
+- The worker reaches only the database, through restricted functions (§9.2.6). Check jobs carry everything the worker needs (repository URL, resolved commands, image key, limits), so the sandbox host reads no files from the tools host.
+- Outbound network from the host is only what the clone stage needs (§9.2.4) and the database port on the tools host.
+- **Docker daemon settings** (proposed, lab): cgroup v2 (needed for reliable memory and process accounting); user-namespace remapping, so UID 0 in a container is not UID 0 on the host (provisional while Q60 is open, §12.3; rootless Docker is the alternative); inter-container communication off (`icc: false`); `no-new-privileges` as the daemon default; IPv6 off on the sandbox networks; API on the Unix socket only, readable only by the worker's user; kernel, Docker, containerd and runc kept patched on a stated schedule (Q63).
+- **Images** are built outside the sandbox host and loaded by digest (Q63). The worker refuses an image whose digest is not in the configured list. Nothing is pulled from a registry while a job runs.
+
+#### 9.2.2 Lifecycle of one submission (proposed)
+
+Both stages serve only one submission and are never reused (the reading of "one container per
+submission" is Q4 and Q66).
+
+1. **Claim.** The worker claims a `check` job and receives a lease token (§9.2.6). It checks the repository URL: `https://` only; no user name or password in the URL (rejected as `url_not_allowed`); host on the allow-list (otherwise `host_not_allowed`). The total deadline (§9.2.5) starts here.
+2. **Create the work volume.** One per job, with a fixed size and inode cap (§9.2.5), labelled with job id and creation time, mounted `nosuid,nodev`. Under the Q59 working assumption (§12.3), a small fixed host helper creates, mounts, unmounts and deletes the volume. It is part of the reviewed image set, takes only a job id and a size from the worker, never reads volume contents, and is the only part of the worker path that needs elevated rights on the VM (provisional).
+3. **Stage A: clone.** A container from the pinned image with the settings in §9.2.3, attached only to the dedicated clone network (§9.2.4), with the work volume at `/work`. **No learner code runs in stage A.** Only the image's fixed helper runs. It clones with Dulwich (§8), not the git executable: `https://` only (no ssh, `git://`, `file://` or local paths), `depth=1`, `recurse_submodules=False`, a clean environment and no user Git config. Dulwich's `clone` runs no hooks (read in its source; recheck at the pinned version). No LFS or filter drivers. A byte cap (`GRADING_SANDBOX_CLONE_MAX_MB`) and a time cap (`GRADING_SANDBOX_CLONE_TIMEOUT_S`). (lab) Confirm redirect and filter behaviour against the pinned version. The worker records the helper's exit code and then removes stage A. Stage A is never reused for checks.
+4. **Stage B: create without network.** A new container from the same pinned image with network mode `none` set at creation, which the container cannot change. The work volume is mounted. Before anything runs, the worker confirms from the host that the network mode is `none` and the container has no network attached. A fixed helper then runs a probe to the lab git server address that must fail. If either check fails, the run stops with `sandbox_isolation_failed`, stage B is destroyed, and no learner code has run. The in-container helper is not trusted to report this; the host-side inspection decides.
+5. **Fixed helpers first.** Still before any learner code: compute similarity fingerprints (§3.1), run `repo_file`, `readme_sections` and `word_count` with a fixed read-only helper, and read the README text for excerpts (§9.5). Paths are resolved and confined to the work volume, including through symlinks. Because no learner code has run yet, these results cannot be tampered with by the submission.
+6. **`command:<name>` checks last,** each as a separate exec with its own time budget (§9.2.5). Only a command defined in the course's check config runs, as an `argv` list, never a command taken from the repository. Pass or fail comes from the exit code the worker observes on the host, never from text the command prints. After each command check, a fixed helper kills every remaining process of the learner user, so a background process cannot survive into the next check. Files changed by one command check stay visible to the next one for the same submission (residual risk, §9.2.9).
+7. **Collect.** Results come back through the worker's exec stream on the host, never through a file in the learner-writable volume. Output is capped per check (§9.2.5) and stored as short evidence marked `learner_originated`.
+8. **Destroy.** Stage B is removed (SIGKILL first if anything is still running), the work volume is unmounted and deleted, and the worker confirms both are gone. This happens on success, failure, timeout and cancellation.
+9. **Submit.** The worker submits all result rows in one call with the lease token (§9.2.6) and releases the job.
+
+#### 9.2.3 Container settings (proposed; stage A and stage B unless noted)
+
+| Setting | Value | Why |
+|---|---|---|
+| Image | Pinned by digest from the configured list; non-root `USER`; no setuid or setgid binaries; no compilers or package managers beyond what the course's checks need; no secrets | (PRD) read-only base image; smaller attack surface |
+| Root filesystem | `--read-only` | (PRD) read-only base image |
+| User | A fixed non-root UID and GID with no match on the host (with user-namespace remapping, Q60) | (PRD) non-root |
+| Capabilities | `--cap-drop ALL`; nothing added | No raw sockets, no mounts, no ptrace of other users |
+| Privileges | `--security-opt no-new-privileges`; never `--privileged`; no devices | Blocks setuid escalation |
+| Syscall and LSM profiles | Docker's default seccomp profile and the AppArmor `docker-default` profile (lab: confirm the AppArmor profile on the VM's distribution); a tighter seccomp profile is optional (Q61) | Reduces reachable kernel surface; does not remove it |
+| CPU and memory | `--cpus 2`, `--memory 2g`, `--memory-swap 2g` (no swap beyond memory) | (PRD) 2 CPU, 2 GB |
+| Processes | `--pids-limit` (`GRADING_SANDBOX_PIDS`), `--init` so orphans are reaped | Fork bombs; zombie processes |
+| File limits | `--ulimit nofile`, `--ulimit fsize` (no larger than the volume), `--ulimit core=0` | Descriptor exhaustion; no core dumps with learner data |
+| Writable paths | Work volume at `/work` (`nosuid,nodev`); `/tmp` as tmpfs `rw,nosuid,nodev,noexec`, size `GRADING_SANDBOX_TMPFS_MB` (counts against memory) | Writes only where intended |
+| IPC and namespaces | `--ipc private`; default PID, mount, UTS and network namespaces; never host namespaces | No sharing with the host or other containers |
+| Network | Stage A: dedicated clone network only. Stage B: `--network none` | §9.2.4 |
+| Logging | `--log-driver none` | Otherwise the daemon keeps learner stdout in log files on the host disk |
+| Restart | `--restart no` | A killed container must stay dead |
+| Environment | Cleared; only fixed values (for example `PATH`, `HOME=/work/home`, `LANG`). No database URL, token or key | No secrets reach a container |
+| Mounts | Only the job's work volume. Never the Docker socket, host paths, `/proc` or `/sys` overrides | No path out of the container |
+| Labels | `learnops.sandbox=1`, job id, stage, creation time | Reaper and reconciliation |
+| Runtime | `GRADING_SANDBOX_RUNTIME` (`runc` now; `runsc` only if Q61 approves it) | Feature flag for a stronger runtime |
+
+#### 9.2.4 Network (proposed; lab)
+
+- **Stage B has no network** from creation (network mode `none`; loopback only inside the container).
+- **Stage A** uses one dedicated Docker bridge network for clones, with inter-container traffic off and IPv6 off.
+- **Host firewall** (rules in the Docker-reserved filter chain so Docker does not overwrite them; lab): from the clone network, allow only TCP 443 to the IP addresses of the allow-listed git hosts (`GRADING_CLONE_ALLOWED_HOSTS`; the lab git server only in v1, Q28), and DNS only to the lab resolver; deny loopback, private ranges, link-local ranges, the cloud-metadata address and everything else. Enforcement is by destination IP, so a redirect or a DNS answer pointing to an internal address cannot reach it. Allow-listing by IP works for a fixed lab git server; a public git host with changing addresses would need a different design (guide, Q28).
+- **Sandbox VM firewall** (lab): inbound SSH only from an administrator address; outbound only to the database port on the tools host, the allowed git hosts, the lab resolver, and the patch source during maintenance.
+- `grading sandbox --check` re-runs the probes (internal address, metadata address, IPv6, a non-allowed host) and fails if any of them connects.
+
+#### 9.2.5 Limits and timeout behaviour (proposed; starting values tuned in the lab)
+
+| Limit | Value | Enforced by | When hit |
+|---|---|---|---|
+| CPU | 2 (PRD) | cgroup | Code runs slower; time limits still apply |
+| Memory | 2 GB, no extra swap (PRD) | cgroup | Container or process killed by the kernel; the worker reads the out-of-memory flag from the host: `error` / `memory_limit` |
+| Processes | `GRADING_SANDBOX_PIDS` (256) | cgroup | New processes refused; recorded as `pids_limit` when the host-side cgroup counter shows the limit was reached (lab: confirm the counter is readable) |
+| Work volume | `GRADING_SANDBOX_WORKDIR_MB` (512), fixed inode count | Per-job volume (provisional, Q59, §12.3) | Writes fail; `disk_limit` if the volume is full at the end of the check |
+| `/tmp` | `GRADING_SANDBOX_TMPFS_MB` (64), counted against memory | tmpfs | Writes fail |
+| Open files | `GRADING_SANDBOX_NOFILE` (1024) | ulimit | Calls fail inside the container |
+| Output per check | `GRADING_SANDBOX_OUTPUT_KB` (64) | Worker reads the stream and discards the rest | Evidence kept up to the cap, marked `output_truncated`; worker memory stays bounded |
+| Clone | `GRADING_SANDBOX_CLONE_TIMEOUT_S` (120), `GRADING_SANDBOX_CLONE_MAX_MB` (200) | Helper caps, and the host deadline as a backstop | `clone_timeout` / `repo_too_large` |
+| Per check | `GRADING_CHECK_TIMEOUT_S` | Host deadline | Learner processes killed; `error` / `check_timeout`; later checks continue if the total budget allows |
+| Total | `GRADING_SANDBOX_TIMEOUT_S` (600, the PRD's 10 minutes) | Host deadline | SIGKILL; remaining checks `error` / `sandbox_timeout` |
+| Concurrent containers | `GRADING_SANDBOX_MAX_CONCURRENT` (2) | Worker | Further jobs wait in the queue |
+
+**Timeout semantics** (proposed; provisional while Q58 is open, §12.3). The PRD does not say what the 10 minutes covers. Proposal: wall
+time for the whole submission, from claim (step 1) to the end of stage B, clone included. The worker
+enforces it with a monotonic clock on the host. A `timeout` inside the container is used only as a
+convenience and is not trusted. When the total runs out: `docker kill` with SIGKILL (a process cannot
+catch it), then forced removal. Results of checks that finished are kept; the rest are `error` with
+`sandbox_timeout`; nothing counts as a pass. The reaper (§9.2.7) removes anything older than the total
+plus `GRADING_SANDBOX_REAPER_GRACE_S`. If the Docker daemon stops responding, the worker stops claiming
+jobs, its heartbeat shows the problem on `/health`, the lease expires and the job returns to the queue
+(§5.3).
+
+**Host sizing** (lab): the VM needs at least `GRADING_SANDBOX_MAX_CONCURRENT` × (2 CPU, 2 GB, work
+volume size) plus room for the worker and the operating system.
+
+#### 9.2.6 Result collection and database access (proposed; provisional while Q62 is open, §12.3)
+
+- The sandbox-host database role has no table grants. It can only call `SECURITY DEFINER` functions in the grading schema: claim a `check` job (returns the payload and a random lease token), extend the lease, and submit results.
+- The submit function checks the lease token and that the job is still `running`; accepts only the check keys listed in that job's payload; limits row count and evidence size; and writes `submission_check`, `similarity_fingerprint` and README `submission_excerpt` rows in one transaction. Any mismatch is refused and recorded in `shared.audit_log` under `system:sandbox`.
+- The functions are created and dropped by the grading migrations (§5.3); their tests are T54.
+- Evidence is learner-controlled text. It is size-capped, marked `learner_originated`, HTML-escaped wherever shown (§9.5) and never treated as instructions.
+
+#### 9.2.7 Cleanup, reaper and recovery (proposed)
+
+- **Normal end:** both stages removed, the volume unmounted and deleted, and removal confirmed (step 8). The worker does not rely on Docker's auto-remove.
+- **Processes:** killing the container kills every process in its cgroup. Between command checks, learner processes are killed (step 6).
+- **Reaper:** runs periodically and once on `grading sandbox`. It removes any container labelled `learnops.sandbox=1` older than the total limit plus the grace period, and any work volume with no live container.
+- **Startup reconciliation:** when the worker starts, it removes every labelled container and volume left from before, because none of them can belong to a live job of this worker.
+- **Worker killed mid-run:** the reaper and reconciliation remove what was left; the lease expires and the job is retried up to `max_attempts` (§5.3). `container_orphaned` is recorded.
+- **Daemon restart mid-run:** containers are not restarted (`--restart no`); the job is retried as above.
+- **Cancellation** (§6.1): the worker stops the job at the next step and destroys both stages.
+
+#### 9.2.8 Threat model (proposed)
+
+The attacker controls the repository content and the text of the submission. Assets: the sandbox VM,
+the tools host and database, other learners' submissions and results, the lab network, and the
+correctness of check results.
+
+| Threat | Main mitigations | What remains |
+|---|---|---|
+| Network access from learner code (exfiltration, scanning the lab, reaching metadata) | Stage B has no network (§9.2.4); the VM firewall | None known for stage B; covered by T28, T55 |
+| Clone stage reaching internal hosts (redirects, DNS answers, internal URL) | No learner code in stage A; https-only URL rules; firewall allow-list by IP; IPv6 off | Bugs in the clone helper or Dulwich, contained in stage A |
+| Malicious repository content during clone (hooks, submodules, LFS, filters, very large or compressed-object bombs) | Dulwich with no hooks or submodules; no filters; byte and time caps; capped volume | Parser bugs (§9.2.9) |
+| Escape to the sandbox VM (kernel or runtime bug) | Non-root, user-namespace remapping, all capabilities dropped, no-new-privileges, seccomp, AppArmor, no socket or devices, patched kernel and runtime; the VM boundary | Shared-kernel risk (§9.2.9) |
+| Abuse of the host volume helper (provisional, Q59) | Fixed arguments (job id, size) validated by the helper; never reads or runs volume contents; filesystem image mounted `nosuid,nodev`; no container can call it | A filesystem-driver bug triggered by a crafted image, reachable only after the learner has written to it; contained by the VM |
+| Resource exhaustion (CPU, memory, fork bomb, disk, inodes, output, time) | §9.2.5 limits; host-side deadline; concurrency cap | A malicious submission can still use its full 10 minutes and slow grading for others |
+| Writing outside the work directory, or path and symlink tricks in file checks | Read-only root; only the volume writable; path resolution and confinement in the helper | — |
+| Tampering with check results | Fixed helpers run before learner code; pass or fail from exit codes on the host; results never read from the volume | A command check can affect later command checks of the same submission (own grade only) |
+| Forged results after an escape | Restricted database functions with lease tokens (§9.2.6); mentor review of every draft (C-09) | Forged results for jobs the compromised host holds |
+| Learner data left behind | Volume deleted; logging driver off; core dumps off; swap off | Data in VM memory until overwritten |
+| Learner text attacking the review UI or the model | Escaping, CSP, code-side validation (§9.5) | See §9.5 |
+| Secrets exposed | No secrets in containers; only the restricted database credential on the VM | That credential if the VM is compromised (§9.2.9) |
+
+#### 9.2.9 Residual risks and stronger isolation (proposed; guide)
+
+These risks remain after every control above. They are listed so the independent reviewer (Q30, Q64)
+and the guide can accept them or ask for more.
+- **Shared kernel.** All containers on the VM share one kernel. A kernel bug reachable through the syscalls the seccomp profile allows can lead to a container escape. The VM is the boundary that then protects the rest of the lab.
+- **Runtime bugs.** Container runtimes (runc, containerd, Docker) have had container-escape vulnerabilities in the past. Specific advisories are to be found and verified by the reviewer before being cited here. Patching (Q63) reduces this risk but does not remove it.
+- **The database credential on the VM.** A full escape gains the restricted function access (§9.2.6). It cannot read or change other tables, but it can forge results for jobs it claims.
+- **Firewall drift.** A later rule change can open egress. `grading sandbox --check` probes (§9.2.4) detect this only when they are run.
+- **Clone-helper and Dulwich bugs.** Contained in stage A, which has the same container settings.
+- **Side channels** between containers running at the same time (timing, shared caches). Low impact for this use; `GRADING_SANDBOX_MAX_CONCURRENT=1` removes it at a throughput cost.
+- **Same-submission interference** between command checks (step 6).
+- **Detection limits.** With no network, a network attempt fails inside the learner's program and is visible only as that check's result and evidence; the host does not see it separately. Whether this counts as "reported" (§C3.7) is Q65.
+- **Throughput denial.** A submission that uses its full limits delays the queue.
+
+**Stronger isolation to evaluate** (proposed; needs the guide's approval as a new tool, Q16, Q61):
+- **gVisor** (`runsc`), an OCI runtime that handles most system calls in user space, so learner code reaches far less of the host kernel. It plugs into Docker as a runtime, so the stack stays Docker. Licence reported as Apache-2.0 (verify at the pinned version, C-11). Costs to measure: compatibility with the course check images, and speed. Proposal: an evaluation that runs T27 to T55 under `runsc` for stage B behind `GRADING_SANDBOX_RUNTIME` (T56), recorded in `NNNN-sandbox-runtime.md`.
+- **Kata Containers or Firecracker** (a small virtual machine per container): stronger, but they need nested virtualisation on the lab VM (lab). Noted, not proposed for v1.
+- Whatever the runtime, the dedicated VM stays required.
+
+#### 9.2.10 Logging, secrets and learner data (proposed)
+
+- Worker logs are structured JSON (PRD OPS-04) with job id, check key, stage, result, reason code and timings. Never logged: learner output, file contents, file names from the repository, excerpts, or the full repository URL (host name only).
+- Container output is never written to the host disk by Docker (`--log-driver none`). The worker keeps only capped evidence, in memory until submitted.
+- No secret enters a container. The only secret on the VM is the restricted database credential, held by the worker process, which runs outside every container's PID namespace.
+- The cloned repository exists only in the per-job volume and is deleted with it. No submission file or repository is stored elsewhere (§5.3). The data-map row for "cloned repository: sandbox volume only, deleted after the run" is added when the feature is built (§9.4).
+
+#### 9.2.11 Operational dependencies (guide, lab)
+
+| Dependency | Needed for | Owner or decision |
+|---|---|---|
+| Dedicated sandbox VM (A11 amendment, §12.2) | SEC-04 host rule | Guide, lab administrator (Q23, Q63) |
+| Firewall rules on the VM and for the clone network | §9.2.4 | Lab administrator; reviewed in Q64 |
+| Lab git server with a fixed address | Clone allow-list | Guide (Q28) |
+| Database port on the tools host reachable only from the VM | §9.2.6 | Lab administrator |
+| Image build and digest list, built outside the VM | §9.2.1 | Owner and guide (Q27, Q63) |
+| Kernel with cgroup v2; Docker with user-namespace remapping or rootless mode | §9.2.1 | Lab (Q60) |
+| Patch schedule for kernel and runtime; monitoring of worker heartbeat | §9.2.9 | Guide, lab administrator (Q63) |
+| Named independent reviewer and checklist | Gate before any learner code runs | Guide (Q30, Q64) |
+
+#### 9.2.12 Dependency policy for `command:` checks (proposed)
+
+No package can be installed in stage B, which has no network, so check images are pre-baked per course
+with dependencies already present, chosen by the `image` key in the check config; no package mirror
+in v1 (Q27). The PRD's example `command:setup` ("Repo builds") must be read with this policy (§12.2).
 
 ### 9.3 http_ok (runs outside the sandbox)
 
@@ -515,6 +722,7 @@ With the hosted provider, these items leave the lab. They are listed in the data
 | README and report excerpts (capped) | `grading.submission_excerpt` | model provider (scrubbed) | `GRADING_RETENTION_DAYS` | Evidence and judgement criteria |
 | Check results and evidence | `grading.submission_check` | model provider (short evidence) | `GRADING_RETENTION_DAYS` | Draft and review |
 | Similarity fingerprints and flags | `grading.similarity_*` | not sent | `GRADING_RETENTION_DAYS` | Similarity flags |
+| Cloned learner repository | Per-job sandbox work volume on the sandbox VM only (§9.2.2) | not sent | Deleted at the end of the run | Machine checks and fingerprints |
 | Drafts, approvals, write attempts | `grading.draft`, `grading.approval`, `write_attempt` | Moodle (approved grade and feedback only) | per project retention | Review, audit, revert |
 | Model call metadata | `shared.model_calls` | not sent | per project retention | Cost and audit; no content |
 
@@ -562,10 +770,13 @@ All strings live in one module file (PRD UI-07). Messages say what happened and 
 | `moodle_unreachable` | Moodle not responding (fetch, write, launch lookup) | Job retried with backoff to `max_attempts`, then `failed`; launch shows an error page and no half-created session | "Moodle is not responding. The job will retry; check again in a few minutes." |
 | `token_invalid`, `permission_denied`, `unexpected_response` | Token rejected; missing capability or enrolment; B4 response does not parse | Jobs stop with no retry storm; shown on the status page; response shape logged without content | "Moodle rejected the service token or the account cannot do this here. Ask your administrator." |
 | `field_missing` | Repository, demo or report label absent | That check `error`; judgement criteria still drafted | "Check could not run: the submission has no (field name)." |
-| `host_not_allowed`, `clone_failed`, `clone_timeout`, `repo_too_large` | Clone failures | `repo_clone` `fail` or `error` with the reason; other criteria drafted (PRD §C3.2, §C3.8) | "Check failed: repository not reachable." |
+| `host_not_allowed`, `url_not_allowed`, `clone_failed`, `clone_timeout`, `repo_too_large` | Clone failures (`url_not_allowed`: not `https://`, or the URL carries a user name or password) | `repo_clone` `fail` or `error` with the reason; other criteria drafted (PRD §C3.2, §C3.8) | "Check failed: repository not reachable." |
 | `check_timeout`, `command_not_configured` | A check exceeded its budget; marking table names a command missing from the check config | That check `error`; others continue | "A check could not run (out of time or not configured). See the detail page." |
 | `sandbox_unavailable` | Sandbox host or worker down | Check jobs wait; nothing runs elsewhere (module rule 2) | "Checks are paused: the sandbox is not available." |
-| `sandbox_isolation_failed` | Network cut could not be verified | Run stopped, container destroyed, check `error`, audit entry | "A check was stopped for safety. Ask your administrator." |
+| `sandbox_isolation_failed` | The host could not confirm that stage B has network mode `none`, or the probe connected (§9.2.2 step 4) | Run stopped before any learner code, container destroyed, check `error`, audit entry | "A check was stopped for safety. Ask your administrator." |
+| `sandbox_timeout` | The 10-minute total ran out (§9.2.5) | Container killed; finished checks kept; remaining checks `error`; never a pass | "Checks ran out of time. Finished checks are shown; the others need manual grading." |
+| `memory_limit`, `pids_limit`, `disk_limit` | The submission hit the memory, process or work-volume limit | That check `error` with the reason as evidence; container destroyed at the end; other criteria drafted | "A check stopped because the submission used too much memory, too many processes or too much disk." |
+| `output_truncated` | Check output exceeded `GRADING_SANDBOX_OUTPUT_KB` | Check result unchanged; evidence kept up to the cap and marked truncated | (flag on the evidence) "Output was cut; only the first part is shown." |
 | `container_orphaned` | Worker died mid-run | Reaper removes the container; lease expiry re-queues the job | internal; status page shows "retrying" |
 | `draft_invalid` | Structurally invalid model output after the retry | Draft set `unavailable` (PRD §B5.2, §C3.8) | "Draft unavailable, grade manually." |
 | `criterion_unavailable` | Code-side validation failed for one criterion | That criterion `unavailable`; others kept and visibly marked | "Draft unavailable for this criterion, grade it manually." |
@@ -602,7 +813,7 @@ Pass rules are stated; none has been met. Each runs on both Moodle 4.5 and 5.3 w
 | A1 | Draft agreement (G-5) | B8.4 test split; band definition in §11.2 | Within-one-band rate at least 80 %; interval and extra figures published |
 | A2 | Grading time (G-4) | B8.4 subset; timed protocol in §11.2 | Median reduction at least 50 % |
 | A3 | No early visibility | Role test in the Module 2 harness: after a write the test learner sees no grade; after release in Moodle the learner sees it; with workflow off the write is refused | As stated |
-| A4 | Malicious repositories contained | One test repo per attack in the PRD (network attempt, fork bomb, write outside the work dir) plus (proposed) memory exhaustion, infinite loop, very large output, symlink escape, git-hook payload, internal-URL clone, check tampering; run only on the reviewed sandbox host | Each attack blocked, the container gone, the host unchanged, a check result that reports it, no internal request reached any target |
+| A4 | Malicious repositories contained | One test repo per attack in the PRD (network attempt, fork bomb, write outside the work dir) plus (proposed) memory exhaustion, infinite loop, very large output, symlink escape, git-hook payload, internal-URL clone, check tampering, and the cases in T43 to T55; run only on the reviewed sandbox host, never in CI or on a developer machine (CI uses fakes) | Each attack blocked, both stages and the work volume gone, the host unchanged (no new files, processes, containers or log entries holding learner output), a check result that reports it ("reported" as defined provisionally in §12.3 Q65), no internal request reached any target |
 | A5 | Write safety | Fake-Moodle and lab tests | Stale, conflict, workflow-off, released, scale-mismatch and lost-response cases behave as §10.1 |
 | A6 | Data integrity | Concurrency and kill-and-retry tests | No duplicate drafts, writes or approvals; approvals append-only |
 | A7 | Comparison report (G-10) | B8.6, both providers | All three measures for both providers, with the fairness notes in §11.2 |
@@ -652,7 +863,8 @@ Planned tests, not yet written. Groups name the test ids; each id maps to one te
 - **Unit and contract:** T01 marking-table parser (samples, unknown check, duplicates, bad sums, Studio round trip); T02 submission-content parser (five fixtures, raw and after a Moodle round trip); T03 check-config schema; T04 B4 manifest equals client allow-list; T05 token redaction; T06 to T09 B5 registry, errors, retries, budget and size guards, fake providers; T10 draft validation (out-of-range, extra, missing, renamed, bad evidence, full marks despite a failed check; total is the sum); T33 http_ok address guard; T34 similarity calibration; T35 contract examples validate.
 - **Integration:** T11 migration up/down/up; T12 append-only approvals; T13 queue behaviour; T14 kill and retry at each step; T15 route authorization walk; T16 cross-course access (404); T20 fetch with faults; T21 write refusals; T22 lost write response; T23 double write click; T36 logging privacy; T37 audit coverage.
 - **End-to-end and lab (both Moodle versions):** T17 learner refusal; T18 CSRF and cookies; T19 XSS and CSP; T24 write and revert; T25 no early visibility; T26 resubmission during a job; T38 review flow on three profiles; T42 smoke tests.
-- **Security (sandbox host, after independent review):** T27 clone egress; T28 network cut; T29 resource attacks; T30 check tampering; T31 reaper and concurrency; T32 sandbox database role.
+- **Security (sandbox host, after independent review):** T27 clone egress; T28 network cut (now: stage B has no network, §9.2.2); T29 resource attacks; T30 check tampering; T31 reaper and concurrency; T32 sandbox database role.
+- **Security additions (proposed; sandbox host, after independent review; none written or run):** T43 IPv6 egress blocked from both stages; T44 private, loopback, link-local and metadata addresses unreachable from stage A, including through redirects and DNS answers; T45 image scan: no setuid or setgid binaries, no Docker socket, no devices, digest matches the list; T46 privileged actions refused in stage B (mount, write to `/proc/sys`, raw socket, ptrace of another user, `setuid`); T47 disk and inode exhaustion gives `disk_limit` and leaves the host unaffected; T48 clone attacks: very large or compressed-object bomb, submodules, LFS pointers, `.gitattributes` filters, ssh, `git://` and `file://` URLs, a URL with a user name or password, a redirect to an internal host; T49 a background process started by one command check does not survive into the next; T50 output flood gives `output_truncated` with bounded worker memory; T51 after a run no learner output exists on the host disk (Docker logs, volumes, core files); T52 worker killed and daemon restarted mid-run: reaper and reconciliation clean up, the job is retried, no orphan volume; T53 per-check and total timeouts: SIGKILL, finished results kept, `sandbox_timeout` on the rest; T54 sandbox database functions: wrong or expired lease token refused, check keys outside the job refused, no direct table access; T55 stage B network mode confirmed `none` from the host and the probe fails; T56 (only if Q61 approves the evaluation) T27 to T55 repeated under `runsc`.
 - **Measurement:** T39 agreement (A1); T40 timing study (A2); T41 model comparison (A7).
 
 Test data to produce: fake-Moodle recordings, malicious and tampering repositories, the similarity set, B8.4 splits with reference grades, the B8.6 rubric.
@@ -661,7 +873,7 @@ Test data to produce: fake-Moodle recordings, malicious and tampering repositori
 
 | # | Risk or question | Needs the lab? | Plan or owner |
 |---|---|---|---|
-| R1 | Sandbox escape (PRD App-D) | yes | SEC-04 controls (§9.2); malicious repository tests; independent review before any learner code runs (Q30) |
+| R1 | Sandbox escape (PRD App-D) | yes | SEC-04 controls (§9.2); dedicated VM as the main boundary; malicious repository tests; independent review before any learner code runs (Q30, Q64); residual risks listed in §9.2.9; stronger runtime evaluated only with approval (Q61) |
 | R2 | AI drafts wrong, e.g. too lenient (PRD App-D) | no | Draft-only (C-09); code-side validation (§4.3d); agreement, leniency share and wrong-answer rate measured (§11.2) |
 | R3 | Prompt injection in learner READMEs or reports | no | §9.5 |
 | R4 | Moodle web-services behaviour differs between 4.5 and 5.3 | yes | Lab verification list (§4.1); normalized models; harness runs on both sites |
@@ -673,7 +885,7 @@ Test data to produce: fake-Moodle recordings, malicious and tampering repositori
 | Q1 | B4 is a Markdown file (`contracts/CLAUDE.md`), but PRD §B.0 rule 1 asks for a JSON Schema and an example for every contract | no | **Decided** by the guide (PR #27): Markdown rules plus a small schema and one allow-list example, no verified flags (§4.1) |
 | Q2 | Where the sandbox host runs | yes | Guide; see Q22, Q23 |
 | Q3 | One service account per site (B4) but one token variable in `.env.example` | yes | **Decided** with Q24 |
-| Q4 | Confirm the reading of "one container per submission; no network after the clone step" (§7) | no | Guide |
+| Q4 | Confirm the reading of "one container per submission; no network after the clone step" (§7) | no | Guide; the proposal is now two stages per submission (Q66); the SEC-04 wording conflict is Q57 |
 | Q5 | "One band" (G-5, §C3.7) is not defined | no | Guide; proposal in §11.2 (Q44) |
 | Q6 | Where a submission carries its repository URL, demo link and report (B1.1 allows `onlinetext` and `file`; `http_ok:demo_url` has no defined source) | yes | Guide and Student 1; proposal in §4.3a (Q32) |
 | Q7 | B4 and `libs/moodle_ws` have no requirement ID for traceability | no | Guide; interim in §2 (Q43) |
@@ -685,7 +897,7 @@ Test data to produce: fake-Moodle recordings, malicious and tampering repositori
 | Q13 | Which mentor or mentors write the B8.4 reference grades, and when | no | Guide |
 | Q14 | (PRD App-C 1) Every B4 function exists on 4.5 and 5.3 with the parameters used, including `workflowstate`; minimum capabilities | yes | Owner, Release 0; list in §4.1 |
 | Q15 | (PRD App-C 9) Which AI features Moodle 5.3 itself provides, so LearnOps does not duplicate them | yes | Owner, Release 0 |
-| Q16 | Is a stronger sandbox runtime (e.g. gVisor) acceptable? It is a new tool | no | Guide |
+| Q16 | Is a stronger sandbox runtime (e.g. gVisor) acceptable? It is a new tool | no | Guide; evaluation proposal in Q61 |
 | Q17 | How to undo a grade already written to Moodle (OPS-05) | yes | Owner; proposal in §10.1 (Q29) |
 | Q18 | Storing similarity flags and the other additional tables not in the PRD's list | no | Owner; noted in the PR; §12.2 |
 | Q19 | Which hosted model provider and SDK (licence check), and the lab LLM endpoint's protocol | yes | Guide |
@@ -721,6 +933,21 @@ Test data to produce: fake-Moodle recordings, malicious and tampering repositori
 | Q51 to Q55 | [F8 to F12] Worker health through a heartbeat table (adjusts OPS-03); best-effort excerpt scrubbing; fake Moodle built only from lab recordings; work breakdown in §13 with the review gate before PR 18; literature reduced to topics until opened | no | Guide and owner |
 | Q56 | Resolved by design (proposed): clone with Dulwich under its Apache-2.0 option instead of the GPL-2.0 git executable (§8, §9.2); guide confirms the licence choice | yes (redirect and filter behaviour) | Guide |
 
+**Decisions proposed by the sandbox revision** (all OPEN; each has a (provisional) working assumption in §12.3):
+
+| # | Decision | Needs the lab? | Plan or owner |
+|---|---|---|---|
+| Q57 | PRD conflict: SEC-04 says "no network", §C3.5 says "no network after the clone step". Is a clone stage with network, in which no learner code runs, allowed? Not resolved by this document. If not: repositories arrive as archive files through Moodle (changes §4.3a and `repo_clone`) | no | Guide; PRD wording in §12.2 |
+| Q58 | What the 10-minute limit covers. Proposal: the whole submission, clone included, with per-stage and per-check budgets (§9.2.5) | no | Guide |
+| Q59 | Work volume: per-job volume with fixed size and inode cap (proposed), tmpfs (counts against memory), or a container storage quota (needs a specific filesystem) | yes | Owner, lab; guide confirms |
+| Q60 | User-namespace remapping in the Docker daemon, or rootless Docker, on the sandbox VM | yes | Owner, lab; independent reviewer |
+| Q61 | Approve an evaluation of gVisor (`runsc`) for stage B behind `GRADING_SANDBOX_RUNTIME`, and optionally a tighter seccomp profile (extends Q16; new tool) | yes | Guide |
+| Q62 | Sandbox database access only through `SECURITY DEFINER` functions with a lease token (amends §5.3 roles) | no | Guide; Student 2 for the migration tool (Q36) |
+| Q63 | Who provisions, patches and monitors the sandbox VM; patch schedule; where check images are built and how digests are listed | yes | Guide, lab administrator |
+| Q64 | Independent review: the reviewer (Q30), the checklist (§9.2 controls, firewall rules, daemon settings, T27 to T55 results), and a repeat review after any change to §9.2 | no | Guide |
+| Q65 | Does "contained and reported" (§C3.7) accept a check failure with evidence when the attempt cannot be seen from the host (a network attempt in a container with no network)? | no | Guide |
+| Q66 | Does a two-stage run (clone container, then run container, both for one submission only) satisfy "one container per submission"? | no | Guide |
+
 ### 12.1 Literature survey
 
 Topics (GETTING-STARTED §6, PRD §C3.12): automated assessment, LLM-as-grader studies, code similarity detection. At least six sources, each opened and verified by the owner before it is cited (root `CLAUDE.md` §6a.5). The earlier candidate list was written from memory and has been reduced to topic headings: authors, years and titles are not recorded here until the owner has opened each source.
@@ -736,6 +963,8 @@ The PRD is not edited by this document. These are the changes the proposals abov
 | Section | Change | Source |
 |---|---|---|
 | A11, OPS-01, SEC-04 | Add machine `sandbox` (dedicated VM, no other LearnOps service); sandbox worker starts there; Docker control interface not network-exposed; clone egress limited to allow-listed git hosts | §3, §9.2, §6.4 |
+| SEC-04, §C3.5 | Make the network rule the same in both places. Option for the guide (not chosen here): "no network for any stage that runs learner code; a clone stage that runs no learner code may reach allow-listed git hosts only" (Q57). Also state what the 10-minute limit covers (Q58) and whether two stages per submission meet "one container per submission" (Q66) | §9.2 |
+| §C3.7 | State what "reported" means for an attack the host cannot observe directly (Q65) | §9.2.9 |
 | SEC-03, App-C item 1 | Capability list recorded in B4 after lab work; replace item 1 with the eleven lab items | §4.1 |
 | C-05 | A written grade can be reverted only before release; documented in the README | §10.1 |
 | B1.1, B1.3, B1 | Submission-content rule, argument formats, criterion key rule, check-config schema; `command:setup` wording to match the dependency policy | §4.3, §9.2 |
@@ -747,6 +976,27 @@ The PRD is not edited by this document. These are the changes the proposals abov
 | C3.7, C3.8, C3.9 | Band definition, dataset split, A3 to A9; failure table; metric definitions and timing protocol | §10.2, §11 |
 | E6, SEC-07 | Excerpt retention, scrubbing, best-effort statement | §9.4, §9.5 |
 | OPS-03 | Worker health through a heartbeat | §6.4 |
+
+### 12.3 Provisional working assumptions for the sandbox (Q57 to Q66)
+
+Each row is (provisional): the design proceeds on it until the guide answers the question, and the
+question stays OPEN in §12. Where options exist, the more conservative one is taken: less network,
+less privilege, shorter time, stronger cleanup. "If the guide decides otherwise" shows how much of the
+design would change. None of these assumptions permits any learner code, including the malicious test
+repositories, to run before the gate in the last row of this table is met.
+
+| Q | Working assumption | Basis | If the guide decides otherwise |
+|---|---|---|---|
+| Q57 | A separate clone stage with network is allowed only if it runs no learner code, reaches only the lab git server by IP over HTTPS, and is destroyed before stage B. Learner code runs only in stage B, which never has a network. The SEC-04 vs §C3.5 conflict is recorded, not resolved | (PRD) both texts agree that learner code runs with no network; (PRD) §C3.5 names a clone step; module rule 2 | Strict reading: replace stage A with an archive import through Moodle (changes §4.3a, Q32, and `repo_clone`); stage B and the rest of §9.2 unchanged |
+| Q58 | The 10 minutes is the total wall time for one submission, clone included (claim to end of stage B), enforced on the host. Budgets: clone 120 s, then fixed-helper checks, then `command:` checks from the remainder | (PRD) §C3.5 gives one limit with no scope; the total reading gives learner code the least time and bounds queue delay | Execution-only reading: raise the stage B budget; structure unchanged |
+| Q59 | Per-job storage is a fixed-size filesystem image with an inode cap, created and mounted (`nosuid,nodev`) by a small fixed host helper the worker calls, and deleted after the run. If the lab VM cannot provide this, a tmpfs volume (counted against memory) is the fallback | Hard size and inode limits without reducing the learner's 2 GB; deterministic deletion | Another mechanism changes only §9.2.5 and the reaper's volume step |
+| Q60 | User-namespace remapping on a rootful Docker daemon | Keeps the standard cgroup v2 limits, AppArmor and the Docker SDK path while removing host root from container UID 0. Rootless behaviour for cgroup delegation and networking is (lab) | Rootless: change §9.2.1 daemon settings and the worker install steps; container settings unchanged |
+| Q61 | gVisor is optional. v1 is designed for `runc` and is to be reviewed with it; no gVisor evaluation starts without approval. `GRADING_SANDBOX_RUNTIME` keeps the choice to configuration | Root `CLAUDE.md` §8 (no new tool without approval); the VM is the main boundary in either case | If the evaluation is approved and adopted: add `runsc` to §8 with version and licence check, run T56; nothing else changes |
+| Q62 | The sandbox host reaches the database only through `SECURITY DEFINER` functions with a lease token; no table grants | Least privilege; limits a compromised host to the jobs it holds (§9.2.6) | Table grants: revert §5.3 roles to the earlier text and drop T54; accept the larger residual risk in §9.2.9 |
+| Q63 | The lab administrator named by the guide provisions and patches the sandbox VM. Check images are built off the VM (CI or the tools host), and their digests are listed in the file named by `GRADING_SANDBOX_IMAGE_DIGESTS` (§6.3; digests are not secrets). Kernel and runtime patches are applied at least monthly and promptly for critical advisories. Monitoring is the worker heartbeat on `/health` | OPS-03, §9.2.1; no owner is named in the PRD | Change owner or schedule only; no design change |
+| Q64 | A reviewer from outside Module 3, named by the guide, signs a checklist (every §9.2 subsection, the firewall rules, the daemon settings, and T27 to T55 results on the sandbox VM). Any change to §9.2 controls needs a new review. **Gate:** no learner code and no malicious test repository runs on any machine until this sign-off exists | Q30; App-D; module rule 2 | A different reviewer or checklist only; the gate stays |
+| Q65 | "Reported" means: the affected check is `fail` or `error`; its evidence shows the blocked action (for example a refused or unreachable connection in the captured output); and the run records that stage B's network mode was confirmed `none` on the host. A4 passes only if the mentor can see all three | (PRD) §C3.7; the host cannot observe a network attempt in a container with no network | A stricter definition would need host-side detection (for example syscall auditing): a new (proposed) item and possibly a new tool |
+| Q66 | One submission per container, never shared. The two stages are two sequential containers for the same single submission | (PRD) §C3.5; stricter isolation than detaching a network from a running container | Single-container reading: merge stages with a network detach and host-side verification (the earlier design in §7); this weakens the Q57 assumption |
 
 ## 13. Work breakdown
 
@@ -775,8 +1025,8 @@ One requirement (or one tightly related group) per pull request. "Gate" is somet
 | 14 | Web scaffold: LTI session, `require_course_access`, CSRF, error shape, strings module | SEC-01, SEC-02, SEC-09 | 13, `libs/lti` | T15 to T18 |
 | 15 | Fetch worker and CLI | FR-G-01 | 2, 5, 13 | T02, T20 |
 | 16 | http_check worker | FR-G-02 | 15 | T33 |
-| 17 | Sandbox image and in-container helper | FR-G-02 | Q27, Q33 | Image digests pinned |
-| 18 | Sandbox worker on the sandbox host, firewall rules, reaper, malicious and tampering repositories | FR-G-02 | 17, Q22, Q23 | **Independent review (Q30) before any learner code runs**; T27 to T32 |
+| 17 | Sandbox image and in-container helpers (clone helper, file-check helper) | FR-G-02 | Q27, Q33, Q63 | Image digests pinned; T45 |
+| 18 | Sandbox worker on the sandbox host (two stages, §9.2.2), daemon settings, firewall rules, database functions, reaper, malicious and tampering repositories | FR-G-02 | 17, Q22, Q23, Q57 to Q60, Q62 | **Independent review (Q30, Q64) before any learner code runs**; T27 to T32, T43 to T55. A gVisor evaluation (T56) is a separate pull request, only if Q61 approves it |
 | 19 | Machine checks (six) | FR-G-02 | 18 | T29, T30 |
 | 20 | Draft worker, validation, `grade_draft` prompt v1 | FR-G-03 | 7, 19 | T10 |
 | 21 | Review API and UI | FR-G-05 | 14, 20 | T19, T38 |
