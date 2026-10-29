@@ -67,3 +67,30 @@ Left out because the PRD does not establish the mapping:
 - **C1.7 "a package containing a protected idnumber is rejected with a clear message".** The schema
   rejects the two default idnumbers; the user-facing message is not tested.
 - **Requirement IDs for the contract work itself.** None in the PRD.
+
+## B8.4 synthetic submissions (PROVISIONAL pilot), Release 0 foundation
+
+Files: `testdata/b8-4-synthetic-submissions/` (manifest, four schemas, six submissions),
+`libs/contracts/tests/test_b8_4_dataset.py`. B8.4 is a test-data set (PRD B8) with no requirement
+ID of its own, so no row in the table above maps to it. It is the dataset for the PRD C3.7
+agreement criterion (G-5), which belongs to Release 4 work that does not exist yet.
+
+### Covered by automated tests
+
+| Rule | Source | Test(s) |
+|---|---|---|
+| Manifest, submission, expected-outcome and reference-grade documents validate against their schemas | Proposed format (set README, O7) | `test_schema_is_a_valid_draft_2020_12_schema`, `test_manifest_is_valid`, `test_submission_and_expected_outcome_are_valid`, `test_reference_grade_files_are_valid` |
+| Each submission has a repository, a demo link and a short report | PRD B8 | `test_submission_and_expected_outcome_are_valid` |
+| Submission, rubric, course package and marking table link up; points sum; only the six check names | PRD B1.3, C3.5 | `test_ids_are_unique_and_match_folders`, `test_references_resolve`, `test_rubric_sources_exist_and_match_the_course_package` |
+| Expected outcomes follow the marking table, carry no scores and agree with the files | Proposed (set README) | `test_expected_outcome_follows_the_marking_table`, `test_expected_check_results_agree_with_the_files` |
+| Reference-grade cross-field rules (criteria match, score range, total = sum) | PRD B8, C3.3 FR-G-03 (sum) | `test_reference_grade_rules_catch_bad_grades` |
+| Across quality levels | PRD B8 | `test_pilot_covers_every_intended_level` |
+| No real learner data (fictional hosts only, no email addresses, small text files) | PRD B8, C-07 | `test_no_real_hosts_or_email_addresses`, `test_files_are_small_text` |
+| Provisional labelling | Set README | `test_provisional_set_marks_everything_provisional`, `test_tags_agree_with_expected_outcomes` |
+
+### Not met yet, and not tested
+
+- At least 30 submissions (pilot: 6) and reference grades from at least one mentor (none; Q13).
+- Rubrics from B8.2 (pilot uses the B1 contract example); the Moodle form of a submission (Q32).
+- Word-count and heading-matching rules are provisional (Q39). See the open decisions in
+  `testdata/b8-4-synthetic-submissions/README.md`.

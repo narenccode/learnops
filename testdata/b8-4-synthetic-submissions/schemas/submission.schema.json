@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:learnops:testdata:b8-4:submission:v1",
+  "title": "B8.4 synthetic submission (PROVISIONAL)",
+  "description": "One fictional submission: repository + demo link + short report (PRD B8). The fields are format-neutral on purpose: how they are placed in Moodle online text or files is the submission-content rule, which is not decided (design Q32).",
+  "type": "object",
+  "required": ["schema", "id", "repository_url", "demo_url", "report", "repo_dir", "hosting"],
+  "properties": {
+    "schema": { "const": "learnops.testdata.b8-4.submission/v1" },
+    "id": { "type": "string", "pattern": "^s[0-9]{3}$" },
+    "repository_url": {
+      "type": "string",
+      "description": "Placeholder on a reserved .invalid host (RFC 2606); replaced by the lab git server address when the set is published.",
+      "pattern": "^https://[a-z0-9.-]+\\.invalid/"
+    },
+    "demo_url": {
+      "type": "string",
+      "description": "Placeholder on a reserved .invalid host; replaced by a lab stub page when the set is published.",
+      "pattern": "^https://[a-z0-9.-]+\\.invalid/"
+    },
+    "report": { "const": "report.md" },
+    "repo_dir": { "const": "repo" },
+    "hosting": {
+      "type": "object",
+      "description": "What the (future) publish step must set up so the machine checks give the intended result.",
+      "required": ["publish_repo", "demo_stub"],
+      "properties": {
+        "publish_repo": {
+          "type": "boolean",
+          "description": "false: the repository is not published, so the URL does not clone."
+        },
+        "demo_stub": {
+          "enum": ["answers", "unrelated_page", "none"],
+          "description": "answers: a stub page that answers the test question; unrelated_page: returns HTTP 200 with unrelated content; none: nothing is served."
+        }
+      }
+    }
+  }
+}

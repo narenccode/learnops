@@ -1,0 +1,42 @@
+# PROVISIONAL author's expected outcome. NOT a reference grade: no scores.
+# Rubric: B1 contract example wk-02-task (not B8.2).
+schema: learnops.testdata.b8-4.expected-outcome/v1
+submission_id: s002
+rubric: b1-example-wk-02-task
+provisional: true
+criteria:
+  - criterion: Repository
+    checks:
+      - check: repo_clone
+        expected: pass
+        reason: hosting.publish_repo is true.
+    judgement: meets
+    rationale: The repository link is published and clones.
+  - criterion: Document answers
+    checks:
+      - check: http_ok:demo_url
+        expected: pass
+        reason: hosting.demo_stub is answers.
+    judgement: meets
+    rationale: The stub demo answers a question from the rules document.
+  - criterion: README
+    checks:
+      - check: readme_sections:Setup,Usage
+        expected: fail
+        reason: >-
+          repo/README.md has "Setup" but its second heading is "How to use", not "Usage". Expected
+          result assumes the PROPOSED matching rule (heading text, case-insensitive, no synonyms;
+          design §4.3b, Q39).
+    judgement: ambiguous
+    rationale: >-
+      The usage information is there under another heading. A mentor could accept it as meeting
+      "README has Setup and Usage sections" or hold to the exact section name. Deliberately left
+      to the mentor's reference grade.
+  - criterion: Weak answers
+    checks: []
+    judgement: ambiguous
+    rationale: >-
+      One weak question is named and explained well (plot clippings matched the paths rule). The
+      second ("some other questions about bins") names no question and gives no reason. Whether
+      this is partly meeting or not meeting "at least two questions ... and explain why" is for
+      the mentor to decide.

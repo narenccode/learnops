@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:learnops:testdata:b8-4:expected-outcome:v1",
+  "title": "B8.4 author's expected outcome for one submission (PROVISIONAL)",
+  "description": "What the author designed each rubric criterion to show: the intended machine-check results and a qualitative judgement with the reasoning. It is NOT a reference grade and carries no scores; reference grades come only from a mentor (PRD B8) and live in reference-grades/.",
+  "type": "object",
+  "required": ["schema", "submission_id", "rubric", "provisional", "criteria"],
+  "not": {
+    "anyOf": [{ "required": ["score"] }, { "required": ["total"] }, { "required": ["grade"] }]
+  },
+  "properties": {
+    "schema": { "const": "learnops.testdata.b8-4.expected-outcome/v1" },
+    "submission_id": { "type": "string", "pattern": "^s[0-9]{3}$" },
+    "rubric": { "type": "string", "minLength": 1 },
+    "provisional": { "type": "boolean" },
+    "criteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["criterion", "checks", "judgement", "rationale"],
+        "not": { "anyOf": [{ "required": ["score"] }, { "required": ["points"] }] },
+        "properties": {
+          "criterion": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Exactly the Criterion cell of the marking table."
+          },
+          "checks": {
+            "type": "array",
+            "description": "One entry per check in the marking table's Check cell, in order; empty when the cell is '—'.",
+            "items": {
+              "type": "object",
+              "required": ["check", "expected", "reason"],
+              "properties": {
+                "check": { "type": "string", "minLength": 1 },
+                "expected": {
+                  "enum": ["pass", "fail", "error", "undetermined"],
+                  "description": "pass, fail and error as in design §5.2; undetermined when the result cannot be predicted yet (command:<name> has no check config, design Q33)."
+                },
+                "reason": { "type": "string", "minLength": 1 }
+              }
+            }
+          },
+          "judgement": {
+            "enum": ["meets", "partly_meets", "does_not_meet", "ambiguous"],
+            "description": "The author's intended reading of 'Full marks when'. Not a score."
+          },
+          "rationale": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}
