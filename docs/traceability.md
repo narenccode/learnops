@@ -67,3 +67,28 @@ Left out because the PRD does not establish the mapping:
 - **C1.7 "a package containing a protected idnumber is rejected with a clear message".** The schema
   rejects the two default idnumbers; the user-facing message is not tested.
 - **Requirement IDs for the contract work itself.** None in the PRD.
+
+## B8.6 model comparison set (PROVISIONAL), Release 0 foundation
+
+Files: `testdata/b8-6-model-comparison/` (manifest, rubric, three schemas, one transcript input,
+two expected outputs), `libs/contracts/tests/test_b8_6_dataset.py`. B8.6 is a test-data set
+(PRD B8) with no requirement ID of its own. It is the input of FR-M-03 (Release 4), which is not
+implemented, so no row in the table above maps to it.
+
+### Covered by automated tests
+
+| Rule | Source | Test(s) |
+|---|---|---|
+| Manifest, rubric and expected chapters validate against their schemas | Proposed format (set README, O10) | `test_schema_is_a_valid_draft_2020_12_schema`, `test_manifest_and_rubric_are_valid`, `test_expected_chapters_are_valid_and_fit_the_transcript` |
+| Fixed inputs linked to expected outputs; pending and placeholder items hold no content | PRD B8 | `test_ids_are_unique_and_references_resolve`, `test_pending_and_placeholder_items_have_no_content` |
+| Transcript input has the B5.4 shape and consistent times | PRD B5.4 | `test_transcript_has_the_prd_b5_4_shape_and_consistent_times`, `test_time_checks_catch_bad_transcripts`, `test_transcript_validates_against_the_b5_contract` (skipped until B5 is on `main`) |
+| Expected chapters use the B6.2 shape and fit the transcript | PRD B6.2 | `test_expected_chapters_are_valid_and_fit_the_transcript`, `test_chapter_checks_catch_overlap` |
+| The four FR-M-03 measures are in the rubric | PRD FR-M-03 | `test_rubric_covers_the_measures_and_tasks` |
+| Provisional and not-reviewed labelling; no results claimed | Set README | `test_status_rules`, `test_reviewed_needs_a_reviewer`, `test_expected_summary_is_labelled_until_reviewed`, `test_no_results_are_claimed` |
+| No real data (fictional hosts only, no email addresses, small text files) | PRD B8, C-07 | `test_files_are_small_text_with_no_real_hosts_or_email_addresses` |
+
+### Not met yet, and not tested
+
+- Grading-draft items (wait for B8.4 and its reference grades, Q13) and practice items (Q12).
+- Reviewed expected outputs, a fixed rubric (Q48), measure definitions marked `open`, set size.
+- Any comparison run or result (FR-M-03, Release 4).

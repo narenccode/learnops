@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:learnops:testdata:b8-6:rubric:v1",
+  "title": "B8.6 review rubric and measures (PROVISIONAL)",
+  "description": "How outputs of the comparison study are judged (FR-M-03). Every definition records where it comes from and whether it is decided. PROVISIONAL: the rubric must be fixed (frozen: true) before any comparison run (design §11.4); it is not fixed yet.",
+  "type": "object",
+  "required": ["schema", "status", "frozen", "output_review", "grade_draft_review", "measures"],
+  "properties": {
+    "schema": { "const": "learnops.testdata.b8-6.rubric/v1" },
+    "status": { "enum": ["provisional", "final"] },
+    "frozen": {
+      "type": "boolean",
+      "description": "true only when the guide has fixed the rubric; a comparison run must refuse an unfrozen rubric."
+    },
+    "output_review": {
+      "type": "object",
+      "required": ["applies_to", "blind_to_provider", "levels", "source", "decision"],
+      "properties": {
+        "applies_to": {
+          "type": "array",
+          "items": { "enum": ["chapters", "summary", "practice"] }
+        },
+        "blind_to_provider": { "type": "boolean" },
+        "levels": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id", "meaning", "counts_as_wrong"],
+            "properties": {
+              "id": { "type": "string", "pattern": "^[a-z_]+$" },
+              "meaning": { "type": "string", "minLength": 1 },
+              "counts_as_wrong": { "type": "boolean" }
+            }
+          }
+        },
+        "source": { "type": "string", "minLength": 1 },
+        "decision": { "$ref": "#/$defs/decision" },
+        "task_guidance": {
+          "type": "object",
+          "description": "Questions a reviewer answers per task. Proposed by the author; not decided.",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["questions", "decision"],
+            "properties": {
+              "questions": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+              "decision": { "$ref": "#/$defs/decision" }
+            }
+          }
+        }
+      }
+    },
+    "grade_draft_review": {
+      "type": "object",
+      "required": ["rule", "source", "decision"],
+      "properties": {
+        "rule": { "type": "string", "minLength": 1 },
+        "source": { "type": "string", "minLength": 1 },
+        "decision": { "$ref": "#/$defs/decision" }
+      }
+    },
+    "measures": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "required_by", "definition", "decision"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z_]+$" },
+          "required_by": { "type": "string", "minLength": 1 },
+          "definition": { "type": "string", "minLength": 1 },
+          "decision": { "$ref": "#/$defs/decision" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "decision": {
+      "enum": ["prd", "proposed", "open"],
+      "description": "prd: stated in the PRD; proposed: a design-document or author proposal awaiting the guide; open: not defined anywhere yet."
+    }
+  }
+}
