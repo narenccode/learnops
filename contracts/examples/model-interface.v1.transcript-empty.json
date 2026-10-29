@@ -5,6 +5,6 @@
     "model": "example-speech-model",
     "duration_s": 4.0,
     "latency_ms": 350,
-    "cost_estimate": 0
+    "cost_estimate": 0.0
   }
 }

@@ -3,7 +3,7 @@
   "$id": "urn:learnops:contract:model-interface:v1",
   "title": "LearnOps model and speech interface (B5, v1)",
   "description": "The data that crosses the shared model and speech interface (PRD B5): the meta record of a language-model call (result.meta, B5.1) and a transcript returned by the speech interface (B5.4). A document is one of the two. result.data is not described here: its shape is the output_schema of the task that was called (B5.1).",
-  "$comment": "Unknown fields are allowed on purpose: after Release 0 contracts change only by adding optional fields and readers ignore unknown fields (PRD B.0, EXT-02). Required is not the same as non-null: every field PRD B5.1 and B5.4 name is required, and a few of them may hold null to say 'not known' (token counts, cost_estimate). Optional meta additions proposed in docs/design/grading.md 4.2 (Q38: input_hash, temperature, seed, cost_known) and an optional transcript language (Student 4 proposal) are accepted as unknown fields; they are neither defined nor required here until agreed. Transcript times (Student 4 consumer feedback, pending the guide): segment and word start/end are numbers of seconds from the start of the original audio file, also when the speech service processes the audio in internal chunks. Empty segments, empty words and empty segment text are valid (Student 4). UNRESOLVED, not decided here: the unit or currency of cost_estimate (the PRD names none); whether 'fake' stays in the provider list (PRD B5.2 names only local and hosted); a required discriminator field on each document kind (Student 2 proposal, not adopted: the PRD names no such field). NOT expressible in JSON Schema, so NOT enforced here: result.data matches the task's output_schema (B5.1); invalid structured output gets one retry and then a clear error, never a partial result (B5.2); provider and model are chosen by MODEL_PROVIDER and MODEL_NAME and keys come from environment variables only (B5.2); prompts are versioned files in libs/model_interface/prompts/ (B5.3); every call's meta is logged to shared.model_calls with no raw learner content (B5.3); a segment or word ends at or after its start, and segments are in time order (B5.4).",
+  "$comment": "Unknown fields are allowed on purpose: after Release 0 contracts change only by adding optional fields and readers ignore unknown fields (PRD B.0, EXT-02). Required is not the same as non-null: every field PRD B5.1 and B5.4 name is required, and token counts and cost_estimate may hold null to say 'not reported' (PRD B5.1). The guide's decisions on this contract are recorded in docs/decisions/0001-b5-model-interface-v1.md: cost_estimate is in US dollars; unknown values are null, never 0; 'fake' stays a provider value for tests only; transcript times are seconds from the start of the original audio, also when processed in chunks; empty segments, words and segment text are valid; no discriminator field (the two kinds stay apart through oneOf); input_hash, temperature, seed, cost_known and a transcript language are not part of v1 (like any unknown field they are ignored, never required). NOT expressible in JSON Schema, so NOT enforced here: result.data matches the task's output_schema (B5.1); invalid structured output gets one retry and then a clear error, never a partial result (B5.2); provider and model are chosen by MODEL_PROVIDER and MODEL_NAME and keys come from environment variables only (B5.2); the fake provider is refused outside tests (B5.2; enforced by libs/model_interface/config.py); prompts are versioned files in libs/model_interface/prompts/ (B5.3); every call's meta is logged to shared.model_calls with no raw learner content (B5.3); a segment ends at or after its start (B5.4; enforced by libs/model_interface/transcript.py). Not decided by the guide and not enforced: a word ends at or after its start, and segments are in time order.",
   "oneOf": [
     { "$ref": "#/$defs/model_result_meta" },
     { "$ref": "#/$defs/transcript" }
@@ -11,7 +11,7 @@
   "$defs": {
     "provider": {
       "enum": ["local", "hosted", "fake"],
-      "description": "local: the lab endpoint; hosted: one hosted API through the provider's official SDK (PRD B5.2, B5.4). fake: a deterministic test-only provider that calls no model (GETTING-STARTED section 6 asks for one; not named in PRD B5.2, so pending the guide's confirmation). Real deployments use local or hosted only."
+      "description": "local: the lab endpoint; hosted: one hosted API through the provider's official SDK; fake: a deterministic provider for automated tests that calls no model (PRD B5.2, B5.4). The service refuses fake unless its test-only setting is on, and that setting is refused in the lab and in production, so lab and production records use local or hosted only."
     },
     "model_name": {
       "type": "string",
@@ -21,7 +21,7 @@
     "token_count": {
       "type": ["integer", "null"],
       "minimum": 0,
-      "description": "Number of tokens, or null when the provider does not report token usage. Never 0 for 'unknown'."
+      "description": "Number of tokens, or null when the provider does not report usage (PRD B5.1). An unknown count is never written as 0."
     },
     "milliseconds": {
       "type": "integer",
@@ -31,12 +31,12 @@
     "seconds": {
       "type": "number",
       "minimum": 0,
-      "description": "Seconds. The PRD names the unit only for duration_s. Segment and word start/end are seconds from the start of the original audio file, also when it was processed in chunks (Student 4 feedback, pending the guide)."
+      "description": "Seconds. Segment and word start/end are seconds from the start of the original audio, also when the speech service processed it in chunks (PRD B5.4)."
     },
     "cost": {
       "type": ["number", "null"],
       "minimum": 0,
-      "description": "Estimated cost of the call, or null when it is unknown or cannot be calculated. Unknown cost is never reported as 0. Unit or currency: not specified by the PRD (unresolved)."
+      "description": "Estimated cost of the call in US dollars (USD) (PRD B5.1). A local model with no billed inference cost reports 0.0. Unknown cost, or cost the provider does not report, is null and is never written as 0."
     },
     "model_result_meta": {
       "type": "object",
@@ -71,6 +71,7 @@
       "properties": {
         "segments": {
           "type": "array",
+          "description": "May be [] (for example, silent audio) (PRD B5.4).",
           "items": { "$ref": "#/$defs/transcript_segment" }
         },
         "meta": { "$ref": "#/$defs/transcript_meta" }
@@ -78,6 +79,7 @@
     },
     "transcript_segment": {
       "type": "object",
+      "description": "One segment. end is at or after start (PRD B5.4; checked by libs/model_interface, not by this schema). text may be empty and words may be [] (PRD B5.4).",
       "required": ["start", "end", "text", "words"],
       "properties": {
         "start": { "$ref": "#/$defs/seconds" },

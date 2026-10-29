@@ -9,15 +9,19 @@ AUTOMATED here (structure only, by contracts/model-interface.v1.schema.json):
     ("not known") but may not be left out; everything else rejects null;
   * unknown fields are accepted (PRD B.0, EXT-02);
   * a document that is neither a meta record nor a transcript, or is both, is rejected;
-  * the transcript examples cover silent audio, a segment without words and one without text.
+  * the examples follow the guide's cost rule: local reports 0.0, unknown cost is null;
+  * the transcript examples cover silent audio, a segment without words, one without text, and
+    times after a chunk boundary (seconds from the start of the original audio).
 
-NOT automated here, and therefore NOT claimed as enforced (the schema's $comment lists them):
-  * result.data matches the task's output_schema (B5.1);
-  * one retry on invalid output, then a clear error (B5.2);
-  * provider and model chosen by environment variables, keys only from the environment (B5.2);
-  * versioned prompt files and logging meta to shared.model_calls without learner content (B5.3);
-  * end >= start, and segments in time order (B5.4).
-These belong to libs/model_interface, which does not exist yet.
+Enforced by libs/model_interface, tested there (JSON Schema cannot express them):
+  * a segment's end >= start (B5.4): model_interface/tests/test_transcript.py;
+  * fake is refused outside a test run (B5.2): model_interface/tests/test_config.py.
+
+NOT automated anywhere yet, and therefore NOT claimed as enforced (the schema's $comment lists
+them): result.data matches the task's output_schema (B5.1); one retry on invalid output, then a
+clear error (B5.2); keys only from the environment (B5.2); versioned prompt files and logging meta
+to shared.model_calls without learner content (B5.3); word end >= start and segments in time order
+(not decided by the guide).
 
 Each invalid case below must fail at the expected place with the expected schema keyword, so a
 case cannot pass for the wrong reason.
@@ -55,6 +59,7 @@ EXAMPLE_DEFS = {
     "model-interface.v1.transcript-empty.json": "transcript",
     "model-interface.v1.transcript-empty-words.json": "transcript",
     "model-interface.v1.transcript-empty-text.json": "transcript",
+    "model-interface.v1.transcript-chunked.json": "transcript",
 }
 TRANSCRIPT_EXAMPLES = sorted(
     n for n, kind in EXAMPLE_DEFS.items() if kind == "transcript"
@@ -234,13 +239,38 @@ def test_transcript_examples_show_known_and_unknown_cost() -> None:
     assert any(isinstance(c, int | float) for c in costs)
 
 
+def test_examples_follow_the_cost_rule() -> None:
+    """Guide (decision 0001): local has no billed cost and reports 0.0; unknown cost is null.
+
+    So a local example never has null cost, and the unknown-usage example is all null, never 0.
+    """
+    metas = {name: load_example(name) for name in META_EXAMPLES}
+    transcript_metas = {n: load_example(n)["meta"] for n in TRANSCRIPT_EXAMPLES}
+    for name, meta in {**metas, **transcript_metas}.items():
+        if meta["provider"] == "local":
+            assert meta["cost_estimate"] == 0.0, name
+    unknown = metas["model-interface.v1.meta-unknown-usage.json"]
+    assert [unknown[f] for f in ("input_tokens", "output_tokens", "cost_estimate")] == [
+        None,
+        None,
+        None,
+    ]
+
+
 def test_transcript_examples_cover_the_empty_cases() -> None:
-    """Student 4: silent audio, a segment without word timings, and a segment without text."""
+    """Silent audio, a segment without word timings, and a segment without text (B5.4)."""
     docs = [load_example(name) for name in TRANSCRIPT_EXAMPLES]
     segments = [s for d in docs for s in d["segments"]]
     assert any(d["segments"] == [] for d in docs)
     assert any(s["words"] == [] and s["text"] for s in segments)
     assert any(s["text"] == "" for s in segments)
+
+
+def test_chunked_example_keeps_times_from_the_start_of_the_audio() -> None:
+    """Seconds from the start of the original audio, also after a chunk boundary (B5.4)."""
+    doc = load_example("model-interface.v1.transcript-chunked.json")
+    times = [t for s in doc["segments"] for t in (s["start"], s["end"])]
+    assert min(times) > 1700 and max(times) <= doc["meta"]["duration_s"]
 
 
 # --- invalid: required fields --------------------------------------------------------------
@@ -401,7 +431,7 @@ META_ACCEPTED = [
     Accepted("hosted provider", set_at(("provider",), "hosted")),
     Accepted("fake provider (tests only)", set_at(("provider",), "fake")),
     Accepted("free-form prompt_version", set_at(("prompt_version",), "2026-10-28")),
-    # Q38 proposals (grading design 4.2): accepted as optional unknown fields, never required.
+    # Q38 proposals: not part of v1 (guide); ignored like any unknown field, never required.
     Accepted("input_hash (Q38)", set_at(("input_hash",), "sha256:0f1e2d")),
     Accepted("temperature (Q38)", set_at(("temperature",), 0.2)),
     Accepted("seed (Q38)", set_at(("seed",), 7)),
@@ -430,11 +460,12 @@ TRANSCRIPT_ACCEPTED = [
     Accepted("segment with no words", set_at(SEGMENT + ("words",), [])),
     Accepted("empty segment text", set_at(SEGMENT + ("text",), "")),
     Accepted("integer seconds", set_at(SEGMENT + ("start",), 0)),
+    Accepted("segment end equals start", set_at(SEGMENT + ("end",), 0.0)),
     Accepted("hosted provider", set_at(TMETA + ("provider",), "hosted")),
     Accepted("fake provider (tests only)", set_at(TMETA + ("provider",), "fake")),
     Accepted("unknown cost is null", set_at(TMETA + ("cost_estimate",), None)),
     Accepted("non-ASCII word", set_at(WORD + ("word",), "namaste—é")),
-    # Student 4 proposal: an optional language field, accepted but not defined or required.
+    # Student 4 proposal: not part of v1 (guide); ignored like any unknown field.
     Accepted("language in meta (proposal)", set_at(TMETA + ("language",), "en")),
 ]
 
@@ -450,4 +481,15 @@ def test_transcript_valid_variation_is_accepted(
 ) -> None:
     case.edit(transcript)
     assert messages(transcript_validator, transcript) == []
+    assert messages(validator, transcript) == []
+
+
+def test_segment_ending_before_it_starts_passes_the_schema(
+    validator: Draft202012Validator, transcript: Doc
+) -> None:
+    """JSON Schema cannot compare two fields, so B5.4's end >= start is NOT a schema rule.
+
+    libs/model_interface/transcript.py enforces it; its tests reject this same document.
+    """
+    transcript["segments"][0]["start"], transcript["segments"][0]["end"] = 2.4, 0.0
     assert messages(validator, transcript) == []

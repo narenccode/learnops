@@ -29,6 +29,6 @@
     "model": "example-speech-model",
     "duration_s": 6.0,
     "latency_ms": 910,
-    "cost_estimate": 0
+    "cost_estimate": 0.0
   }
 }

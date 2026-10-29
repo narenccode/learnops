@@ -1,6 +1,6 @@
 {
-  "provider": "local",
-  "model": "example-local-model",
+  "provider": "hosted",
+  "model": "example-hosted-model",
   "input_tokens": null,
   "output_tokens": null,
   "latency_ms": 2610,
