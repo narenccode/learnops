@@ -19,6 +19,7 @@ SETTINGS = (
     "MODEL_PROVIDER",
     "MODEL_NAME",
     "MODEL_LOCAL_URL",
+    "MODEL_HOSTED_API_KEY",
 )
 
 

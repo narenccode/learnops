@@ -34,6 +34,36 @@ result.meta  # provider, model, input/output tokens, latency_ms, cost_estimate, 
 A provider failure is not retried. Every error derives from `ModelError`, and error messages never
 contain inputs, prompts or model output.
 
+## Providers
+
+`MODEL_PROVIDER` picks one provider; `MODEL_NAME` names the model for local and hosted. They all
+implement the `Provider` protocol (`providers/base.py`), so `run()` has no provider-specific code
+and every provider gives the same `Result`.
+
+| Provider | Class | State |
+|---|---|---|
+| `local` | `LocalProvider` (`providers/local.py`) | Works only with an injected `LocalTransport`; no real transport exists (Q19) |
+| `hosted` | `HostedProvider` (`providers/hosted.py`) | Works only with an injected `HostedTransport`; no real transport exists (Q19) |
+| `fake` | `FakeProvider` (`providers/fake.py`) | Test runs only, with `LEARNOPS_ENV=test` and `MODEL_ALLOW_FAKE=true`. Refuses to initialise anywhere else |
+
+`create_provider()` is the resolver, and `get_provider()` keeps one shared provider. `local` and
+`hosted` share one `TransportProvider.complete()` (`providers/transport.py`), which turns any
+transport failure into `ProviderUnavailable` carrying only the exception's class name.
+
+- **No fallback, ever.** If the selected provider can't be built or reached, the call fails. Local
+  never falls back to hosted or fake, and nothing else is tried.
+- **API keys.** A provider never holds a key. The real hosted transport reads
+  `MODEL_HOSTED_API_KEY` from the environment. `create_provider()` only checks that it is set, so
+  the value can't reach a `repr()`, a log record or an error.
+- **Cost.** Local is `0.0`. Hosted is what the transport reports, and `None` when it reports
+  nothing, never 0.
+
+**Adding a real transport (after Q19):** write a class with the `complete()` of `LocalTransport` or
+`HostedTransport` that returns a `TransportReply` and raises on failure, then pass it to
+`create_provider(local_transport=...)` or `create_provider(hosted_transport=...)` and call
+`configure_provider()` when the service starts. `run()` doesn't change. A hosted transport must use
+the provider's official SDK (PRD B5.2), and needs a licence check before it is added.
+
 ## Adding a task
 
 1. Add a prompt file `prompts/<task>/v1.md`:
@@ -103,7 +133,9 @@ so do not configure it in a service to get past `CallLoggerMissing`.
 | `LEARNOPS_ENV` | `test`, `lab` or `production`. Unset counts as "not test". |
 | `MODEL_PROVIDER` | `local`, `hosted`, or `fake` in test runs only |
 | `MODEL_ALLOW_FAKE` | `true` only with `LEARNOPS_ENV=test`; anywhere else the service refuses to start |
-| `MODEL_NAME`, `MODEL_LOCAL_URL` | Local provider settings |
+| `MODEL_NAME` | The model, for local and hosted. The fake keeps its fixed `fake-model` name. |
+| `MODEL_LOCAL_URL` | Local provider endpoint |
+| `MODEL_HOSTED_API_KEY` | Hosted provider key. Spending-capped, from the guide (PRD A15.5). |
 
 No key or token is ever stored in the repository.
 
@@ -112,7 +144,7 @@ No key or token is ever stored in the repository.
 | Item | Waiting for |
 |---|---|
 | Real request to the lab endpoint. `LocalProvider` needs an injected `LocalTransport`; none exists for the real endpoint. | Q19 (endpoint protocol) |
-| Hosted provider. `MODEL_PROVIDER=hosted` raises `ProviderUnavailable`. | Q19 (provider, SDK, licence), spending-cap key |
+| Real hosted API call. `HostedProvider` needs an injected `HostedTransport`; none exists, so `MODEL_PROVIDER=hosted` raises `ProviderUnavailable`. | Q19 (provider, SDK, licence), spending-cap key |
 | PostgreSQL logger for `shared.model_calls`. **Until it exists, no lab or production service can make a logged model call.** | Q36 (migration tool, shared schema) |
 | Pydantic models for task schemas | Guide's decision |
 | Timeouts from the environment, transport retries, budget guard | Design proposals only (`docs/design/grading.md` §4.2) |

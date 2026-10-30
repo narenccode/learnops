@@ -6,29 +6,40 @@ model.run(task, inputs, output_schema) keeps one fake provider and its responses
 
 Both read the real process environment through config.provider_from_env, and get_provider() does
 so on every call, so the fake-provider rule (decision record 0001 #3) applies to every caller even
-after a provider is cached. The hosted provider and the real local transport are not implemented
-yet (design Q19).
+after a provider is cached. The real local and hosted transports are not implemented yet (design
+Q19).
+
+There is no fallback. Each setting has one branch and nothing here catches a failure, so if the
+selected provider cannot be built or reached the call fails; another provider is never tried.
 """
 
 from __future__ import annotations
 
 import os
+from typing import Final
 
 from .. import messages
-from ..config import provider_from_env
+from ..config import ConfigError, provider_from_env
 from ..errors import ProviderUnavailable
 from .base import Provider, ProviderRequest, ProviderResponse
 from .fake import FakeProvider
-from .local import LocalProvider, LocalTransport, TransportError, TransportReply
+from .hosted import HostedProvider, HostedTransport
+from .local import LocalProvider, LocalTransport
+from .transport import TransportError, TransportProvider, TransportReply
+
+HOSTED_KEY_VARIABLE: Final = "MODEL_HOSTED_API_KEY"
 
 __all__ = [
     "FakeProvider",
+    "HostedProvider",
+    "HostedTransport",
     "LocalProvider",
     "LocalTransport",
     "Provider",
     "ProviderRequest",
     "ProviderResponse",
     "TransportError",
+    "TransportProvider",
     "TransportReply",
     "configure_provider",
     "create_provider",
@@ -39,16 +50,30 @@ __all__ = [
 _shared: Provider | None = None
 
 
-def create_provider(*, local_transport: LocalTransport | None = None) -> Provider:
+def create_provider(
+    *,
+    local_transport: LocalTransport | None = None,
+    hosted_transport: HostedTransport | None = None,
+) -> Provider:
     """The provider named by MODEL_PROVIDER, after the fake-provider rule.
 
-    local_transport is required for the local provider until the lab protocol is decided (Q19).
+    Only the selected provider's transport is used. A transport is required for local and hosted
+    until the protocol and the SDK are decided (Q19).
     """
     selected = provider_from_env(os.environ, "MODEL_PROVIDER")
     if selected == "fake":
         return FakeProvider()
     if selected == "hosted":
-        raise ProviderUnavailable(messages.HOSTED_NOT_IMPLEMENTED)
+        if hosted_transport is None:
+            raise ProviderUnavailable(messages.HOSTED_NOT_INTEGRATED)
+        # Only checked: the key's value is never stored here, nor shown in this error.
+        if not os.environ.get(HOSTED_KEY_VARIABLE, "").strip():
+            raise ConfigError(
+                messages.MISSING_SETTING.format(variable=HOSTED_KEY_VARIABLE)
+            )
+        return HostedProvider(
+            model=os.environ.get("MODEL_NAME", ""), transport=hosted_transport
+        )
     if local_transport is None:
         raise ProviderUnavailable(messages.LOCAL_NOT_INTEGRATED)
     return LocalProvider(

@@ -132,13 +132,14 @@ No code checks these yet. The schema's `$comment` lists them too.
 
 Files: `libs/model_interface/` (`runner.py`, `registry.py`, `prompts.py`, `prompts/example_echo/v1.md`
 (test-only), `providers/`, `call_log.py`, `errors.py`, `messages.py`), tests in
-`libs/model_interface/tests/` (`test_run.py`, `test_call_logging.py`, `test_registry_and_prompts.py`,
-`test_providers.py`, `test_public_api.py`), and usage notes in `libs/model_interface/README.md`.
+`libs/model_interface/tests/` (`test_run.py`, `test_call_logging.py`, `test_multi_provider.py`,
+`test_registry_and_prompts.py`, `test_providers.py`, `test_public_api.py`), and usage notes in
+`libs/model_interface/README.md`.
 Builds on the B5 contract section above (PR #25) and does not change `config.py` or `transcript.py`.
 
 FR-M-01 ("Shared model interface library (B5.1–B5.3)", R0) is still deliberately not in the table
 at the top: this skeleton does not complete it. Missing: the real local transport (the lab
-endpoint's protocol, design Q19), the hosted provider (Q19), and logging `meta` to
+endpoint's protocol, design Q19), the real hosted transport (Q19), and logging `meta` to
 `shared.model_calls` (migration tool and shared schema, Q36). FR-M-01 gets its row in the pull
 request that completes it.
 
@@ -159,7 +160,11 @@ refuses without a logger outside a test run, but the only logger that exists is 
 | Inputs are checked against the task's input schema before any provider call | B5.1 | `runner.py` | `test_invalid_inputs_are_refused_before_any_call` |
 | Output is validated; on invalid output one retry, then `InvalidOutput`, never a partial result | B5.2 | `runner.py` | `test_invalid_output_is_retried_once`, `test_invalid_output_twice_raises_and_returns_nothing` |
 | `meta` is checked against the B5 schema; unknown usage is `null`, local cost is `0.0` | B5.1 | `runner.py`, `providers/local.py` | `test_meta_that_breaks_the_b5_contract_is_refused`, `test_local_meta_reports_unknown_usage_as_null`, `test_local_keeps_unreported_usage_as_none` |
-| Provider chosen by `MODEL_PROVIDER`; `fake` only through the `config.py` guard, against the real process environment; `hosted` refused with a clear error until Q19 | B5.2 | `providers/__init__.py`, `providers/fake.py` | `test_providers.py`: `test_hosted_is_not_implemented_yet`, `test_fake_is_built_only_in_a_test_run`, `test_fake_cannot_be_built_outside_a_test_run`, `test_fake_needs_model_provider_fake_even_in_a_test_run`, `test_fake_takes_no_environment_argument`; `test_run.py`: `test_default_provider_comes_from_the_guarded_configuration`; `test_call_logging.py`: `test_the_guard_runs_again_on_every_get_provider` |
+| One provider interface: local, hosted and fake give the same validated `Result`, with valid B5 `meta`, logged through the shared logger; `runner.py` has no provider-specific code | B5.1, B5.2 | `providers/base.py`, `providers/transport.py`, `runner.py` | `test_multi_provider.py`: `test_every_provider_gives_the_same_validated_result_and_logs_it`, `test_a_hosted_failure_is_logged_through_the_shared_logger` |
+| Hosted provider behind an injectable transport: no URL assumed; reported cost kept; unreported cost is `None`, never 0; `MODEL_NAME` required and shown in `meta`; transport failures carry no content | B5.1, B5.2 | `providers/hosted.py`, `providers/transport.py` | `test_multi_provider.py`: `test_hosted_passes_the_request_to_its_transport_without_a_url`, `test_hosted_keeps_a_reported_cost`, `test_hosted_cost_not_reported_is_none_never_zero`, `test_local_cost_stays_zero_whatever_the_transport_reports`, `test_hosted_transport_failure_shows_no_content`, `test_hosted_needs_model_name`, `test_model_name_reaches_hosted_meta` |
+| No fallback between providers: if the selected provider can't be built or reached, the call fails and no other provider is tried | B5.2 | `providers/__init__.py` | `test_multi_provider.py`: `test_a_failing_local_provider_never_tries_hosted_or_fake`, `test_a_transport_for_the_other_provider_is_never_used`, `test_the_resolver_never_catches_a_selected_provider_failure` |
+| An API key comes from the environment only; a provider never holds it; it appears in no `repr()`, error or log record | B5.2, C-06 | `providers/__init__.py`, `providers/hosted.py` | `test_multi_provider.py`: `test_a_missing_key_names_the_variable`, `test_the_key_appears_in_no_repr_error_or_log_record`, `test_the_key_is_not_passed_to_the_transport` |
+| Provider chosen by `MODEL_PROVIDER`; `fake` only through the `config.py` guard, against the real process environment; `hosted` refused with a clear error until a transport exists (Q19) | B5.2 | `providers/__init__.py`, `providers/fake.py` | `test_multi_provider.py`: `test_the_resolver_refuses_the_fake_outside_a_test_run_even_with_the_flag`; `test_providers.py`: `test_hosted_is_not_implemented_yet`, `test_fake_is_built_only_in_a_test_run`, `test_fake_cannot_be_built_outside_a_test_run`, `test_fake_needs_model_provider_fake_even_in_a_test_run`, `test_fake_takes_no_environment_argument`; `test_run.py`: `test_default_provider_comes_from_the_guarded_configuration`; `test_call_logging.py`: `test_the_guard_runs_again_on_every_get_provider` |
 | Fake provider is deterministic by task and inputs, with failure injection | B5.2 (test use) | `providers/fake.py` | `test_fake_answers_by_task_and_inputs_whatever_the_key_order`, `test_fake_without_a_fixture_says_so`, `test_fake_plays_queued_outputs_in_order_then_repeats_the_last`, `test_fake_failure_injection_raises_once` |
 | Local provider: settings from `MODEL_LOCAL_URL` and `MODEL_NAME`; request goes to an injected transport; transport failures become `ProviderUnavailable` without request content | B5.2 | `providers/local.py` | `test_local_needs_its_settings`, `test_local_passes_the_request_to_its_transport`, `test_transport_failure_becomes_provider_unavailable_without_content`, `test_local_without_a_transport_is_not_integrated_yet` |
 | Provider failures are raised, not retried and not turned into output | B5.2 | `runner.py` | `test_provider_failure_is_raised_not_retried` |
@@ -176,7 +181,7 @@ refuses without a logger outside a test run, but the only logger that exists is 
 | Rule | PRD | Waiting for |
 |---|---|---|
 | Real local endpoint request | B5.2 | Q19 (lab endpoint protocol) |
-| Hosted provider through the provider's official SDK | B5.2 | Q19 (provider, SDK, licence) |
+| Real hosted API call through the provider's official SDK (`HostedProvider` exists; no real `HostedTransport`) | B5.2 | Q19 (provider, SDK, licence), spending-cap key (A15.5) |
 | Every call logs `meta` to `shared.model_calls` (PostgreSQL logger). Until it exists, `run()` refuses outside a test run unless a logger is configured | B5.3 | Q36 (migration tool, shared schema) |
 | Timeouts, transport retries and the budget guard | — | Design proposals only (grading.md §4.2) |
 | Task schemas as Pydantic models | Root `CLAUDE.md` §6 ("Pydantic models for every contract and API payload"); PRD B5.1 allows "JSON Schema / Pydantic model" | OPEN DECISION for the guide: JSON Schema is used meanwhile. Adding Pydantic (planned 2.14.1, grading.md §8) changes `requirements-dev.txt`, owned by Students 1 and 2 and the guide |

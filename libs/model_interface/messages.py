@@ -51,9 +51,13 @@ LOCAL_NOT_INTEGRATED: Final = (
     "The local provider has no transport yet: the lab endpoint's protocol is not decided "
     "(design Q19). Pass a transport to create_provider() in tests."
 )
-HOSTED_NOT_IMPLEMENTED: Final = (
-    "The hosted provider is not implemented yet: the provider and SDK are not chosen "
-    "(design Q19). Use MODEL_PROVIDER=local."
+HOSTED_UNREACHABLE: Final = (
+    "The hosted model API did not answer ({detail}). Check the service status and that "
+    "MODEL_HOSTED_API_KEY is set, then try again."
+)
+HOSTED_NOT_INTEGRATED: Final = (
+    "The hosted provider has no transport yet: the provider and SDK are not chosen (design Q19). "
+    "Pass a transport to create_provider() in tests."
 )
 MISSING_SETTING: Final = (
     "{variable} is not set. Set it in the environment (see .env.example)."
