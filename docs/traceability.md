@@ -132,7 +132,8 @@ No code checks these yet. The schema's `$comment` lists them too.
 
 Files: `libs/model_interface/` (`runner.py`, `registry.py`, `prompts.py`, `prompts/example_echo/v1.md`
 (test-only), `providers/`, `call_log.py`, `errors.py`, `messages.py`), tests in
-`libs/model_interface/tests/` (`test_run.py`, `test_registry_and_prompts.py`, `test_providers.py`, `test_public_api.py`).
+`libs/model_interface/tests/` (`test_run.py`, `test_call_logging.py`, `test_registry_and_prompts.py`,
+`test_providers.py`, `test_public_api.py`), and usage notes in `libs/model_interface/README.md`.
 Builds on the B5 contract section above (PR #25) and does not change `config.py` or `transcript.py`.
 
 FR-M-01 ("Shared model interface library (B5.1–B5.3)", R0) is still deliberately not in the table
@@ -144,26 +145,30 @@ request that completes it.
 Of the B5 section's "Documented but not automatically enforced" rows, these are now enforced by
 code and tested here: `result.data` matches `output_schema`; one retry then a clear error;
 versioned prompt files; unknown usage written as `null` by the local provider. Logging to
-`shared.model_calls` is only partly covered (meta-only records, in memory).
+`shared.model_calls` is only partly covered: every attempt is recorded (meta only) and `run()`
+refuses without a logger outside a test run, but the only logger that exists is in memory.
 
 ### Enforced by library code and covered by automated tests
 
 | Rule | PRD | Code | Test(s) |
 |---|---|---|---|
-| One call `run(task, inputs, output_schema)` returns validated `data` and `meta` | B5.1 | `runner.py` | `test_run.py`: `test_valid_output_returns_data_and_b5_meta`, `test_default_provider_is_used_when_none_is_given` |
+| One call `run(task, inputs, output_schema)` returns validated `data` and `meta`, with no provider or logger passed, through one shared provider | B5.1 | `runner.py`, `providers/__init__.py` | `test_run.py`: `test_valid_output_returns_data_and_b5_meta`, `test_the_prd_call_shape_works_with_the_shared_fake_provider`; `test_call_logging.py`: `test_the_shared_provider_is_kept_between_calls`, `test_a_configured_provider_is_used_by_the_prd_call_shape`, `test_a_cached_fake_is_replaced_when_the_setting_changes` |
 | Public call shape `import model_interface as model; model.run(task, inputs, output_schema)`; the module is `model_interface.runner` and there is no `model_interface.run` module to import by mistake | B5.1 | `__init__.py`, `runner.py` | `test_public_api.py`: `test_model_run_is_the_runner_function`, `test_model_run_takes_task_inputs_output_schema_first`, `test_from_import_gives_the_function`, `test_runner_module_imports_as_a_module`, `test_there_is_no_model_interface_run_module`, `test_every_exported_name_exists` |
 | `task` is a registered task name; names are unique and well formed | B5.1 | `registry.py` | `test_registry_and_prompts.py`: `test_registered_task_can_be_looked_up`, `test_duplicate_task_name_is_refused`, `test_unregistered_task_is_refused`, `test_bad_task_name_is_refused`; `test_run.py`: `test_unregistered_task_is_refused_before_any_call` |
 | `output_schema` must be the registered one; task schemas must be valid JSON Schemas and are kept as private copies | B5.1 | `registry.py`, `runner.py` | `test_output_schema_must_be_the_registered_one`, `test_invalid_schema_is_refused`, `test_registered_schema_is_a_private_copy` |
 | Inputs are checked against the task's input schema before any provider call | B5.1 | `runner.py` | `test_invalid_inputs_are_refused_before_any_call` |
 | Output is validated; on invalid output one retry, then `InvalidOutput`, never a partial result | B5.2 | `runner.py` | `test_invalid_output_is_retried_once`, `test_invalid_output_twice_raises_and_returns_nothing` |
 | `meta` is checked against the B5 schema; unknown usage is `null`, local cost is `0.0` | B5.1 | `runner.py`, `providers/local.py` | `test_meta_that_breaks_the_b5_contract_is_refused`, `test_local_meta_reports_unknown_usage_as_null`, `test_local_keeps_unreported_usage_as_none` |
-| Provider chosen by `MODEL_PROVIDER`; `fake` only through the `config.py` guard, against the real process environment; `hosted` refused with a clear error until Q19 | B5.2 | `providers/__init__.py`, `providers/fake.py` | `test_providers.py`: `test_hosted_is_not_implemented_yet`, `test_fake_is_built_only_in_a_test_run`, `test_fake_cannot_be_built_outside_a_test_run`, `test_fake_needs_model_provider_fake_even_in_a_test_run`, `test_fake_takes_no_environment_argument`; `test_run.py`: `test_default_provider_comes_from_the_guarded_configuration` |
+| Provider chosen by `MODEL_PROVIDER`; `fake` only through the `config.py` guard, against the real process environment; `hosted` refused with a clear error until Q19 | B5.2 | `providers/__init__.py`, `providers/fake.py` | `test_providers.py`: `test_hosted_is_not_implemented_yet`, `test_fake_is_built_only_in_a_test_run`, `test_fake_cannot_be_built_outside_a_test_run`, `test_fake_needs_model_provider_fake_even_in_a_test_run`, `test_fake_takes_no_environment_argument`; `test_run.py`: `test_default_provider_comes_from_the_guarded_configuration`; `test_call_logging.py`: `test_the_guard_runs_again_on_every_get_provider` |
 | Fake provider is deterministic by task and inputs, with failure injection | B5.2 (test use) | `providers/fake.py` | `test_fake_answers_by_task_and_inputs_whatever_the_key_order`, `test_fake_without_a_fixture_says_so`, `test_fake_plays_queued_outputs_in_order_then_repeats_the_last`, `test_fake_failure_injection_raises_once` |
 | Local provider: settings from `MODEL_LOCAL_URL` and `MODEL_NAME`; request goes to an injected transport; transport failures become `ProviderUnavailable` without request content | B5.2 | `providers/local.py` | `test_local_needs_its_settings`, `test_local_passes_the_request_to_its_transport`, `test_transport_failure_becomes_provider_unavailable_without_content`, `test_local_without_a_transport_is_not_integrated_yet` |
 | Provider failures are raised, not retried and not turned into output | B5.2 | `runner.py` | `test_provider_failure_is_raised_not_retried` |
 | Prompts are versioned files `prompts/<task>/v<N>.md` whose `prompt_version` header names their own task and version; the highest version is used unless one is named | B5.3 | `prompts.py` | `test_example_prompt_loads_with_its_version`, `test_highest_version_is_used_unless_one_is_named`, `test_prompt_version_must_agree_with_the_file`, `test_prompt_without_header_or_text_is_refused`, `test_task_without_a_prompt_cannot_be_registered` |
 | The test-only example prompt registers nothing in the shared registry | — (repository rule) | `registry.py` | `test_no_task_is_registered_in_the_shared_registry_by_the_library` |
-| Call records hold `meta` only, never inputs or output | B5.3 | `call_log.py`, `runner.py` | `test_logger_records_meta_only`, `test_invalid_output_is_retried_once` |
+| Call records hold `meta` only, never inputs or output | B5.3 | `call_log.py`, `runner.py` | `test_logger_records_meta_only`, `test_invalid_output_is_retried_once`, `test_failed_attempts_log_no_content` |
+| Every attempt is logged, also failed ones; a provider failure and invalid `meta` are recorded with `null` usage and then raised; invalid output keeps the usage the provider reported | B5.1, B5.3 | `runner.py`, `call_log.py` | `test_call_logging.py`: `test_success_is_logged_with_b5_meta`, `test_provider_failure_is_logged_with_null_usage_and_raised`, `test_an_unexpected_provider_exception_is_logged_and_raised`, `test_failure_records_are_valid_b5_meta`, `test_invalid_meta_is_logged_with_null_usage_and_raised`, `test_a_provider_failure_on_the_retry_is_logged_as_attempt_two`, `test_invalid_output_keeps_the_usage_the_provider_reported` |
+| Required logging is never skipped: outside `LEARNOPS_ENV=test`, also with it unset, `run()` refuses before any model call when no logger is configured; a test run falls back to an in-memory logger; a logger that fails stops the call from returning | B5.3 | `call_log.py`, `runner.py` | `test_call_logging.py`: `test_run_refuses_without_a_logger_outside_a_test_run`, `test_a_configured_logger_is_used_outside_a_test_run`, `test_a_logger_passed_to_the_call_is_used_outside_a_test_run`, `test_a_test_run_falls_back_to_the_in_memory_logger`, `test_the_in_memory_fallback_does_not_survive_leaving_the_test_run`, `test_a_logger_that_fails_stops_the_call_from_returning` |
+| `repr()` never shows inputs, prompt text, model text or result data | B5.3, OPS-04 | `providers/base.py`, `providers/local.py`, `prompts.py`, `runner.py` | `test_call_logging.py`: `test_repr_of_a_request_shows_no_prompt_or_inputs`, `test_repr_of_a_response_shows_no_text`, `test_repr_of_a_transport_reply_shows_no_text`, `test_repr_of_a_result_shows_no_data`, `test_repr_of_a_prompt_shows_no_text` |
 | Error messages never carry learner input, model output or transport detail: problems are named by their place in the schema only, and transport failures keep only the exception's class name with the original chain cut | B5.3, OPS-04 | `runner.py`, `providers/local.py`, `messages.py` | `test_run.py`: `test_invalid_output_error_shows_no_model_output`, `test_invalid_output_error_shows_no_raw_text`, `test_invalid_input_error_shows_no_learner_input`, `test_invalid_meta_error_shows_no_output`, `test_invalid_output_twice_raises_and_returns_nothing`; `test_providers.py`: `test_transport_failure_becomes_provider_unavailable_without_content` |
 
 ### Not implemented, and therefore not claimed
@@ -172,6 +177,6 @@ versioned prompt files; unknown usage written as `null` by the local provider. L
 |---|---|---|
 | Real local endpoint request | B5.2 | Q19 (lab endpoint protocol) |
 | Hosted provider through the provider's official SDK | B5.2 | Q19 (provider, SDK, licence) |
-| Every call logs `meta` to `shared.model_calls` | B5.3 | Q36 (migration tool, shared schema) |
+| Every call logs `meta` to `shared.model_calls` (PostgreSQL logger). Until it exists, `run()` refuses outside a test run unless a logger is configured | B5.3 | Q36 (migration tool, shared schema) |
 | Timeouts, transport retries and the budget guard | — | Design proposals only (grading.md §4.2) |
 | Task schemas as Pydantic models | Root `CLAUDE.md` §6 ("Pydantic models for every contract and API payload"); PRD B5.1 allows "JSON Schema / Pydantic model" | OPEN DECISION for the guide: JSON Schema is used meanwhile. Adding Pydantic (planned 2.14.1, grading.md §8) changes `requirements-dev.txt`, owned by Students 1 and 2 and the guide |

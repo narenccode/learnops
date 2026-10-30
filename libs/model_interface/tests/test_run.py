@@ -9,7 +9,6 @@ from typing import Any
 import pytest
 from jsonschema import Draft202012Validator
 
-from model_interface import runner as run_module
 from model_interface.call_log import InMemoryCallLogger
 from model_interface.config import ConfigError
 from model_interface.errors import (
@@ -20,7 +19,12 @@ from model_interface.errors import (
     SchemaMismatch,
     UnregisteredTask,
 )
-from model_interface.providers import FakeProvider, LocalProvider, TransportReply
+from model_interface.providers import (
+    FakeProvider,
+    LocalProvider,
+    TransportReply,
+    get_provider,
+)
 from model_interface.registry import TaskRegistry
 from model_interface.runner import run
 
@@ -144,7 +148,14 @@ def test_meta_that_breaks_the_b5_contract_is_refused(registry: TaskRegistry) -> 
         url="http://ai.lab.invalid:11434", model="m", transport=NegativeTokens()
     )
     with pytest.raises(InvalidMeta, match="does not match the B5 contract"):
-        run("example_echo", INPUTS, ECHO_OUTPUT, provider=provider, registry=registry)
+        run(
+            "example_echo",
+            INPUTS,
+            ECHO_OUTPUT,
+            provider=provider,
+            registry=registry,
+            logger=InMemoryCallLogger(),
+        )
 
 
 def test_local_meta_reports_unknown_usage_as_null(registry: TaskRegistry) -> None:
@@ -156,7 +167,12 @@ def test_local_meta_reports_unknown_usage_as_null(registry: TaskRegistry) -> Non
         url="http://ai.lab.invalid:11434", model="m", transport=NoUsage()
     )
     result = run(
-        "example_echo", INPUTS, ECHO_OUTPUT, provider=provider, registry=registry
+        "example_echo",
+        INPUTS,
+        ECHO_OUTPUT,
+        provider=provider,
+        registry=registry,
+        logger=InMemoryCallLogger(),
     )
     assert (result.meta["input_tokens"], result.meta["output_tokens"]) == (None, None)
     assert result.meta["cost_estimate"] == 0.0
@@ -192,21 +208,26 @@ def test_logger_records_meta_only(registry: TaskRegistry, fake: FakeProvider) ->
 def test_default_provider_comes_from_the_guarded_configuration(
     registry: TaskRegistry, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Without an explicit provider, run() uses create_provider(), so the fake rule applies."""
+    """Without an explicit provider, run() uses get_provider(), so the fake rule applies."""
     monkeypatch.setenv("MODEL_PROVIDER", "fake")  # but not a test run
     with pytest.raises(ConfigError, match="fake provider is turned off"):
         run("example_echo", INPUTS, ECHO_OUTPUT, registry=registry)
 
 
-def test_default_provider_is_used_when_none_is_given(
-    registry: TaskRegistry, fake_env: None, monkeypatch: pytest.MonkeyPatch
+def test_the_prd_call_shape_works_with_the_shared_fake_provider(
+    registry: TaskRegistry, fake_env: None
 ) -> None:
-    configured = FakeProvider()
-    configured.add_response("example_echo", INPUTS, {"echo": "ok"})
-    monkeypatch.setattr(run_module, "create_provider", lambda: configured)
+    """model.run(task, inputs, output_schema): no provider and no logger passed.
+
+    No stub: the response set on the shared provider must still be there when run() asks for it.
+    """
+    shared = get_provider()
+    assert isinstance(shared, FakeProvider)
+    shared.add_response("example_echo", INPUTS, {"echo": "ok"})
     assert run("example_echo", INPUTS, ECHO_OUTPUT, registry=registry).data == {
         "echo": "ok"
     }
+    assert len(shared.requests) == 1
 
 
 # --- error messages never carry content ----------------------------------------------------
@@ -300,6 +321,13 @@ def test_invalid_meta_error_shows_no_output(registry: TaskRegistry) -> None:
         url="http://ai.lab.invalid:11434", model="m", transport=BadUsage()
     )
     with pytest.raises(InvalidMeta) as caught:
-        run("example_echo", INPUTS, ECHO_OUTPUT, provider=provider, registry=registry)
+        run(
+            "example_echo",
+            INPUTS,
+            ECHO_OUTPUT,
+            provider=provider,
+            registry=registry,
+            logger=InMemoryCallLogger(),
+        )
     assert SECRET_VALUE not in shown(caught.value)
     assert "private answer" not in shown(caught.value)

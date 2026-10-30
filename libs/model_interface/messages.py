@@ -58,6 +58,11 @@ HOSTED_NOT_IMPLEMENTED: Final = (
 MISSING_SETTING: Final = (
     "{variable} is not set. Set it in the environment (see .env.example)."
 )
+NO_CALL_LOGGER: Final = (
+    "No call logger is configured, so this call could not be logged (PRD B5.3). Nothing was sent "
+    "to the model. Call configure_call_logger() when the service starts. The PostgreSQL logger "
+    "for shared.model_calls is not built yet (design Q36)."
+)
 FAKE_NOT_SELECTED: Final = (
     "The fake provider was requested but MODEL_PROVIDER is '{value}'. Set MODEL_PROVIDER=fake "
     "in the test run."

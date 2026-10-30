@@ -3,8 +3,12 @@ with monkeypatch instead of passing a mapping."""
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+
 import pytest
 
+from model_interface.call_log import reset_call_logger
+from model_interface.providers import reset_provider
 from model_interface.registry import TaskRegistry
 
 from .echo_task import ECHO_INPUT, ECHO_OUTPUT
@@ -19,10 +23,15 @@ SETTINGS = (
 
 
 @pytest.fixture(autouse=True)
-def clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Start every test with no provider settings, whatever the developer's shell has."""
+def clean_env(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
+    """Start every test with no provider settings, shared provider or configured logger."""
     for name in SETTINGS:
         monkeypatch.delenv(name, raising=False)
+    reset_provider()
+    reset_call_logger()
+    yield
+    reset_provider()
+    reset_call_logger()
 
 
 @pytest.fixture

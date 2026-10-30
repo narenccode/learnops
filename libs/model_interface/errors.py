@@ -45,3 +45,7 @@ class PromptError(ModelError):
 
 class ProviderUnavailable(ModelError):
     """The provider could not be reached, or is not integrated yet."""
+
+
+class CallLoggerMissing(ModelError):
+    """No call logger is configured outside a test run; nothing was sent to the model."""

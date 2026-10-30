@@ -9,7 +9,7 @@ LocalProvider and run() do not change.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Final, Protocol
 
 from .. import messages
@@ -24,7 +24,7 @@ LOCAL_COST_USD: Final = 0.0
 
 @dataclass(frozen=True)
 class TransportReply:
-    text: str
+    text: str = field(repr=False)  # repr() must never carry model output (PRD B5.3)
     input_tokens: int | None = None  # None: the endpoint did not report usage
     output_tokens: int | None = None
 

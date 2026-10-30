@@ -3,10 +3,18 @@
     import model_interface as model
     result = model.run(task="...", inputs={...}, output_schema=spec.output_schema)
 
-Every AI call in LearnOps goes through run() (root CLAUDE.md rule 6).
+Every AI call in LearnOps goes through run() (root CLAUDE.md rule 6). See README.md in this folder.
 """
 
+from .call_log import (
+    CallLogger,
+    CallRecord,
+    InMemoryCallLogger,
+    configure_call_logger,
+    get_call_logger,
+)
 from .errors import (
+    CallLoggerMissing,
     DuplicateTask,
     InvalidInput,
     InvalidMeta,
@@ -18,6 +26,7 @@ from .errors import (
     SchemaMismatch,
     UnregisteredTask,
 )
+from .providers import configure_provider, create_provider, get_provider
 from .registry import TaskRegistry, TaskSpec, get_task, register_task
 
 # The module is runner.py, not run.py: a module named run would be shadowed by this function, so
@@ -25,7 +34,11 @@ from .registry import TaskRegistry, TaskSpec, get_task, register_task
 from .runner import Result, run
 
 __all__ = [
+    "CallLogger",
+    "CallLoggerMissing",
+    "CallRecord",
     "DuplicateTask",
+    "InMemoryCallLogger",
     "InvalidInput",
     "InvalidMeta",
     "InvalidOutput",
@@ -38,6 +51,11 @@ __all__ = [
     "TaskRegistry",
     "TaskSpec",
     "UnregisteredTask",
+    "configure_call_logger",
+    "configure_provider",
+    "create_provider",
+    "get_call_logger",
+    "get_provider",
     "get_task",
     "register_task",
     "run",

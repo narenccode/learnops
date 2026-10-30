@@ -1,12 +1,18 @@
 """model.run(task, inputs, output_schema) (PRD B5.1, B5.2).
 
 Steps: look up the registered task; refuse an output_schema that is not the registered one;
-validate the inputs before any provider call; call the provider; parse and validate the output;
-on invalid output retry once, then raise InvalidOutput. Partial or invalid output is never
-returned. Every attempt's meta is checked against the B5 contract and given to the call logger.
+validate the inputs before any provider call; find the provider and the call logger, refusing
+before any model call if there is no logger outside a test run; call the provider; parse and
+validate the output; on invalid output retry once, then raise InvalidOutput. Partial or invalid
+output is never returned.
 
-Provider failures (ProviderUnavailable) are not retried here: transport retries, timeouts and the
-budget guard are design proposals (grading.md §4.2), not part of this skeleton.
+Every attempt is logged (PRD B5.3), also one that fails: a provider failure and meta that breaks
+the B5 contract are recorded with null usage, because the usage is not known (decision record 0001
+#1), and then raised. If the logger itself fails, that error is raised too, so a call that could
+not be logged never returns a result.
+
+Provider failures are not retried here: transport retries, timeouts and the budget guard are
+design proposals (grading.md §4.2), not part of this skeleton.
 """
 
 from __future__ import annotations
@@ -15,7 +21,7 @@ import copy
 import json
 import time
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import cache
 from pathlib import Path
 from typing import Any, Final
@@ -24,9 +30,9 @@ from jsonschema import Draft202012Validator
 from jsonschema.exceptions import best_match
 
 from . import messages
-from .call_log import CallLogger, CallRecord, Outcome
+from .call_log import CallLogger, CallRecord, get_call_logger
 from .errors import InvalidInput, InvalidMeta, InvalidOutput, SchemaMismatch
-from .providers import Provider, ProviderRequest, ProviderResponse, create_provider
+from .providers import Provider, ProviderRequest, ProviderResponse, get_provider
 from .registry import DEFAULT_REGISTRY, Schema, TaskRegistry
 
 MAX_ATTEMPTS: Final = 2  # PRD B5.2: on invalid output, one retry
@@ -37,7 +43,8 @@ B5_SCHEMA_PATH: Final = (
 
 @dataclass(frozen=True)
 class Result:
-    data: Any  # validated against the task's output schema
+    # Validated against the task's output schema. repr() leaves it out: it is model output.
+    data: Any = field(repr=False)
     meta: dict[str, Any]  # a B5 model_result_meta record (PRD B5.1)
 
 
@@ -69,23 +76,25 @@ def _parse_output(text: str, schema: Schema) -> tuple[Any, str | None]:
 
 
 def _meta(
-    provider: Provider, response: ProviderResponse, latency_ms: int, version: str
+    provider: Provider,
+    version: str,
+    latency_ms: int,
+    response: ProviderResponse | None = None,
 ) -> dict[str, Any]:
-    meta: dict[str, Any] = {
+    """A B5 meta record. Without a response the usage is not known, so it is null, never 0."""
+    return {
         "provider": provider.name,
         "model": provider.model,
-        "input_tokens": response.input_tokens,
-        "output_tokens": response.output_tokens,
+        "input_tokens": response.input_tokens if response else None,
+        "output_tokens": response.output_tokens if response else None,
         "latency_ms": latency_ms,
-        "cost_estimate": response.cost_estimate,
+        "cost_estimate": response.cost_estimate if response else None,
         "prompt_version": version,
     }
-    problem = _problem(_meta_validator(), meta)
-    if problem is not None:
-        raise InvalidMeta(
-            messages.INVALID_META.format(provider=provider.name, detail=problem)
-        )
-    return meta
+
+
+def _elapsed_ms(started: float) -> int:
+    return round((time.perf_counter() - started) * 1000)
 
 
 def run(
@@ -99,8 +108,9 @@ def run(
 ) -> Result:
     """Run one registered task and return validated data with its meta, or raise a ModelError.
 
-    provider defaults to create_provider(), the configured provider. logger receives one
-    CallRecord per attempt (meta only).
+    provider defaults to get_provider(), the shared configured provider. logger defaults to
+    get_call_logger(), which refuses outside a test run when none is configured. It receives one
+    CallRecord per attempt, including failed attempts (meta only).
     """
     spec = registry.get(task)
     if output_schema != spec.output_schema:
@@ -109,29 +119,41 @@ def run(
     if problem is not None:
         raise InvalidInput(messages.INVALID_INPUT.format(task=task, detail=problem))
 
-    chosen = provider if provider is not None else create_provider()
+    chosen = provider if provider is not None else get_provider()
+    call_logger = logger if logger is not None else get_call_logger()
+    version = spec.prompt.prompt_version
     request = ProviderRequest(
         task=task,
         prompt=spec.prompt.text,
-        prompt_version=spec.prompt.prompt_version,
+        prompt_version=version,
         inputs=copy.deepcopy(dict(inputs)),
         output_schema=spec.output_schema,
     )
     for attempt in range(1, MAX_ATTEMPTS + 1):
         started = time.perf_counter()
-        response = chosen.complete(request)
-        latency_ms = round((time.perf_counter() - started) * 1000)
-        meta = _meta(chosen, response, latency_ms, spec.prompt.prompt_version)
-        data, problem = _parse_output(response.text, spec.output_schema)
-        if logger is not None:
-            outcome: Outcome = "ok" if problem is None else "invalid_output"
-            logger.record(
-                CallRecord(task=task, attempt=attempt, outcome=outcome, meta=meta)
+        try:
+            response = chosen.complete(request)
+        except Exception:
+            meta = _meta(chosen, version, _elapsed_ms(started))
+            call_logger.record(CallRecord(task, attempt, "provider_error", meta))
+            raise
+        latency_ms = _elapsed_ms(started)
+        meta = _meta(chosen, version, latency_ms, response)
+        meta_problem = _problem(_meta_validator(), meta)
+        if meta_problem is not None:
+            # The reported usage broke the contract, so it is dropped from the record.
+            usage_unknown = _meta(chosen, version, latency_ms)
+            call_logger.record(CallRecord(task, attempt, "invalid_meta", usage_unknown))
+            raise InvalidMeta(
+                messages.INVALID_META.format(provider=chosen.name, detail=meta_problem)
             )
+        data, problem = _parse_output(response.text, spec.output_schema)
         if problem is None:
+            call_logger.record(CallRecord(task, attempt, "ok", meta))
             return Result(data=data, meta=meta)
+        call_logger.record(CallRecord(task, attempt, "invalid_output", meta))
     raise InvalidOutput(
         messages.INVALID_OUTPUT.format(
-            task=task, detail=problem, prompt_version=spec.prompt.prompt_version
+            task=task, detail=problem, prompt_version=version
         )
     )

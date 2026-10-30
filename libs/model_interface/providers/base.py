@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Protocol
 
 from ..config import Provider as ProviderName
@@ -11,18 +11,23 @@ from ..config import Provider as ProviderName
 
 @dataclass(frozen=True)
 class ProviderRequest:
+    """repr() leaves out the prompt and the inputs, so a log or traceback cannot show them."""
+
     task: str
-    prompt: str
+    prompt: str = field(repr=False)
     prompt_version: str
-    inputs: Mapping[str, Any]
+    inputs: Mapping[str, Any] = field(repr=False)
     output_schema: Mapping[str, Any]
 
 
 @dataclass(frozen=True)
 class ProviderResponse:
-    """Raw model text plus usage. None means "not reported", never 0 (decision record 0001 #1)."""
+    """Raw model text plus usage. None means "not reported", never 0 (decision record 0001 #1).
 
-    text: str
+    repr() leaves out the text, so a log or traceback cannot show model output.
+    """
+
+    text: str = field(repr=False)
     input_tokens: int | None
     output_tokens: int | None
     cost_estimate: float | None  # US dollars (decision record 0001 #2)

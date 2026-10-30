@@ -15,7 +15,7 @@ edited; a change is a new v<N+1>.md file. The layout is the design proposal (gra
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Final
 
@@ -32,7 +32,7 @@ class Prompt:
     task: str
     version: int
     prompt_version: str  # "<task>/v<N>", the value logged in result.meta
-    text: str
+    text: str = field(repr=False)  # repr() must never carry prompt text (PRD B5.3)
 
 
 def _bad(path: Path, detail: str) -> PromptError:
