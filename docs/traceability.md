@@ -2,6 +2,8 @@
 
 | Requirement | Test(s) | Demo step | Bloom level |
 |---|---|---|---|
+| B6.1 – Media path templates | `test_course_lesson_path_uses_prd_template`, `test_live_class_path_uses_prd_template`, `test_path_numbers_are_zero_padded`, `test_valid_slugs_are_accepted`, `test_invalid_slugs_are_rejected` | Generate course lesson and live-class paths; verify slug rules and zero-padded numbering | — |
+| B6.4 – Media signing interface (`none` baseline) | `test_none_signer_builds_media_url`, `test_none_signer_accepts_custom_ttl`, `test_none_signer_removes_trailing_slash_from_base_url` | Build a plain media URL using `NoneSigner` | — |
 
 ## B1 course package contract (v1), Release 0 foundation
 
