@@ -1,0 +1,239 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:learnops:contract:course-model:v1",
+  "title": "LearnOps course model (B2, v1)",
+  "description": "DRAFT, not approved and not frozen. All 17 unresolved decisions are recorded in docs/traceability.md. The OPEN DECISION markers in this schema identify only some unresolved fields and are not the complete list, so a field without a marker is not settled. A normalised JSON description of a course, read by the checker and built from a Moodle backup (.mbz) or a course package (PRD B2). It describes what a course IS, including a broken course, so that the checker can report the problem. This schema checks structure only and must never reject a course-design error.",
+  "$comment": "Unknown fields are allowed on purpose: after Release 0 contracts change only by adding optional fields and readers ignore unknown fields (PRD B.0, EXT-02). A null means the source does not carry the value, for example a package has no Moodle visibility setting, or that the item does not exist, as stated on each field. Deliberately NOT enforced here, because a course that breaks them must still validate so that a rule can report it: unique or well-formed idnumbers (CK-06), protected items (CK-07), points summing to the target (CK-03), references inside availability, criteria or badges pointing at real activities (CK-04, CK-08), circular unlock rules (CK-05), completion rules that can be met (CK-02), a valid marking table with matching points (CK-09), marking workflow being on (CK-10), H5P having no grade item (CK-11), relative media paths (CK-12), and completion tracking on activities used in unlock rules (CK-13). The inner form of availability belongs to Moodle and is not described here. Unique cmid values are not enforced either; the model builder guarantees them.",
+  "type": "object",
+  "required": ["schema", "source", "course", "sections", "course_completion", "badges"],
+  "properties": {
+    "schema": {
+      "const": "learnops.course-model/v1",
+      "description": "Contract name and version."
+    },
+    "source": { "$ref": "#/$defs/source" },
+    "course": { "$ref": "#/$defs/course" },
+    "sections": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/section" },
+      "description": "In course order."
+    },
+    "course_completion": { "$ref": "#/$defs/course_completion" },
+    "badges": {
+      "type": ["array", "null"],
+      "items": { "$ref": "#/$defs/badge" },
+      "description": "null when the source does not carry them: a package never does (PRD B1.4). An empty array means the source carries badges and has none."
+    }
+  },
+  "$defs": {
+    "idnumber": {
+      "type": ["string", "null"],
+      "description": "As found in the source, with no format check, because invalid and duplicate values are what CK-06 reports. null when there is none. Protected idnumbers are allowed, because CK-07 needs to see them (unlike B1, which rejects them)."
+    },
+    "title": {
+      "type": ["string", "null"]
+    },
+    "visible": {
+      "type": ["boolean", "null"],
+      "description": "null when the source does not carry it, as in a package."
+    },
+    "availability": {
+      "type": ["object", "null"],
+      "description": "Moodle's own availability JSON, kept whole so that no information is lost (PRD B2). null means no restriction. A package unlock rule is written in this same form."
+    },
+    "cmid": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "OPEN DECISION: not in the PRD key fields. Moodle's course-module id, which availability conditions, completion criteria and badges use to refer to an activity. For a package the builder assigns synthetic ids. Unique within one model and meaningless across models, so a comparison uses idnumber."
+    },
+    "source": {
+      "type": "object",
+      "description": "OPEN DECISION: not in the PRD key fields. Where the model came from.",
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "enum": ["mbz", "package"]
+        },
+        "mode": {
+          "enum": ["full", "sections-only"],
+          "description": "The package's output mode (PRD B1.4). CK-07 needs it, because a sections-only package leaves out the protected items on purpose."
+        }
+      },
+      "if": { "properties": { "kind": { "const": "package" } }, "required": ["kind"] },
+      "then": { "required": ["mode"] }
+    },
+    "course": {
+      "type": "object",
+      "required": ["shortname", "completion_enabled"],
+      "properties": {
+        "shortname": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The Moodle course shortname."
+        },
+        "fullname": {
+          "type": "string"
+        },
+        "completion_enabled": {
+          "type": ["boolean", "null"],
+          "description": "Course-level completion tracking. null when the source does not carry it, as in a package."
+        },
+        "total_points": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "description": "OPEN DECISION: not in the PRD key fields. The target total for CK-03 when the source states one. A .mbz does not, so the target then comes from rule configuration."
+        }
+      }
+    },
+    "section": {
+      "type": "object",
+      "required": ["number", "idnumber", "visible", "availability", "activities"],
+      "properties": {
+        "number": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Moodle's section number. Moodle has a section 0, so the minimum is 0, not 1 as in B1."
+        },
+        "idnumber": {
+          "$ref": "#/$defs/idnumber",
+          "description": "OPEN DECISION: the PRD lists this, but Moodle sections are not known to have an idnumber, so it is expected to be null for a .mbz until checked against a real backup."
+        },
+        "title": { "$ref": "#/$defs/title" },
+        "visible": { "$ref": "#/$defs/visible" },
+        "availability": { "$ref": "#/$defs/availability" },
+        "activities": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/activity" },
+          "description": "In course order. May be empty."
+        }
+      }
+    },
+    "completion": {
+      "type": "object",
+      "description": "The activity's completion rule. A rule that can never be met must still validate (CK-02).",
+      "required": ["tracking"],
+      "properties": {
+        "tracking": {
+          "enum": ["none", "manual", "automatic"]
+        },
+        "view": {
+          "type": "boolean",
+          "description": "Complete when viewed."
+        },
+        "submit": {
+          "type": "boolean",
+          "description": "Complete when submitted (B1 completion: submit)."
+        },
+        "use_grade": {
+          "type": "boolean",
+          "description": "Complete when a grade is received."
+        },
+        "pass_grade": {
+          "type": "boolean",
+          "description": "Complete only with a passing grade."
+        }
+      }
+    },
+    "grade_item": {
+      "type": ["object", "null"],
+      "description": "null means no grade item. This also answers whether an H5P activity is graded (PRD B2, CK-11).",
+      "required": ["max_grade"],
+      "properties": {
+        "max_grade": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Maximum grade. A number, not an integer, because Moodle grades can be decimal."
+        }
+      }
+    },
+    "marking_table": {
+      "type": "object",
+      "description": "OPEN DECISION: the PRD lists only presence, but CK-09 also compares points.",
+      "required": ["present"],
+      "properties": {
+        "present": {
+          "type": "boolean"
+        },
+        "points_total": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "description": "Sum of the table's Points column. null when there is no table or it cannot be parsed."
+        }
+      }
+    },
+    "activity": {
+      "type": "object",
+      "required": ["type", "idnumber", "cmid", "visible", "availability", "completion", "grade_item"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "minLength": 1,
+          "description": "page, assignment, url, label or h5p (the B1 names). Any other type keeps Moodle's module name and is reported as not checked (PRD C2.8), so this is not an enum."
+        },
+        "idnumber": { "$ref": "#/$defs/idnumber" },
+        "cmid": { "$ref": "#/$defs/cmid" },
+        "title": { "$ref": "#/$defs/title" },
+        "visible": { "$ref": "#/$defs/visible" },
+        "availability": { "$ref": "#/$defs/availability" },
+        "completion": { "$ref": "#/$defs/completion" },
+        "grade_item": { "$ref": "#/$defs/grade_item" },
+        "marking_workflow": {
+          "type": ["boolean", "null"],
+          "description": "null when the source does not carry it, as in a package."
+        },
+        "marking_table": { "$ref": "#/$defs/marking_table" },
+        "media_refs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "OPEN DECISION: not in the PRD key fields. Every media reference found in the activity, as written, so that CK-12 can report full URLs. Empty means none found; absent means not collected."
+        }
+      },
+      "if": { "properties": { "type": { "const": "assignment" } }, "required": ["type"] },
+      "then": { "required": ["marking_workflow", "marking_table"] }
+    },
+    "criterion": {
+      "type": "object",
+      "description": "One course-completion or badge criterion. CK-08 reports a criterion that refers to a missing item, so the reference is not checked here.",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The kind of criterion, for example activity. Open, because Moodle has several."
+        },
+        "cmid": {
+          "type": ["integer", "null"],
+          "description": "The activity referred to, as found in the source. It may not exist in this model."
+        },
+        "idnumber": {
+          "$ref": "#/$defs/idnumber",
+          "description": "The referred activity's idnumber, when the builder can resolve it."
+        }
+      }
+    },
+    "course_completion": {
+      "type": ["object", "null"],
+      "description": "null when the source does not carry it: a package never does (PRD B1.4).",
+      "required": ["criteria"],
+      "properties": {
+        "criteria": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/criterion" }
+        }
+      }
+    },
+    "badge": {
+      "type": "object",
+      "required": ["name", "criteria"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "criteria": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/criterion" }
+        }
+      }
+    }
+  }
+}

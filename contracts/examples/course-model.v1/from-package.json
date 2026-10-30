@@ -1,0 +1,88 @@
+{
+  "_note": "Valid example for contracts/course-model.v1.schema.json (PRD B2). Hand-written model of the B1 example package in contracts/examples/course-package.v1/. Fictional content for contract testing only. cmid values are synthetic.",
+  "schema": "learnops.course-model/v1",
+  "source": { "kind": "package", "mode": "full" },
+  "course": {
+    "shortname": "DEMO-AI-101",
+    "fullname": "Build an AI Assistant",
+    "completion_enabled": null,
+    "total_points": 100
+  },
+  "sections": [
+    {
+      "number": 1,
+      "idnumber": "wk-01",
+      "title": "Week 1 — Set up your tools",
+      "visible": null,
+      "availability": null,
+      "activities": [
+        {
+          "type": "page",
+          "idnumber": "wk-01-guide",
+          "cmid": 1,
+          "title": "Week 1 guide",
+          "visible": null,
+          "availability": null,
+          "completion": { "tracking": "none" },
+          "grade_item": null,
+          "media_refs": []
+        },
+        {
+          "type": "assignment",
+          "idnumber": "wk-01-task",
+          "cmid": 2,
+          "title": "Week 1 task",
+          "visible": null,
+          "availability": null,
+          "completion": { "tracking": "automatic", "submit": true },
+          "grade_item": { "max_grade": 50 },
+          "marking_workflow": null,
+          "marking_table": { "present": true, "points_total": 50 },
+          "media_refs": []
+        }
+      ]
+    },
+    {
+      "number": 2,
+      "idnumber": "wk-02",
+      "title": "Week 2 — Extend your assistant",
+      "visible": null,
+      "availability": {
+        "op": "&",
+        "c": [
+          { "type": "completion", "cm": 2, "e": 1 },
+          { "type": "date", "d": ">=", "t": 1770595200 }
+        ],
+        "showc": [true, true]
+      },
+      "activities": [
+        {
+          "type": "page",
+          "idnumber": "wk-02-guide",
+          "cmid": 3,
+          "title": "Week 2 guide",
+          "visible": null,
+          "availability": null,
+          "completion": { "tracking": "none" },
+          "grade_item": null,
+          "media_refs": []
+        },
+        {
+          "type": "assignment",
+          "idnumber": "wk-02-task",
+          "cmid": 4,
+          "title": "Week 2 task",
+          "visible": null,
+          "availability": null,
+          "completion": { "tracking": "automatic", "submit": true },
+          "grade_item": { "max_grade": 50 },
+          "marking_workflow": null,
+          "marking_table": { "present": true, "points_total": 50 },
+          "media_refs": []
+        }
+      ]
+    }
+  ],
+  "course_completion": null,
+  "badges": null
+}
