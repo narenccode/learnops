@@ -4,8 +4,8 @@ Both reach a model through an injected transport. TransportProvider.complete() i
 that calls a transport and handles its failure, so the two providers cannot drift apart. A subclass
 supplies only what differs: how it calls its transport, its cost, and its "unreachable" message.
 
-A provider never holds an API key. The real hosted transport reads its key from the environment
-(PRD B5.2), so a key cannot appear in a provider's repr(), in a log record or in an error.
+A provider never holds a credential, so one cannot appear in a provider's repr(), in a log record
+or in an error. Credentials belong to the real transport, which does not exist yet (design Q19).
 """
 
 from __future__ import annotations
@@ -63,15 +63,16 @@ class TransportProvider(ABC):
     def complete(self, request: ProviderRequest) -> ProviderResponse:
         try:
             reply = self._send(request)
-        except Exception as error:  # any transport failure, not only TransportError
-            # Only the exception's class name is kept. Its message and the chained original could
-            # hold a URL, the request or learner content, so the chain is cut (from None).
+            return ProviderResponse(
+                text=reply.text,
+                input_tokens=reply.input_tokens,
+                output_tokens=reply.output_tokens,
+                cost_estimate=self._cost(reply),
+            )
+        except Exception as error:
+            # Any failure, also a reply that is not a TransportReply. Only the exception's class
+            # name is kept: its message and the chained original could hold a URL, the request or
+            # learner content, so the chain is cut (from None).
             raise ProviderUnavailable(
                 self.unreachable_message.format(detail=type(error).__name__)
             ) from None
-        return ProviderResponse(
-            text=reply.text,
-            input_tokens=reply.input_tokens,
-            output_tokens=reply.output_tokens,
-            cost_estimate=self._cost(reply),
-        )

@@ -43,8 +43,17 @@ def fake_env(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture
-def registry() -> TaskRegistry:
-    """A private registry with the test-only example_echo task (never the shared one)."""
+def test_run(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Declares a test run, where injecting a provider or logger into run() is allowed."""
+    monkeypatch.setenv("LEARNOPS_ENV", "test")
+
+
+@pytest.fixture
+def registry(test_run: None) -> TaskRegistry:
+    """A private registry with the test-only example_echo task (never the shared one).
+
+    Using it declares a test run. A test of a service sets LEARNOPS_ENV itself afterwards.
+    """
     reg = TaskRegistry()
     reg.register("example_echo", ECHO_INPUT, ECHO_OUTPUT)
     return reg

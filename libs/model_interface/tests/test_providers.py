@@ -23,6 +23,7 @@ from model_interface.providers import (
 )
 
 from .echo_task import ECHO_OUTPUT
+from .mock_transport import MockTransport
 
 
 def request(inputs: Mapping[str, Any], task: str = "example_echo") -> ProviderRequest:
@@ -33,23 +34,6 @@ def request(inputs: Mapping[str, Any], task: str = "example_echo") -> ProviderRe
         inputs=inputs,
         output_schema=ECHO_OUTPUT,
     )
-
-
-class RecordingTransport:
-    def __init__(
-        self, reply: TransportReply | None = None, error: Exception | None = None
-    ) -> None:
-        self.reply = reply or TransportReply(
-            text='{"echo": "hi"}', input_tokens=12, output_tokens=3
-        )
-        self.error = error
-        self.calls: list[dict[str, Any]] = []
-
-    def complete(self, **kwargs: Any) -> TransportReply:
-        self.calls.append(kwargs)
-        if self.error is not None:
-            raise self.error
-        return self.reply
 
 
 # --- fake provider guard -------------------------------------------------------------------
@@ -164,20 +148,22 @@ def test_local_needs_its_settings(
     monkeypatch.setenv("MODEL_NAME", "example-local-model")
     monkeypatch.delenv(missing)
     with pytest.raises(ConfigError, match=f"{missing} is not set"):
-        create_provider(local_transport=RecordingTransport())
+        create_provider(local_transport=MockTransport())
 
 
 # --- local provider ------------------------------------------------------------------------
 
 
-def local(transport: RecordingTransport) -> LocalProvider:
+def local(transport: MockTransport) -> LocalProvider:
     return LocalProvider(
         url="http://ai.lab.invalid:11434", model="m", transport=transport, timeout_s=5
     )
 
 
 def test_local_passes_the_request_to_its_transport() -> None:
-    transport = RecordingTransport()
+    transport = MockTransport(
+        TransportReply(text='{"echo": "hi"}', input_tokens=12, output_tokens=3)
+    )
     reply = local(transport).complete(request({"text": "hi"}))
     assert transport.calls == [
         {
@@ -198,7 +184,7 @@ def test_local_passes_the_request_to_its_transport() -> None:
 
 
 def test_local_keeps_unreported_usage_as_none() -> None:
-    reply = local(RecordingTransport(TransportReply(text="{}"))).complete(
+    reply = local(MockTransport(TransportReply(text="{}"))).complete(
         request({"text": "x"})
     )
     assert (reply.input_tokens, reply.output_tokens) == (None, None)
@@ -218,7 +204,7 @@ def test_transport_failure_becomes_provider_unavailable_without_content(
     error: Exception,
 ) -> None:
     with pytest.raises(ProviderUnavailable) as caught:
-        local(RecordingTransport(error=error)).complete(request({"text": "x"}))
+        local(MockTransport(error=error)).complete(request({"text": "x"}))
     shown = f"{caught.value!s} {caught.value!r}"
     assert "secret learner text" not in shown
     assert "token=abc" not in shown

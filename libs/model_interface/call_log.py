@@ -8,6 +8,10 @@ Required logging is never skipped. get_call_logger() returns the configured logg
 (LEARNOPS_ENV=test) with none configured it returns an in-memory one; anywhere else, including with
 LEARNOPS_ENV unset, it raises CallLoggerMissing, so run() refuses before any model call.
 
+Logger injection is for tests. Outside a test run, a logger passed to run() must be the configured
+one, so a call cannot bypass the shared log, and InMemoryCallLogger cannot be configured at all,
+because its records would not reach shared.model_calls.
+
 The PostgreSQL logger for shared.model_calls waits for the migration tool and shared schema
 (design Q36). Until it exists, no lab or production service can make a logged model call.
 """
@@ -21,7 +25,7 @@ from dataclasses import dataclass, field
 from typing import Any, Literal, Protocol
 
 from . import messages
-from .config import ENV_VARIABLE, TEST_ENVIRONMENT
+from .config import ENV_VARIABLE, TEST_ENVIRONMENT, ConfigError
 from .errors import CallLoggerMissing
 
 Outcome = Literal["ok", "invalid_output", "provider_error", "invalid_meta"]
@@ -61,9 +65,16 @@ _configured: CallLogger | None = None
 _test_logger = InMemoryCallLogger()
 
 
+def is_test_run() -> bool:
+    """True only with LEARNOPS_ENV=test. Unset counts as "not test", as in config.py."""
+    return os.environ.get(ENV_VARIABLE, "").strip() == TEST_ENVIRONMENT
+
+
 def configure_call_logger(logger: CallLogger) -> None:
-    """Set the logger every run() uses unless a call passes its own."""
+    """Set the logger every run() uses. InMemoryCallLogger is refused outside a test run."""
     global _configured
+    if isinstance(logger, InMemoryCallLogger) and not is_test_run():
+        raise ConfigError(messages.IN_MEMORY_LOGGER_TEST_ONLY)
     _configured = logger
 
 
@@ -78,6 +89,17 @@ def get_call_logger() -> CallLogger:
     """The configured logger, or the in-memory one in a test run; otherwise CallLoggerMissing."""
     if _configured is not None:
         return _configured
-    if os.environ.get(ENV_VARIABLE, "").strip() == TEST_ENVIRONMENT:
+    if is_test_run():
         return _test_logger
     raise CallLoggerMissing(messages.NO_CALL_LOGGER)
+
+
+def resolve_call_logger(logger: CallLogger | None) -> CallLogger:
+    """The logger for one call. Passing one is for tests; a service gets the configured one only."""
+    if logger is None:
+        return get_call_logger()
+    if is_test_run():
+        return logger
+    if logger is not get_call_logger():
+        raise ConfigError(messages.CALL_LOGGER_NOT_CONFIGURED)
+    return logger

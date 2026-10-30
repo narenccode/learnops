@@ -41,6 +41,7 @@ from model_interface.registry import TaskRegistry
 from model_interface.runner import Result, run
 
 from .echo_task import ECHO_OUTPUT
+from .mock_transport import MockTransport
 
 B5_SCHEMA = (
     Path(__file__).resolve().parents[3] / "contracts" / "model-interface.v1.schema.json"
@@ -50,19 +51,7 @@ SECRET_OUTPUT = "private model text"
 NULL_USAGE = {"input_tokens": None, "output_tokens": None, "cost_estimate": None}
 
 
-class Transport:
-    """Counts calls, so a test can prove nothing was sent."""
-
-    def __init__(self, reply: TransportReply | None = None) -> None:
-        self.reply = reply or TransportReply(text='{"echo": "ok"}')
-        self.calls = 0
-
-    def complete(self, **_: Any) -> TransportReply:
-        self.calls += 1
-        return self.reply
-
-
-def local(transport: Transport) -> LocalProvider:
+def local(transport: MockTransport) -> LocalProvider:
     return LocalProvider(
         url="http://ai.lab.invalid:11434", model="m", transport=transport
     )
@@ -86,50 +75,54 @@ def fake(fake_env: None) -> FakeProvider:
 def test_run_refuses_without_a_logger_outside_a_test_run(
     registry: TaskRegistry, monkeypatch: pytest.MonkeyPatch, environment: str | None
 ) -> None:
-    if environment is not None:
+    monkeypatch.setenv("MODEL_PROVIDER", "local")
+    transport = MockTransport()
+    configure_provider(local(transport))
+    if environment is None:
+        monkeypatch.delenv("LEARNOPS_ENV")
+    else:
         monkeypatch.setenv("LEARNOPS_ENV", environment)
-    transport = Transport()
     with pytest.raises(CallLoggerMissing, match="Nothing was sent to the model"):
-        run(
-            "example_echo",
-            INPUTS,
-            ECHO_OUTPUT,
-            provider=local(transport),
-            registry=registry,
-        )
-    assert transport.calls == 0  # refused before any model call
+        run("example_echo", INPUTS, ECHO_OUTPUT, registry=registry)
+    assert transport.calls == []  # refused before any model call
 
 
 def test_a_configured_logger_is_used_outside_a_test_run(
     registry: TaskRegistry, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    class ServiceLogger:
+        def __init__(self) -> None:
+            self.records: list[CallRecord] = []
+
+        def record(self, record: CallRecord) -> None:
+            self.records.append(record)
+
     monkeypatch.setenv("LEARNOPS_ENV", "lab")
-    logger = InMemoryCallLogger()
+    monkeypatch.setenv("MODEL_PROVIDER", "local")
+    configure_provider(local(MockTransport()))
+    logger = ServiceLogger()
     configure_call_logger(logger)
-    run(
-        "example_echo",
-        INPUTS,
-        ECHO_OUTPUT,
-        provider=local(Transport()),
-        registry=registry,
-    )
+    run("example_echo", INPUTS, ECHO_OUTPUT, registry=registry)
     assert [r.outcome for r in logger.records] == ["ok"]
 
 
-def test_a_logger_passed_to_the_call_is_used_outside_a_test_run(
+def test_a_logger_passed_to_the_call_is_refused_outside_a_test_run(
     registry: TaskRegistry, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """It used to be accepted, which let a call bypass the shared log."""
     monkeypatch.setenv("LEARNOPS_ENV", "production")
-    logger = InMemoryCallLogger()
-    run(
-        "example_echo",
-        INPUTS,
-        ECHO_OUTPUT,
-        provider=local(Transport()),
-        registry=registry,
-        logger=logger,
-    )
-    assert len(logger.records) == 1
+    monkeypatch.setenv("MODEL_PROVIDER", "local")
+    transport = MockTransport()
+    configure_provider(local(transport))
+    with pytest.raises(CallLoggerMissing):  # none configured, so nothing can match it
+        run(
+            "example_echo",
+            INPUTS,
+            ECHO_OUTPUT,
+            registry=registry,
+            logger=InMemoryCallLogger(),
+        )
+    assert transport.calls == []
 
 
 def test_a_test_run_falls_back_to_the_in_memory_logger(
@@ -233,7 +226,7 @@ def test_failure_records_are_valid_b5_meta(
 def test_invalid_meta_is_logged_with_null_usage_and_raised(
     registry: TaskRegistry,
 ) -> None:
-    transport = Transport(TransportReply(text='{"echo": "ok"}', input_tokens=-1))
+    transport = MockTransport(TransportReply(text='{"echo": "ok"}', input_tokens=-1))
     logger = InMemoryCallLogger()
     with pytest.raises(InvalidMeta):
         run(
@@ -319,11 +312,11 @@ def test_the_guard_runs_again_on_every_get_provider(
         get_provider()
 
 
-def test_a_cached_fake_is_replaced_when_the_setting_changes(
+def test_a_changed_setting_never_switches_the_shared_provider(
     fake: FakeProvider, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setenv("MODEL_PROVIDER", "hosted")
-    with pytest.raises(ProviderUnavailable, match="Q19"):
+    with pytest.raises(ConfigError, match="never switches provider"):
         get_provider()
 
 
@@ -331,11 +324,11 @@ def test_a_configured_provider_is_used_by_the_prd_call_shape(
     registry: TaskRegistry, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setenv("MODEL_PROVIDER", "local")
-    transport = Transport()
+    transport = MockTransport()
     configure_provider(local(transport))
     logger = InMemoryCallLogger()
     run("example_echo", INPUTS, ECHO_OUTPUT, registry=registry, logger=logger)
-    assert transport.calls == 1
+    assert len(transport.calls) == 1
 
 
 # --- repr privacy --------------------------------------------------------------------------

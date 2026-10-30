@@ -30,9 +30,20 @@ from jsonschema import Draft202012Validator
 from jsonschema.exceptions import best_match
 
 from . import messages
-from .call_log import CallLogger, CallRecord, get_call_logger
-from .errors import InvalidInput, InvalidMeta, InvalidOutput, SchemaMismatch
-from .providers import Provider, ProviderRequest, ProviderResponse, get_provider
+from .call_log import CallLogger, CallRecord, resolve_call_logger
+from .errors import (
+    InvalidInput,
+    InvalidMeta,
+    InvalidOutput,
+    ProviderUnavailable,
+    SchemaMismatch,
+)
+from .providers import (
+    Provider,
+    ProviderRequest,
+    ProviderResponse,
+    resolve_provider,
+)
 from .registry import DEFAULT_REGISTRY, Schema, TaskRegistry
 
 MAX_ATTEMPTS: Final = 2  # PRD B5.2: on invalid output, one retry
@@ -67,10 +78,18 @@ def _problem(validator: Draft202012Validator, instance: Any) -> str | None:
     return f"'{error.validator}' at schema path {list(error.absolute_schema_path) or 'top level'}"
 
 
-def _parse_output(text: str, schema: Schema) -> tuple[Any, str | None]:
+def _refuse_constant(name: str) -> None:
+    """NaN and Infinity are not JSON, though Python's parser accepts them by default."""
+    raise ValueError(name)
+
+
+def _parse_output(text: Any, schema: Schema) -> tuple[Any, str | None]:
+    # The provider contract says str. Checked here because json.loads would also accept bytes.
+    if not isinstance(text, str):
+        return None, "output is not text"
     try:
-        data = json.loads(text)
-    except json.JSONDecodeError:
+        data = json.loads(text, parse_constant=_refuse_constant)
+    except (ValueError, RecursionError):
         return None, "output is not JSON"
     return data, _problem(Draft202012Validator(schema), data)
 
@@ -108,9 +127,10 @@ def run(
 ) -> Result:
     """Run one registered task and return validated data with its meta, or raise a ModelError.
 
-    provider defaults to get_provider(), the shared configured provider. logger defaults to
-    get_call_logger(), which refuses outside a test run when none is configured. It receives one
-    CallRecord per attempt, including failed attempts (meta only).
+    Application services pass neither provider nor logger and get the configured ones; with no
+    logger configured outside a test run, the call is refused. Passing a different provider or
+    logger is for test runs only, and is refused anywhere else. The logger receives one CallRecord
+    per attempt, including failed attempts (meta only).
     """
     spec = registry.get(task)
     if output_schema != spec.output_schema:
@@ -119,8 +139,8 @@ def run(
     if problem is not None:
         raise InvalidInput(messages.INVALID_INPUT.format(task=task, detail=problem))
 
-    chosen = provider if provider is not None else get_provider()
-    call_logger = logger if logger is not None else get_call_logger()
+    chosen = resolve_provider(provider)
+    call_logger = resolve_call_logger(logger)
     version = spec.prompt.prompt_version
     request = ProviderRequest(
         task=task,
@@ -133,6 +153,10 @@ def run(
         started = time.perf_counter()
         try:
             response = chosen.complete(request)
+            if not isinstance(response, ProviderResponse):
+                raise ProviderUnavailable(
+                    messages.BAD_PROVIDER_RESPONSE.format(provider=chosen.name)
+                )
         except Exception:
             meta = _meta(chosen, version, _elapsed_ms(started))
             call_logger.record(CallRecord(task, attempt, "provider_error", meta))

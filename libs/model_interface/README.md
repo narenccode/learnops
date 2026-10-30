@@ -34,35 +34,83 @@ result.meta  # provider, model, input/output tokens, latency_ms, cost_estimate, 
 A provider failure is not retried. Every error derives from `ModelError`, and error messages never
 contain inputs, prompts or model output.
 
-## Providers
+## Architecture
 
-`MODEL_PROVIDER` picks one provider; `MODEL_NAME` names the model for local and hosted. They all
-implement the `Provider` protocol (`providers/base.py`), so `run()` has no provider-specific code
-and every provider gives the same `Result`.
+Application code calls one function and names no provider:
 
-| Provider | Class | State |
+```
+model.run(task, inputs, output_schema)        runner.py: no provider-specific code
+  |  validates inputs, output and metadata; retries invalid output once; logs every attempt
+  v
+Provider protocol: name, model, complete()    providers/base.py
+  |-- FakeProvider                            providers/fake.py (test runs only)
+  `-- TransportProvider                       providers/transport.py (shared call and error handling)
+        |-- LocalProvider  -> LocalTransport  providers/local.py
+        `-- HostedProvider -> HostedTransport providers/hosted.py
+```
+
+| Common part | Where | What it does |
 |---|---|---|
-| `local` | `LocalProvider` (`providers/local.py`) | Works only with an injected `LocalTransport`; no real transport exists (Q19) |
-| `hosted` | `HostedProvider` (`providers/hosted.py`) | Works only with an injected `HostedTransport`; no real transport exists (Q19) |
-| `fake` | `FakeProvider` (`providers/fake.py`) | Test runs only, with `LEARNOPS_ENV=test` and `MODEL_ALLOW_FAKE=true`. Refuses to initialise anywhere else |
+| Invocation | `Provider.complete(request)` | The one method every provider has |
+| Request | `ProviderRequest` | Task, prompt, `prompt_version`, inputs, output schema |
+| Response | `ProviderResponse` | Raw text, input and output tokens, `cost_estimate`. Usage is `None` when not reported |
+| Errors | `ProviderUnavailable` | Any transport failure or malformed reply, with only the exception's class name |
+| Metadata and validation | `run()` | The same B5 `meta` and the same output check for every provider |
+| Logging | `CallLogger` | One record per attempt, whichever provider ran |
 
-`create_provider()` is the resolver, and `get_provider()` keeps one shared provider. `local` and
-`hosted` share one `TransportProvider.complete()` (`providers/transport.py`), which turns any
-transport failure into `ProviderUnavailable` carrying only the exception's class name.
+| Provider | Responsible for | State |
+|---|---|---|
+| `LocalProvider` | Passing the request and `MODEL_LOCAL_URL` to its transport. Cost is `0.0` | Mock-tested. **Real endpoint pending** |
+| `HostedProvider` | Passing the request to its transport. Cost is what the transport reports, `None` when it reports nothing, never 0 | Mock-tested. **Real API pending** |
+| `FakeProvider` | Deterministic answers and failures for tests | Test runs only |
 
+**Fake restrictions.** It needs `LEARNOPS_ENV=test` and `MODEL_ALLOW_FAKE=true`, and refuses to
+initialise in the lab, in production or with `LEARNOPS_ENV` unset. Any object calling itself `fake`
+is refused the same way. It is never a fallback.
+
+## Choosing a provider
+
+`MODEL_PROVIDER` picks the provider; `MODEL_NAME` names the model for local and hosted. The resolver
+is `create_provider()`.
+
+**Application services must use the configured path.** Build once at start, then only call `run()`:
+
+```python
+model.configure_provider(model.create_provider(local_transport=transport))  # at service start
+model.configure_call_logger(call_logger)                                    # at service start
+result = model.run("my_task", inputs, spec.output_schema)                   # everywhere else
+```
+
+Changing from local to hosted is then a setting and a restart, with no application change.
+
+**Injection is for test runs.** With `LEARNOPS_ENV=test`, `run()` accepts any valid `provider=` and
+`logger=`. Anywhere else, including with `LEARNOPS_ENV` unset, it refuses before any model call
+unless they are the configured ones. So a service set up for local can't silently run on hosted,
+or the reverse, and no call can miss the shared log.
+
+- **Unknown names are refused.** `MODEL_PROVIDER` must be `local`, `hosted` or `fake`.
+- **Invalid providers are refused.** `configure_provider()` and `run()` check for a callable
+  `complete()`, a supported name and a model. A matching name alone isn't enough.
+- **No silent replacement.** A provider that differs from `MODEL_PROVIDER` is refused, and so is a
+  second provider. If the setting changes while a service runs, `get_provider()` raises instead of
+  rebuilding. In tests, call `reset_provider()` between cases.
 - **No fallback, ever.** If the selected provider can't be built or reached, the call fails. Local
   never falls back to hosted or fake, and nothing else is tried.
-- **API keys.** A provider never holds a key. The real hosted transport reads
-  `MODEL_HOSTED_API_KEY` from the environment. `create_provider()` only checks that it is set, so
-  the value can't reach a `repr()`, a log record or an error.
-- **Cost.** Local is `0.0`. Hosted is what the transport reports, and `None` when it reports
-  nothing, never 0.
+- **Credentials.** A provider never holds one, so it can't reach a `repr()`, a log record or an
+  error. Mock transports need none, so no key is required to build `HostedProvider`. **The
+  requirement stays for the real thing:** a real hosted transport must take its key from the
+  environment only (PRD B5.2) and refuse to start without one. How it does so is pending Q19.
 
-**Adding a real transport (after Q19):** write a class with the `complete()` of `LocalTransport` or
-`HostedTransport` that returns a `TransportReply` and raises on failure, then pass it to
-`create_provider(local_transport=...)` or `create_provider(hosted_transport=...)` and call
-`configure_provider()` when the service starts. `run()` doesn't change. A hosted transport must use
-the provider's official SDK (PRD B5.2), and needs a licence check before it is added.
+## Real server integration: PENDING
+
+Nothing here has talked to a real server. The lab isn't ready, so `local` and `hosted` are tested
+with mock transports only (`tests/mock_transport.py`). That proves the interface, not the servers.
+
+When the lab endpoint and the Q19 answers exist, add a class with the `complete()` of
+`LocalTransport` or `HostedTransport` that returns a `TransportReply` and raises on failure, then
+pass it to `create_provider()` at service start. `run()` and application code don't change. A hosted
+transport must use the provider's official SDK (PRD B5.2), and needs a licence check and the spending
+cap (PRD A15.5) settled first.
 
 ## Adding a task
 
@@ -117,14 +165,15 @@ PRD B5.3: every call logs `meta`, with no raw learner content.
 - **Failed attempts have null usage:** `input_tokens`, `output_tokens` and `cost_estimate` are `null`
   because they are not known. They are never written as 0. Invalid output keeps the usage the
   provider reported, because the model did answer.
-- **Logging is never skipped.** `run()` uses the logger set with `configure_call_logger()`, or one
-  passed as `logger=`. In a test run with neither, it uses an in-memory logger. **Anywhere else,
-  including with `LEARNOPS_ENV` unset, it raises `CallLoggerMissing` before any model call.**
+- **Logging is never skipped.** `run()` uses the logger set with `configure_call_logger()`. In a
+  test run with none, it uses an in-memory logger, and a test can pass its own as `logger=`.
+  **Anywhere else, including with `LEARNOPS_ENV` unset, it raises `CallLoggerMissing` before any
+  model call, and a `logger=` that isn't the configured one is refused.**
 - **If the logger itself fails,** that error is raised, so a call that could not be logged never
   returns a result.
 
-`InMemoryCallLogger` is for tests. It is not `shared.model_calls`, and it keeps records in memory,
-so do not configure it in a service to get past `CallLoggerMissing`.
+`InMemoryCallLogger` is for test runs only, and `configure_call_logger()` refuses it anywhere else:
+its records never reach `shared.model_calls`.
 
 ## Configuration
 
@@ -135,7 +184,7 @@ so do not configure it in a service to get past `CallLoggerMissing`.
 | `MODEL_ALLOW_FAKE` | `true` only with `LEARNOPS_ENV=test`; anywhere else the service refuses to start |
 | `MODEL_NAME` | The model, for local and hosted. The fake keeps its fixed `fake-model` name. |
 | `MODEL_LOCAL_URL` | Local provider endpoint |
-| `MODEL_HOSTED_API_KEY` | Hosted provider key. Spending-capped, from the guide (PRD A15.5). |
+| `MODEL_HOSTED_API_KEY` | Reserved for the real hosted transport (Q19). Nothing reads it yet. |
 
 No key or token is ever stored in the repository.
 

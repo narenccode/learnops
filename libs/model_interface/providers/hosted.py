@@ -5,9 +5,12 @@ HostedTransport does the actual request through the provider's official SDK; non
 yet, and tests inject a fake transport. The transport takes no URL, because how a hosted API is
 addressed depends on that SDK.
 
-This class holds no API key. The real transport reads MODEL_HOSTED_API_KEY from the environment
-(PRD B5.2), so the key cannot appear here, in a log record or in an error. Cost is what the
-transport reports; if it reports none, cost is None and never 0 (decision record 0001 #1).
+This class holds no API key and does not require one, so mock transports need no credential. The
+requirement itself stays: the real transport must take its key from the environment only (PRD
+B5.2) and must refuse to start without it. How it does so is pending Q19.
+
+Cost is what the transport reports; if it reports none, cost is None and never 0 (decision record
+0001 #1).
 """
 
 from __future__ import annotations

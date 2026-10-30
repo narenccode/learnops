@@ -52,8 +52,33 @@ LOCAL_NOT_INTEGRATED: Final = (
     "(design Q19). Pass a transport to create_provider() in tests."
 )
 HOSTED_UNREACHABLE: Final = (
-    "The hosted model API did not answer ({detail}). Check the service status and that "
-    "MODEL_HOSTED_API_KEY is set, then try again."
+    "The hosted model API did not answer ({detail}). Check the service status and the hosted "
+    "provider's settings, then try again."
+)
+INVALID_PROVIDER: Final = "{kind} cannot be used as a model provider: {reason}. Build one with create_provider()."
+PROVIDER_MISMATCH: Final = (
+    "The configured provider is '{configured}' but MODEL_PROVIDER is '{selected}'. LearnOps never "
+    "switches provider by itself. Fix the setting, or restart the service with the right provider."
+)
+PROVIDER_ALREADY_SET: Final = (
+    "A different provider is already configured, and it is never replaced silently. Configure "
+    "the provider once, when the service starts."
+)
+PROVIDER_NOT_CONFIGURED: Final = (
+    "run() was given a provider that is not the configured one. Services use the provider set "
+    "with configure_provider(); passing another is for test runs only. Nothing was sent."
+)
+CALL_LOGGER_NOT_CONFIGURED: Final = (
+    "run() was given a logger that is not the configured one, so the call would miss the shared "
+    "log. Services use the logger set with configure_call_logger(). Nothing was sent."
+)
+IN_MEMORY_LOGGER_TEST_ONLY: Final = (
+    "InMemoryCallLogger is for test runs only: its records never reach shared.model_calls. The "
+    "PostgreSQL logger is not built yet (design Q36)."
+)
+BAD_PROVIDER_RESPONSE: Final = (
+    "The provider '{provider}' returned something that is not a provider response. This is a bug "
+    "in the provider code."
 )
 HOSTED_NOT_INTEGRATED: Final = (
     "The hosted provider has no transport yet: the provider and SDK are not chosen (design Q19). "

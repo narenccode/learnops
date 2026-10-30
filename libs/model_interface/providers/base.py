@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import Any, Protocol
+from typing import Any, Protocol, runtime_checkable
 
 from ..config import Provider as ProviderName
 
@@ -33,7 +33,10 @@ class ProviderResponse:
     cost_estimate: float | None  # US dollars (decision record 0001 #2)
 
 
+@runtime_checkable
 class Provider(Protocol):
+    """isinstance() only proves the attributes exist; ensure_provider() checks the rest."""
+
     @property
     def name(self) -> ProviderName: ...
 
