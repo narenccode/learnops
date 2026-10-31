@@ -1,0 +1,41 @@
+name: guide-inbox
+
+# One issue, "Guide inbox", rewritten in place so it is ready whenever the guide looks: what needs a
+# decision, what only waits for a merge, questions for the guide, what waits on students, what merged.
+# Refreshed after every bot review, on every new comment and each morning 08:30 India time.
+# No AI, no secrets. Editing the issue sends no email.
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_run:
+    workflows: [pr-review]
+    types: [completed]
+  issue_comment:
+    types: [created, edited]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+concurrency:
+  group: guide-inbox
+  cancel-in-progress: true
+
+jobs:
+  inbox:
+    # the bot's own comments already trigger pr-review, which triggers this through workflow_run
+    if: github.event_name != 'issue_comment' || github.event.comment.user.login != 'github-actions[bot]'
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Inbox
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python .github/scripts/inbox.py --post

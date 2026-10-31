@@ -264,6 +264,7 @@ Your guide gives you the dates and your release commitments in person.
 ## 8. Asking questions and reporting progress
 
 - **Anything unclear in the PRD:** open an issue in the repository titled `PRD question: …` and tell your guide. Do not guess, and don't change the PRD yourself.
+- **A question for the guide on a pull request:** write it as a comment that contains `@narenccode`. The guide sees tagged questions in one list; an untagged question can wait unseen.
 - **A decision that affects the design:** write a short record in `docs/decisions/NNNN-title.md` (a few lines: decision, options, why).
 - **Weekly:** a short stand-up with your guide (what is done, what is next, what is blocked), and your pull requests merged or in review.
 - **Before asking for help:** run `/preflight`, read the error, and check §9 below.
