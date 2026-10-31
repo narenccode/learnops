@@ -84,7 +84,9 @@ CONTRACT_REF = re.compile(
     r"\bB[1-8](?:\.\d+)?\b"
 )  # a contract has no FR id: "B6.1" is its reference
 CODE_EXT = (".py", ".ts", ".tsx", ".js", ".jsx")
-LIBS_IMPORT = re.compile(r"^\s*(?:from|import)\s+libs\.")  # libraries are imported by their own name
+LIBS_IMPORT = re.compile(
+    r"^\s*(?:from|import)\s+libs\."
+)  # libraries are imported by their own name
 REFACTOR_ONLY = re.compile(r"refactor only\s*:", re.IGNORECASE)
 WEAK_SECRET = "a hard-coded secret value"  # not applied to tests and test data
 

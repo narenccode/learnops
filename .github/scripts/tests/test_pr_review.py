@@ -685,7 +685,8 @@ def test_lessons_come_only_from_the_guide_oldest_first_and_capped():
 
 def test_lessons_are_neutralised_and_empty_ones_dropped():
     got = v.lessons_from(
-        [{"user": "guide", "body": "Lesson: ping @someone <!-- x -->\nLesson:"}], "guide"
+        [{"user": "guide", "body": "Lesson: ping @someone <!-- x -->\nLesson:"}],
+        "guide",
     )
     assert got == ["ping @​someone  x"]
 
