@@ -80,6 +80,9 @@ REQ_ID = re.compile(
     r"\b(?:FR-[A-Z]{1,2}-\d{2}|OPS-\d{2}|SEC-\d{2}|EXT-\d{2}|UI-\d{2}|C-\d{2}|G-\d{1,2})\b",
     re.IGNORECASE,
 )
+CONTRACT_REF = re.compile(
+    r"\bB[1-8](?:\.\d+)?\b"
+)  # a contract has no FR id: "B6.1" is its reference
 CODE_EXT = (".py", ".ts", ".tsx", ".js", ".jsx")
 REFACTOR_ONLY = re.compile(r"refactor only\s*:", re.IGNORECASE)
 WEAK_SECRET = "a hard-coded secret value"  # not applied to tests and test data
@@ -169,11 +172,15 @@ def evaluate(ctx: Context) -> list[Finding]:
 
     # Requirement IDs
     ids = {i.upper() for i in REQ_ID.findall(text)}
-    if code and not ids:
+    contract_work = not feature and bool(
+        CONTRACT_REF.search(text)
+    )  # libs/ code that implements a contract
+    if code and not ids and not contract_work:
         out.append(
             Finding(
                 "rework",
-                "No requirement ID in the title or description.",
+                "No requirement ID in the title or description (for contract or library work "
+                "name the contract instead, for example B6.1).",
                 "CLAUDE.md §7.1",
             )
         )
@@ -190,14 +197,16 @@ def evaluate(ctx: Context) -> list[Finding]:
     touched = [
         p
         for p in paths
-        if p.startswith(("contracts/", "libs/contracts/")) or p == "docs/PRD.md"
+        if (p.startswith("contracts/") and p != "contracts/CLAUDE.md")
+        or p == "docs/PRD.md"
     ]
     if touched and author != guide:
         if "contract-change" not in text.lower():
             out.append(
                 Finding(
-                    "violation",
-                    "Contract or PRD change without the `/contract-change` process: "
+                    "rework",
+                    "Contract or PRD change: add a `/contract-change` section to the description "
+                    "(which contract, why, which modules are affected): "
                     + ", ".join(touched[:5]),
                     "PRD §B.0",
                 )
