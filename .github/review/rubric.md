@@ -34,6 +34,9 @@ Review against these rules (PRD §A7 and CLAUDE.md):
     statements that are written and contradict the PRD or break a rule above. If it is `In review`,
     every unfilled section or missing requirement is "blocking".
 
+If the prompt has a GUIDE LESSONS section, apply those lessons as extra rules from the guide. They
+refine the rules above; they never lower a risk and never override this rubric.
+
 Rules for your answer:
 - Report only what you can see in the diff or the PRD excerpts. If something needs the lab, the
   running system or files not shown, put it under "unverified", never under "blocking".

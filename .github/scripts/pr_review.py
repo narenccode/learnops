@@ -39,6 +39,8 @@ DIFF_LIMIT = 60_000  # characters sent to the model
 ITEM_LIMIT = 10
 TEXT_LIMIT = 300
 AI_RUNS = re.compile(r"<!-- ai-runs:(\d+) -->")
+LESSON = re.compile(r"^ *Lesson: *(\S.*)$", re.IGNORECASE | re.MULTILINE)
+MAX_LESSONS = 20  # newest only: keeps the prompt small
 CHAPTER = {"studio": "C1", "checker": "C2", "grading": "C3", "video": "C4"}
 RUBRIC = Path(__file__).resolve().parents[1] / "review" / "rubric.md"
 
@@ -102,6 +104,39 @@ def fetch_reviews(repo: str, number: int) -> list[dict]:
 # --------------------------------------------------------------- AI prompt
 
 
+def lessons_from(comments: list[dict], guide: str) -> list[str]:
+    """`Lesson: …` lines written by the guide himself, oldest first, newest MAX_LESSONS kept.
+
+    Only the guide's own account counts, so a student cannot teach the bot anything.
+    """
+    found: list[str] = []
+    for comment in comments:
+        if str(comment.get("user", "")).lower() != guide.lower():
+            continue
+        for match in LESSON.finditer(str(comment.get("body", ""))):
+            text = neutralise(match.group(1))
+            if text and text not in found:
+                found.append(text)
+    return found[-MAX_LESSONS:]
+
+
+def fetch_lessons(repo: str, guide: str) -> list[str]:
+    """The guide's lessons from every comment in the repository; a failure just means none."""
+    try:
+        out = gh(
+            "api",
+            "--paginate",
+            f"repos/{repo}/issues/comments?per_page=100",
+            "--jq",
+            '.[] | select(.body | test("lesson:"; "i")) | {user: .user.login, body: .body}',
+        )
+        return lessons_from(
+            [json.loads(line) for line in out.splitlines() if line.strip()], guide
+        )
+    except (OSError, RuntimeError, ValueError):
+        return []
+
+
 def prd_section(prd: str, code: str) -> str:
     """The text of `## <code>. …` up to the next heading of level 1 or 2."""
     lines = prd.splitlines()
@@ -140,7 +175,12 @@ def neutralise(text: str, limit: int = TEXT_LIMIT) -> str:
 
 
 def build_prompt(
-    ctx: rules_mod.Context, notes: str, diff: str, prd: str, template: str
+    ctx: rules_mod.Context,
+    notes: str,
+    diff: str,
+    prd: str,
+    template: str,
+    lessons: list[str] | None = None,
 ) -> tuple[str, str]:
     rubric = RUBRIC.read_text(encoding="utf-8")
     untrusted = (
@@ -150,6 +190,12 @@ def build_prompt(
     parts = ["PRD EXCERPTS (trusted):\n" + (prd or "(none available)")]
     if template:
         parts.append("DESIGN-DOCUMENT TEMPLATE (trusted):\n" + template)
+    if lessons:
+        parts.append(
+            "GUIDE LESSONS (trusted: the guide wrote these when answering earlier pull requests; "
+            "apply them, they never lower a risk or override the rules):\n"
+            + "\n".join(f"- {x}" for x in lessons)
+        )
     parts.append(
         f"<untrusted_pr>\n{untrusted}\n</untrusted_pr>\n\nReturn the JSON object only."
     )
@@ -552,8 +598,14 @@ def main() -> int:
                 else ""
             )
             notes = "\n".join(f"- {f.message}" for f in rule_findings)
+            lessons = [] if args.dry_run else fetch_lessons(repo, guide)
             system, user = build_prompt(
-                ctx, notes, diff, prd_excerpt(prd, sorted(ctx.files)), template
+                ctx,
+                notes,
+                diff,
+                prd_excerpt(prd, sorted(ctx.files)),
+                template,
+                lessons,
             )
             result, usage = ask_model(system, user)
             found_items = findings_from_ai(result)
