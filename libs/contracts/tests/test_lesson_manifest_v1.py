@@ -5,15 +5,19 @@ AUTOMATED here (structure only, by contracts/lesson-manifest.v1.schema.json):
   * both example manifests validate (single-track; main, main-low, camera and screen), and so
     does the B6.3 example from the PRD;
   * a single-track lesson stays valid when camera and screen tracks are added (C4.7);
-  * required fields (those pointing to files B6.2 marks as required), types, the main track,
-    the four track roles, slug and timestamp patterns, relative paths only (B6.3, C-08), and
-    that unknown fields are accepted (PRD B.0, EXT-02).
+  * the nine required root fields (schema, course_slug, lesson_id, title, duration_s, tracks,
+    captions, transcript, chapters), types, exactly one main track, track roles as open
+    lowercase names (known: main, main-low, camera, screen; others such as audio accepted),
+    slug and timestamp patterns, relative paths only (B6.3, C-08), and that unknown fields are
+    accepted (PRD B.0, EXT-02).
 
 NOT automated here, and therefore NOT claimed as enforced (the schema's $comment lists them):
-  * that the files the manifest names, and poster.jpg, exist in the lesson folder;
+  * that the files the manifest names, and poster.jpg (which has no manifest field), exist in
+    the lesson folder;
   * that lesson.json is written last, only when every required file exists (FR-V-08);
   * that course_slug and lesson_id match the folder's place in the B6.1 path template;
-  * the shapes of transcript, chapters, slides and cues files (B6.2), which have no schema yet.
+  * the contents of the transcript file (B5.4 shape, owned by B5) and of the chapters, slides
+    and cues files (B6.2), which have no schema yet.
 
 Each invalid case below must fail at the expected place with the expected schema keyword, so a
 case cannot pass for the wrong reason.
@@ -74,6 +78,19 @@ PROCESSING: Loc = ("processing",)
 COMPLETED_AT: Loc = PROCESSING + ("completed_at",)
 NEW_TRACK: Loc = ("tracks", 1)  # appended by add_track()
 
+# Guide decision for B6.3: these root fields are required; every other root field is optional.
+REQUIRED_ROOT = (
+    "schema",
+    "course_slug",
+    "lesson_id",
+    "title",
+    "duration_s",
+    "tracks",
+    "captions",
+    "transcript",
+    "chapters",
+)
+
 
 # --- helpers -------------------------------------------------------------------------------
 
@@ -95,6 +112,14 @@ def set_at(loc: Loc, value: Any) -> Edit:
 def drop_at(loc: Loc) -> Edit:
     def edit(doc: Doc) -> None:
         del _parent(doc, loc)[loc[-1]]
+
+    return edit
+
+
+def keep_only(*keys: str) -> Edit:
+    def edit(doc: Doc) -> None:
+        for key in set(doc) - set(keys):
+            del doc[key]
 
     return edit
 
@@ -183,10 +208,21 @@ def test_prd_example_is_valid(validator: Draft202012Validator) -> None:
     assert messages(validator, copy.deepcopy(PRD_EXAMPLE)) == []
 
 
-def test_examples_use_every_track_role(schema: dict[str, Any]) -> None:
-    roles = schema["$defs"]["track"]["properties"]["role"]["enum"]
+KNOWN_ROLES = {"main", "main-low", "camera", "screen"}
+
+
+def test_examples_use_every_known_track_role() -> None:
+    # The role list is open, so this checks the examples cover the roles B6.2/B6.3 name.
     used = {t["role"] for p in (SINGLE_TRACK, CAMERA_SCREEN) for t in load(p)["tracks"]}
-    assert used == set(roles) == {"main", "main-low", "camera", "screen"}
+    assert used == KNOWN_ROLES
+
+
+@pytest.mark.parametrize("role", sorted(KNOWN_ROLES - {"main"}) + ["audio", "camera2"])
+def test_added_track_with_known_or_new_lowercase_role_is_accepted(
+    validator: Draft202012Validator, doc: Doc, role: str
+) -> None:
+    add_track(role=role, file=f"{role}.mp4")(doc)
+    assert messages(validator, doc) == []
 
 
 def test_single_track_lesson_stays_valid_with_camera_and_screen_added(
@@ -203,8 +239,17 @@ def test_single_track_lesson_stays_valid_with_camera_and_screen_added(
 
 # --- invalid: required fields --------------------------------------------------------------
 
+
+def test_schema_requires_exactly_the_nine_root_fields(schema: dict[str, Any]) -> None:
+    assert sorted(schema["required"]) == sorted(REQUIRED_ROOT)
+
+
 MISSING = [
     missing("root without schema", ("schema",)),
+    missing("root without course_slug", ("course_slug",)),
+    missing("root without lesson_id", ("lesson_id",)),
+    missing("root without title", ("title",)),
+    missing("root without duration_s", ("duration_s",)),
     missing("root without tracks", ("tracks",)),
     missing("root without captions", ("captions",)),
     missing("root without transcript", ("transcript",)),
@@ -244,16 +289,29 @@ TRACK_CASES = [
         [{"role": "main-low", "file": "360p.mp4", "height": 360}],
         "contains",
     ),
-    bad("role is unknown", MAIN + ("role",), "slides", "enum"),
-    bad("role has wrong case", MAIN + ("role",), "Main", "enum"),
-    bad("role uses an underscore", MAIN + ("role",), "main_low", "enum"),
-    bad("role is a number", MAIN + ("role",), 1, "enum"),
     Case(
-        "added track with unknown role",
-        add_track(role="audio", file="audio.m4a"),
-        NEW_TRACK + ("role",),
-        "enum",
+        "two main tracks",
+        add_track(role="main", file="b.mp4"),
+        ("tracks",),
+        "maxContains",
     ),
+    bad("main role has wrong case", MAIN + ("role",), "Main", "pattern"),
+    *[
+        Case(
+            f"added track role {role!r}",
+            add_track(role=role, file="x.mp4"),
+            NEW_TRACK + ("role",),
+            keyword,
+        )
+        for role, keyword in [
+            ("Audio", "pattern"),
+            ("main_low", "pattern"),
+            ("camera-", "pattern"),
+            ("", "pattern"),
+            ("audio\n", "pattern"),
+            (1, "type"),
+        ]
+    ],
     bad("height is a string", MAIN + ("height",), "720", "type"),
     bad("height is fractional", MAIN + ("height",), 720.5, "type"),
     bad("height is boolean", MAIN + ("height",), True, "type"),
@@ -438,10 +496,6 @@ ACCEPTED = [
     Accepted("unknown field in caption", set_at(CAPTION + ("future",), [1])),
     Accepted("unknown field in source", set_at(SOURCE + ("future",), "x")),
     Accepted("unknown field in processing", set_at(PROCESSING + ("future",), True)),
-    Accepted("no course_slug", drop_at(("course_slug",))),
-    Accepted("no lesson_id", drop_at(("lesson_id",))),
-    Accepted("no title", drop_at(("title",))),
-    Accepted("no duration_s", drop_at(("duration_s",))),
     Accepted("no source", drop_at(SOURCE)),
     Accepted("no processing", drop_at(PROCESSING)),
     Accepted("empty processing", set_at(PROCESSING, {})),
@@ -454,7 +508,11 @@ ACCEPTED = [
     Accepted(
         "main-low track added", add_track(role="main-low", file="360p.mp4", height=360)
     ),
-    Accepted("main track not listed first", add_track(role="main", file="b.mp4")),
+    Accepted(
+        "main track not listed first",
+        lambda d: d["tracks"].insert(0, {"role": "main-low", "file": "360p.mp4"}),
+    ),
+    Accepted("only the nine required fields", keep_only(*REQUIRED_ROOT)),
     Accepted(
         "second caption language",
         lambda d: d["captions"].append({"lang": "hi", "file": "captions.hi.vtt"}),

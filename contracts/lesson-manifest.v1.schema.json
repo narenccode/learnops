@@ -3,9 +3,19 @@
   "$id": "urn:learnops:contract:lesson-manifest:v1",
   "title": "LearnOps lesson manifest (B6, v1)",
   "description": "The lesson.json manifest in a lesson folder (PRD B6.2, B6.3). It lists the lesson's tracks and derived files. Every path is relative to the lesson folder (PRD B6.3, C-08). This schema checks structure only; rules that need the lesson folder or the configuration are listed under $comment and are enforced by validator code, not by this file.",
-  "$comment": "Unknown fields are allowed on purpose: after Release 0 contracts change only by adding optional fields and readers ignore unknown fields (PRD B.0, EXT-02). Required here: the manifest fields that point to files B6.2 marks as required (the main track, captions, transcript, chapters). poster.jpg is required by B6.2 but the B6.3 manifest has no field for it, so it is found by its fixed file name in the lesson folder and is not described here. The fields course_slug, lesson_id, title, duration_s, source and processing appear in the B6.3 example but the PRD does not say whether they are required, so they are optional here and checked for type only when present (to be confirmed by the contract reviewers before the Release 0 freeze). NOT expressible in JSON Schema, so NOT enforced here: that the named files exist in the lesson folder; that lesson.json is written last, only when every required file exists (FR-V-08); that lesson_id and course_slug match the folder's place in the B6.1 path template (the template is configurable); the file names B6.2 gives (720p.mp4, captions.en.vtt and so on), since the manifest is what readers follow. processing.completed_at: the pattern guarantees the RFC 3339 shape and field ranges (month 01-12, day 01-31, hour 00-23 and so on) with any validator; calendar validity (for example no 31 February) is checked only by a validator run with a date-time format checker, which jsonschema provides only when the rfc3339-validator package is installed (it is not in requirements-dev.txt).",
+  "$comment": "Unknown fields are allowed on purpose: after Release 0 contracts change only by adding optional fields and readers ignore unknown fields (PRD B.0, EXT-02). Required (guide decision, PRD B6.3): schema, course_slug, lesson_id, title, duration_s, and the fields that point to files B6.2 marks as required (tracks with exactly one main track, captions, transcript, chapters). Optional: slides, cues, summary, source, processing. Track roles are open lowercase names so new kinds of track need no contract change; main, main-low, camera and screen are the known ones and a v1 reader ignores roles it doesn't play. poster.jpg is required by B6.2 but has no manifest field: readers find it by its fixed file name in the lesson folder. transcript only names the file; its contents follow the B5.4 transcript shape, which this schema does not repeat. NOT expressible in JSON Schema, so NOT enforced here: that the named files exist in the lesson folder; that lesson.json is written last, only when every required file exists (FR-V-08); that lesson_id and course_slug match the folder's place in the B6.1 path template (the template is configurable); the file names B6.2 gives (720p.mp4, captions.en.vtt and so on), since the manifest is what readers follow. processing.completed_at: the pattern guarantees the RFC 3339 shape and field ranges (month 01-12, day 01-31, hour 00-23 and so on) with any validator; calendar validity (for example no 31 February) is checked only by a validator run with a date-time format checker, which jsonschema provides only when the rfc3339-validator package is installed (it is not in requirements-dev.txt).",
   "type": "object",
-  "required": ["schema", "tracks", "captions", "transcript", "chapters"],
+  "required": [
+    "schema",
+    "course_slug",
+    "lesson_id",
+    "title",
+    "duration_s",
+    "tracks",
+    "captions",
+    "transcript",
+    "chapters"
+  ],
   "properties": {
     "schema": {
       "const": "learnops.lesson/v1",
@@ -38,7 +48,9 @@
         "required": ["role"],
         "properties": { "role": { "const": "main" } }
       },
-      "description": "Every video track of the lesson. A main track is required (PRD B6.2: 720p.mp4). camera and screen are reserved for F-1 and are listed, not played, in v1 (PRD B6.2, B6.3); a v1 reader ignores roles it doesn't play."
+      "minContains": 1,
+      "maxContains": 1,
+      "description": "Every video track of the lesson. Exactly one main track (PRD B6.2: 720p.mp4), so a reader never has to choose between two. Other tracks are optional. camera and screen are reserved for F-1 and are listed, not played, in v1 (PRD B6.2, B6.3); a v1 reader ignores roles it doesn't play."
     },
     "captions": {
       "type": "array",
@@ -48,7 +60,7 @@
     },
     "transcript": {
       "$ref": "#/$defs/relative_path",
-      "description": "Segments with word timings, in the B5.4 shape (PRD B6.2)."
+      "description": "Path to the transcript file: segments with word timings in the B5.4 transcript shape (PRD B6.2). Only the path is checked here; the file's contents belong to the B5 contract."
     },
     "chapters": {
       "$ref": "#/$defs/relative_path",
@@ -73,7 +85,7 @@
     "slug": {
       "type": "string",
       "pattern": "^[a-z0-9]+(-[a-z0-9]+)*(?![\\s\\S])",
-      "description": "Lowercase ASCII letters and digits separated by single hyphens (PRD B6.1, B1.1). The end anchor is (?![\\s\\S]) instead of $ because Python's $ also matches before a trailing newline."
+      "description": "Lowercase ASCII letters and digits separated by single hyphens (PRD B6.1, B1.1). Also the form of track roles. The end anchor is (?![\\s\\S]) instead of $ because Python's $ also matches before a trailing newline."
     },
     "relative_path": {
       "type": "string",
@@ -85,8 +97,8 @@
       "required": ["role", "file"],
       "properties": {
         "role": {
-          "enum": ["main", "main-low", "camera", "screen"],
-          "description": "main: the main video (720p). main-low: the low-bandwidth copy (360p, optional). camera, screen: separate tracks reserved for F-1 (PRD B6.2, B6.3)."
+          "$ref": "#/$defs/slug",
+          "description": "Open list of lowercase names in the slug form, so a new kind of track (for example audio) needs no contract change. Known roles: main: the main video (720p). main-low: the low-bandwidth copy (360p, optional). camera, screen: separate tracks reserved for F-1 (PRD B6.2, B6.3)."
         },
         "file": { "$ref": "#/$defs/relative_path" },
         "height": {

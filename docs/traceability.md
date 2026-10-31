@@ -87,8 +87,9 @@ Structure only. Test names are in `test_lesson_manifest_v1.py`.
 | Rule | PRD | Test(s) |
 |---|---|---|
 | `schema` equals `learnops.lesson/v1` | B6.3 | `test_missing_required_field_is_rejected`, `test_wrong_type_or_value_is_rejected` |
-| `tracks`, `captions`, `transcript`, `chapters` required (they point to files B6.2 marks required) | B6.2, B6.3 | `test_missing_required_field_is_rejected`, `test_wrong_type_or_value_is_rejected` |
-| At least one `main` track; track roles are `main`, `main-low`, `camera`, `screen` | B6.2, B6.3 | `test_invalid_track_is_rejected`, `test_examples_use_every_track_role` |
+| Nine root fields required: `schema`, `course_slug`, `lesson_id`, `title`, `duration_s`, `tracks`, `captions`, `transcript`, `chapters`; `slides`, `cues`, `summary`, `source`, `processing` optional | B6.2, B6.3 | `test_schema_requires_exactly_the_nine_root_fields`, `test_missing_required_field_is_rejected`, `test_valid_variation_is_accepted` |
+| Exactly one `main` track | B6.2, B6.3 | `test_invalid_track_is_rejected`, `test_example_manifest_is_valid` |
+| Track roles are open lowercase names (slug form); known roles `main`, `main-low`, `camera`, `screen`; others such as `audio` accepted | B6.3 | `test_invalid_track_is_rejected`, `test_added_track_with_known_or_new_lowercase_role_is_accepted`, `test_examples_use_every_known_track_role` |
 | A single-track lesson stays valid when `camera` and `screen` tracks are added | C4.7, EXT-03 | `test_single_track_lesson_stays_valid_with_camera_and_screen_added` |
 | Every path is relative to the lesson folder: not a URL, not absolute, no `..` segment | B6.3, C-08 | `test_path_that_is_not_relative_is_rejected` |
 | `course_slug` is lowercase ASCII with hyphens | B6.1 | `test_invalid_course_slug_is_rejected` |
@@ -96,9 +97,7 @@ Structure only. Test names are in `test_lesson_manifest_v1.py`.
 | The schema is valid; both examples and the PRD B6.3 example validate | B.0 rule 1 | `test_schema_is_a_valid_draft_2020_12_schema`, `test_example_manifest_is_valid`, `test_prd_example_is_valid` |
 
 Enforced and tested, but chosen in the schema rather than stated as a rule in the PRD (to be
-confirmed by the contract reviewers): `course_slug`, `lesson_id`, `title`, `duration_s`, `source`
-and `processing` are optional; `track.role` is a closed list of the four roles named in B6.2/B6.3;
-`source.kind` is required inside `source` but is any non-empty string (the PRD names only
+confirmed by the contract reviewers): `source.kind` is required inside `source` but is any non-empty string (the PRD names only
 `upload`); `captions` not empty; `height` a positive integer; `duration_s` a non-negative number;
 `processing.completed_at` an RFC 3339 timestamp with a time zone; non-empty strings.
 
@@ -110,4 +109,5 @@ and `processing` are optional; `track.role` is a closed list of the four roles n
 | `lesson.json` written last, only when all required files exist | B6.2 | FR-V-08 (R3) |
 | `course_slug` and `lesson_id` match the folder's place in the path template | B6.1 | `libs/media_paths` (Release 0, separate pull request) |
 | Calendar validity of `processing.completed_at` (for example no 31 February) | — | Only with a `date-time` format checker (`rfc3339-validator`, not installed in CI) |
-| Shapes of `transcript.en.json`, `chapters.json`, `slides.json`, `cues.json` | B6.2 | No schema yet |
+| Contents of `transcript.en.json` (B5.4 shape) | B5.4, B6.2 | B5 contract (no schema in `contracts/` yet) |
+| Shapes of `chapters.json`, `slides.json`, `cues.json` | B6.2 | No schema yet |
