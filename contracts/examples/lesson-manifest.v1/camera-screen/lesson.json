@@ -1,0 +1,28 @@
+{
+  "schema": "learnops.lesson/v1",
+  "course_slug": "build-ai-assistant",
+  "lesson_id": "02-first-assistant/01-call-a-model",
+  "title": "Call a model",
+  "duration_s": 1265.4,
+  "tracks": [
+    { "role": "main", "file": "720p.mp4", "height": 720 },
+    { "role": "main-low", "file": "360p.mp4", "height": 360 },
+    { "role": "camera", "file": "camera.mp4" },
+    { "role": "screen", "file": "screen.mp4" }
+  ],
+  "captions": [{ "lang": "en", "file": "captions.en.vtt" }],
+  "transcript": "transcript.en.json",
+  "chapters": "chapters.json",
+  "slides": "slides.json",
+  "cues": "cues.json",
+  "summary": "summary.en.md",
+  "source": {
+    "kind": "upload",
+    "uploaded_by": "test-mentor-sub-0001",
+    "original_name": "call-a-model.mkv"
+  },
+  "processing": {
+    "pipeline_version": "1.0.0",
+    "completed_at": "2026-10-29T11:40:12+05:30"
+  }
+}

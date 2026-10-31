@@ -67,3 +67,47 @@ Left out because the PRD does not establish the mapping:
 - **C1.7 "a package containing a protected idnumber is rejected with a clear message".** The schema
   rejects the two default idnumbers; the user-facing message is not tested.
 - **Requirement IDs for the contract work itself.** None in the PRD.
+
+## B6 lesson manifest contract (v1), Release 0 foundation
+
+Files: `contracts/lesson-manifest.v1.schema.json`, `contracts/examples/lesson-manifest.v1/`
+(`single-track/lesson.json`, `camera-screen/lesson.json`),
+`libs/contracts/tests/test_lesson_manifest_v1.py`. B6 has no requirement ID of its own in the PRD
+(it is a contract, PRD B.0), so no row in the table above maps to it.
+
+FR-V-08 ("Write `lesson.json` (B6.3) last, only when all required files exist", Release 3) is
+deliberately not in the table above. The tests below cover only the schema that FR-V-08 and the
+C4.7 criterion "`lesson.json` validates against B6.3" will be checked against. FR-V-08 gets its row
+in the pull request that implements it.
+
+### Enforced by the JSON Schema and covered by automated tests
+
+Structure only. Test names are in `test_lesson_manifest_v1.py`.
+
+| Rule | PRD | Test(s) |
+|---|---|---|
+| `schema` equals `learnops.lesson/v1` | B6.3 | `test_missing_required_field_is_rejected`, `test_wrong_type_or_value_is_rejected` |
+| Nine root fields required: `schema`, `course_slug`, `lesson_id`, `title`, `duration_s`, `tracks`, `captions`, `transcript`, `chapters`; `slides`, `cues`, `summary`, `source`, `processing` optional | B6.2, B6.3 | `test_schema_requires_exactly_the_nine_root_fields`, `test_missing_required_field_is_rejected`, `test_valid_variation_is_accepted` |
+| Exactly one `main` track | B6.2, B6.3 | `test_invalid_track_is_rejected`, `test_example_manifest_is_valid` |
+| Track roles are open lowercase names (slug form); known roles `main`, `main-low`, `camera`, `screen`; others such as `audio` accepted | B6.3 | `test_invalid_track_is_rejected`, `test_added_track_with_known_or_new_lowercase_role_is_accepted`, `test_examples_use_every_known_track_role` |
+| A single-track lesson stays valid when `camera` and `screen` tracks are added | C4.7, EXT-03 | `test_single_track_lesson_stays_valid_with_camera_and_screen_added` |
+| Every path is relative to the lesson folder: not a URL, not absolute, no `..` segment | B6.3, C-08 | `test_path_that_is_not_relative_is_rejected` |
+| `course_slug` is lowercase ASCII with hyphens | B6.1 | `test_invalid_course_slug_is_rejected` |
+| Unknown fields are accepted | B.0 rule 2, EXT-02 | `test_valid_variation_is_accepted` |
+| The schema is valid; both examples and the PRD B6.3 example validate | B.0 rule 1 | `test_schema_is_a_valid_draft_2020_12_schema`, `test_example_manifest_is_valid`, `test_prd_example_is_valid` |
+
+Enforced and tested, but chosen in the schema rather than stated as a rule in the PRD (to be
+confirmed by the contract reviewers): `source.kind` is required inside `source` but is any non-empty string (the PRD names only
+`upload`); `captions` not empty; `height` a positive integer; `duration_s` a non-negative number;
+`processing.completed_at` an RFC 3339 timestamp with a time zone; non-empty strings.
+
+### Documented but not automatically enforced
+
+| Rule | PRD | Where the PRD places it |
+|---|---|---|
+| The files the manifest names, and `poster.jpg`, exist in the lesson folder | B6.2 | FR-V-08 (R3) |
+| `lesson.json` written last, only when all required files exist | B6.2 | FR-V-08 (R3) |
+| `course_slug` and `lesson_id` match the folder's place in the path template | B6.1 | `libs/media_paths` (Release 0, separate pull request) |
+| Calendar validity of `processing.completed_at` (for example no 31 February) | — | Only with a `date-time` format checker (`rfc3339-validator`, not installed in CI) |
+| Contents of `transcript.en.json` (B5.4 shape) | B5.4, B6.2 | B5 contract (no schema in `contracts/` yet) |
+| Shapes of `chapters.json`, `slides.json`, `cues.json` | B6.2 | No schema yet |
