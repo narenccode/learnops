@@ -6,8 +6,10 @@
 ## B1 course package contract (v1), Release 0 foundation
 
 Files: `contracts/course-package.v1.schema.json`, `contracts/examples/course-package.v1/`,
-`libs/contracts/tests/test_course_package_v1.py`. B1 has no requirement ID of its own in the PRD
-(it is a contract, PRD B.0), so no row in the table above maps to it.
+`libs/contracts/tests/test_course_package_v1.py`; the schema stage of the package validator in
+`libs/contracts/*.py` (shared validator reference EXT-09) with its tests `test_validate_course.py`
+and `test_report.py`. B1 has no requirement ID of its own in the PRD (it is a contract, PRD B.0),
+so no row in the table above maps to it.
 
 FR-S-03 ("Validate against B1 and the checker rule library", Release 2) is deliberately not in the
 table above. The tests below cover only the B1-related part of it: structure checks against the
@@ -38,9 +40,25 @@ to `submit`; `submission` limited to `onlinetext` and `file`; `section.number` a
 as non-negative integers; non-empty titles; the shape of `body` (relative path, no `..`);
 `activities` and `sections` not empty.
 
+### Enforced by validator code (`libs/contracts`) and covered by automated tests
+
+`validate_course_document()` runs the schema on a parsed `course.yaml` and returns a report. Test
+names are in `test_validate_course.py` (course.yaml as parsed data) and `test_report.py` (the
+report types).
+
+| Rule | PRD | Test(s) |
+|---|---|---|
+| The schema is applied to a parsed `course.yaml`; every error is reported (not only the first), in a fixed order, with its place, a message and a fix hint; an impossible calendar date and a document that is not an object are errors | B.0 rule 4, B1.1 | `test_example_document_has_no_errors`, `test_schema_errors_are_reported_with_their_place`, `test_every_schema_error_is_reported_not_only_the_first`, `test_an_impossible_calendar_date_is_rejected`, `test_a_document_that_is_not_an_object_is_an_error` |
+| The two default protected idnumbers are rejected with a clear message that names the place and says what to do; the validator reports each one once | B1.4 | `test_default_protected_idnumbers_are_left_to_the_schema`, `test_default_protected_idnumber_gets_a_clear_message` |
+| Rules that are not implemented are listed as "not checked" in every report, so that "no errors" is not read as "fully checked" (a design choice, not a PRD rule) | n/a | `test_held_rules_are_reported_as_not_checked_never_skipped_silently`, `test_a_document_with_weekly_structure_problems_is_not_judged_here` |
+| A report is ok when it has no errors; "not checked" entries do not make it fail; issues cannot be changed after creation | n/a | `test_empty_report_is_ok`, `test_report_with_an_error_is_not_ok`, `test_not_checked_items_do_not_make_a_report_fail`, `test_issue_defaults_are_a_document_level_issue`, `test_issue_cannot_be_changed_after_creation` |
+
+This is not FR-S-03 or FR-C-03: the checker's rules (CK-xx) work on the course model (B2), which
+this library does not build.
+
 ### Documented but not automatically enforced
 
-No validator code for these exists yet, so nothing in the repository checks them. The schema's
+The validator does not check these yet, so nothing in the repository enforces them. The schema's
 `$comment` lists them too. The example package was checked against them by hand when it was
 created; that check is not automated and is not committed.
 
@@ -64,6 +82,7 @@ Left out because the PRD does not establish the mapping:
   not to individual requirements.
 - **FR-S-02, FR-S-04, FR-S-07, FR-S-08, FR-C-01, FR-G-01.** They touch B1 but need code that does
   not exist yet, and the PRD does not say that schema tests count towards them.
-- **C1.7 "a package containing a protected idnumber is rejected with a clear message".** The schema
-  rejects the two default idnumbers; the user-facing message is not tested.
+- **C1.7 "a package containing a protected idnumber is rejected with a clear message".** The
+  validator reports the two default idnumbers with a clear message (tested above); the Course
+  Studio screen and CLI that show it do not exist yet.
 - **Requirement IDs for the contract work itself.** None in the PRD.
