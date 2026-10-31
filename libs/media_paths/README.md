@@ -33,7 +33,7 @@ Both functions accept a custom template. Numbers are zero-padded to at least two
 `NoneSigner` builds plain media URLs using an injected media base URL.
 
 ```python
-from libs.media_paths import NoneSigner
+from media_paths import NoneSigner
 
 signer = NoneSigner("https://media.example.com")
 url = signer.sign("courses/python/01-basics/01-intro/720p.mp4")

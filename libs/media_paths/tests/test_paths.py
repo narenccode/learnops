@@ -1,6 +1,6 @@
 import pytest
 
-from libs.media_paths.paths import (
+from media_paths.paths import (
     course_lesson_path,
     live_class_path,
 )

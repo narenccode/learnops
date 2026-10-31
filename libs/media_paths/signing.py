@@ -1,6 +1,6 @@
 from urllib.parse import quote, urlsplit
 
-from libs.media_paths.validation import validate_relative_path
+from media_paths.validation import validate_relative_path
 
 
 class NoneSigner:

@@ -1,9 +1,9 @@
-from libs.media_paths.paths import (
+from media_paths.paths import (
     course_lesson_path,
     live_class_path,
 )
-from libs.media_paths.signing import NoneSigner
-from libs.media_paths.validation import (
+from media_paths.signing import NoneSigner
+from media_paths.validation import (
     validate_relative_path,
     validate_slug,
 )

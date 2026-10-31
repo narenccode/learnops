@@ -1,6 +1,6 @@
 import pytest
 
-from libs.media_paths.validation import (
+from media_paths.validation import (
     validate_relative_path,
     validate_slug,
 )

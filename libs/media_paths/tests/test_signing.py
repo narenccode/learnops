@@ -1,4 +1,4 @@
-from libs.media_paths.signing import NoneSigner
+from media_paths.signing import NoneSigner
 
 
 def test_none_signer_builds_media_url() -> None:
