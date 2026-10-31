@@ -2,7 +2,8 @@
 
 Covered here: the schema stage and the report it returns. NOT covered, on purpose, because ownership
 or details are still undecided (see HELD_RULE_CODES): one Page and one Assignment per week, the
-unlock chain, the marking table, the Check vocabulary and protected_section. The validator must
+unlock chain, the points total, completion on unlock activities, idnumber uniqueness, the marking
+table, the Check vocabulary, protected_section and extra protected idnumbers. The validator must
 report those as "not checked".
 """
 

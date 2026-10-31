@@ -56,6 +56,21 @@ HELD_RULES: tuple[tuple[str, str, str], ...] = (
         "Not checked: week N unlocks when the task of week N-1 is submitted.",
     ),
     (
+        "points_total_not_checked",
+        "B1.2 rule 3",
+        "Not checked: graded points across the course sum to total_points.",
+    ),
+    (
+        "unlock_completion_not_checked",
+        "B1.2 rule 5",
+        "Not checked: completion tracking is on for every activity used in an unlock rule.",
+    ),
+    (
+        "idnumber_unique_not_checked",
+        "B1.2 rule 6",
+        "Not checked: idnumbers are unique within the course.",
+    ),
+    (
         "marking_table_not_checked",
         "B1.3",
         "Not checked: the marking table in each assignment body (format and points).",
@@ -69,5 +84,10 @@ HELD_RULES: tuple[tuple[str, str, str], ...] = (
         "protected_section_not_checked",
         "B1.4",
         "Not checked: that no section uses the protected section number.",
+    ),
+    (
+        "extra_protected_idnumbers_not_checked",
+        "B1.4",
+        "Not checked: protected idnumbers configured beyond the two defaults.",
     ),
 )

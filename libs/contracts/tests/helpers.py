@@ -23,9 +23,13 @@ HELD_RULE_CODES = frozenset(
     {
         "week_structure_not_checked",
         "unlock_chain_not_checked",
+        "points_total_not_checked",
+        "unlock_completion_not_checked",
+        "idnumber_unique_not_checked",
         "marking_table_not_checked",
         "check_vocabulary_not_checked",
         "protected_section_not_checked",
+        "extra_protected_idnumbers_not_checked",
     }
 )
 
