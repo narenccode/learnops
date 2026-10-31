@@ -1,0 +1,32 @@
+{
+  "segments": [
+    {
+      "start": 1798.6,
+      "end": 1801.4,
+      "text": "Now open the terminal.",
+      "words": [
+        { "start": 1798.6, "end": 1799.0, "word": "Now" },
+        { "start": 1799.0, "end": 1799.5, "word": "open" },
+        { "start": 1799.5, "end": 1799.8, "word": "the" },
+        { "start": 1799.8, "end": 1801.4, "word": "terminal." }
+      ]
+    },
+    {
+      "start": 1802.0,
+      "end": 1803.1,
+      "text": "Type git status.",
+      "words": [
+        { "start": 1802.0, "end": 1802.3, "word": "Type" },
+        { "start": 1802.3, "end": 1802.6, "word": "git" },
+        { "start": 1802.6, "end": 1803.1, "word": "status." }
+      ]
+    }
+  ],
+  "meta": {
+    "provider": "local",
+    "model": "example-speech-model",
+    "duration_s": 3600.0,
+    "latency_ms": 184000,
+    "cost_estimate": 0.0
+  }
+}
