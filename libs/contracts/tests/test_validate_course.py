@@ -9,6 +9,7 @@ report those as "not checked".
 
 from __future__ import annotations
 
+import copy
 from typing import Any
 
 import pytest
@@ -74,6 +75,19 @@ def test_every_schema_error_is_reported_not_only_the_first(example_doc: Doc) -> 
     example_doc["sections"][0]["number"] = 0
     codes = error_codes(validate_course_document(example_doc))
     assert sorted(codes) == ["schema_enum", "schema_minimum"]
+
+
+def test_errors_are_ordered_by_number_not_by_text(example_doc: Doc) -> None:
+    # sections[2] must come before sections[10]; sorting the places as text gets this wrong.
+    week = example_doc["sections"][0]
+    example_doc["sections"] = [copy.deepcopy(week) for _ in range(12)]
+    for index in (10, 2):  # broken in reverse order, so the input order proves nothing
+        del example_doc["sections"][index]["title"]
+    report = validate_course_document(example_doc)
+    assert [issue.location for issue in report.errors] == [
+        ("sections", 2),
+        ("sections", 10),
+    ]
 
 
 def test_an_impossible_calendar_date_is_rejected(example_doc: Doc) -> None:

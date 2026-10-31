@@ -34,11 +34,18 @@ def _validator() -> Draft202012Validator:
 
 def schema_issues(document: object) -> list[Issue]:
     """Every schema error, ordered by place so the result is the same on every run."""
-    errors = sorted(
-        _validator().iter_errors(document),
-        key=lambda e: ([str(p) for p in e.absolute_path], e.message),
-    )
+    errors = sorted(_validator().iter_errors(document), key=_order)
     return [_to_issue(error) for error in errors]
+
+
+def _order(error: ValidationError) -> tuple[list[tuple[int, int, str]], str]:
+    # List positions compare as numbers (sections[2] before sections[10]). A number and a name
+    # never meet in the same step, because the first item of each pair tells them apart.
+    place = [
+        (0, part, "") if isinstance(part, int) else (1, 0, part)
+        for part in error.absolute_path
+    ]
+    return place, error.message
 
 
 def _to_issue(error: ValidationError) -> Issue:
