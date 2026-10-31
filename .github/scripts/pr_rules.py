@@ -84,6 +84,9 @@ CONTRACT_REF = re.compile(
     r"\bB[1-8](?:\.\d+)?\b"
 )  # a contract has no FR id: "B6.1" is its reference
 CODE_EXT = (".py", ".ts", ".tsx", ".js", ".jsx")
+LIBS_IMPORT = re.compile(
+    r"^\s*(?:from|import)\s+libs\."
+)  # libraries are imported by their own name
 REFACTOR_ONLY = re.compile(r"refactor only\s*:", re.IGNORECASE)
 WEAK_SECRET = "a hard-coded secret value"  # not applied to tests and test data
 
@@ -190,6 +193,32 @@ def evaluate(ctx: Context) -> list[Finding]:
             out.append(
                 Finding(
                     "rework", f"Not in the PRD: {', '.join(unknown)}.", "PRD Part C"
+                )
+            )
+
+    # Shared libraries are imported by their own name (guide decision, 2026-10-31): a libs/__init__.py
+    # or a `libs.` prefix breaks the other libraries' tests once two such pull requests are merged.
+    if ctx.files.get("libs/__init__.py", "D") != "D":
+        out.append(
+            Finding(
+                "rework",
+                "libs/__init__.py breaks the other libraries' imports. Each library is imported by "
+                "its own name (`import media_paths`). Delete the file and drop the `libs.` prefix.",
+                "guide decision",
+            )
+        )
+    for path, lines in sorted(ctx.added.items()):
+        if (
+            path.endswith(".py")
+            and not path.startswith(".github/")
+            and any(LIBS_IMPORT.search(ln) for ln in lines)
+        ):
+            out.append(
+                Finding(
+                    "rework",
+                    f"{path}: import the library by its own name (`import media_paths`), "
+                    "not with a `libs.` prefix.",
+                    "guide decision",
                 )
             )
 

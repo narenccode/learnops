@@ -331,3 +331,41 @@ def test_fake_password_in_a_test_is_fine_but_real_key_formats_are_not():
     assert r.verdict_of(r.evaluate(ctx(files, added=real))) == "rule-violation"
     code = {"modules/studio/a.py": ['password = "dummy-password-123"']}
     assert r.verdict_of(r.evaluate(ctx(files, added=code))) == "rule-violation"
+
+
+def test_libs_init_file_is_rework_but_a_deletion_is_fine():
+    f = r.evaluate(
+        ctx(["libs/media_paths/paths.py", "libs/__init__.py"], title="B6.1 EXT-09")
+    )
+    assert any(
+        "breaks the other libraries" in x.message and x.level == "rework" for x in f
+    )
+    c = ctx(["libs/media_paths/paths.py", "libs/__init__.py"], title="B6.1 EXT-09")
+    c.files["libs/__init__.py"] = "D"
+    assert not any("breaks the other libraries" in x.message for x in r.evaluate(c))
+
+
+def test_libs_prefix_import_is_rework_in_code_but_not_in_the_bot_scripts():
+    bad = ctx(
+        ["libs/media_paths/tests/test_paths.py"],
+        title="B6.1 EXT-09",
+        added={
+            "libs/media_paths/tests/test_paths.py": [
+                "from libs.media_paths.paths import x"
+            ]
+        },
+    )
+    assert any("libs." in x.message and x.level == "rework" for x in r.evaluate(bad))
+    ok = ctx(
+        ["libs/media_paths/tests/test_paths.py"],
+        title="B6.1 EXT-09",
+        added={
+            "libs/media_paths/tests/test_paths.py": ["from media_paths.paths import x"]
+        },
+    )
+    assert not any("import the library" in x.message for x in r.evaluate(ok))
+    bot = ctx(
+        [".github/scripts/tests/t.py"],
+        added={".github/scripts/tests/t.py": ["from libs.x import y"]},
+    )
+    assert not any("import the library" in x.message for x in r.evaluate(bot))
