@@ -67,3 +67,43 @@ Left out because the PRD does not establish the mapping:
 - **C1.7 "a package containing a protected idnumber is rejected with a clear message".** The schema
   rejects the two default idnumbers; the user-facing message is not tested.
 - **Requirement IDs for the contract work itself.** None in the PRD.
+
+## B4 Moodle web-services contract (v1), Release 0 foundation
+
+Files: `contracts/moodle-ws.v1.md` (normative rules), `contracts/moodle-ws.v1.schema.json`,
+`contracts/examples/moodle-ws.v1.functions.json` (allow-list), `libs/contracts/tests/test_moodle_ws_v1.py`.
+**Contract work only, draft, not verified on any Moodle site.** Guide's decisions on Q1, Q24 and
+Q37: PR #27.
+
+FR-G-01 ("Fetch assignments, the marking table and submissions … through B4") and FR-G-06 ("Write
+only approved drafts to Moodle via B4"), both Release 4, are deliberately not in the table above. They
+need `libs/moodle_ws` and the grading module, which do not exist yet.
+
+### Enforced by automated tests
+
+Test names are in `test_moodle_ws_v1.py`.
+
+| Rule | PRD | Test(s) |
+|---|---|---|
+| The allow-list names exactly the PRD B4 functions, no extra, none missing, no duplicates | B4 | `test_function_names_equal_the_prd_b4_list`, `test_prd_b4_lists_the_expected_number_of_functions` |
+| The allow-list and the rules text (`moodle-ws.v1.md` §2) name the same functions | B.0 rule 1 | `test_function_names_equal_the_rules_table` |
+| Each entry's purpose is the PRD B4 purpose | B4 | `test_purpose_is_the_prd_purpose` |
+| No parameter is listed unless the PRD names it; `mod_assign_save_grade` sends `workflowstate` | B4, App-C 1 | `test_every_parameter_is_named_in_the_prd`, `test_save_grade_sends_the_workflow_state` |
+| A replacement name for a Moodle version also appears in the PRD B4 text | B4 ("replacements recorded here") | `test_a_replacement_name_is_also_in_the_prd` |
+| No verification state is stored in the schema or example | Guide, Q1 | `test_invalid_document_is_rejected_at_the_expected_place` (three verified-flag cases) |
+| Schema is valid; example validates; invalid documents fail at the expected place; unknown fields are accepted | B.0 rule 1, rule 2 | `test_schema_is_a_valid_draft_2020_12_schema`, `test_example_is_valid`, `test_invalid_document_is_rejected_at_the_expected_place`, `test_unknown_fields_are_accepted` |
+| One token variable per site with a placeholder; no single `MOODLE_WS_TOKEN` | B4, SEC-03, C-06; guide, Q24 | `test_one_token_variable_per_site_with_a_placeholder` |
+
+### Documented but not automatically enforced
+
+| Rule | PRD |
+|---|---|
+| Only the functions listed in the contract are called (`libs/moodle_ws` will build its allow-list from the example; the library does not exist yet) | B4 |
+| One service account per site, with a token restricted to those functions and minimum capabilities | B4, SEC-03 |
+| The token is stored only in the environment | SEC-03, C-06 |
+| A grade write uses workflow state `readyforrelease`, never `released`; only approved drafts are written | B4, C-09 |
+| Each function exists with the parameters used on Moodle 4.5 and 5.3 (all 10 lab checks are still open) | B4, App-C 1 |
+
+Open: when the lab Moodle sites are available (all ten checks in `moodle-ws.v1.md` §5 wait for
+them; B4 cannot be frozen until they pass), and the parameter name for feedback comments on
+`mod_assign_save_grade` (not in the PRD; lab check 1). Q1, Q24 and Q37 are decided (PR #27).
