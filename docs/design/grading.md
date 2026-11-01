@@ -277,6 +277,7 @@ transcript = speech.transcribe(audio_path, language="en")
 - **Validation and retries** (PRD §B5.2 plus proposals). Output is validated against `output_schema`. Whether task schemas are Pydantic models or JSON Schemas is open (guide, Q67). On invalid output there is one retry, then a typed error `InvalidOutput`. Never a silent partial result. Transport failures (timeout, unavailable, rate limit) get bounded library retries with backoff (`MODEL_TRANSPORT_RETRIES`), separate from the validation retry. Job-level retries apply only to errors flagged `retryable`. Every attempt is logged, including failed ones.
 - **Error types** (proposed, all derive from `ModelError`): `UnregisteredTask`, `SchemaMismatch`, `InputTooLarge`, `InvalidOutput`, `ProviderTimeout`, `ProviderUnavailable`, `RateLimited`, `ProviderAuth`, `BudgetExceeded`.
 - **Limits and budget** (proposed): `MODEL_TIMEOUT_S`, `MODEL_MAX_INPUT_TOKENS` (input over the limit is `InputTooLarge`, never silently truncated), `SPEECH_TIMEOUT_S` scaled by audio duration, `MODEL_BUDGET_USD` (the guide supplies the cap, PRD A15.5). The library sums `cost_estimate` from `shared.model_calls` and refuses with `BudgetExceeded` before sending when the cap would be passed.
+- **Provider independence** (proposed for the guide; Q19 and Q67 stay open). Callers name a task, never a provider. `local` and `hosted` stay separate adapters, credentials come only from the environment, and every call has a timeout and a cost limit and logs the provider in `meta`. A failed provider gives a typed error; there is no silent fallback to another provider. The hosted provider, its SDK and licence, and the spending limit are not chosen here.
 - **`meta`** (guide's decisions in `docs/decisions/0001-b5-model-interface-v1.md`, PR #25): `input_hash`, `temperature`, `seed` and `cost_known` are **not part of v1** (#8); they could be added later as optional fields (PRD §B.0 rule 2). Unknown token counts and cost are `null`, never 0 (#1). A local model with no billed cost reports `0.0` (#2).
 - **Speech.** Callers always receive one transcript with absolute timestamps. Whether the library uploads the whole file or splits it internally is hidden behind the interface and checked in the lab with a 90-minute file (PRD G-7) (lab). `audio_path` must be readable by the calling process; workers on other hosts need the file locally (to be stated in Module 4's design).
 - **Prompts.** Versioned files in `libs/model_interface/prompts/`, each with a `prompt_version` (PRD §B5.3). Layout (proposed): `prompts/<task>/v<N>.md` with `prompt_version` in a front-matter header; a published version is never edited; a change is a new file; a check confirms the file name and header agree.
@@ -285,6 +286,8 @@ transcript = speech.transcribe(audio_path, language="en")
 ### 4.3 Proposed contract text (for the contract owners, via `/contract-change` or before the freeze)
 
 These are drafts inside this document only. Nothing here changes a contract file.
+
+**Strict submission format** (proposed for the guide; Q32, Q33 and Q39 stay open). Whatever format is agreed should carry a version and be validated before any check or learner code runs: file names, extensions, sizes and argument formats are checked, and malformed or unexpected input is refused with a reason, never repaired. The limits and the schema are not set here, and no schema is final until Students 1 and 2 have agreed it. Nothing in this section is an approved or frozen contract.
 
 **(a) Submission-content rule for B1** (owner: Student 1; consumers: Students 2 and 3) (Q32).
 - Online text carries labelled lines, case-insensitive, one per line: `Repository: <https URL>`, `Demo: <https URL>`, and `Report:` followed by the report text to the end.
@@ -369,6 +372,8 @@ shared.audit_log, shared.course_link    -- owned by Module 2, used not changed (
 | `write` | write | version, approval event ids | `write:<version>:<approval event id>` |
 | `revert` | write | write_attempt id | `revert:<write_attempt id>` |
 
+- **Run identity** (proposed for the guide; Q70 stays open). Each grading execution gets a unique run id, linked to its jobs and audit entries, so `--run` has a defined meaning and the same run cannot be started twice by accident. How the id is stored is not decided, and no change to `job` or `shared.audit_log` is proposed here (§12.4).
+
 - **What is stored.** Check evidence (size-capped, marked `learner_originated`), capped excerpts (§9.5), fingerprints and references. No submission files and no cloned repositories are stored. Cloned repositories exist only inside the sandbox and are destroyed with it. A retention job removes expired excerpts, fingerprints and check evidence after `GRADING_RETENTION_DAYS` (the guide sets the value, Q34).
 - **Migrations.** Versioned, each with an up and a down step (PRD OPS-07), each run in one transaction. The down step drops only what its up step created. A migration touches only objects in the grading schema; the shared schema is owned by Module 2 (`course_link`, `audit_log`) and Module 3 (`model_calls`). One migration tool for the whole repository, chosen by Module 2 (Q36). Shared migrations run before module migrations.
 - **Roles.** Application role: read and write on its own schema, read-only on `shared.course_link`, insert-only on `shared.audit_log` and `shared.model_calls`. Sandbox-host role (§9.2.6, revised, Q62): no table grants at all; `EXECUTE` only on a small set of `SECURITY DEFINER` functions that claim a `check` job, extend its lease, and submit its results (`submission_check`, `similarity_fingerprint` and README rows of `submission_excerpt`) under the job's lease token; nothing else.
@@ -449,6 +454,7 @@ Variables are listed here; adding them to `.env.example` is a separate step by t
 | `GRADING_SANDBOX_CPUS`, `GRADING_SANDBOX_MEMORY`, `GRADING_SANDBOX_TIMEOUT_S` | 2, 2g, 600 (PRD §C3.5; what the 600 s covers is Q58) | to add (proposed) |
 | `GRADING_SANDBOX_PIDS`, `GRADING_SANDBOX_WORKDIR_MB`, `GRADING_SANDBOX_OUTPUT_KB`, `GRADING_SANDBOX_MAX_CONCURRENT`, `GRADING_CHECK_TIMEOUT_S` | 256, 512, 64, 2, to be set | to add (proposed) |
 | `GRADING_SANDBOX_CLONE_TIMEOUT_S`, `GRADING_SANDBOX_CLONE_MAX_MB` | 120, 200 (unvalidated starting values; part of the 600 s total, Q58) | to add (proposed) |
+| `GRADING_SANDBOX_SETUP_TIMEOUT_S`, `GRADING_SANDBOX_DEPS_TIMEOUT_S`, `GRADING_SANDBOX_EXEC_TIMEOUT_S`, `GRADING_SANDBOX_CLEANUP_TIMEOUT_S` | 60, 180, 300, 30 (proposed ceilings under `GRADING_SANDBOX_TIMEOUT_S`, Q58; untested; §9.2.5) | to add (proposed) |
 | `GRADING_SANDBOX_NOFILE`, `GRADING_SANDBOX_TMPFS_MB`, `GRADING_SANDBOX_REAPER_GRACE_S` | 1024, 64, 120 | to add (proposed) |
 | `GRADING_SANDBOX_RUNTIME` (feature flag: `runc`; `runsc` only if Q61 approves it) | `runc` | to add (proposed) |
 | `GRADING_SANDBOX_IMAGE_DIGESTS` (path to the list of allowed check-image digests, §9.2.1; digests are not secrets) | placeholder path | to add (proposed; provisional, Q63) |
@@ -577,6 +583,18 @@ claimed.**
 **Isolation depends on the removal step.** Unlike a container created with no network, this design is
 only as good as step 4 of §9.2.2. Residual risks are in §9.2.9.
 
+**Repository cloning, recommendation** (proposed for the guide; Q57 stays open). Cloning is a preparation step, separate from running learner code. No learner code runs during it, it reaches only allow-listed git sources (§9.2.4; Q28, Q69), and the network is gone before any learner code runs. Each clone is also recorded for auditing: the job, the source host, the time and the result, never the full URL (§9.2.10). How that record is written is not decided (§12.4). Whether this satisfies SEC-04 is for the guide.
+
+**Container isolation, alternative** (proposed for the guide; Q66 stays open; needs security review). The baseline stays one container per submission, as PRD §C3.5 requires and §9.2.2 describes. The owner also puts forward two containers per submission, one after the other, as an alternative security recommendation. This conflicts with §C3.5 "one container per submission", so it can apply only if the guide accepts that departure:
+
+| | Preparation container | Execution container |
+|---|---|---|
+| Does | Clones the repository, validates the files, prepares dependencies only as §9.2.12 allows | Runs untrusted learner code and the checks |
+| Network | Allow-listed sources only (§9.2.4) | None, from creation |
+| Both | Non-root, resource limits, read-only base filesystem, all capabilities dropped, no Docker socket mount, destroyed after use (§9.2.3) | Same |
+
+This adds operational work: two containers to start, a shared work volume to hand over, and more cleanup and failure cases. It is put forward because learner code would then never run in a container that had a network, which removes the risks that network removal fails silently or that a connection outlasts it (§9.2.9). It does not remove every same-container risk: a parser bug in the clone step still runs with the network attached, and a changed file could cross in the shared work volume, so the volume's contents stay untrusted. This alternative replaces nothing in this document: §9.2.2 and the other sections keep the one-container baseline unless the guide decides otherwise (§12.4).
+
 **Isolation boundary.** Docker is not treated as a complete isolation boundary: containers share the
 host kernel (§9.2.9). The design layers controls: a dedicated VM (proposed, Q23; the main boundary), a hardened
 container runtime configuration, network denial, resource limits, and a restricted path back to the
@@ -664,6 +682,19 @@ catch it), then forced removal. Results of checks that finished are kept; the re
 plus `GRADING_SANDBOX_REAPER_GRACE_S`. If the Docker daemon stops responding, the worker stops claiming
 jobs, its heartbeat shows the problem on `/health`, the lease expires and the job returns to the queue
 (§5.3).
+
+**Stage budgets, recommendation** (proposed for the guide and lab; Q58 stays open). A configurable budget per stage, as initial design values that have not been tested on any lab host:
+
+| Stage | Variable | Budget |
+|---|---|---|
+| Setup | `GRADING_SANDBOX_SETUP_TIMEOUT_S` | 60 s |
+| Repository clone | `GRADING_SANDBOX_CLONE_TIMEOUT_S` | 120 s |
+| Dependency installation, only if §9.2.12 allows it | `GRADING_SANDBOX_DEPS_TIMEOUT_S` | 180 s |
+| Code execution, all checks together | `GRADING_SANDBOX_EXEC_TIMEOUT_S` | 300 s |
+| Cleanup | `GRADING_SANDBOX_CLEANUP_TIMEOUT_S` | 30 s |
+| Overall deadline | `GRADING_SANDBOX_TIMEOUT_S` | 600 s (10 minutes) |
+
+The 10-minute overall deadline stays a proposed limit, pending testing. The stage budgets add up to 690 s, more than the 600 s deadline, so each one is a ceiling and not a guaranteed allocation. The overall deadline takes priority: a stage can get less than its budget when earlier stages used more. `GRADING_CHECK_TIMEOUT_S` stays the limit for one check, inside the code-execution budget. Removing the container is never skipped when the deadline passes; whether that time counts towards the deadline is part of Q58 (§12.4).
 
 **Host sizing** (lab): the sandbox VM needs at least `GRADING_SANDBOX_MAX_CONCURRENT` × (2 CPU, 2 GB, work
 volume size) plus room for the worker and the operating system.
@@ -756,6 +787,12 @@ No package can be installed in the container, which has no network, so check ima
 with dependencies already present, chosen by the `image` key in the check config; no package mirror
 in v1 (Q27). The PRD's example `command:setup` ("Repo builds") must be read with this policy (§12.2).
 
+**Dependency alternatives** (proposed for the guide; Q27 and the network policy stay open). Dependency installation must comply with the approved sandbox network restrictions (§9.2.4). No unrestricted network access is assumed, and learner code never has a network. Two alternatives are for the guide's review:
+- **Pre-baked dependencies** (the policy above): nothing is fetched while a submission is processed, so the sandbox needs no network for packages.
+- **Approved package mirror**: a mirror added to the approved destinations, reached only before learner code runs. It needs the guide's approval, a lab host, and a change to the policy above and to §9.2.4.
+
+Whichever is chosen, package installers can run code from the package, so installing what a learner's repository names is not free of learner-controlled code (§12.4).
+
 ### 9.3 http_ok (runs outside the sandbox)
 
 (PRD §C3.5) The URL from the submission must return HTTP 2xx within 10 s. The http_check worker (proposed): runs no learner code; accepts only http(s) URLs; resolves the name once, connects to that address, and refuses private, loopback, link-local and cloud-metadata addresses, repeating the check on every redirect and again for the connected address, so DNS rebinding cannot reach internal lab services; limits the number of redirects and the size of the response; stores only the status code and timing.
@@ -814,6 +851,8 @@ A write is made per submission version, never per criterion, and only when every
 **Unknown outcome** (timeout or lost response): the attempt is `unknown`. The retry first runs the preconditions and a read-back: if Moodle already holds exactly the intended values, mark `written` and make no second write; if it holds other values and the identifying fields changed, mark `conflict` and ask the mentor; if it holds the pre-write values, write again under the same idempotency key.
 
 **Revert** (PRD C-05): `grading write --revert --attempt <id>` writes the stored previous values back using the same preconditions, only while the grade is unreleased. After a mentor releases a grade in Moodle LearnOps cannot revert it; the README says so plainly (Q29).
+
+**Reversal history** (proposed for the guide; Q70 stays open). Reversing a grade adds a new event and never edits the original: the audit history keeps the original result and the reversal, with who and when. How Moodle behaves on an undo is not known, and needs lab verification (§4.1 item 5; Q17, Q29).
 
 (lab) Every behaviour above must be exercised on Moodle 4.5 and 5.3 before B4 is frozen.
 
@@ -883,6 +922,7 @@ These also make up the grading part of the final demonstration (PRD §E5 step 4)
 Every measurement records the data set, method, date and who measured. Numbers come from logs or recorded sessions, never estimates. Definitions below are (proposed, guide, Q44 to Q48).
 
 - **Band (Q44).** A band is 10 % of the assignment's total points. "Within one band" means the draft total's band index differs from the reference total's by at most 1. Because that is lenient (up to about 19 percentage points), the report also shows exact-band agreement, mean absolute error in points, per-criterion agreement, and the share of drafts more than two bands above the reference (leniency risk, R2). G-5 passes only if the within-one-band rate on the test split is at least 80 %, as the PRD says; the extra figures are reported, not part of the pass rule, unless the guide decides otherwise.
+- **Rubric weights, optional guidance** (proposed for the guide; Q44 stays open; weights and thresholds need the guide's approval). Optional guidance for preparing test examples only: functional correctness 50 %, code quality 20 %, efficiency 15 %, requirements and documentation 15 %. This is not an additional grading formula and overrides no marking table: PRD B1.3 and each assignment's marking table keep their criteria and points, and the overall draft grade stays the sum of the criterion scores (FR-G-03; §12.4).
 - **Sample size (Q45).** At an observed 80 % the 95 % interval (Wilson) is roughly 63 to 90 % for n = 30, 68 to 88 % for n = 60 and 71 to 87 % for n = 100. The PRD minimum is 30. Proposal: a test split of at least 60 if authoring effort allows, always printing the interval next to the rate.
 - **Wrong-answer rate (Q48).** A criterion draft is wrong if a code-side rule it should have failed was missed (counted as a test failure), or its score differs from the mentor reference score by more than 1 point (criteria worth up to 4 points) or 25 % of `points_max` (larger criteria), or a blinded mentor judges its evidence or feedback unsupported or false. Criteria stored as `unavailable` are reported separately as an availability rate. For chapters, summaries and practice drafts (B8.6) a blinded mentor scores each output as acceptable, acceptable with edits, or unusable or factually wrong; "wrong" is the third level; the rubric lives with the test data and is fixed before any comparison run.
 - **Grading time (Q46).** Manual baseline: from opening a submission in Moodle to saving the grade and feedback, timed by recorded session or stopwatch log. Assisted: from opening the submission in the review view to the last approve or edit event, from tool logs; machine job time is not counted but reported separately. Idle gaps over 3 minutes between UI events are excluded and the number excluded is reported. Counterbalanced: half the set manual first, half assisted first, then swapped for a second session or mentor; mentor and order are recorded. Pass: the median assisted time is at least 50 % below the median manual time on the same submissions.
@@ -907,6 +947,7 @@ Every measurement records the data set, method, date and who measured. Numbers c
 - **Format:** each submission follows the submission-content rule (§4.3a) and is placed through Moodle.
 - **Hosting:** all repositories, reports and names are fictional, written for this project, on an approved git host (Q69) with demo links to lab stub pages. Sources and licences are recorded in `testdata/README.md`.
 - **Reference grades:** at least one mentor grades every submission on the same marking table before seeing any draft; a second mentor grades at least 10 test submissions to measure mentor-to-mentor agreement (proposed). Who the mentors are is open (Q13). Reference grades are stored as the set's answer file.
+- **Reference practice** (proposed for the guide; Q13 stays open): human-reviewed reference submissions, borderline examples near each band edge, and a record of each disagreement between reviewers and how it was settled.
 
 ### 11.4 Test set B8.6: model comparison set
 
@@ -950,13 +991,13 @@ Test data to produce: fake-Moodle recordings, malicious and tampering repositori
 | Q10 | Does SEC-05 apply to files downloaded from Moodle? Applied anyway (§9.1) | no | Owner |
 | Q11 | Literature kept in §12.1 (here) or in `docs/literature-grading.md` | no | **Decided** by the owner: kept in §12.1 |
 | Q12 | B8.6 needs practice, chapter and summary inputs from Modules 1 and 4 | no | Integration lead and guide |
-| Q13 | Which mentor or mentors write the B8.4 reference grades, and when | no | Guide |
+| Q13 | Which mentor or mentors write the B8.4 reference grades, and when. Proposed practice: §11.3 | no | Guide |
 | Q14 | (PRD App-C 1) Every B4 function exists on 4.5 and 5.3 with the parameters used, including `workflowstate`; minimum capabilities | yes | Owner, Release 0; list in §4.1 |
 | Q15 | (PRD App-C 9) Which AI features Moodle 5.3 itself provides, so LearnOps does not duplicate them | yes | Owner, Release 0 |
 | Q16 | Is a stronger sandbox runtime (e.g. gVisor) acceptable? It is a new tool | no | Guide; evaluation proposal in Q61 |
 | Q17 | How to undo a grade already written to Moodle (OPS-05) | yes | Owner; proposal in §10.1 (Q29) |
 | Q18 | Storing similarity flags and the other additional tables not in the PRD's list | no | Owner; noted in the PR; §12.2 |
-| Q19 | Which hosted model provider and SDK (licence check), and the lab LLM endpoint's protocol | yes | Guide |
+| Q19 | Which hosted model provider and SDK (licence check), and the lab LLM endpoint's protocol. Proposed rules: §4.2 | yes | Guide |
 | Q20 | (PRD App-C 6) The LTI 1.3 library choice and licence; used through `libs/lti` | yes | Student 2 |
 | Q21 | (PRD A15.2) Assumption that the B4 functions exist on both versions; replacements recorded in B4 | yes | Owner |
 
@@ -993,8 +1034,8 @@ Test data to produce: fake-Moodle recordings, malicious and tampering repositori
 
 | # | Decision | Needs the lab? | Plan or owner |
 |---|---|---|---|
-| Q57 | SEC-04 says "no network", §C3.5 says "no network after the clone step". **OPEN; interpretation pending review.** Owner's reading, not a guide ruling: SEC-04 governs learner code and points to §C3.5, so a clone step that runs no learner code is allowed. No compliance is claimed. If the guide refuses: code as a file through Moodle, which needs PRD changes to `repo_clone`, §C3.2, §C3.8 and B8.4 | no | Guide; PRD wording in §12.2 |
-| Q58 | What the 10-minute limit covers (§C3.5 gives no scope). **OPEN.** Student 3's proposal: 10 minutes for the whole submission, clone included (§9.2.5), pending testing; not verified | no | Guide |
+| Q57 | SEC-04 says "no network", §C3.5 says "no network after the clone step". **OPEN; interpretation pending review.** Owner's reading, not a guide ruling: SEC-04 governs learner code and points to §C3.5, so a clone step that runs no learner code is allowed. No compliance is claimed. If the guide refuses: code as a file through Moodle, which needs PRD changes to `repo_clone`, §C3.2, §C3.8 and B8.4. Owner's recommendation: §9.2 | no | Guide; PRD wording in §12.2 |
+| Q58 | What the 10-minute limit covers (§C3.5 gives no scope). **OPEN.** Student 3's proposal: 10 minutes for the whole submission, clone included (§9.2.5), pending testing; not verified. Proposed stage budgets: §9.2.5 | no | Guide and lab |
 | Q59 | Work volume: per-job volume with fixed size and inode cap (proposed), tmpfs (counts against memory), or a container storage quota (needs a specific filesystem) | yes | Owner, lab; guide confirms |
 | Q60 | User-namespace remapping in the Docker daemon, or rootless Docker, on the sandbox host | yes | Owner, lab; independent reviewer |
 | Q61 | Approve an evaluation of gVisor (`runsc`) for the container behind `GRADING_SANDBOX_RUNTIME`, and optionally a tighter seccomp profile (extends Q16; new tool) | yes | Guide |
@@ -1002,11 +1043,11 @@ Test data to produce: fake-Moodle recordings, malicious and tampering repositori
 | Q63 | Who provisions, patches and monitors the sandbox host; patch schedule; where check images are built and how digests are listed | yes | Guide, lab administrator |
 | Q64 | Independent review: the reviewer (Q30), the checklist (§9.2 controls, firewall rules, daemon settings, proof on the pinned Docker version that the container cannot rejoin the network, T27 to T55 and T57 results), and a repeat review after any change to §9.2 | no | Guide |
 | Q65 | Does "contained and reported" (§C3.7) accept a check failure with evidence when the attempt cannot be seen from the host (a network attempt in a container with no network)? | no | Guide |
-| Q66 | One container per submission. **OPEN.** Student 3's proposed decision, not guide-approved: follow §C3.5 literally, with one container that clones and then loses its network. Residual risks in §9.2.9 are for the guide to accept. The alternative is two containers, which departs from the literal words | no | Guide |
+| Q66 | One container per submission. **OPEN.** Student 3's proposed decision, not guide-approved: follow §C3.5 literally, with one container that clones and then loses its network. Residual risks in §9.2.9 are for the guide to accept. The alternative is two containers, which departs from the literal words; the owner puts it forward as a security alternative for the guide's review (§9.2), and one container stays the baseline | no | Guide; security review |
 | Q67 | Task schemas: Pydantic models or JSON Schemas. Root `CLAUDE.md` §6 asks for Pydantic models, PRD §B5.1 allows "JSON Schema / Pydantic model", and adding Pydantic changes `requirements-dev.txt` | no | Guide |
 | Q68 | Similarity scope. **OPEN.** Student 3's proposed v1 decision, not guide-approved: compare submissions with other submissions of the same cohort; fictional synthetic reference solutions for testing only; instructor-provided reference solutions outside mandatory v1 scope; results are indicators for mentor review, not automatic plagiarism decisions (§3.1) | no | Guide confirms |
 | Q69 | Infrastructure dependency: the PRD names no git source. A11 lists none, yet `repo_clone`, the clone step and B8.4 repositories depend on one. What git source can the sandbox host reach, and where do B8.4 repositories live? This document assumes no host, address or availability | yes | Guide, lab administrator |
-| Q70 | **OPEN.** `grading purge` refuses a run if `shared.audit_log` references its rows, but OPS-06 requires an audit entry for every state-changing operation, so `grading fetch`'s undo may always refuse. Should purge ignore audit references, and how is a "run" identified (`job` has no run column)? | no | Owner; guide confirms |
+| Q70 | **OPEN.** `grading purge` refuses a run if `shared.audit_log` references its rows, but OPS-06 requires an audit entry for every state-changing operation, so `grading fetch`'s undo may always refuse. Should purge ignore audit references, and how is a "run" identified (`job` has no run column)? Proposed run id: §5.3; reversal history: §10.1 | no | Owner; guide confirms |
 
 ### 12.1 Literature survey
 
@@ -1098,6 +1139,17 @@ repositories, to run before the gate in the last row of this table is met.
 | Q64 | A reviewer from outside Module 3, named by the guide, signs a checklist (every §9.2 subsection, the firewall rules, the daemon settings, proof on the pinned Docker version that the container cannot rejoin the network, and T27 to T55 and T57 results on the sandbox VM). Any change to §9.2 controls needs a new review. **Gate:** no learner code and no malicious test repository runs on any machine until this sign-off exists | Q30; App-D; module rule 2 | A different reviewer or checklist only; the gate stays |
 | Q65 | "Reported" means: the affected check is `fail` or `error`; its evidence shows the blocked action (for example a refused or unreachable connection in the captured output); and the run records that the container's network removal was confirmed on the host. A4 passes only if the mentor can see all three | (PRD) §C3.7; the host cannot observe a network attempt in a container with no network | A stricter definition would need host-side detection (for example syscall auditing): a new (proposed) item and possibly a new tool |
 | Q66 | One container per submission, as §C3.5 says, cloning and then losing its network | (PRD) §C3.5 | Two containers: the earlier design, in which learner code runs in a container that never had a network; needs the guide to accept the departure from the literal words |
+
+### 12.4 Conflicts in the owner's recommendations (flagged for the guide, not resolved)
+
+| Recommendation | Conflicts with | Question |
+|---|---|---|
+| Two containers (Q66, §9.2) | §C3.5 "one container per submission"; the one-container design in §7, §9.2.2 and §12.3 | Does the guide accept the departure from §C3.5? Until then one container stays the baseline. If accepted, §9.2.2, §9.2.3, §9.2.9 and §12.3 change |
+| Stage budgets (Q58, §9.2.5) | They total 690 s against the proposed 600 s overall deadline (§C3.5's 10-minute limit) | Are ceilings under an overall deadline acceptable, or should the stages be reduced? Does removing the container count towards the deadline? |
+| Dependency installation (Q58, Q66) | §9.2.12 and Q27: pre-baked images, no package installation, no package mirror. Fetching packages also needs network beyond allow-listed git sources (§9.2.4) | Pre-baked dependencies or an approved package mirror (§9.2.12)? If nothing is installed while a submission is processed, the 180 s stage and the dependency part of the preparation step fall away. If a learner's repository can name packages, an installer may run learner-controlled code during preparation |
+| Rubric weights (Q44, §11.2) | PRD B1.3: each marking table sets its criteria and points. PRD FR-G-03: the overall draft grade is the sum of the criterion scores, so a percentage weighting cannot be applied on top | Are the weights acceptable as optional guidance for preparing test examples only? |
+| Clone audit record (Q57, §9.2) | The sandbox-host role has no table grants (§5.3), so it cannot write `shared.audit_log` | Who writes the record, and is a clone a state-changing operation under OPS-06? |
+| Run id (Q70, §5.3) | `job` has no run column, and `shared.audit_log` belongs to Module 2 (§5.3) | Where is the id stored? A change to the audit log needs Module 2 |
 
 ## 13. Work breakdown
 
