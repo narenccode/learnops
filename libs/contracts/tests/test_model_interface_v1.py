@@ -1,37 +1,13 @@
 """B5 model and speech interface contract (PRD B5.1-B5.4): the JSON Schema and its examples.
 
-AUTOMATED here (structure only, by contracts/model-interface.v1.schema.json):
-  * the schema is a valid Draft 2020-12 schema;
-  * every example validates, both against the whole schema and against its own definition;
-  * the fields PRD B5.1 names for result.meta and B5.4 names for transcript.segments,
-    words and transcript.meta are required, with their types, minimums and the provider enum;
-  * required is not the same as non-null: token counts and cost_estimate may be null
-    ("not known") but may not be left out; everything else rejects null;
-  * unknown fields are accepted (PRD B.0, EXT-02);
-  * a document that is neither a meta record nor a transcript, or is both, is rejected;
-  * the examples follow the guide's cost rule: local reports 0.0, unknown cost is null;
-  * the transcript examples cover silent audio, a segment without words, one without text, and
-    times after a chunk boundary (seconds from the start of the original audio).
-
-Enforced by libs/model_interface, tested there (JSON Schema cannot express them):
-  * a segment's end >= start (B5.4): model_interface/tests/test_transcript.py;
-  * fake is refused outside a test run (B5.2): model_interface/tests/test_config.py.
-
-NOT automated anywhere yet, and therefore NOT claimed as enforced (the schema's $comment lists
-them): result.data matches the task's output_schema (B5.1); one retry on invalid output, then a
-clear error (B5.2); keys only from the environment (B5.2); versioned prompt files and logging meta
-to shared.model_calls without learner content (B5.3); word end >= start and segments in time order
-(not decided by the guide).
-
-Each invalid case below must fail at the expected place with the expected schema keyword, so a
-case cannot pass for the wrong reason.
+Structure only: docs/traceability.md lists what each test covers and what is not automated. Each
+invalid case must fail at the expected place with the expected schema keyword, so a case cannot
+pass for the wrong reason.
 """
 
 from __future__ import annotations
 
-import copy
 import json
-from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -70,36 +46,18 @@ META_EXAMPLES = sorted(
 
 Doc = dict[str, Any]
 Loc = tuple[str | int, ...]
-Edit = Callable[[Doc], None]
+DROP = object()
+
+# Each kind of document: its definition, and the example a test case starts from.
+KINDS = {
+    "meta": ("model_result_meta", "model-interface.v1.meta-local.json"),
+    "transcript": ("transcript", "model-interface.v1.transcript.json"),
+}
 
 # Places in the transcript example.
 SEGMENT: Loc = ("segments", 0)
 WORD: Loc = ("segments", 0, "words", 0)
 TMETA: Loc = ("meta",)
-
-
-# --- helpers -------------------------------------------------------------------------------
-
-
-def _parent(doc: Doc, loc: Loc) -> Any:
-    node: Any = doc
-    for key in loc[:-1]:
-        node = node[key]
-    return node
-
-
-def set_at(loc: Loc, value: Any) -> Edit:
-    def edit(doc: Doc) -> None:
-        _parent(doc, loc)[loc[-1]] = value
-
-    return edit
-
-
-def drop_at(loc: Loc) -> Edit:
-    def edit(doc: Doc) -> None:
-        del _parent(doc, loc)[loc[-1]]
-
-    return edit
 
 
 def error_keys(validator: Draft202012Validator, instance: Any) -> set[tuple[Loc, str]]:
@@ -122,26 +80,43 @@ def load_example(name: str) -> Doc:
 @dataclass(frozen=True)
 class Case:
     name: str
-    edit: Edit
+    loc: Loc
+    value: Any  # DROP removes the field instead
     at: Loc
     keyword: str
+
+    def apply(self, doc: Doc) -> Doc:
+        parent: Any = doc
+        for key in self.loc[:-1]:
+            parent = parent[key]
+        if self.value is DROP:
+            del parent[self.loc[-1]]
+        else:
+            parent[self.loc[-1]] = self.value
+        return doc
 
 
 def bad(name: str, loc: Loc, value: Any, keyword: str) -> Case:
     """Replace the value at loc; the schema must reject it at loc with keyword."""
-    return Case(name, set_at(loc, value), loc, keyword)
+    return Case(name, loc, value, loc, keyword)
 
 
 def missing(name: str, loc: Loc) -> Case:
     """Remove the field at loc; the schema must report it as required on its parent."""
-    return Case(name, drop_at(loc), loc[:-1], "required")
+    return Case(name, loc, DROP, loc[:-1], "required")
 
 
-def params(cases: list[Case]) -> list[Any]:
-    return [pytest.param(c, id=c.name) for c in cases]
+def ok(name: str, loc: Loc, value: Any) -> Case:
+    """Replace the value at loc; the schema must still accept the document."""
+    return Case(name, loc, value, loc, "")
 
 
-# --- fixtures ------------------------------------------------------------------------------
+def params(meta_cases: list[Case], transcript_cases: list[Case]) -> list[Any]:
+    """Every case once, as (kind, case), with the kind in its test id."""
+    groups = (("meta", meta_cases), ("transcript", transcript_cases))
+    return [
+        pytest.param(k, c, id=f"{k}: {c.name}") for k, cases in groups for c in cases
+    ]
 
 
 @pytest.fixture(scope="module")
@@ -167,29 +142,6 @@ def def_validator(registry: Registry[Any], name: str) -> Draft202012Validator:
     return Draft202012Validator(
         {"$ref": f"{SCHEMA_ID}#/$defs/{name}"}, registry=registry
     )
-
-
-@pytest.fixture(scope="module")
-def meta_validator(registry: Registry[Any]) -> Draft202012Validator:
-    return def_validator(registry, "model_result_meta")
-
-
-@pytest.fixture(scope="module")
-def transcript_validator(registry: Registry[Any]) -> Draft202012Validator:
-    return def_validator(registry, "transcript")
-
-
-@pytest.fixture
-def meta() -> Doc:
-    return copy.deepcopy(load_example("model-interface.v1.meta-local.json"))
-
-
-@pytest.fixture
-def transcript() -> Doc:
-    return copy.deepcopy(load_example("model-interface.v1.transcript.json"))
-
-
-# --- the schema and the examples -----------------------------------------------------------
 
 
 def test_schema_is_a_valid_draft_2020_12_schema(schema: dict[str, Any]) -> None:
@@ -250,11 +202,8 @@ def test_examples_follow_the_cost_rule() -> None:
         if meta["provider"] == "local":
             assert meta["cost_estimate"] == 0.0, name
     unknown = metas["model-interface.v1.meta-unknown-usage.json"]
-    assert [unknown[f] for f in ("input_tokens", "output_tokens", "cost_estimate")] == [
-        None,
-        None,
-        None,
-    ]
+    fields = ("input_tokens", "output_tokens", "cost_estimate")
+    assert [unknown[f] for f in fields] == [None] * 3
 
 
 def test_transcript_examples_cover_the_empty_cases() -> None:
@@ -273,26 +222,10 @@ def test_chunked_example_keeps_times_from_the_start_of_the_audio() -> None:
     assert min(times) > 1700 and max(times) <= doc["meta"]["duration_s"]
 
 
-# --- invalid: required fields --------------------------------------------------------------
-
 META_FIELDS = (
-    "provider",
-    "model",
-    "input_tokens",
-    "output_tokens",
-    "latency_ms",
-    "cost_estimate",
-    "prompt_version",
+    "provider model input_tokens output_tokens latency_ms cost_estimate prompt_version"
 )
-META_MISSING = [missing(f"meta without {f}", (f,)) for f in META_FIELDS]
-
-
-@pytest.mark.parametrize("case", params(META_MISSING))
-def test_meta_missing_required_field_is_rejected(
-    meta_validator: Draft202012Validator, meta: Doc, case: Case
-) -> None:
-    case.edit(meta)
-    assert (case.at, case.keyword) in error_keys(meta_validator, meta)
+META_MISSING = [missing(f"meta without {f}", (f,)) for f in META_FIELDS.split()]
 
 
 TRANSCRIPT_MISSING = [
@@ -312,15 +245,20 @@ TRANSCRIPT_MISSING = [
 ]
 
 
-@pytest.mark.parametrize("case", params(TRANSCRIPT_MISSING))
-def test_transcript_missing_required_field_is_rejected(
-    transcript_validator: Draft202012Validator, transcript: Doc, case: Case
+def assert_rejected(registry: Registry[Any], kind: str, case: Case) -> None:
+    definition, example = KINDS[kind]
+    doc = case.apply(load_example(example))
+    assert (case.at, case.keyword) in error_keys(
+        def_validator(registry, definition), doc
+    )
+
+
+@pytest.mark.parametrize(("kind", "case"), params(META_MISSING, TRANSCRIPT_MISSING))
+def test_missing_required_field_is_rejected(
+    registry: Registry[Any], kind: str, case: Case
 ) -> None:
-    case.edit(transcript)
-    assert (case.at, case.keyword) in error_keys(transcript_validator, transcript)
+    assert_rejected(registry, kind, case)
 
-
-# --- invalid: wrong types, values and enums ------------------------------------------------
 
 META_BAD = [
     bad("provider is unknown", ("provider",), "other", "enum"),
@@ -351,14 +289,6 @@ META_BAD = [
 ]
 
 
-@pytest.mark.parametrize("case", params(META_BAD))
-def test_meta_wrong_type_or_value_is_rejected(
-    meta_validator: Draft202012Validator, meta: Doc, case: Case
-) -> None:
-    case.edit(meta)
-    assert (case.at, case.keyword) in error_keys(meta_validator, meta)
-
-
 TRANSCRIPT_BAD = [
     bad("segments is an object", ("segments",), {}, "type"),
     bad("segment is a string", SEGMENT, "hello", "type"),
@@ -384,18 +314,15 @@ TRANSCRIPT_BAD = [
 ]
 
 
-@pytest.mark.parametrize("case", params(TRANSCRIPT_BAD))
-def test_transcript_wrong_type_or_value_is_rejected(
-    transcript_validator: Draft202012Validator, transcript: Doc, case: Case
+@pytest.mark.parametrize(("kind", "case"), params(META_BAD, TRANSCRIPT_BAD))
+def test_wrong_type_or_value_is_rejected(
+    registry: Registry[Any], kind: str, case: Case
 ) -> None:
-    case.edit(transcript)
-    assert (case.at, case.keyword) in error_keys(transcript_validator, transcript)
+    assert_rejected(registry, kind, case)
 
 
 @pytest.mark.parametrize(
-    "value",
-    [[], "grade_draft/v1", None, 1, {}, {"provider": "local"}],
-    ids=repr,
+    "value", [[], "grade_draft/v1", None, 1, {}, {"provider": "local"}], ids=repr
 )
 def test_document_that_is_neither_kind_is_rejected(
     validator: Draft202012Validator, value: Any
@@ -404,92 +331,66 @@ def test_document_that_is_neither_kind_is_rejected(
 
 
 def test_document_that_is_both_kinds_is_rejected(
-    validator: Draft202012Validator, meta: Doc, transcript: Doc
+    validator: Draft202012Validator,
 ) -> None:
     """Without a discriminator field, oneOf is what keeps the two kinds apart."""
-    both = {**meta, **transcript}
-    assert ((), "oneOf") in error_keys(validator, both)
-
-
-# --- valid variations: the schema must NOT reject these ------------------------------------
-
-
-@dataclass(frozen=True)
-class Accepted:
-    name: str
-    edit: Edit
+    meta, transcript = (load_example(example) for _, example in KINDS.values())
+    assert ((), "oneOf") in error_keys(validator, {**meta, **transcript})
 
 
 META_ACCEPTED = [
-    Accepted("unknown field in meta", set_at(("future",), {"a": 1})),
-    Accepted("zero tokens", set_at(("output_tokens",), 0)),
-    Accepted("whole-number cost", set_at(("cost_estimate",), 1)),
-    Accepted("zero cost (known to be free)", set_at(("cost_estimate",), 0)),
-    Accepted("unknown cost is null", set_at(("cost_estimate",), None)),
-    Accepted("unknown input_tokens is null", set_at(("input_tokens",), None)),
-    Accepted("unknown output_tokens is null", set_at(("output_tokens",), None)),
-    Accepted("hosted provider", set_at(("provider",), "hosted")),
-    Accepted("fake provider (tests only)", set_at(("provider",), "fake")),
-    Accepted("free-form prompt_version", set_at(("prompt_version",), "2026-10-28")),
+    ok("unknown field in meta", ("future",), {"a": 1}),
+    ok("zero tokens", ("output_tokens",), 0),
+    ok("whole-number cost", ("cost_estimate",), 1),
+    ok("zero cost (known to be free)", ("cost_estimate",), 0),
+    ok("unknown cost is null", ("cost_estimate",), None),
+    ok("unknown input_tokens is null", ("input_tokens",), None),
+    ok("unknown output_tokens is null", ("output_tokens",), None),
+    ok("hosted provider", ("provider",), "hosted"),
+    ok("fake provider (tests only)", ("provider",), "fake"),
+    ok("free-form prompt_version", ("prompt_version",), "2026-10-28"),
     # Q38 proposals: not part of v1 (guide); ignored like any unknown field, never required.
-    Accepted("input_hash (Q38)", set_at(("input_hash",), "sha256:0f1e2d")),
-    Accepted("temperature (Q38)", set_at(("temperature",), 0.2)),
-    Accepted("seed (Q38)", set_at(("seed",), 7)),
-    Accepted("cost_known (Q38)", set_at(("cost_known",), False)),
+    ok("input_hash (Q38)", ("input_hash",), "sha256:0f1e2d"),
+    ok("temperature (Q38)", ("temperature",), 0.2),
+    ok("seed (Q38)", ("seed",), 7),
+    ok("cost_known (Q38)", ("cost_known",), False),
 ]
-
-
-@pytest.mark.parametrize("case", [pytest.param(a, id=a.name) for a in META_ACCEPTED])
-def test_meta_valid_variation_is_accepted(
-    validator: Draft202012Validator,
-    meta_validator: Draft202012Validator,
-    meta: Doc,
-    case: Accepted,
-) -> None:
-    case.edit(meta)
-    assert messages(meta_validator, meta) == []
-    assert messages(validator, meta) == []
 
 
 TRANSCRIPT_ACCEPTED = [
-    Accepted("unknown field at root", set_at(("future",), 1)),
-    Accepted("unknown field in segment", set_at(SEGMENT + ("future",), "x")),
-    Accepted("unknown field in word", set_at(WORD + ("future",), [1])),
-    Accepted("unknown field in meta", set_at(TMETA + ("future",), True)),
-    Accepted("no segments (silent audio)", set_at(("segments",), [])),
-    Accepted("segment with no words", set_at(SEGMENT + ("words",), [])),
-    Accepted("empty segment text", set_at(SEGMENT + ("text",), "")),
-    Accepted("integer seconds", set_at(SEGMENT + ("start",), 0)),
-    Accepted("segment end equals start", set_at(SEGMENT + ("end",), 0.0)),
-    Accepted("hosted provider", set_at(TMETA + ("provider",), "hosted")),
-    Accepted("fake provider (tests only)", set_at(TMETA + ("provider",), "fake")),
-    Accepted("unknown cost is null", set_at(TMETA + ("cost_estimate",), None)),
-    Accepted("non-ASCII word", set_at(WORD + ("word",), "namaste—é")),
+    ok("unknown field at root", ("future",), 1),
+    ok("unknown field in segment", SEGMENT + ("future",), "x"),
+    ok("unknown field in word", WORD + ("future",), [1]),
+    ok("unknown field in meta", TMETA + ("future",), True),
+    ok("no segments (silent audio)", ("segments",), []),
+    ok("segment with no words", SEGMENT + ("words",), []),
+    ok("empty segment text", SEGMENT + ("text",), ""),
+    ok("integer seconds", SEGMENT + ("start",), 0),
+    ok("segment end equals start", SEGMENT + ("end",), 0.0),
+    ok("hosted provider", TMETA + ("provider",), "hosted"),
+    ok("fake provider (tests only)", TMETA + ("provider",), "fake"),
+    ok("unknown cost is null", TMETA + ("cost_estimate",), None),
+    ok("non-ASCII word", WORD + ("word",), "namaste—é"),
     # Student 4 proposal: not part of v1 (guide); ignored like any unknown field.
-    Accepted("language in meta (proposal)", set_at(TMETA + ("language",), "en")),
+    ok("language in meta (proposal)", TMETA + ("language",), "en"),
 ]
 
 
-@pytest.mark.parametrize(
-    "case", [pytest.param(a, id=a.name) for a in TRANSCRIPT_ACCEPTED]
-)
-def test_transcript_valid_variation_is_accepted(
-    validator: Draft202012Validator,
-    transcript_validator: Draft202012Validator,
-    transcript: Doc,
-    case: Accepted,
+@pytest.mark.parametrize(("kind", "case"), params(META_ACCEPTED, TRANSCRIPT_ACCEPTED))
+def test_valid_variation_is_accepted(
+    validator: Draft202012Validator, registry: Registry[Any], kind: str, case: Case
 ) -> None:
-    case.edit(transcript)
-    assert messages(transcript_validator, transcript) == []
-    assert messages(validator, transcript) == []
+    definition, example = KINDS[kind]
+    doc = case.apply(load_example(example))
+    assert messages(def_validator(registry, definition), doc) == []
+    assert messages(validator, doc) == []
 
 
 def test_segment_ending_before_it_starts_passes_the_schema(
-    validator: Draft202012Validator, transcript: Doc
+    validator: Draft202012Validator,
 ) -> None:
-    """JSON Schema cannot compare two fields, so B5.4's end >= start is NOT a schema rule.
-
-    libs/model_interface/transcript.py enforces it; its tests reject this same document.
-    """
+    """JSON Schema cannot compare two fields, so B5.4's end >= start is NOT a schema rule; library
+    code enforces it."""
+    transcript = load_example(KINDS["transcript"][1])
     transcript["segments"][0]["start"], transcript["segments"][0]["end"] = 2.4, 0.0
     assert messages(validator, transcript) == []
