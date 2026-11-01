@@ -1,0 +1,41 @@
+# Valid example for contracts/h5p-practice.v1.md (PRD B7) and the B1 `file` field.
+# Fictional content for contract testing only. It is not the B8.2 sample course.
+#
+# The week keeps its one guide Page and one task Assignment. The H5P practice item is an
+# optional extra. This ordinary practice item comes right after the guide Page (list order; there
+# is no ordering field), and it is never graded. This example has no video lesson: where a video
+# checkpoint goes is an open decision in B7.
+#
+# The .h5p file named below is NOT in the repository, on purpose: no real .h5p file is kept
+# here (B7). The file name is illustrative; B7 does not fix a folder or a naming convention.
+schema: learnops.course/v1
+course:
+  shortname: DEMO-H5P-101
+  fullname: "Practice with H5P"
+  slug: practice-with-h5p
+  total_points: 100
+  mode: full
+sections:
+  - number: 1
+    title: "Week 1 — Set up your tools"
+    idnumber: wk-01
+    unlock:
+      after: null
+      start_date: null
+    activities:
+      - type: page
+        idnumber: wk-01-guide
+        title: "Week 1 guide"
+        body: weeks/01-guide.md
+      - type: h5p
+        idnumber: wk-01-practice
+        title: "Week 1 practice"
+        graded: false
+        file: wk-01-practice.h5p
+      - type: assignment
+        idnumber: wk-01-task
+        title: "Week 1 task"
+        body: weeks/01-task.md
+        points: 100
+        submission: [onlinetext, file]
+        completion: submit

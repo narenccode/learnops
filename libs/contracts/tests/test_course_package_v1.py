@@ -5,14 +5,20 @@ AUTOMATED here (structure only, by contracts/course-package.v1.schema.json):
   * the example package's course.yaml validates, also with mode "sections-only";
   * required fields, types, enums, identifier and path patterns, ISO dates, the two default
     protected idnumbers (B1.4), the per-type required fields (B1.1, B7), and that unknown
-    fields are accepted (PRD B.0, EXT-02).
+    fields are accepted (PRD B.0, EXT-02);
+  * the B7 practice entry: an h5p activity has graded false and a `file` (a relative path
+    ending in lowercase .h5p, same path rules as `body`). `file` is defined for h5p only, so on
+    any other type it is an unknown field and is not checked (guide's decision, Issue #44).
 
 NOT automated here, and therefore NOT claimed as enforced (the schema's $comment lists them):
   * B1.2 rules 1, 2, 3, 5 and 6: one guide Page and one task Assignment per week, the unlock
     chain, points summing to total_points, completion on unlock activities, unique idnumbers;
   * B1.3: the marking table inside an assignment body (markers, columns, points, Check names);
   * B1.4: configured protected idnumbers other than the two defaults, protected_section;
-  * that the files named by "body" exist.
+  * that the files named by "body" exist, and that the .h5p file named by an h5p activity
+    exists (no real .h5p is kept in the repository);
+  * that an ordinary optional h5p practice entry comes right after the week's guide Page (list
+    order; B7). Video checkpoint placement is an open decision and is not covered.
 These need validator code that does not exist yet (Release 0/1 work in libs/contracts and the
 checker). Until then they are checked by hand, not by this file.
 
@@ -81,6 +87,29 @@ def add_activity(**fields: Any) -> Edit:
         doc["sections"][0]["activities"].append(fields)
 
     return edit
+
+
+DROP = object()  # marks a field that h5p_fields() must leave out
+
+
+def h5p_fields(**changes: Any) -> dict[str, Any]:
+    """A valid h5p practice entry (PRD B7); `changes` overrides or adds fields.
+
+    A change whose value is DROP removes that field, so a case can leave out exactly one.
+    """
+    fields: dict[str, Any] = {
+        "type": "h5p",
+        "idnumber": "wk-01-practice",
+        "title": "Practice",
+        "graded": False,
+        "file": "wk-01-practice.h5p",
+    }
+    for key, value in changes.items():
+        if value is DROP:
+            del fields[key]
+        else:
+            fields[key] = value
+    return fields
 
 
 def compose(*edits: Edit) -> Edit:
@@ -196,7 +225,13 @@ MISSING = [
     missing("assignment without completion", TASK + ("completion",)),
     Case(
         "h5p without graded",
-        add_activity(type="h5p", idnumber="wk-01-practice", title="Practice"),
+        add_activity(**h5p_fields(graded=DROP)),
+        NEW_ACTIVITY,
+        "required",
+    ),
+    Case(
+        "h5p without file",
+        add_activity(**h5p_fields(file=DROP)),
         NEW_ACTIVITY,
         "required",
     ),
@@ -209,6 +244,17 @@ def test_missing_required_field_is_rejected(
 ) -> None:
     case.edit(doc)
     assert (case.at, case.keyword) in error_keys(validator, doc)
+
+
+@pytest.mark.parametrize("field", ["graded", "file"])
+def test_h5p_missing_field_is_named_and_only_that_field(
+    validator: Draft202012Validator, doc: Doc, field: str
+) -> None:
+    # The MISSING cases above only look at (place, keyword), which both fields share. This
+    # pins the message, so "without graded" cannot pass because `file` is missing, or the reverse.
+    add_activity(**h5p_fields(**{field: DROP}))(doc)
+    required = [m for m in messages(validator, doc) if "required property" in m]
+    assert required == [f"'{field}' is a required property"]
 
 
 # --- invalid: identifiers (slug, idnumber, unlock.after) -----------------------------------
@@ -364,11 +410,33 @@ TYPE_CASES = [
     bad("body is a number", PAGE + ("body",), 5, "type"),
     Case(
         "h5p that is graded",
-        add_activity(
-            type="h5p", idnumber="wk-01-practice", title="Practice", graded=True
-        ),
+        add_activity(**h5p_fields(graded=True)),
         NEW_ACTIVITY + ("graded",),
         "const",
+    ),
+    Case(
+        "h5p graded is a string",
+        add_activity(**h5p_fields(graded="false")),
+        NEW_ACTIVITY + ("graded",),
+        "const",
+    ),
+    Case(
+        "h5p file is a number",
+        add_activity(**h5p_fields(file=5)),
+        NEW_ACTIVITY + ("file",),
+        "type",
+    ),
+    Case(
+        "h5p file is a list",
+        add_activity(**h5p_fields(file=["a.h5p"])),
+        NEW_ACTIVITY + ("file",),
+        "type",
+    ),
+    Case(
+        "h5p file is null",
+        add_activity(**h5p_fields(file=None)),
+        NEW_ACTIVITY + ("file",),
+        "type",
     ),
 ]
 
@@ -415,6 +483,50 @@ def test_body_that_is_not_a_relative_path_is_rejected(
     assert (case.at, case.keyword) in error_keys(validator, doc)
 
 
+# --- invalid: h5p file paths (same path rules as body, plus a lowercase .h5p ending) --------
+
+# Everything BAD_BODIES rejects, rewritten to end in .h5p so that only the path rule is tested,
+# plus values that are paths but do not end in a lowercase .h5p.
+BAD_H5P_FILES = [
+    # URLs, absolute paths and '..' (whitespace-free values, split on spaces):
+    *"../x.h5p practice/../../x.h5p /abs/x.h5p https://example.org/x.h5p file:///x.h5p".split(),
+    # Wrong extension, or no name before it:
+    *"x.H5P x.h5P x.zip x.h5p.zip x.h5p.bak x practice/ xh5p x.h5p/ .h5p practice/.h5p".split(),
+    # Values that cannot be written in the lists above:
+    "mailto:a@b.c.h5p",
+    "C:\\x.h5p",
+    "practice\\x.h5p",
+    "",
+    "x.h5p\n",
+    "practice/x\n.h5p",
+]
+H5P_FILE_CASES = [
+    Case(
+        f"h5p file {v!r}",
+        add_activity(**h5p_fields(file=v)),
+        NEW_ACTIVITY + ("file",),
+        "pattern",
+    )
+    for v in BAD_H5P_FILES
+]
+
+
+@pytest.mark.parametrize("case", params(H5P_FILE_CASES))
+def test_h5p_file_that_is_not_a_relative_h5p_path_is_rejected(
+    validator: Draft202012Validator, doc: Doc, case: Case
+) -> None:
+    case.edit(doc)
+    assert (case.at, case.keyword) in error_keys(validator, doc)
+
+
+def test_h5p_with_a_protected_idnumber_is_rejected(
+    validator: Draft202012Validator, doc: Doc
+) -> None:
+    # B1.4 holds for every activity type, so an h5p entry cannot take a protected idnumber.
+    add_activity(**h5p_fields(idnumber="final-project"))(doc)
+    assert (NEW_ACTIVITY + ("idnumber",), "not") in error_keys(validator, doc)
+
+
 # --- valid variations: the schema must NOT reject these ------------------------------------
 
 
@@ -448,11 +560,21 @@ ACCEPTED = [
     Accepted(
         "label activity", add_activity(type="label", idnumber="wk-01-note", title="N")
     ),
+    Accepted("ungraded h5p activity", add_activity(**h5p_fields())),
     Accepted(
-        "ungraded h5p activity",
-        add_activity(
-            type="h5p", idnumber="wk-01-practice", title="Practice", graded=False
-        ),
+        "h5p activity in a folder",
+        add_activity(**h5p_fields(file="practice/week-1/wk-01-practice.h5p")),
+    ),
+    Accepted(
+        "h5p file with '..' inside a name",
+        add_activity(**h5p_fields(file="a/..b/c.h5p")),
+    ),
+    Accepted("h5p with an unknown field", add_activity(**h5p_fields(future="x"))),
+    # `file` is defined for h5p only (guide's decision), so elsewhere it is an unknown field.
+    Accepted("file on a page is not checked", set_at(PAGE + ("file",), 5)),
+    Accepted(
+        "file on a url activity is not checked",
+        add_activity(type="url", idnumber="wk-01-link", title="Link", file="no path"),
     ),
     Accepted(
         "idnumber that only contains a protected one",

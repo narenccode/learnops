@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:learnops:contract:h5p-practice:v1",
+  "title": "LearnOps H5P practice content types (B7, v1)",
+  "description": "DRAFT, not approved and not frozen. The H5P content types a practice item may use (PRD B7), as a list of names that must be one of the four phrases PRD B7 uses, each at most once. The rules (ungraded, optional, relative paths, mentor approval, video checkpoint modes, interactive video for lab demonstrations only) are in contracts/h5p-practice.v1.md, which is the normative text. The shape of a practice item inside a course package is defined by B1 (contracts/course-package.v1.schema.json), not here.",
+  "$comment": "Unknown fields are allowed on purpose: after Release 0 contracts change only by adding optional fields and readers ignore unknown fields (PRD B.0, EXT-02). The four phrases are copied from PRD B7 and kept literal; whether 'drag-the-words or drag-and-drop / ordering' is one content type or a choice is an open decision, so it is one entry. This schema invents no H5P machine identifier and no library version: both are still to verify in the lab (PRD App-C item 5), and B7 cannot be frozen before they are known; versions are added once verified, if needed. The lab-only status of interactive video is stated in the contract text, not as a field. The list need not hold all four types. NOT expressible in JSON Schema, so checked by libs/contracts/tests/test_h5p_practice_v1.py: that the four phrases are the ones in the PRD B7 text. NOT checked anywhere yet: that an .h5p file really uses one of these types.",
+  "type": "object",
+  "required": ["schema", "content_types"],
+  "properties": {
+    "schema": { "const": "learnops.h5p-practice/v1", "description": "Contract name and version." },
+    "content_types": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/content_type" },
+      "description": "Each of the four content types may be listed at most once.",
+      "allOf": [
+        { "contains": { "properties": { "name": { "const": "question set" } }, "required": ["name"] }, "minContains": 0, "maxContains": 1 },
+        { "contains": { "properties": { "name": { "const": "drag-the-words or drag-and-drop / ordering" } }, "required": ["name"] }, "minContains": 0, "maxContains": 1 },
+        { "contains": { "properties": { "name": { "const": "branching scenario" } }, "required": ["name"] }, "minContains": 0, "maxContains": 1 },
+        { "contains": { "properties": { "name": { "const": "interactive video" } }, "required": ["name"] }, "minContains": 0, "maxContains": 1 }
+      ]
+    }
+  },
+  "$defs": {
+    "content_type": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "enum": [
+            "question set",
+            "drag-the-words or drag-and-drop / ordering",
+            "branching scenario",
+            "interactive video"
+          ],
+          "description": "The content type, written exactly as PRD B7 writes it (lower case). Not an H5P machine name."
+        }
+      }
+    }
+  }
+}
