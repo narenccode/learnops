@@ -5,9 +5,10 @@ and the protected idnumbers a site adds to the two defaults (B1.4, passed in as 
 NOT covered, on purpose, because ownership or details are still undecided (see
 HELD_RULE_CODES): one Page and one Assignment per week, the unlock chain, the points total,
 completion on unlock activities, an idnumber never reused across package versions (B1.2 rule 6,
-second half), that body files exist (needs the package folder), the marking table, the
-Check vocabulary and protected_section. The validator must
-report those as "not checked". The settings object is tested in test_config.py.
+second half), the marking table, the Check vocabulary and protected_section. The validator must
+report those as "not checked", and so must the body files for a parsed document, which cannot
+look at a folder (validate_package does, in test_validate_package.py). The settings object is
+tested in test_config.py.
 """
 
 from __future__ import annotations
@@ -382,10 +383,14 @@ def test_public_names_are_exported_from_the_package() -> None:
 
     for name in (
         "ConfigError",
+        "DirectorySource",
+        "FileState",
         "Issue",
+        "PackageSource",
         "ValidationConfig",
         "ValidationReport",
         "validate_course_document",
+        "validate_package",
     ):
         assert hasattr(contracts, name), name
 

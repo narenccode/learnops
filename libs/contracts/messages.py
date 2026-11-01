@@ -53,6 +53,28 @@ PROTECTED_IDNUMBER = (
 )
 PROTECTED_IDNUMBER_HINT = PROTECTED_DEFAULT_HINT
 
+# --- reading a package folder (B1.1) -------------------------------------------------------
+
+COURSE_YAML_MISSING = "The package has no course.yaml."
+COURSE_YAML_MISSING_HINT = (
+    "Put course.yaml at the top of the package folder (PRD B1.1), then validate again."
+)
+COURSE_YAML_UNREADABLE = "course.yaml could not be read: {reason}."
+COURSE_YAML_UNREADABLE_HINT = (
+    "Save course.yaml as UTF-8 and fix the YAML syntax at the place named above."
+)
+BODY_FILE_MISSING = "{where}: the file '{path}' does not exist in the package."
+BODY_FILE_MISSING_HINT = (
+    "Add the file at that path, or change 'body' to a file that exists in the package."
+)
+BODY_NOT_A_FILE = "{where}: '{path}' is a folder, not a file."
+BODY_NOT_A_FILE_HINT = "Point 'body' at a Markdown file, not at a folder."
+BODY_OUTSIDE_PACKAGE = "{where}: '{path}' leads outside the package folder."
+BODY_OUTSIDE_PACKAGE_HINT = (
+    "Move the file into the package folder and point 'body' at it. Links that leave the "
+    "folder are not allowed."
+)
+
 # --- settings -------------------------------------------------------------------------------
 
 CONFIG_BAD_PROTECTED_IDNUMBER = (
@@ -79,10 +101,16 @@ NOT_CHECKED_HINT = "Check this by hand until the validator supports it."
 
 # Reported when the structure is invalid: the course-level rules need a sound structure. The
 # text names no rule, so that it stays true as more course-level rules are implemented.
-CROSS_RULES_NOT_CHECKED = "The course-level rules did not run because the structure of course.yaml is invalid."
+CROSS_RULES_NOT_CHECKED = (
+    "The course-level rules did not run because course.yaml could not be checked."
+)
 CROSS_RULES_NOT_CHECKED_HINT = (
-    "Fix the structure errors listed above. The course-level rules run once the structure "
-    "is valid."
+    "Fix the errors listed above. The course-level rules run once course.yaml is valid."
+)
+# Same code as the held rule below, for a package whose body check did not run.
+BODY_FILES_NOT_CHECKED_YET = (
+    "Not checked: that the file named by each body exists. This check runs once "
+    "course.yaml is valid."
 )
 
 # Rules that are not implemented yet. Each is (code, PRD rule, what is not checked). They are
@@ -120,7 +148,7 @@ HELD_RULES: tuple[tuple[str, str, str], ...] = (
     (
         "body_files_not_checked",
         "B1.1",
-        "Not checked: that the file named by each body exists. This needs the package folder, which course.yaml does not carry.",
+        "Not checked: that the file named by each body exists. This needs the package folder, which a parsed course.yaml does not carry. validate_package checks it.",
     ),
     (
         "marking_table_not_checked",

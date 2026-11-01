@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any
+
+import pytest
+import yaml
 
 from contracts.report import Issue, ValidationReport
 
@@ -35,6 +39,24 @@ HELD_RULE_CODES = frozenset(
         "protected_section_not_checked",
     }
 )
+
+# A package report lists the same rules except the body files, which it has checked.
+PACKAGE_HELD_RULE_CODES = HELD_RULE_CODES - {"body_files_not_checked"}
+
+
+def write_course(package_dir: Path, doc: Doc) -> None:
+    text = yaml.safe_dump(doc, allow_unicode=True, sort_keys=False)
+    (package_dir / "course.yaml").write_bytes(text.encode("utf-8"))
+
+
+def link_or_skip(link: Path, target: Path) -> None:
+    """Make a symbolic link, or skip the test where the system does not allow it."""
+    try:
+        os.symlink(target, link)
+    except (OSError, NotImplementedError):
+        pytest.skip(
+            "symbolic links are not available here (Windows without developer mode)"
+        )
 
 
 def error_codes(report: ValidationReport) -> list[str]:
