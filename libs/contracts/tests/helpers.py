@@ -16,6 +16,9 @@ Doc = dict[str, Any]
 WEEK1: tuple[str | int, ...] = ("sections", 0)
 WEEK2: tuple[str | int, ...] = ("sections", 1)
 WEEK1_GUIDE = WEEK1 + ("activities", 0)
+WEEK1_TASK = WEEK1 + ("activities", 1)
+WEEK2_GUIDE = WEEK2 + ("activities", 0)
+WEEK2_TASK = WEEK2 + ("activities", 1)
 
 # Rules that are deliberately not implemented yet because their ownership or details are still
 # undecided. The validator must say so in `not_checked`, never skip them silently.
@@ -25,11 +28,10 @@ HELD_RULE_CODES = frozenset(
         "unlock_chain_not_checked",
         "points_total_not_checked",
         "unlock_completion_not_checked",
-        "idnumber_unique_not_checked",
+        "idnumber_reuse_not_checked",
         "marking_table_not_checked",
         "check_vocabulary_not_checked",
         "protected_section_not_checked",
-        "extra_protected_idnumbers_not_checked",
     }
 )
 
