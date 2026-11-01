@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import functools
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -30,6 +31,12 @@ def load_schema() -> dict[str, Any]:
 def _validator() -> Draft202012Validator:
     # The format checker is on so that impossible calendar dates are rejected.
     return Draft202012Validator(load_schema(), format_checker=FormatChecker())
+
+
+@functools.cache
+def identifier_pattern() -> re.Pattern[str]:
+    """The idnumber pattern, read from the schema so that the two can never drift apart."""
+    return re.compile(load_schema()["$defs"]["identifier"]["pattern"])
 
 
 def schema_issues(document: object) -> list[Issue]:
