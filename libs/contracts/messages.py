@@ -65,8 +65,8 @@ CONFIG_PROTECTED_NOT_A_LIST = (
     "separate idnumbers before passing it."
 )
 CONFIG_WRONG_TYPE = (
-    "config must be a ValidationConfig, not {found}. Build one with "
-    "ValidationConfig(protected_idnumbers=...) and pass it as config=."
+    "config must be a ValidationConfig instance, not {found}. "
+    "Pass a ValidationConfig instance, e.g. ValidationConfig(...)."
 )
 CONFIG_PROTECTED_NOT_TEXT = (
     "Protected idnumber {value!r} is not text. Pass each idnumber as a string, for example "
@@ -111,9 +111,16 @@ HELD_RULES: tuple[tuple[str, str, str], ...] = (
     (
         "idnumber_reuse_not_checked",
         "B1.2 rule 6",
-        "Not checked: that an idnumber is never reused for a different activity. This needs "
-        "the previous version of the package, which one course.yaml cannot supply. "
-        "Uniqueness within this package is checked.",
+        (
+            "Not checked: that an idnumber is never reused for a different activity. This "
+            "needs the previous version of the package, which one course.yaml cannot supply. "
+            "Uniqueness within this package is checked."
+        ),
+    ),
+    (
+        "body_files_not_checked",
+        "B1.1",
+        "Not checked: that the file named by each body exists. This needs the package folder, which course.yaml does not carry.",
     ),
     (
         "marking_table_not_checked",

@@ -31,9 +31,11 @@ def validate_course_document(
     if config is None:
         config = ValidationConfig()
     elif not isinstance(config, ValidationConfig):
-        found = getattr(
-            config, "__name__", type(config).__name__
-        )  # a class, or an object
+        found = (
+            f"the class {config.__name__} itself"
+            if isinstance(config, type)
+            else f"a value of type {type(config).__name__}"
+        )
         raise ConfigError(messages.CONFIG_WRONG_TYPE.format(found=found))
     errors = schema_issues(doc)
     if errors or not isinstance(doc, dict):

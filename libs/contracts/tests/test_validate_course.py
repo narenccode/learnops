@@ -5,7 +5,8 @@ and the protected idnumbers a site adds to the two defaults (B1.4, passed in as 
 NOT covered, on purpose, because ownership or details are still undecided (see
 HELD_RULE_CODES): one Page and one Assignment per week, the unlock chain, the points total,
 completion on unlock activities, an idnumber never reused across package versions (B1.2 rule 6,
-second half), the marking table, the Check vocabulary and protected_section. The validator must
+second half), that body files exist (needs the package folder), the marking table, the
+Check vocabulary and protected_section. The validator must
 report those as "not checked". The settings object is tested in test_config.py.
 """
 
@@ -105,9 +106,12 @@ def test_an_impossible_calendar_date_is_rejected(example_doc: Doc) -> None:
 
 @pytest.mark.parametrize("value", [[], None, 1, "learnops.course/v1"], ids=repr)
 def test_a_document_that_is_not_an_object_is_an_error(value: Any) -> None:
-    issue = only(validate_course_document(value).errors)
-    assert issue.code == "schema_type"
-    assert issue.location == ()
+    for config in (None, CONFIG):  # no course-level rule can run on a non-object
+        report = validate_course_document(value, config=config)
+        issue = only(report.errors)
+        assert issue.code == "schema_type"
+        assert issue.location == ()
+        assert "cross_rules_not_checked" in not_checked_codes(report)
 
 
 def test_default_protected_idnumbers_are_left_to_the_schema(example_doc: Doc) -> None:
@@ -162,15 +166,6 @@ def test_any_schema_error_holds_back_the_idnumber_rules(example_doc: Doc) -> Non
     assert not_checked_codes(report) == HELD_RULE_CODES | {"cross_rules_not_checked"}
 
 
-@pytest.mark.parametrize("value", [[], None, 1, "learnops.course/v1"], ids=repr)
-def test_a_document_that_is_not_an_object_also_skips_the_course_level_rules(
-    value: Any,
-) -> None:
-    report = validate_course_document(value, config=CONFIG)
-    assert error_codes(report) == ["schema_type"]
-    assert "cross_rules_not_checked" in not_checked_codes(report)
-
-
 def test_the_course_level_notice_names_no_rule(example_doc: Doc) -> None:
     # It must stay true when more course-level rules are implemented, so it lists none of them.
     del example_doc["sections"][0]["title"]
@@ -193,6 +188,16 @@ def test_cross_version_reuse_of_idnumbers_is_listed_as_not_checked(
     assert reuse.rule == "B1.2 rule 6"
     assert "never reused" in reuse.message and "previous version" in reuse.message
     assert reuse.fix_hint
+
+
+def test_body_files_are_listed_as_not_checked_and_never_looked_for(
+    example_doc: Doc,
+) -> None:
+    example_doc["sections"][0]["activities"][0]["body"] = "weeks/no-such-file.md"
+    report = validate_course_document(example_doc)
+    notice = {i.code: i for i in report.not_checked}["body_files_not_checked"]
+    assert report.errors == ()
+    assert notice.rule == "B1.1" and "package folder" in notice.message
 
 
 # --- idnumbers unique within one package (B1.2 rule 6, first half) ----------------------------
@@ -303,13 +308,6 @@ def test_configured_protected_idnumber_is_rejected_in_both_modes(
     assert "template" in issue.fix_hint
 
 
-def test_a_configured_protected_idnumber_is_allowed_when_not_configured(
-    example_doc: Doc,
-) -> None:
-    set_at(example_doc, WEEK1_GUIDE + ("idnumber",), "capstone-gate")
-    assert validate_course_document(example_doc).errors == ()
-
-
 def test_only_an_exact_match_is_protected(example_doc: Doc) -> None:
     set_at(example_doc, WEEK1_GUIDE + ("idnumber",), "capstone-gate-draft")
     set_at(example_doc, WEEK2_GUIDE + ("idnumber",), "capstone")
@@ -346,16 +344,10 @@ def test_protected_and_duplicate_problems_are_both_reported(example_doc: Doc) ->
 @pytest.mark.parametrize(
     ("config", "value"),
     [
-        (
-            CONFIG,
-            "course-feedback",
-        ),  # configured ids add to the defaults, never replace them
-        (
-            ValidationConfig(["final-project"]),
-            "final-project",
-        ),  # a default listed again
+        (CONFIG, "course-feedback"),
+        (ValidationConfig(["final-project"]), "final-project"),
     ],
-    ids=["defaults still apply", "reported once"],
+    ids=["configured ids add to the defaults", "a default listed again, reported once"],
 )
 def test_a_default_protected_id_is_always_rejected_and_reported_once(
     example_doc: Doc, config: ValidationConfig, value: str
@@ -404,7 +396,7 @@ def test_public_names_are_exported_from_the_package() -> None:
         ({"protected_idnumbers": ["capstone-gate"]}, "dict"),
         (["capstone-gate"], "list"),
         ("capstone-gate", "str"),
-        (ValidationConfig, "ValidationConfig"),  # the class itself, not an instance
+        (ValidationConfig, "the class ValidationConfig itself"),  # not an instance
         (object(), "object"),
     ],
     ids=["dict", "list", "str", "the class", "object"],
@@ -414,7 +406,9 @@ def test_an_unsupported_config_type_is_refused_not_ignored(
 ) -> None:
     with pytest.raises(ConfigError) as error:
         validate_course_document(example_doc, config=config)
-    assert "ValidationConfig" in str(error.value) and named in str(error.value)
+    message = str(error.value)
+    assert named in message and "not ValidationConfig" not in message
+    assert "Pass a ValidationConfig instance, e.g. ValidationConfig(...)." in message
     # Refused even when the document is broken: the setting is checked first.
     with pytest.raises(ConfigError):
         validate_course_document([], config=config)

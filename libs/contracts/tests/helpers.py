@@ -29,6 +29,7 @@ HELD_RULE_CODES = frozenset(
         "points_total_not_checked",
         "unlock_completion_not_checked",
         "idnumber_reuse_not_checked",
+        "body_files_not_checked",
         "marking_table_not_checked",
         "check_vocabulary_not_checked",
         "protected_section_not_checked",
