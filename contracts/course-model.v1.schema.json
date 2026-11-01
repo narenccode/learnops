@@ -2,14 +2,14 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:learnops:contract:course-model:v1",
   "title": "LearnOps course model (B2, v1)",
-  "description": "DRAFT, not approved and not frozen. All 17 unresolved decisions are recorded in docs/traceability.md. The OPEN DECISION markers in this schema identify only some unresolved fields and are not the complete list, so a field without a marker is not settled. A normalised JSON description of a course, read by the checker and built from a Moodle backup (.mbz) or a course package (PRD B2). It describes what a course IS, including a broken course, so that the checker can report the problem. This schema checks structure only and must never reject a course-design error.",
-  "$comment": "Unknown fields are allowed on purpose: after Release 0 contracts change only by adding optional fields and readers ignore unknown fields (PRD B.0, EXT-02). A null means the source does not carry the value, for example a package has no Moodle visibility setting, or that the item does not exist, as stated on each field. Deliberately NOT enforced here, because a course that breaks them must still validate so that a rule can report it: unique or well-formed idnumbers (CK-06), protected items (CK-07), points summing to the target (CK-03), references inside availability, criteria or badges pointing at real activities (CK-04, CK-08), circular unlock rules (CK-05), completion rules that can be met (CK-02), a valid marking table with matching points (CK-09), marking workflow being on (CK-10), H5P having no grade item (CK-11), relative media paths (CK-12), and completion tracking on activities used in unlock rules (CK-13). The inner form of availability belongs to Moodle and is not described here. Unique cmid values are not enforced either; the model builder guarantees them.",
+  "description": "DRAFT, not approved and not frozen. Confirmed decisions and open items are recorded in docs/decisions/0003-b2-course-model.md. The OPEN DECISION markers in this schema identify only some unresolved fields and are not the complete list, so a field without a marker is not settled. A normalised JSON description of a course, read by the checker and built from a Moodle backup (.mbz) or a course package (PRD B2). It describes what a course IS, including a broken course, so that the checker can report the problem. This schema checks structure only and must never reject a course-design error.",
+  "$comment": "Unknown fields are allowed on purpose: after Release 0 contracts change only by adding optional fields and readers ignore unknown fields (PRD B.0, A9, EXT-02). A null means the source does not carry the value, for example a package has no Moodle visibility setting, or that the item does not exist, as stated on each field. For visible and completion_enabled, null never means false, and the checker treats it as cannot judge, not as a fault. Deliberately NOT enforced here, because a course that breaks them must still validate so that a rule can report it: unique or well-formed idnumbers (CK-06), protected items (CK-07), points summing to the target (CK-03), references inside availability, criteria or badges pointing at real activities (CK-04, CK-08), circular unlock rules (CK-05), completion rules that can be met (CK-02), a valid marking table with matching points (CK-09), marking workflow being on (CK-10), H5P having no grade item (CK-11), relative media paths (CK-12), and completion tracking on activities used in unlock rules (CK-13). The inner form of availability belongs to Moodle and is not described here. Unique cmid values are not enforced either; the model builder guarantees them. CK-07 compares protected items field by field against a supplied reference model of the template course, using the same comparison as FR-C-05; there are no fingerprints. The model holds no body text or attached files, so a change to those cannot be seen.",
   "type": "object",
   "required": ["schema", "source", "course", "sections", "course_completion", "badges"],
   "properties": {
     "schema": {
       "const": "learnops.course-model/v1",
-      "description": "Contract name and version."
+      "description": "Contract name and version. Changing this value is a breaking change requiring v2."
     },
     "source": { "$ref": "#/$defs/source" },
     "course": { "$ref": "#/$defs/course" },
@@ -35,16 +35,16 @@
     },
     "visible": {
       "type": ["boolean", "null"],
-      "description": "null when the source does not carry it, as in a package."
+      "description": "null means the source does not say, as in a package. It never means false: the checker treats it as cannot judge, not as a fault."
     },
     "availability": {
       "type": ["object", "null"],
-      "description": "Moodle's own availability JSON, kept whole so that no information is lost (PRD B2). null means no restriction. A package unlock rule is written in this same form."
+      "description": "Moodle's own availability JSON, kept whole so that no information is lost (PRD B2). null means no restriction. A package unlock rule is written in this same form, with its date as a Unix timestamp for 00:00 in the configured site timezone (see source.timezone). In a completion condition, cm = -1 is Moodle's previous-activity reference, not a missing activity, and CK-01 and CK-04 must resolve it before reporting. How Moodle picks that activity is pending verification on Moodle 4.5 and 5.3."
     },
     "cmid": {
       "type": "integer",
       "minimum": 1,
-      "description": "OPEN DECISION: not in the PRD key fields. Moodle's course-module id, which availability conditions, completion criteria and badges use to refer to an activity. For a package the builder assigns synthetic ids. Unique within one model and meaningless across models, so a comparison uses idnumber."
+      "description": "Moodle's course-module id, which availability conditions, completion criteria and badges use to refer to an activity. Never compare it between models: idnumber is the stable identity. OPEN DECISION: a package has no Moodle id, and the synthetic ids used for packages are unresolved."
     },
     "source": {
       "type": "object",
@@ -57,10 +57,15 @@
         "mode": {
           "enum": ["full", "sections-only"],
           "description": "The package's output mode (PRD B1.4). CK-07 needs it, because a sections-only package leaves out the protected items on purpose."
+        },
+        "timezone": {
+          "type": "string",
+          "minLength": 1,
+          "description": "OPEN DECISION: this location is proposed. The guide confirmed that the model records the timezone name, not where. The configured site timezone used to convert package dates, for example Asia/Kolkata for the lab. Required for a package; optional for a .mbz, which already holds timestamps."
         }
       },
       "if": { "properties": { "kind": { "const": "package" } }, "required": ["kind"] },
-      "then": { "required": ["mode"] }
+      "then": { "required": ["mode", "timezone"] }
     },
     "course": {
       "type": "object",
@@ -76,7 +81,7 @@
         },
         "completion_enabled": {
           "type": ["boolean", "null"],
-          "description": "Course-level completion tracking. null when the source does not carry it, as in a package."
+          "description": "Course-level completion tracking. null means the source does not say, as in a package. It never means false: the checker treats it as cannot judge, not as a fault."
         },
         "total_points": {
           "type": ["number", "null"],

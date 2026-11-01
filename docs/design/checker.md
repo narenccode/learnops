@@ -329,6 +329,7 @@ Store test results and reports as CI artefacts where appropriate. Use synthetic 
 | 8 | Uploaded backups may be malformed or contain unsafe archive paths | No for basic unit tests; yes for lab validation | Validate inputs and test archive handling with synthetic malformed fixtures |
 | 9 | The exact CLI subcommands, API routes and environment variables have not yet been confirmed against existing repository conventions | No | Inspect repository configuration before implementation and document final interfaces |
 | 10 | Exact library versions and licence compatibility remain to be verified | No | Pin dependencies and run the project's dependency and licence checks before release |
+| 11 | Open question: how is the template reference model supplied to CK-07? It is compared field by field, the same way as FR-C-05, and cannot show changes to body text or attached files, which B2 does not hold | Yes | Student 2 to agree the input with the guide and Student 1 before implementing CK-07 |
 
 Before requesting final approval, compare this table with the risks in the PRD's Appendix C and add any additional risks that specifically affect the Course Checker or integration harness.
 

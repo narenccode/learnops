@@ -422,7 +422,7 @@ A normalised JSON description of a course, read by the checker. Produced from a 
 Key fields: course (shortname, completion enabled), sections (number, idnumber, visibility,
 availability rules), activities (type, idnumber, visibility, availability rules, completion rule,
 grade item and max grade, marking-workflow flag, presence of a marking table), course completion
-criteria, badges (criteria), H5P activities (graded or not). The schema in `/contracts/course-model.v1.json`
+criteria, badges (criteria), H5P activities (graded or not). The schema in `/contracts/course-model.v1.schema.json`
 is the authority; availability rules are kept in Moodle's own availability JSON form so no
 information is lost.
 

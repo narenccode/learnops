@@ -1,7 +1,7 @@
 {
-  "_note": "Valid example for contracts/course-model.v1.schema.json (PRD B2). Hand-written model of the B1 example package in contracts/examples/course-package.v1/. Fictional content for contract testing only. cmid values are synthetic.",
+  "_note": "Valid example for contracts/course-model.v1.schema.json (PRD B2). Hand-written model of the B1 example package in contracts/examples/course-package.v1/. Fictional content for contract testing only. cmid values are synthetic, and synthetic ids and source.timezone are unresolved proposals.",
   "schema": "learnops.course-model/v1",
-  "source": { "kind": "package", "mode": "full" },
+  "source": { "kind": "package", "mode": "full", "timezone": "Asia/Kolkata" },
   "course": {
     "shortname": "DEMO-AI-101",
     "fullname": "Build an AI Assistant",
@@ -51,7 +51,7 @@
         "op": "&",
         "c": [
           { "type": "completion", "cm": 2, "e": 1 },
-          { "type": "date", "d": ">=", "t": 1770595200 }
+          { "type": "date", "d": ">=", "t": 1770575400 }
         ],
         "showc": [true, true]
       },
