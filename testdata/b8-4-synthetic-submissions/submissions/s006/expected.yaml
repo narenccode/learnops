@@ -1,0 +1,45 @@
+# PROVISIONAL author's expected outcome. NOT a reference grade: no scores.
+# Rubric: B1 contract example wk-01-task (not B8.2).
+# Machine checks and the criterion disagree on purpose: http_ok and word_count pass, but the work
+# does not answer the task (an assistant that answers a question).
+schema: learnops.testdata.b8-4.expected-outcome/v1
+submission_id: s006
+rubric: b1-example-wk-01-task
+provisional: true
+criteria:
+  - criterion: Working demo
+    checks:
+      - check: http_ok:demo_url
+        expected: pass
+        reason: hosting.demo_stub is unrelated_page, which returns HTTP 200.
+    judgement: does_not_meet
+    rationale: >-
+      The link opens, but the page is about running, not an assistant answering a test question.
+      A passing check alone must not earn the marks.
+  - criterion: Code quality
+    checks:
+      - check: repo_file:README.md
+        expected: error
+        reason: >-
+          hosting.publish_repo is false, so the repository cannot be cloned and the file check
+          cannot run (error, not fail; design §4.3d).
+      - check: command:setup
+        expected: error
+        reason: The repository cannot be cloned, so no command can run.
+    judgement: does_not_meet
+    rationale: >-
+      The repository is not reachable. The local copy is a unit converter, not the assistant
+      the task asks for.
+  - criterion: Reflection
+    checks:
+      - check: word_count:200
+        expected: pass
+        reason: >-
+          report.md has more than 200 words under the PROVISIONAL counting rule
+          (whitespace-separated tokens of the whole file).
+    judgement: ambiguous
+    rationale: >-
+      Read literally, "200+ words covering what worked and what didn't" is met. But the report is
+      about a different project, so it does not reflect on building the assistant the task asks
+      for (off topic). Whether "Full marks when" is read literally or against the task text is
+      for the mentor's reference grade, not decided here.
