@@ -21,7 +21,7 @@ status is `Approved` (foundation work listed in §13 under "Release 0" is allowe
 
 Nothing labelled (proposed), (lab), (guide) or (provisional) is a fact about Moodle or the PRD. No statement in this
 document has been checked against a live Moodle or Moodle's own documentation. Literature is cited
-only from §12.1, and the owner has yet to open those sources.
+only from §12.1, and the owner has verified all six sources against the original PDFs.
 
 **Revision note.** This revision applies a pre-implementation review in three groups: critical
 blockers (§4.1, §5, §9, §10.1), integration (§4, §5, §6.1, §12, §13) and testability and
@@ -986,7 +986,7 @@ Test data to produce: fake-Moodle recordings, malicious and tampering repositori
 | Q44 to Q48 | [F1 to F5] Band definition (§11.2); test split size (keep 30 or raise to 60, always publish the interval); timing protocol (3-minute idle rule, counterbalancing); development and sealed test split, second mentor on at least 10, test split not authored by the prompt author; wrong-answer rubric and tolerance, blind mentors, transport failures counted separately | no | Guide |
 | Q49 | [F6] Similarity method and thresholds (§3.1); cohort size limit | no | Guide |
 | Q50 | [F7] Moodle semantics policy (§4.1): submitted only, groups unsupported, points only, suspended skipped | yes | Guide, lab |
-| Q51 to Q55 | [F8 to F12] Worker health through a heartbeat table (adjusts OPS-03); best-effort excerpt scrubbing; fake Moodle built only from lab recordings; work breakdown in §13 with the review gate before PR 18; literature cited in §12.1 only, with the owner still to open each source | no | Guide and owner |
+| Q51 to Q55 | [F8 to F12] Worker health through a heartbeat table (adjusts OPS-03); best-effort excerpt scrubbing; fake Moodle built only from lab recordings; work breakdown in §13 with the review gate before PR 18; literature cited in §12.1 only, with all six sources verified by the owner | no | Guide and owner |
 | Q56 | Resolved by design (proposed): clone with Dulwich under its Apache-2.0 option instead of the GPL-2.0 git executable (§8, §9.2); guide confirms the licence choice | yes (redirect and filter behaviour) | Guide |
 
 **Decisions proposed by the sandbox revision and later** (all OPEN; Q57 to Q66 have a (provisional) working assumption in §12.3; Q67 to Q70 do not):
@@ -1014,7 +1014,7 @@ Topics (GETTING-STARTED §6, PRD §C3.12): automated assessment, LLM-as-grader s
 
 These sources inform this design; they do not decide anything in §12. Their results come from other settings, so they do not show how LearnOps will perform. Figures are the authors' own. Each entry says whether it reports **empirical findings**, a **review** of other studies, or a **proposed method**.
 
-**How these were checked.** Every DOI was resolved in Crossref. ACM, Elsevier and IEEE pages could not be opened by the tool used, so the text read is the one named in each entry; where that is a preprint, the published version may differ. **The owner has not yet opened them** (checklist below).
+**How these were checked.** Every DOI was resolved in Crossref. ACM, Elsevier and IEEE pages could not be opened by the tool used, so the text read is the one named in each entry; where that is a preprint, the published version may differ. The owner has since checked all six against the original PDFs (checklist below).
 
 **Automated assessment of programming assignments**
 
@@ -1028,7 +1028,7 @@ These sources inform this design; they do not decide anything in §12. Their res
   *Empirical.* LLM scores compared with two human evaluators on 450 responses (code translation, generation, summarization). Output-based methods reached Pearson correlations of 81.32 and 68.51 on translation and generation, where the authors say they can be used standalone; for summarization they say these methods should not be used directly or alone. The task is not student grading.
   *Informs:* not assuming that agreement on one task carries over to another; reporting per-criterion agreement (§11.2); mentor approval of every draft (PRD C-09).
 - **L3.** G. Crupi, R. Tufano, A. Velasco, A. Mastropaolo, D. Poshyvanyk, G. Bavota. "On the Effectiveness of LLM-as-a-Judge for Code Generation and Summarization." *IEEE Transactions on Software Engineering* 51(8), 2025, 2329–2345. https://doi.org/10.1109/TSE.2025.3586082. Text read: arXiv 2507.16587v1.
-  *Empirical.* For code correctness, Cohen's kappa between GPT-4 and the ground truth was 0.21 for Java and 0.10 for Python, and for Java it misjudged 50 % of wrong implementations as correct. For content adequacy of summaries, Krippendorff's alpha with the median human rating reached 0.58 (Java) and 0.63 (Python), against 0.81 and 0.69 among the human raters. The task is not student grading.
+  *Empirical.* For code correctness, Cohen's kappa between GPT-4 and the ground truth was 0.21 for Java and 0.10 for Python (Table 2, automated CoT prompt), and for Java it misjudged 50 % of wrong implementations as correct. For content adequacy of summaries, Krippendorff's alpha with the median human rating was 0.58 (Java) and 0.63 (Python) with the zero-shot prompt (Table 5), against 0.81 and 0.69 among the human raters. The task is not student grading.
   *Informs:* letting machine checks, not the model, establish whether code works (FR-G-02, code-side rules in §4.3d); measuring mentor-to-mentor agreement as a baseline (Q47); the leniency measure in §11.2 (R2).
 - **L4.** A. Piscitelli, M. De Rosa, V. Fuccella, G. Costagliola. "LLM-Based Rubric Grading for Programming Assignments: An Empirical Study." *Proceedings of the 18th International Conference on Computer Supported Education (CSEDU)*, vol. 3, SciTePress, 2026, 2039–2050. https://doi.org/10.5220/0015049400004021. Text read: publisher's page and PDF.
   *Empirical.* Three LLMs graded student submissions already graded by a teacher against a rubric. The best model reached Cohen's kappa 0.59. Specification Adherence and Design Autonomy showed larger discrepancies. The authors state the limits: 30 submissions and a single teacher.
@@ -1039,18 +1039,18 @@ These sources inform this design; they do not decide anything in §12. Their res
 - **L5.** M. Zakeri-Nasrabadi, S. Parsa, M. Ramezani, C. Roy, M. Ekhtiarzadeh. "A systematic literature review on source code similarity measurement and clone detection: Techniques, applications, and challenges." *Journal of Systems and Software* 204, 2023, article 111796. https://doi.org/10.1016/j.jss.2023.111796. Text read: arXiv 2306.16171.
   *Review* of 136 primary studies. Of 12 datasets found, only eight were publicly accessible. The authors name the lack of reliable datasets and of empirical evaluations among the main challenges.
   *Informs:* building our own similarity calibration set and not relying on a published threshold (§3.1, Q49).
-- **L6.** S. Schleimer, D. S. Wilkerson, A. Aiken. "Winnowing: Local Algorithms for Document Fingerprinting." *Proceedings of the 2003 ACM SIGMOD International Conference on Management of Data*, 2003, 76–85. https://doi.org/10.1145/872757.872770. Text read: copy hosted by an author, https://sschleimer.warwick.ac.uk/Maths/winnowing.pdf. Crossref gives only the short title; the full title is from Semantic Scholar's record.
-  *Proposed method*, with analysis and a report of experience. Matches at least as long as a guarantee threshold are detected and matches shorter than a noise threshold are not; in each window of k-gram hashes the minimum is selected, and the rightmost if tied. The density analysis assumes random data. The paper reports experience with MOSS, a service for detecting plagiarism in programming assignments.
+- **L6.** S. Schleimer, D. S. Wilkerson, A. Aiken. "Winnowing: Local Algorithms for Document Fingerprinting." *Proceedings of the 2003 ACM SIGMOD International Conference on Management of Data*, 2003, 76–85. https://doi.org/10.1145/872757.872770. Text read: copy hosted by an author, https://sschleimer.warwick.ac.uk/Maths/winnowing.pdf. Crossref gives only the short title; the full title is on the paper's first page.
+  *Proposed method*, with analysis and a report of experience. Matches at least as long as a guarantee threshold are detected and matches shorter than a noise threshold are not; in each window of k-gram hashes the minimum is selected, and the rightmost if tied. The density analysis assumes random data. The paper reports experience with MOSS (Measure Of Software Similarity), a service for detecting plagiarism in programming assignments.
   *Informs:* the fingerprints in §3.1, with `k` and the window as configuration. It does not set their values, and it offers no evidence about student work in LearnOps.
 
 **Owner check (root `CLAUDE.md` §6a.5).** Open each source, confirm the reference and the figures quoted above, then tick it.
 
-- [ ] L1
-- [ ] L2
-- [ ] L3
-- [ ] L4
-- [ ] L5
-- [ ] L6
+- [x] L1
+- [x] L2
+- [x] L3
+- [x] L4
+- [x] L5
+- [x] L6
 
 **Considered, not cited.** Xiong, Xiang and Zhou, "A Review of Source Code Plagiarism Detection Techniques for Programming Assignments" (ITME 2024, https://doi.org/10.1109/ITME63426.2024.00212): the record exists, but no abstract or text could be read, so what it says is unknown.
 
