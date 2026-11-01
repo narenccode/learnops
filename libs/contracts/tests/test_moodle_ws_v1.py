@@ -6,8 +6,11 @@ AUTOMATED here:
   * the example's function names equal the PRD B4 function list exactly (no extra, none missing,
     no duplicates) and equal the function names in the §2 table of moodle-ws.v1.md;
   * each example entry's purpose is the PRD B4 Purpose cell for that function;
-  * every listed parameter is named in the PRD (B4 or App-C), so none is invented;
-  * a replacement name, if any, also appears in the PRD B4 text (guide's rule, PR #27);
+  * every listed parameter is named in the PRD for that function, so none is invented or
+    attached to the wrong function;
+  * a replacement name, if any, also appears in the PRD B4 text (guide's rule, PR #27), and a
+    replacement applies only to its own Moodle version (shown on a test-local document, because
+    the contract example records none);
   * no verification state is stored: the schema refuses any field name containing "verif"
     (guide's decision on Q1);
   * .env.example has one token variable per site with a placeholder, and no MOODLE_WS_TOKEN
@@ -42,6 +45,8 @@ ENV_EXAMPLE = ROOT / ".env.example"
 # A Moodle function name has at least one underscore; "readyforrelease" and "released" in the
 # same table cells do not, so they are never mistaken for functions.
 FUNCTION = re.compile(r"`([a-z]+(?:_[a-z0-9]+)+)`")
+# How the PRD ties a parameter to a function: App-C item 1 says "`workflowstate` on `mod_...`".
+PARAMETER_ON_FUNCTION = re.compile(r"`([a-z][a-z0-9_]*)` on `([a-z0-9_]+)`")
 
 Doc = dict[str, Any]
 
@@ -76,6 +81,50 @@ def prd_functions() -> dict[str, str]:
             assert name not in functions, f"{name} listed twice in PRD B4"
             functions[name] = purpose
     return functions
+
+
+def prd_parameters(prd: str) -> dict[str, set[str]]:
+    """Function name -> the parameters the PRD names for that function."""
+    named: dict[str, set[str]] = {}
+    for parameter, function in PARAMETER_ON_FUNCTION.findall(prd):
+        named.setdefault(function, set()).add(parameter)
+    return named
+
+
+def wrongly_placed(functions: list[Doc], prd: str) -> list[tuple[str, str]]:
+    """(function, parameter) pairs where the PRD does not name that parameter for that function."""
+    named = prd_parameters(prd)
+    return [
+        (function["name"], parameter)
+        for function in functions
+        for parameter in function["parameters"]
+        if parameter not in named.get(function["name"], set())
+    ]
+
+
+def replacements_outside_prd(functions: list[Doc], b4: str) -> list[str]:
+    """Replacement names that the PRD B4 text does not contain."""
+    return [
+        replacement["name"]
+        for function in functions
+        for replacement in function.get("replacements", [])
+        if f"`{replacement['name']}`" not in b4
+    ]
+
+
+def resolved_name(doc: Doc, function: str, moodle_version: str) -> str:
+    """The name to call on a version, by the rule in moodle-ws.v1.md §2a."""
+    schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+    replacement_item = schema["$defs"]["function"]["properties"]["replacements"][
+        "items"
+    ]
+    if moodle_version not in replacement_item["properties"]["moodle_version"]["enum"]:
+        raise ValueError(f"Moodle {moodle_version} is not supported")
+    entry = next(f for f in doc["functions"] if f["name"] == function)
+    for replacement in entry.get("replacements", []):
+        if replacement["moodle_version"] == moodle_version:
+            return str(replacement["name"])
+    return function
 
 
 def rules_functions() -> list[str]:
@@ -145,11 +194,37 @@ def test_purpose_is_the_prd_purpose(example: Doc) -> None:
             assert function["purpose"] == purposes[function["name"]], function["name"]
 
 
-def test_every_parameter_is_named_in_the_prd(example: Doc) -> None:
+def test_every_parameter_is_named_in_the_prd_for_its_function(example: Doc) -> None:
     prd = PRD_PATH.read_text(encoding="utf-8")
-    for function in example["functions"]:
-        for parameter in function["parameters"]:
-            assert f"`{parameter}`" in prd, (function["name"], parameter)
+    assert wrongly_placed(example["functions"], prd) == []
+
+
+def test_the_prd_names_workflowstate_only_for_save_grade() -> None:
+    """Guards the PRD parsing: no other parameter is tied to any function yet (lab check 1)."""
+    prd = PRD_PATH.read_text(encoding="utf-8")
+    assert prd_parameters(prd) == {"mod_assign_save_grade": {"workflowstate"}}
+
+
+@pytest.mark.parametrize(
+    "functions",
+    [
+        pytest.param(
+            [{"name": "mod_assign_set_user_flags", "parameters": ["workflowstate"]}],
+            id="a real parameter on the wrong function",
+        ),
+        pytest.param(
+            [{"name": "mod_assign_save_grade", "parameters": ["readyforrelease"]}],
+            id="a workflow value is not a parameter",
+        ),
+        pytest.param(
+            [{"name": "mod_assign_save_grade", "parameters": ["feedback"]}],
+            id="a parameter the PRD does not name",
+        ),
+    ],
+)
+def test_a_parameter_not_named_for_its_function_is_found(functions: list[Doc]) -> None:
+    prd = PRD_PATH.read_text(encoding="utf-8")
+    assert wrongly_placed(functions, prd) != []
 
 
 def test_save_grade_sends_the_workflow_state(example: Doc) -> None:
@@ -159,10 +234,51 @@ def test_save_grade_sends_the_workflow_state(example: Doc) -> None:
 
 
 def test_a_replacement_name_is_also_in_the_prd(example: Doc) -> None:
-    b4 = prd_b4()
-    for function in example["functions"]:
-        for replacement in function.get("replacements", []):
-            assert f"`{replacement['name']}`" in b4, (function["name"], replacement)
+    assert replacements_outside_prd(example["functions"], prd_b4()) == []
+
+
+# --- the replacement rule, on a test-local document ------------------------------------------
+
+
+@pytest.fixture
+def with_replacement(example: Doc) -> Doc:
+    """The contract example records no replacement, so this one exists only in this test."""
+    doc = copy.deepcopy(example)
+    doc["functions"][0]["replacements"] = [
+        {"moodle_version": "5.3", "name": "core_course_example_replacement"}
+    ]
+    return doc
+
+
+def test_a_replacement_entry_is_valid(
+    validator: Draft202012Validator, with_replacement: Doc
+) -> None:
+    assert error_keys(validator, with_replacement) == set()
+
+
+def test_a_replacement_applies_only_to_its_version(with_replacement: Doc) -> None:
+    name = with_replacement["functions"][0]["name"]
+    assert resolved_name(with_replacement, name, "4.5") == name
+    assert (
+        resolved_name(with_replacement, name, "5.3")
+        == "core_course_example_replacement"
+    )
+
+
+def test_a_function_without_a_replacement_keeps_its_name(with_replacement: Doc) -> None:
+    name = with_replacement["functions"][1]["name"]
+    assert resolved_name(with_replacement, name, "5.3") == name
+
+
+def test_an_unsupported_version_is_refused(with_replacement: Doc) -> None:
+    name = with_replacement["functions"][0]["name"]
+    with pytest.raises(ValueError, match="5.0"):
+        resolved_name(with_replacement, name, "5.0")
+
+
+def test_a_replacement_missing_from_the_prd_is_found(with_replacement: Doc) -> None:
+    missing = replacements_outside_prd(with_replacement["functions"], prd_b4())
+    assert missing == ["core_course_example_replacement"]
 
 
 # --- invalid documents ---------------------------------------------------------------------
@@ -212,6 +328,34 @@ def edited(example: Doc, change: Any) -> Doc:
             "pattern",
         ),
         (
+            "function name with a trailing newline",
+            lambda d: d["functions"][0].update(
+                name="core_course_get_courses_by_field\n"
+            ),
+            ("functions", 0, "name"),
+            "pattern",
+        ),
+        (
+            "replacement name with a trailing newline",
+            lambda d: d["functions"][0].update(
+                replacements=[{"moodle_version": "5.3", "name": "core_x_y\n"}]
+            ),
+            ("functions", 0, "replacements", 0, "name"),
+            "pattern",
+        ),
+        (
+            "parameter name with a trailing newline",
+            lambda d: d["functions"][6].update(parameters=["workflowstate\n"]),
+            ("functions", 6, "parameters", 0),
+            "pattern",
+        ),
+        (
+            "parameter name with a trailing carriage return and newline",
+            lambda d: d["functions"][6].update(parameters=["workflowstate\r\n"]),
+            ("functions", 6, "parameters", 0),
+            "pattern",
+        ),
+        (
             "duplicate parameter",
             lambda d: d["functions"][6].update(
                 parameters=["workflowstate", "workflowstate"]
@@ -252,6 +396,14 @@ def test_invalid_document_is_rejected_at_the_expected_place(
     keyword: str,
 ) -> None:
     assert (where, keyword) in error_keys(validator, edited(example, change)), name
+
+
+@pytest.mark.parametrize("parameter", ["workflowstate", "a", "field_2_name"])
+def test_a_valid_parameter_name_is_accepted(
+    validator: Draft202012Validator, example: Doc, parameter: str
+) -> None:
+    doc = edited(example, lambda d: d["functions"][6].update(parameters=[parameter]))
+    assert error_keys(validator, doc) == set()
 
 
 def test_unknown_fields_are_accepted(
