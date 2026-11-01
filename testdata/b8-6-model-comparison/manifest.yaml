@@ -1,0 +1,59 @@
+# B8.6 model comparison set (PRD B8, used by FR-M-03): PROVISIONAL.
+#
+# One fictional transcript as the input for one chapters item and one summary item. Their
+# expected outputs are AUTHOR-DRAFTED and NOT REVIEWED by a mentor. Grading-draft items wait for
+# B8.4 (PR #31) and its mentor reference grades (Q13). Practice is a placeholder until Students 1
+# and 4 agree the inputs (Q12). No comparison has been run; there are no results.
+schema: learnops.testdata.b8-6/v1
+status: provisional
+rubric: rubric.yaml
+
+inputs:
+  - id: t001
+    kind: transcript
+    path: inputs/t001/transcript.en.json
+    source_note: inputs/t001/source.md
+    provisional: true
+
+items:
+  - id: ch-001
+    task: chapters
+    status: ready
+    provisional: true
+    input: t001
+    expected: expected/ch-001/chapters.json
+    expected_review:
+      status: not_reviewed
+    authored_by: Student 3
+    note: Author-drafted expected chapters; NOT REVIEWED. Input still to be agreed with Student 4 (Q12).
+
+  - id: su-001
+    task: summary
+    status: ready
+    provisional: true
+    input: t001
+    expected: expected/su-001/summary.en.md
+    expected_review:
+      status: not_reviewed
+    authored_by: Student 3
+    note: Author-drafted expected summary; NOT REVIEWED. Input still to be agreed with Student 4 (Q12).
+
+  - id: gd-001
+    task: grade_draft
+    status: pending
+    provisional: true
+    depends_on:
+      - B8.4 merged (PR #31)
+      - Submission-content rule for B8.4 submissions (design Q32)
+      - B8.4 mentor reference grades (design Q13)
+      - GradeDraftInputV1 / GradeDraftV1 agreed (design §4.3d, Q41)
+    note: Inputs will be B8.4 submissions and expected outputs their mentor reference grades.
+
+  - id: pr-001
+    task: practice
+    status: placeholder
+    provisional: true
+    depends_on:
+      - Practice inputs agreed with Students 1 and 4 (design Q12)
+      - FR-S-12 practice step designed (Release 5 stretch)
+    note: Placeholder only. No practice questions are written until Q12 is agreed.
