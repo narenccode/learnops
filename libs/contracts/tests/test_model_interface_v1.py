@@ -300,6 +300,7 @@ TRANSCRIPT_BAD = [
     bad("word start is negative", WORD + ("start",), -1, "minimum"),
     bad("word end is a string", WORD + ("end",), "0.6", "type"),
     bad("word is empty", WORD + ("word",), "", "minLength"),
+    bad("word is a string", WORD, "hello", "type"),
     bad("word is a number", WORD + ("word",), 1, "type"),
     bad("meta is a list", TMETA, [], "type"),
     bad("meta provider is unknown", TMETA + ("provider",), "cloud", "enum"),
