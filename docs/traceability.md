@@ -98,7 +98,7 @@ Test names are in `test_moodle_ws_v1.py`.
 
 | Rule | PRD |
 |---|---|
-| Only the functions listed in the contract are called (`libs/moodle_ws` will build its allow-list from the example; the library does not exist yet) | B4 |
+| Only the functions listed in the contract are called (`libs/moodle_ws` builds its allow-list from the example) | B4 |
 | One service account per site, with a token restricted to those functions and minimum capabilities | B4, SEC-03 |
 | The token is stored only in the environment | SEC-03, C-06 |
 | A grade write uses workflow state `readyforrelease`, never `released`; only approved drafts are written | B4, C-09 |
@@ -107,3 +107,20 @@ Test names are in `test_moodle_ws_v1.py`.
 Open: when the lab Moodle sites are available (all ten checks in `moodle-ws.v1.md` §5 wait for
 them; B4 cannot be frozen until they pass), and the parameter name for feedback comments on
 `mod_assign_save_grade` (not in the PRD; lab check 1). Q1, Q24 and Q37 are decided (PR #27).
+
+## `libs/moodle_ws` skeleton, Release 0 foundation
+
+Files: `libs/moodle_ws/`. The library has no requirement ID of its own (design Q7, Q43, open), so no
+row in the table above maps to it. Interim, per design §2: read side under FR-G-01, write side under
+FR-G-06. Neither requirement is implemented by this skeleton.
+
+| Rule | Source | Test |
+|---|---|---|
+| Only allow-listed functions are sent; the list comes from the contract example | B4 §2a, guide on Q1 | `test_allowlist.py` |
+| A grade write sends `readyforrelease`, never `released` | B4 §3, C-09 | `test_client.py` |
+| One token per site, from the environment only | B4 §1, Q24, SEC-03, C-06 | `test_config.py` |
+| Tokens and full URLs stay out of logs and errors | SEC-03, OPS-04, design §4.1 | `test_redaction.py` |
+| One error family with stable codes | Design §4.1, §10.2 (library documentation, Q37) | `test_errors.py` |
+
+Not covered: all of this runs against a scripted fake transport. No real transport exists, and nothing
+has been checked against Moodle (all ten checks in `contracts/moodle-ws.v1.md` §5 are open).
