@@ -40,6 +40,17 @@ jobs:
           # -rs lists every skipped test and its reason in the log.
           if bash .github/scripts/has_tests.sh; then pip install pytest && pytest -q -rs; fi
 
+      - name: Symlink tests must run, not skip
+        run: |
+          set -o pipefail
+          T=libs/contracts/tests/test_validate_package.py
+          pytest -v -rs \
+            "$T::test_source_refuses_a_link_that_leaves_the_package" \
+            "$T::test_source_follows_a_link_that_stays_inside_the_package" \
+            "$T::test_body_that_is_a_link_leaving_the_package_is_an_error" \
+            | tee "$RUNNER_TEMP/symlink.log"
+          test "$(grep -c ' PASSED' "$RUNNER_TEMP/symlink.log")" -eq 3
+
       - name: Tests for the CI scripts
         run: |
           if [ -d .github/scripts/tests ]; then pip install pytest && pytest -q .github/scripts/tests; fi
