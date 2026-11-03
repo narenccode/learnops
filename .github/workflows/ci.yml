@@ -36,7 +36,9 @@ jobs:
 
       - name: Unit tests
         run: |
-          if ls -d modules/*/tests libs/*/tests >/dev/null 2>&1; then pip install pytest && pytest -q; fi
+          # has_tests.sh: true when modules/*/tests OR libs/*/tests exists (see its comment).
+          # -rs lists every skipped test and its reason in the log.
+          if bash .github/scripts/has_tests.sh; then pip install pytest && pytest -q -rs; fi
 
       - name: Tests for the CI scripts
         run: |
