@@ -1,9 +1,11 @@
-"""CI must run the unit tests whenever modules/*/tests OR libs/*/tests exists.
+"""CI must run the unit tests whenever modules/*/tests OR libs/*/tests exists, and the three
+symlink tests must pass there, not skip.
 
 The "Unit tests" step used `ls -d modules/*/tests libs/*/tests`, which fails when either pattern
 matches nothing. With only libs/contracts/tests present, pytest never ran and nothing said so.
 """
 
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -81,15 +83,74 @@ def test_this_repository_has_tests_to_run() -> None:
     assert run_in(ROOT) == 0
 
 
-def unit_tests_step() -> str:
+def step_run(name: str) -> str:
     workflow = yaml.safe_load(WORKFLOW.read_text(encoding="utf-8"))
     steps = workflow["jobs"]["checks"]["steps"]
-    (step,) = [s for s in steps if s.get("name") == "Unit tests"]
+    (step,) = [s for s in steps if s.get("name") == name]
     return str(step["run"])
 
 
-def test_workflow_uses_the_discovery_script_and_lists_skips() -> None:
-    run = unit_tests_step()
+def test_unit_tests_step_uses_the_discovery_script_and_names_every_test() -> None:
+    run = step_run("Unit tests")
     assert "has_tests.sh" in run
-    assert "pytest -q -rs" in run
+    assert "pytest -v -rs" in run
+    assert "set -o pipefail" in run  # otherwise tee hides a failing pytest
     assert "ls -d" not in run
+
+
+PACKAGE_TESTS = "libs/contracts/tests/test_validate_package.py"
+REQUIRED = [
+    "test_source_refuses_a_link_that_leaves_the_package",
+    "test_source_follows_a_link_that_stays_inside_the_package",
+    "test_body_that_is_a_link_leaving_the_package_is_an_error",
+]
+
+
+def run_guard(folder: Path, log_lines: list[str], *, tests_file: bool = True) -> int:
+    """Run the "Symlink tests must pass" step in `folder` against a fake pytest -v log."""
+    if tests_file:
+        (folder / PACKAGE_TESTS).parent.mkdir(parents=True)
+        (folder / PACKAGE_TESTS).write_text("", encoding="utf-8")
+    text = "\n".join(log_lines) + "\n"
+    (folder / "unit.log").write_text(text, encoding="utf-8")
+    assert BASH is not None
+    env = {**os.environ, "RUNNER_TEMP": folder.as_posix()}
+    run = step_run("Symlink tests must pass, not skip")
+    done = subprocess.run(
+        [BASH, "-e", "-c", run], cwd=folder, env=env, check=False, capture_output=True
+    )
+    return done.returncode
+
+
+def passed(name: str) -> str:
+    return f"{PACKAGE_TESTS}::{name} PASSED [ 50%]"
+
+
+@needs_bash
+def test_guard_accepts_three_passed_even_with_an_unrelated_skip(tmp_path: Path) -> None:
+    log = [passed(n) for n in REQUIRED]
+    log.append("libs/other/tests/test_x.py::test_needs_gpu SKIPPED [ 90%]")
+    assert run_guard(tmp_path, log) == 0
+
+
+@needs_bash
+@pytest.mark.parametrize("which", range(3))
+def test_guard_fails_when_a_required_test_is_skipped(
+    tmp_path: Path, which: int
+) -> None:
+    log = [passed(n) for n in REQUIRED]
+    log[which] = f"{PACKAGE_TESTS}::{REQUIRED[which]} SKIPPED [ 50%]"
+    assert run_guard(tmp_path, log) == 1
+
+
+@needs_bash
+def test_guard_fails_when_a_required_test_is_renamed_or_missing(tmp_path: Path) -> None:
+    log = [passed(n) for n in REQUIRED[:2]]
+    log.append(passed(REQUIRED[2] + "_renamed"))  # a longer name must not count
+    assert run_guard(tmp_path, log) == 1
+
+
+@needs_bash
+def test_guard_does_nothing_before_the_package_tests_exist(tmp_path: Path) -> None:
+    # main has no test_validate_package.py until the package-folder PR lands.
+    assert run_guard(tmp_path, [], tests_file=False) == 0

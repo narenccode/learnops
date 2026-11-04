@@ -37,19 +37,32 @@ jobs:
       - name: Unit tests
         run: |
           # has_tests.sh: true when modules/*/tests OR libs/*/tests exists (see its comment).
-          # -rs lists every skipped test and its reason in the log.
-          if bash .github/scripts/has_tests.sh; then pip install pytest && pytest -q -rs; fi
+          # -v puts every test name in the log; -rs lists every skipped test and its reason.
+          if bash .github/scripts/has_tests.sh; then
+            pip install pytest
+            set -o pipefail  # without it a failing pytest would be hidden by tee
+            pytest -v -rs | tee "$RUNNER_TEMP/unit.log"
+          fi
 
-      - name: Symlink tests must run, not skip
+      - name: Symlink tests must pass, not skip
         run: |
-          set -o pipefail
+          # Skips elsewhere are allowed. These three exist to prove that links cannot leave a
+          # package, so a skip (for example no symlink support on the runner) must fail the job.
           T=libs/contracts/tests/test_validate_package.py
-          pytest -v -rs \
-            "$T::test_source_refuses_a_link_that_leaves_the_package" \
-            "$T::test_source_follows_a_link_that_stays_inside_the_package" \
-            "$T::test_body_that_is_a_link_leaving_the_package_is_an_error" \
-            | tee "$RUNNER_TEMP/symlink.log"
-          test "$(grep -c ' PASSED' "$RUNNER_TEMP/symlink.log")" -eq 3
+          if [ ! -f "$T" ]; then
+            echo "::notice::$T does not exist yet; nothing to guard."
+            exit 0
+          fi
+          for name in \
+            test_source_refuses_a_link_that_leaves_the_package \
+            test_source_follows_a_link_that_stays_inside_the_package \
+            test_body_that_is_a_link_leaving_the_package_is_an_error; do
+            if ! grep -qF "$T::$name PASSED" "$RUNNER_TEMP/unit.log"; then
+              echo "::error::$name did not pass (skipped, failed, renamed or not run)."
+              exit 1
+            fi
+          done
+          echo "All three symlink tests passed."
 
       - name: Tests for the CI scripts
         run: |
