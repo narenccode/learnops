@@ -55,6 +55,14 @@ The checker's rules (CK-01…CK-13) work on the course model (B2) and stay in Mo
   before it is validated. `PackageSource` is the small interface another source would implement.
 - **Duplicate keys and size.** PyYAML keeps the last of two equal keys in `course.yaml` and the
   library sets no size limit. The caller limits what it accepts.
+- **Links can change during validation (TOCTOU).** `DirectorySource` checks that a path stays
+  inside the package folder and reads the file in separate steps. It does not guard against a
+  link being swapped between the two. A change like that, made by someone else or by another
+  process while validation runs, could point a read outside the folder. The check is not a
+  security boundary against a package that is being modified while it is validated. The caller
+  should validate a private copy that nothing else can change, such as the unpacked upload
+  (Course Studio, SEC-05). Whether this library needs its own protection is an open question
+  for the guide.
 - **Letter case.** On Windows and macOS a body named `Weeks/01.md` finds `weeks/01.md`; on Linux it
   does not. Run the validation on Linux (the CI does) before trusting a package.
 - **Repository checkout.** The schema is found two folders above this library, so it works from a
