@@ -1,0 +1,45 @@
+{
+  "schema": "learnops.moodle-ws/v1",
+  "functions": [
+    {
+      "name": "core_course_get_courses_by_field",
+      "purpose": "Course structure",
+      "parameters": []
+    },
+    {
+      "name": "core_course_get_contents",
+      "purpose": "Course structure",
+      "parameters": []
+    },
+    {
+      "name": "core_enrol_get_enrolled_users",
+      "purpose": "Enrolled users",
+      "parameters": []
+    },
+    {
+      "name": "mod_assign_get_assignments",
+      "purpose": "Assignments",
+      "parameters": []
+    },
+    {
+      "name": "mod_assign_get_submissions",
+      "purpose": "Submissions",
+      "parameters": []
+    },
+    {
+      "name": "mod_assign_get_submission_status",
+      "purpose": "Submissions",
+      "parameters": []
+    },
+    {
+      "name": "mod_assign_save_grade",
+      "purpose": "Write draft grade + feedback",
+      "parameters": ["workflowstate"]
+    },
+    {
+      "name": "mod_assign_set_user_flags",
+      "purpose": "Workflow state",
+      "parameters": []
+    }
+  ]
+}

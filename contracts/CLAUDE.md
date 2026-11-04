@@ -12,7 +12,7 @@ Files here are **shared contracts** between modules (PRD Part B). They are froze
 | B1 Course package | `course-package.v1.schema.json` | Student 1 |
 | B2 Course model | `course-model.v1.schema.json` | Student 2 |
 | B3 LTI launch | `lti-launch.v1.md` (claims and role mapping) | Student 2 |
-| B4 Web-services usage | `moodle-ws.v1.md` (functions and capabilities) | Student 3 |
+| B4 Web-services usage | `moodle-ws.v1.md` (rules: functions, account, capabilities, lab checks), `moodle-ws.v1.schema.json` + `examples/moodle-ws.v1.functions.json` (allow-list) | Student 3 |
 | B5 Model and speech interface | `model-interface.v1.schema.json` | Student 3 |
 | B6 Lesson manifest and paths | `lesson-manifest.v1.schema.json` | Student 4 |
 | B7 H5P practice output | `h5p-practice.v1.md` | Student 1 |
