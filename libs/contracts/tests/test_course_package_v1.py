@@ -18,7 +18,8 @@ No code checks the rest yet. The validator lists each of them as "not checked" i
     package versions (it needs the previous version of the package);
   * B1.3: the marking table inside an assignment body (markers, columns, points, Check names);
   * B1.4: the protected_section number;
-  * B1.1: that the files named by "body" exist (needs the package folder, so it is part 3/3).
+  * B1.1, in a parsed course.yaml: that the files named by "body" exist. validate_package checks
+    it for a package folder (test_validate_package.py).
 Until they are implemented they are checked by hand, not by this file.
 
 Each invalid case below must fail at the expected place with the expected schema keyword, so a

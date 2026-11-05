@@ -7,9 +7,9 @@
 
 Files: `contracts/course-package.v1.schema.json`, `contracts/examples/course-package.v1/`,
 `libs/contracts/tests/test_course_package_v1.py`; the package validator in `libs/contracts/*.py`
-(shared validator reference EXT-09: the schema stage, idnumbers unique within one package, and
-configured protected idnumbers) with its tests `test_validate_course.py`, `test_config.py` and
-`test_report.py`. B1 has no requirement ID of its own in the PRD (it is a contract, PRD B.0), so
+(shared validator reference EXT-09: the schema stage, idnumbers unique within one package,
+configured protected idnumbers, and reading a package folder with its body files) with its tests
+`test_validate_course.py`, `test_validate_package.py`, `test_config.py` and `test_report.py`. B1 has no requirement ID of its own in the PRD (it is a contract, PRD B.0), so
 no row in the table above maps to it.
 
 FR-S-03 ("Validate against B1 and the checker rule library", Release 2) is deliberately not in the
@@ -44,9 +44,10 @@ as non-negative integers; non-empty titles; the shape of `body` (relative path, 
 ### Enforced by validator code (`libs/contracts`) and covered by automated tests
 
 `validate_course_document()` runs the schema on a parsed `course.yaml`, then (when the structure
-is valid) the idnumber rules, and returns a report. Settings come in through `ValidationConfig`;
+is valid) the idnumber rules, and returns a report. `validate_package()` does the same for a
+package folder: it reads `course.yaml` first and, when that is valid, also checks the body files. Settings come in through `ValidationConfig`;
 the library reads no environment variables. Test names are in `test_validate_course.py`
-(course.yaml as parsed data), `test_config.py` (the settings object) and `test_report.py` (the
+(course.yaml as parsed data), `test_validate_package.py` (a package folder), `test_config.py` (the settings object) and `test_report.py` (the
 report types).
 
 **B1.2 rule 6 has two halves, and only the first is enforced.** The validator checks that
@@ -69,7 +70,11 @@ claimed as fully implemented.
 | `validate_course_document()` refuses a `config` that is not a `ValidationConfig` (a dict, a list, a string, the class itself) with a `ConfigError` that says what to pass, before the document is read; it never ignores it | B1.4 | `test_an_unsupported_config_type_is_refused_not_ignored` |
 | The library reads no environment variables; validation does not change the document it is given | CLAUDE.md §2.3 | `test_the_library_reads_no_environment_variables`, `test_the_document_is_not_changed_by_validation` |
 | The idnumber rules run only when the schema finds no error anywhere in the document (an unrelated schema error holds them back too, and so does a document that is not an object). The report then adds `cross_rules_not_checked`, whose text names no rule so that it stays true as more rules are implemented | n/a | `test_any_schema_error_holds_back_the_idnumber_rules`, `test_a_document_that_is_not_an_object_is_an_error` (also checks the notice), `test_the_course_level_notice_names_no_rule` (a valid document has no such notice: `test_held_rules_are_reported_as_not_checked_never_skipped_silently`) |
-| Rules that are not implemented are listed as "not checked" in every report, so that "no errors" is not read as "fully checked" (a design choice, not a PRD rule). Nine are listed now (see the next section). One is `body_files_not_checked` (B1.1): the validator reads no files, so a `body` naming a missing file is not an error here; checking it needs the package folder and belongs to 3/3 | n/a | `test_held_rules_are_reported_as_not_checked_never_skipped_silently`, `test_a_document_with_weekly_structure_problems_is_not_judged_here`, `test_body_files_are_listed_as_not_checked_and_never_looked_for` |
+| Rules that are not implemented are listed as "not checked" in every report, so that "no errors" is not read as "fully checked" (a design choice, not a PRD rule). A report for a parsed document lists nine (see the next section). A report for a package lists eight, because it checked the body files | n/a | `test_held_rules_are_reported_as_not_checked_never_skipped_silently`, `test_a_document_with_weekly_structure_problems_is_not_judged_here`, `test_example_package_has_no_errors` |
+| A package folder is read through a `PackageSource`; `DirectorySource` never reads outside the folder: a path with `..`, an absolute path or a link that leaves the folder is refused, a link that stays inside is followed. A refused file is never read | B1.1 | `test_source_reads_an_existing_file`, `test_source_tells_a_missing_file_from_a_folder`, `test_source_refuses_paths_that_leave_the_package`, `test_source_refuses_a_link_that_leaves_the_package`, `test_source_follows_a_link_that_stays_inside_the_package` (the two link tests run on the Linux CI) |
+| `validate_package()` reads `course.yaml` from the folder. A missing file, text that is not UTF-8, bad YAML (also an unquoted impossible date), and a file that is not an object are errors with a fix hint, never an exception; an unquoted real date fails the schema | B1.1 | `test_missing_course_yaml_is_an_error`, `test_course_yaml_that_cannot_be_read_is_an_error`, `test_an_unquoted_yaml_date_is_an_error`, `test_course_yaml_that_is_not_an_object_fails_the_schema` |
+| **Body files exist** (B1.1: the package is a folder with `course.yaml` plus the Markdown files; implied, not a numbered rule). Each `body` must name a file inside the package, in both modes. A missing file, a folder and a link leaving the folder are errors at the activity, in document order, after the idnumber errors. A shared body file and an activity without a body are not errors. Only existence is checked, never the content | B1.1 | `test_missing_body_file_is_an_error_at_the_activity`, `test_every_missing_body_file_is_reported_in_document_order`, `test_body_that_is_a_folder_is_an_error`, `test_body_that_is_a_link_leaving_the_package_is_an_error`, `test_a_body_file_may_be_shared_and_an_activity_may_have_no_body`, `test_duplicate_idnumbers_are_reported_before_missing_body_files`, `test_any_package_source_works_and_only_course_yaml_is_read` |
+| `body_files_not_checked` is listed for a parsed document (it reads no files) and for a package whose `course.yaml` could not be validated, and is left out only when the body files were checked. The idnumber rules and the settings apply to a package too, and a wrong `config` is refused before anything is read | B1.1 | `test_body_files_are_listed_as_not_checked_and_never_looked_for`, `test_body_files_are_not_checked_while_the_structure_is_invalid`, `test_the_other_course_rules_and_the_settings_also_apply_to_a_package`, `test_a_wrong_config_is_refused_before_anything_is_read` |
 | A report is ok when it has no errors; "not checked" entries do not make it fail; issues cannot be changed after creation | n/a | `test_empty_report_is_ok`, `test_report_with_an_error_is_not_ok`, `test_not_checked_items_do_not_make_a_report_fail`, `test_issue_defaults_are_a_document_level_issue`, `test_issue_cannot_be_changed_after_creation` |
 
 This is not FR-S-03 or FR-C-03: the checker's rules (CK-xx) work on the course model (B2), which
@@ -78,8 +83,8 @@ this library does not build.
 ### Documented but not automatically enforced
 
 Nothing in the repository enforces these yet. Each is listed as "not checked" in every report the
-validator returns (nine entries; the B1.3 row has two of them, and rule 4 has none because it is
-not a package field).
+validator returns (eight entries, plus the body files when they were not checked; the B1.3 row
+has two of them, and rule 4 has none because it is not a package field).
 The schema's `$comment` lists them too, and also lists the two parts that the validator now
 enforces (rule 6 within one package, configured protected idnumbers). Updating that comment
 needs a separate contract-change review and is not part of this change. The example package was
@@ -94,7 +99,6 @@ committed.
 | Assignments use marking workflow | B1.2 rule 4 | CK-10 (not a package field) |
 | Completion tracking on for every activity used in an unlock rule | B1.2 rule 5 | CK-13 |
 | An `idnumber` is never reused for a different activity (listed as `idnumber_reuse_not_checked`; uniqueness within one package is enforced above) | B1.2 rule 6, second half | The PRD states this rule. It cannot be judged from one `course.yaml`: it needs the previous package version, and no owner or checker is assigned yet (CK-06 covers duplicate or invalid idnumbers in the course model only) |
-| The file named by each `body` exists in the package folder (listed as `body_files_not_checked`) | B1.1 | Implied by "a folder containing `course.yaml` plus Markdown files", not a numbered rule. Needs the package folder, so it is for 3/3 |
 | Marking table present and valid: markers, columns, points sum, allowed `Check` names | B1.3, C3.5 | CK-09 |
 | `protected_section` collision (configured protected idnumbers are enforced above) | B1.4 | `protected_section` has no default in the PRD; CK-07 covers the course model |
 
