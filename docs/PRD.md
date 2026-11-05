@@ -578,7 +578,7 @@ url = media_signing.sign(relative_path, ttl_seconds=3600)
 | B8.2 Sample course | A fictional 4-week project-based course package following B1 | Student 1 |
 | B8.3 Planted-error courses | Variants of B8.2, each with known errors from the checker catalogue (§C2.3), with an answer file | Student 2 |
 | B8.4 Synthetic submissions | ≥ 30 submissions (repo + demo link + short report) across quality levels, with reference grades from at least one mentor | Student 3 |
-| B8.5 Lecture videos | ≥ 5 Indian-English technical lectures (≥ 3 h total) with reference transcripts; recorded with written consent or openly licensed (licence verified and recorded) | Student 4 |
+| B8.5 Lecture videos | ≥ 5 Indian-English technical lectures (≥ 30 min total, enough for the Release 0 baseline) with reference transcripts; recorded with written consent or openly licensed (licence verified and recorded) | Student 4 |
 | B8.6 Model comparison set | Fixed inputs and expected outputs for practice drafts, grading drafts, chapters and summaries | Student 3 |
 
 No real learner data in any set.
