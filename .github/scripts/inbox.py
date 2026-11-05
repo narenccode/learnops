@@ -150,6 +150,8 @@ def build(
     now: datetime,
     guide: str,
     rules: list,
+    issues: list[dict] | None = None,
+    issue_comments: dict[int, list[dict]] | None = None,
 ) -> str:
     ready = [p for p in open_prs if not p.get("isDraft")]
     decide = [p for p in ready if labels(p) & set(DECISION_LABELS)]
@@ -167,6 +169,11 @@ def build(
     for p in ready:
         for who, when in waiting_questions(p, comments.get(p["number"], []), guide):
             questions.append(f"- {link(p)}: @​{who} asked you on {when}")
+    for issue in issues or []:
+        for who, when in waiting_questions(
+            issue, (issue_comments or {}).get(issue["number"], []), guide
+        ):
+            questions.append(f"- Issue {link(issue)}: @​{who} asked you on {when}")
 
     out = [f"## {TITLE}", ""]
     if not (undecided or mergeable or questions):
@@ -263,6 +270,30 @@ def fetch_open(repo: str) -> list[dict]:
     )
 
 
+def fetch_issues(repo: str) -> list[dict]:
+    """Open issues written by people (not the bot's own: the inbox and the weekly digest)."""
+    fields = "number,title,author,url,createdAt,body"
+    out = json.loads(
+        gh(
+            "issue",
+            "list",
+            "--repo",
+            repo,
+            "--state",
+            "open",
+            "--limit",
+            "100",
+            "--json",
+            fields,
+        )
+    )
+    return [
+        i
+        for i in out
+        if i["title"] != TITLE and "github-actions" not in i["author"]["login"]
+    ]
+
+
 def fetch_comments(repo: str, number: int) -> list[dict]:
     out = gh(
         "api",
@@ -322,7 +353,11 @@ def main() -> int:
         )
         for number, items in comments.items()
     }
-    body = build(open_prs, merged, comments, bot_text, now, guide, rules)
+    issues = fetch_issues(repo)
+    issue_comments = {i["number"]: fetch_comments(repo, i["number"]) for i in issues}
+    body = build(
+        open_prs, merged, comments, bot_text, now, guide, rules, issues, issue_comments
+    )
     print(body)
     if args.post and not args.dry_run:
         number, old = find_issue(repo)
