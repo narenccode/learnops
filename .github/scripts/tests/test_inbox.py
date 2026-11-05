@@ -188,3 +188,36 @@ def test_waiting_students_and_drafts_and_merged_flags():
 def test_checks_green_ignores_the_bots_own_status():
     assert i.checks_green(pr(1))
     assert not i.checks_green(pr(1, checks=("SUCCESS", "")))
+
+
+def test_a_question_in_an_issue_reaches_the_guide_until_he_answers():
+    issue = {
+        "number": 44,
+        "title": "B7 clarifications",
+        "url": "https://x/issues/44",
+        "author": {"login": "s1"},
+        "createdAt": "2026-11-01T00:00:00Z",
+        "body": "Hi @guide, a few questions",
+    }
+    text = make([])
+    assert "Nothing needs you right now" in text
+    asked = i.build([], [], {}, {}, NOW, "guide", RULES, [issue], {44: []})
+    assert "Issue [#44]" in section(asked, 3)
+    assert "Nothing needs you right now" not in asked
+    answered = {
+        44: [{"user": "guide", "createdAt": "2026-11-02T00:00:00Z", "body": "ok"}]
+    }
+    done = i.build([], [], {}, {}, NOW, "guide", RULES, [issue], answered)
+    assert "#44" not in section(done, 3)
+    again = {
+        44: answered[44]
+        + [
+            {
+                "user": "s1",
+                "createdAt": "2026-11-03T00:00:00Z",
+                "body": "@guide two more",
+            }
+        ]
+    }
+    reopened = i.build([], [], {}, {}, NOW, "guide", RULES, [issue], again)
+    assert "#44" in section(reopened, 3)
