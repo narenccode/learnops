@@ -1,0 +1,10 @@
+# B8.5: recordings and extracted audio stay in the lab and are never committed.
+# Only these files may be tracked in this folder; everything else here is ignored,
+# whatever its extension. This applies to this folder only.
+*
+!.gitignore
+!README.md
+!lectures/
+!lectures/*/
+!lectures/*/outline.md
+!lectures/*/transcript.en.txt
