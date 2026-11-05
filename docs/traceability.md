@@ -168,13 +168,14 @@ package, not packages in general.
 | The file named by `file` exists, and uses an allowed content type | B7 | No check exists; no real `.h5p` is kept in the repository |
 | Interactive video only in lab demonstrations | B7 | A rule of the contract text; no check exists |
 | AI-drafted items are approved by a mentor before they reach learners | C-09, FR-S-12 | A process rule of Studio, not a data rule |
-| `cues.json` entries are valid | B6.2, FR-V-14 | The B6 cues schema does not exist yet |
+| `cues.json` entries are valid | B6.2, FR-V-14 | The B6 cues schema does not exist yet. Student 4 proposes `type: "h5p"` with `ref` = the practice item's `idnumber`; this is provisional, quoted in B7 section 6, and not enforced here |
 
 ### Open decisions and not mapped
 
 Open: H5P library versions and whether "drag-the-words or drag-and-drop / ordering" is one type
-(until the lab check, App-C item 5); the `ref` kinds of a cue (Student 4, in the B6 cues schema);
-several practice items in one week and video checkpoint placement (the guide has not decided; B7
-makes no rule). Not mapped: a row, demo step and Bloom level for FR-S-12 and FR-V-14, because the
-PRD does not say schema tests count towards them. Adding M2 to the PRD B.0 "Used by" row is the
-guide's change (Issue #44, answer 1) and is in the pull request description, not in `docs/PRD.md`.
+(until the lab check, App-C item 5); the `ref` kinds and the cue fields (Student 4, in the B6 cues
+schema, still to come; her `h5p` + `idnumber` encoding is only a proposal); several practice items in
+one week and video checkpoint placement (the guide has not decided; B7 makes no rule). Not mapped: a
+row, demo step and Bloom level for FR-S-12 and FR-V-14, because the PRD does not say schema tests
+count towards them. This pull request adds M2 to the B7 "Used by" row in PRD B.0, as the guide asked
+(Issue #44, answer 1 and his reply of 2026-11-05).

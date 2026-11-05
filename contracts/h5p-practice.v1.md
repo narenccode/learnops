@@ -3,8 +3,8 @@
 **Status:** Draft. Not approved. **Provisional: it cannot be frozen** until the H5P library versions
 are verified in the lab (guide's answer to question 5, Issue #44; PRD App-C item 5).
 **Owner:** Student 1. **Used by:** Module 1 (Course Studio), Module 2 (course checker, for CK-11) and
-Module 4 (video pipeline). The PRD B.0 table still names only M1 and M4; adding M2 is the guide's
-decision (Issue #44, answer 1) and is proposed in the pull request, not made in this file's text.
+Module 4 (video pipeline). The PRD B.0 table lists M1, M2 and M4: M2 was added in the same pull
+request as this file, as the guide asked (Issue #44, answer 1 and his reply of 2026-11-05).
 **Source:** PRD §B7, B1.1, B1.2, B6.2, C-08, C-09, FR-S-12, FR-V-14, FR-C-03 (CK-11, CK-12). Where
 this file and the PRD differ, the PRD wins.
 
@@ -122,10 +122,26 @@ where an activity should appear"; the manifest field `cues` holds its path). The
 small schemas for `chapters.json`, `slides.json` and `cues.json` come in a separate pull request
 before the end of Release 0 (guide's comment on PR #32). B7 follows whatever that schema says.
 
+**PROVISIONAL — pending the B6 cue schema PR.** Student 4 has said (Issue #44, 2026-11-05) that the
+B6 `cues.json` schema is not finalized, that she will add it in a separate pull request, and that
+the B6 schema will own the cue fields and their validation rules. What follows is her proposal,
+quoted only so that readers of B7 know the direction. It is **not** a B7 requirement. B7 does not
+enforce it, and no B7 schema, example or test uses it. If the B6 schema says otherwise, the B6 schema
+wins and this block is corrected.
+
+- Proposed cue for a B7 practice item: `{"type": "h5p", "ref": "<activity-idnumber>"}`. The `ref`
+  would be the plain Moodle `idnumber` of the practice item in `course.yaml`, resolved within the
+  course (EXT-06: activities are identified by `idnumber`, never by position or display name).
+- Proposed rules for the cue fields, all pending the B6 schema: `t` is a required, non-negative
+  number of seconds (like `duration_s`); `type` is required and comes from a cue-type list not yet
+  agreed; `ref` is required and its format depends on the type; `label` is required and not empty;
+  `t` lies within the media duration; and `ref` resolves to a resource of the matching type.
+
 - **OPEN DECISION: the `ref` kinds.** Which kinds of reference a cue may carry is for Student 4 to
-  answer (guide, Issue #44, answer 6). PRD FR-X-12 shows more than H5P: "an H5P from B7, a
-  whiteboard image, a scenario, or an external activity URL allowed by configuration". Until the B6
-  schema exists, B7 says nothing about `ref`.
+  answer in the B6 schema (guide, Issue #44, answer 6). PRD FR-X-12 shows more than H5P: "an H5P
+  from B7, a whiteboard image, a scenario, or an external activity URL allowed by configuration".
+  The proposal above covers only the practice-item case and is itself provisional. Until the B6
+  schema exists, B7 requires nothing about `ref`.
 - PRD FR-X-12 also says a learner can skip a cue "unless the cue is marked `required`". Where that
   mark is stored is not defined, and is B6's to define.
 
@@ -136,7 +152,7 @@ before the end of Release 0 (guide's comment on PR #32). B7 follows whatever tha
 | B1 course package | The `h5p` entry in `course.yaml`, including the `file` field added with B7 |
 | B2 course model | `grade_item: null` as "no grade item", read by CK-11. B2 is Student 2's contract (a draft when this was written) |
 | B5 model interface | AI drafts of the questions (FR-S-12, FR-V-14) |
-| B6 lesson manifest | `cues.json` and its path (section 6). B6 is Student 4's contract (PR #32); B6 owns `cues.json` |
+| B6 lesson manifest | `cues.json` and its path (section 6). B6 is Student 4's contract (PR #32); B6 owns `cues.json`. Its cue schema is not written yet and is due before the end of Release 0; section 6 holds only a provisional proposal |
 
 ## 8. What is enforced where
 
@@ -186,7 +202,7 @@ package; CK-11 is the check on the course model, where PRD B7 says "the checker 
 | The file named by `file` exists | No real `.h5p` is kept in the repository |
 | The `.h5p` file uses one of the content types in section 3 | No check exists; library versions are not known |
 | AI-drafted items are approved by a mentor before they reach learners | A process rule of Studio (FR-S-12), not a data rule |
-| `cues.json` entries are valid | The B6 schema does not exist yet |
+| `cues.json` entries are valid | The B6 cue schema does not exist yet (the proposal in section 6 is provisional) |
 | Interactive video is used only in lab demonstrations | A rule of this text; the schema has no field for it |
 
 ## 9. Open decisions
@@ -194,7 +210,7 @@ package; CK-11 is the check on the course model, where PRD B7 says "the checker 
 | Marker | What is not decided | Who decides |
 |---|---|---|
 | OPEN DECISION: library versions (Q5) | Exact H5P library versions on Moodle 4.5 and 5.3 | The lab check (App-C item 5); B7 cannot freeze before |
-| OPEN DECISION: `ref` kinds (Q6) | Which reference kinds a cue allows | Student 4, in the B6 cues schema |
+| OPEN DECISION: `ref` kinds (Q6) | Which reference kinds a cue allows. Student 4's `type` and `ref` proposal for practice items (section 6) is provisional | Student 4, in the B6 cues schema |
 | OPEN DECISION: several practice items | How many per week, and their order | The guide |
 | OPEN DECISION: video checkpoint placement | Where a video checkpoint goes: PRD B7 says "after the video"; the guide-page placement is not applied to it | The guide |
 | OPEN DECISION: the second content type | One type or a choice between several (the schema enum keeps one literal phrase) | The lab check and the guide |
