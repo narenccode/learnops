@@ -128,7 +128,8 @@ FR-C-03 CK-11 (Release 1). No row in the table at the top maps to it.
 
 **Status: draft, not approved, and it cannot be frozen** until the H5P library versions are
 verified in the lab (PRD App-C item 5; guide's answer 5 on Issue #44). This section is separate
-from the B1 section above, which another pull request is also changing.
+from the B1 section above, which is already on main. The B1 `file` field added with B7 is covered
+in the first table below, not in the B1 section.
 
 ### Enforced by the B1 schema and covered by automated tests
 
