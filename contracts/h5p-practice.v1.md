@@ -3,8 +3,7 @@
 **Status:** Draft. Not approved. **Provisional: it cannot be frozen** until the H5P library versions
 are verified in the lab (guide's answer to question 5, Issue #44; PRD App-C item 5).
 **Owner:** Student 1. **Used by:** Module 1 (Course Studio), Module 2 (course checker, for CK-11) and
-Module 4 (video pipeline). The PRD B.0 table lists M1, M2 and M4: M2 was added in the same pull
-request as this file, as the guide asked (Issue #44, answer 1 and his reply of 2026-11-05).
+Module 4 (video pipeline); M2 was added to the PRD B.0 table in this pull request (guide, Issue #44).
 **Source:** PRD §B7, B1.1, B1.2, B6.2, C-08, C-09, FR-S-12, FR-V-14, FR-C-03 (CK-11, CK-12). Where
 this file and the PRD differ, the PRD wins.
 
@@ -19,8 +18,7 @@ produce **ungraded H5P practice** for a course: which content types, how a pract
 a course package, and which rules it must obey.
 
 **Practice is optional.** The standard week stays one guide Page and one task Assignment (PRD
-B1.2 rule 1). An H5P practice item is an optional extra on top of that and never replaces either
-(guide, Issue #44).
+B1.2 rule 1); an H5P practice item is an optional extra and never replaces either (guide, Issue #44).
 
 B7 does **not** cover:
 
@@ -54,18 +52,16 @@ PRD B7 names these content types, and this file uses its wording. The schema
 | branching scenario | Courses | **to verify in the lab** |
 | interactive video | Lab demonstrations only, with openly licensed videos | **to verify in the lab** |
 
-- **No H5P machine name and no version is invented here.** The exact library versions available on
-  Moodle 4.5 and 5.3 are verified in the lab (PRD App-C item 5). Until then B7 cannot be frozen.
-  Results are recorded in `docs/decisions/`, as for B4.
-- **Interactive video is for lab demonstrations only**, with openly licensed videos (PRD B7). The
-  schema does not mark this; it is a rule of this text and is not enforced (section 8.4). A boolean
-  field in the data was considered and left out because no answer approves it; it is a question
-  for reviewers.
-- **OPEN DECISION: library versions.** Not known until the lab check. They will be added once
-  verified, if needed.
+- **No H5P machine name and no version is invented here. OPEN DECISION: library versions.** The
+  exact library versions available on Moodle 4.5 and 5.3 are verified in the lab (PRD App-C item 5)
+  and added if needed. Until then B7 cannot be frozen. Results are recorded in `docs/decisions/`, as
+  for B4.
+- **Interactive video is for lab demonstrations only** (PRD B7; see the table). The schema does not
+  mark this; it is a rule of this text and is not enforced (section 8). A boolean field in the data
+  was considered and left out because no answer approves it; it is a question for reviewers.
 - **OPEN DECISION: the second row.** The PRD says "drag-the-words or drag-and-drop / ordering". The
   schema keeps that phrase as one literal entry and does not decide whether it is one content type
-  or a choice between several.
+  or a choice between several. The lab check and the guide decide.
 
 ## 4. The practice item in a course package
 
@@ -87,13 +83,13 @@ defined by B1 (`contracts/course-package.v1.schema.json`), not by this file:
   `wk-01-practice.h5p`. B7 does not fix a folder or a naming convention.
 - **Placement of ordinary optional practice:** there is no ordering field. The order of the
   `activities` list is the order, and the practice entry comes right after the week's guide Page
-  (guide's answer 3). This is not checked by any schema or validator yet (section 8.4). It does not
+  (guide's answer 3). This is not checked by any schema or validator yet (section 8). It does not
   cover video checkpoints (next points).
 - **OPEN DECISION: several practice items in one week.** Not decided. This file makes no rule about
-  how many there may be or how they are ordered among themselves.
+  how many there may be or how they are ordered among themselves. The guide decides.
 - **OPEN DECISION: video checkpoint placement.** PRD B7 says a video checkpoint is "a separate
-  activity after the video". The guide's answer 3 is about the practice entry after the guide Page.
-  Where a video checkpoint goes, and whether it differs, is not decided here (section 6).
+  activity after the video"; the guide's answer 3 covers only the entry after the guide Page. Where
+  a video checkpoint goes is not decided here (section 6). The guide decides.
 
 ## 5. Rules for every practice item
 
@@ -110,12 +106,9 @@ Studio. **B7 v1 defines no JSON structure for a draft or a review card.**
 
 ## 6. Video checkpoints
 
-PRD B7 and FR-V-14 give two modes:
-
-| Mode | What is produced |
-|---|---|
-| A separate activity after the video (default) | A practice item as in sections 4 and 5. Its placement is an OPEN DECISION (section 4); the guide-page placement rule is not applied to it. |
-| `cues.json` entries for the future player (F-1) | Entries in the lesson's `cues.json`. |
+PRD B7 and FR-V-14 give two modes. The default is a separate activity after the video: a practice
+item as in sections 4 and 5, whose placement is an OPEN DECISION (section 4); the guide-page
+placement rule is not applied to it. The other is `cues.json` entries for the future player (F-1).
 
 **B7 does not define a cue structure.** `cues.json` is owned by B6 (PRD B6.2: optional, "moments
 where an activity should appear"; the manifest field `cues` holds its path). The guide has said
@@ -124,10 +117,9 @@ before the end of Release 0 (guide's comment on PR #32). B7 follows whatever tha
 
 **PROVISIONAL — pending the B6 cue schema PR.** Student 4 has said (Issue #44, 2026-11-05) that the
 B6 `cues.json` schema is not finalized, that she will add it in a separate pull request, and that
-the B6 schema will own the cue fields and their validation rules. What follows is her proposal,
-quoted only so that readers of B7 know the direction. It is **not** a B7 requirement. B7 does not
-enforce it, and no B7 schema, example or test uses it. If the B6 schema says otherwise, the B6 schema
-wins and this block is corrected.
+the B6 schema will own the cue fields and their validation rules. What follows is her proposal. It is
+**not** a B7 requirement. B7 does not enforce it, and no B7 schema, example or test uses it. If the
+B6 schema says otherwise, the B6 schema wins and this block is corrected.
 
 - Proposed cue for a B7 practice item: `{"type": "h5p", "ref": "<activity-idnumber>"}`. The `ref`
   would be the plain Moodle `idnumber` of the practice item in `course.yaml`, resolved within the
@@ -140,8 +132,7 @@ wins and this block is corrected.
 - **OPEN DECISION: the `ref` kinds.** Which kinds of reference a cue may carry is for Student 4 to
   answer in the B6 schema (guide, Issue #44, answer 6). PRD FR-X-12 shows more than H5P: "an H5P
   from B7, a whiteboard image, a scenario, or an external activity URL allowed by configuration".
-  The proposal above covers only the practice-item case and is itself provisional. Until the B6
-  schema exists, B7 requires nothing about `ref`.
+  The proposal above covers only the practice-item case and is itself provisional.
 - PRD FR-X-12 also says a learner can skip a cue "unless the cue is marked `required`". Where that
   mark is stored is not defined, and is B6's to define.
 
@@ -156,61 +147,19 @@ wins and this block is corrected.
 
 ## 8. What is enforced where
 
-"Not enforced" means nothing in the repository checks it today.
+"Not enforced" means nothing in the repository checks it today. The rules that schemas and tests do
+enforce (`h5p` as an allowed activity type and its `graded` and `file` fields in the B1 schema, the
+content-type list, the "nothing invented" rules, the example package, and the rule of no `.h5p`
+file) are listed with their tests and PRD references in `docs/traceability.md`, section "B7 H5P
+practice output contract". The placement and the standard week of the example package are checked
+on that example only, not on packages in general.
 
-### 8.1 Enforced by the B1 schema, with tests in `test_course_package_v1.py`
+**Planned checker rules (Module 2, Release 1, not built):** CK-11, a practice (H5P) activity has no
+grade item (the B1 schema already rejects `graded: true` in a package; CK-11 checks the course
+model, B2, where PRD B7 says "the checker enforces this"); CK-12, media referenced by a full URL.
 
-| Rule | Detail |
-|---|---|
-| `h5p` is an allowed activity `type` | Enum |
-| `graded` is present and `false` on an `h5p` activity | Missing, `true` or any other value is rejected |
-| `file` is present on an `h5p` activity | Missing is rejected |
-| `file` is a relative path ending in lowercase `.h5p` | URLs, absolute paths, `..`, backslashes, other or upper-case extensions and an empty name are rejected |
-| `idnumber` format; the two default protected idnumbers are rejected | `final-project`, `course-feedback` |
-| `file` is not checked on other activity types | It is an unknown field there |
-| Unknown fields are accepted | PRD EXT-02 |
-
-### 8.2 Enforced by the B7 schema and tests, in `test_h5p_practice_v1.py`
-
-| Rule | Detail |
-|---|---|
-| The schema allows only the four PRD B7 phrases, each at most once; invented names, other capitals and machine names are rejected | Schema (enum, `maxContains`) |
-| The enum equals the phrases in the PRD B7 text, and the example lists all four | Test; reads `docs/PRD.md` |
-| The schema and example have no key `version`, `library`, `libraries` or `machine_name`, and no string like `H5P.<letter>` | Test of those spellings only; other ways to write a version are not detected |
-| The example package validates against the B1 schema | And uses only fields B1 defines |
-| In the example, the ordinary practice item is ungraded and comes right after the guide Page, and the week still has one Page and one Assignment | Example only, not a general check; the example has no video lesson |
-| No `.h5p` file exists in the repository | Fails if one is added |
-| B7 defines no cue structure | The schema and example have no key `cue`, `cues` or `ref` |
-
-### 8.3 Planned checker rules (Module 2). Not built; Release 1
-
-| Rule | Checker rule |
-|---|---|
-| A practice (H5P) activity must not have a grade item | CK-11 |
-| Media referenced by a full fixed URL instead of a relative path | CK-12 |
-
-The checker works on the course model (B2). The B1 schema already rejects `graded: true` in a
-package; CK-11 is the check on the course model, where PRD B7 says "the checker enforces this".
-
-### 8.4 Documented here, not enforced by anything yet
-
-| Rule | Why not enforced |
-|---|---|
-| An ordinary practice entry comes right after the week's guide Page | A schema cannot express it, and the validator does not check week structure yet (B1.2 rule 1 is itself not enforced) |
-| Where a video checkpoint goes | Not decided |
-| The standard week has one Page and one Assignment | Same: B1.2 rule 1 |
-| The file named by `file` exists | No real `.h5p` is kept in the repository |
-| The `.h5p` file uses one of the content types in section 3 | No check exists; library versions are not known |
-| AI-drafted items are approved by a mentor before they reach learners | A process rule of Studio (FR-S-12), not a data rule |
-| `cues.json` entries are valid | The B6 cue schema does not exist yet (the proposal in section 6 is provisional) |
-| Interactive video is used only in lab demonstrations | A rule of this text; the schema has no field for it |
-
-## 9. Open decisions
-
-| Marker | What is not decided | Who decides |
-|---|---|---|
-| OPEN DECISION: library versions (Q5) | Exact H5P library versions on Moodle 4.5 and 5.3 | The lab check (App-C item 5); B7 cannot freeze before |
-| OPEN DECISION: `ref` kinds (Q6) | Which reference kinds a cue allows. Student 4's `type` and `ref` proposal for practice items (section 6) is provisional | Student 4, in the B6 cues schema |
-| OPEN DECISION: several practice items | How many per week, and their order | The guide |
-| OPEN DECISION: video checkpoint placement | Where a video checkpoint goes: PRD B7 says "after the video"; the guide-page placement is not applied to it | The guide |
-| OPEN DECISION: the second content type | One type or a choice between several (the schema enum keeps one literal phrase) | The lab check and the guide |
+**Not enforced by anything yet** (each is in the traceability table "Documented but not
+automatically enforced"): placement (section 4), video checkpoints (sections 4 and 6), whether the
+file named by `file` exists (section 4), interactive video only in lab demonstrations (section 3),
+`cues.json` entries (section 6), the standard week of one Page and one Assignment (B1.2 rule 1), the
+content type of the `.h5p` file, and mentor approval of AI drafts (a process rule of Studio).

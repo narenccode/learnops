@@ -15,7 +15,7 @@ AUTOMATED here:
     Assignment. These are checks on the EXAMPLE, not general enforcement;
   * no .h5p file exists anywhere in the repository (.gitignore does not block it).
 
-NOT automated here, so NOT claimed (contract text, section 8.4): placement and the one-Page,
+NOT automated here, so NOT claimed (contract text, section 8): placement and the one-Page,
 one-Assignment week in packages in general (B1.2 rule 1); video checkpoint placement (open); that
 the named file exists or uses an allowed type; the lab-only rule for interactive video; CK-11 and
 CK-12 (Release 1); mentor approval of AI drafts; cues.json contents (the B6 schema does not exist

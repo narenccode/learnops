@@ -127,26 +127,21 @@ PRD (it is a contract, PRD B.0). It is used by FR-S-12 and FR-V-14 (Release 5, s
 FR-C-03 CK-11 (Release 1). No row in the table at the top maps to it.
 
 **Status: draft, not approved, and it cannot be frozen** until the H5P library versions are
-verified in the lab (PRD App-C item 5; guide's answer 5 on Issue #44). This section is separate
-from the B1 section above, which is already on main. The B1 `file` field added with B7 is covered
-in the first table below, not in the B1 section.
+verified in the lab (PRD App-C item 5; guide's answer 5 on Issue #44). The B1 section above is on
+main; the B1 `file` field added with B7 is covered in the first table below.
 
-### Enforced by the B1 schema and covered by automated tests
-
-Test names are in `test_course_package_v1.py`.
+### Enforced by the B1 schema; tests in `test_course_package_v1.py`
 
 | Rule | PRD | Test(s) |
 |---|---|---|
-| An `h5p` activity must have `graded: false` | B7 | `test_missing_required_field_is_rejected`, `test_wrong_type_or_value_is_rejected`, `test_h5p_missing_field_is_named_and_only_that_field` |
-| An `h5p` activity must have `file` | B7, Issue #44 answer 2 | `test_missing_required_field_is_rejected`, `test_h5p_missing_field_is_named_and_only_that_field`, `test_wrong_type_or_value_is_rejected` |
+| An `h5p` activity must have `graded: false` and `file` | B7, Issue #44 answer 2 | `test_missing_required_field_is_rejected`, `test_wrong_type_or_value_is_rejected`, `test_h5p_missing_field_is_named_and_only_that_field` |
 | `file` is a relative path ending in lowercase `.h5p`; URLs, absolute paths, `..`, backslashes, other or upper-case extensions and an empty name are rejected | B7, C-08 | `test_h5p_file_that_is_not_a_relative_h5p_path_is_rejected` |
 | `file` is not checked on other activity types (it is an unknown field there) | Issue #44 answer 2 | `test_valid_variation_is_accepted` |
 | An `h5p` activity cannot take a protected idnumber | B1.4 | `test_h5p_with_a_protected_idnumber_is_rejected` |
 
-### Enforced by the B7 schema and tests
+### Enforced by the B7 schema; tests in `test_h5p_practice_v1.py`
 
-Test names are in `test_h5p_practice_v1.py`. Rows that say "example only" check the example
-package, not packages in general.
+Rows that say "example only" check the example package, not packages in general.
 
 | Rule | PRD | Test(s) |
 |---|---|---|
@@ -178,5 +173,4 @@ Open: H5P library versions and whether "drag-the-words or drag-and-drop / orderi
 schema, still to come; her `h5p` + `idnumber` encoding is only a proposal); several practice items in
 one week and video checkpoint placement (the guide has not decided; B7 makes no rule). Not mapped: a
 row, demo step and Bloom level for FR-S-12 and FR-V-14, because the PRD does not say schema tests
-count towards them. This pull request adds M2 to the B7 "Used by" row in PRD B.0, as the guide asked
-(Issue #44, answer 1 and his reply of 2026-11-05).
+count towards them. This pull request adds M2 to the B7 "Used by" row in PRD B.0 (guide, Issue #44).
