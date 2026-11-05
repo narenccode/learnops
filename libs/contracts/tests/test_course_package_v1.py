@@ -10,17 +10,24 @@ AUTOMATED here (structure only, by contracts/course-package.v1.schema.json):
     ending in lowercase .h5p, same path rules as `body`). `file` is defined for h5p only, so on
     any other type it is an unknown field and is not checked (guide's decision, Issue #44).
 
-NOT automated here, and therefore NOT claimed as enforced (the schema's $comment lists them):
-  * B1.2 rules 1, 2, 3, 5 and 6: one guide Page and one task Assignment per week, the unlock
-    chain, points summing to total_points, completion on unlock activities, unique idnumbers;
+NOT checked by the schema, so not tested here (the schema's $comment lists them). The validator
+in libs/contracts (tests: test_validate_course.py, test_config.py) enforces two of them:
+idnumbers unique within one package (B1.2 rule 6, first half) and the protected idnumbers a site
+configures beyond the two defaults (B1.4).
+No code checks the rest yet. The validator lists each of them as "not checked" in every report:
+  * B1.2 rules 1, 2, 3 and 5: one guide Page and one task Assignment per week, the unlock chain,
+    points summing to total_points, completion on unlock activities;
+  * B1.2 rule 6, second half: an idnumber is never reused for a different activity across
+    package versions (it needs the previous version of the package);
   * B1.3: the marking table inside an assignment body (markers, columns, points, Check names);
-  * B1.4: configured protected idnumbers other than the two defaults, protected_section;
-  * that the files named by "body" exist, and that the .h5p file named by an h5p activity
-    exists (no real .h5p is kept in the repository);
-  * that an ordinary optional h5p practice entry comes right after the week's guide Page (list
-    order; B7). Video checkpoint placement is an open decision and is not covered.
-These need validator code that does not exist yet (Release 0/1 work in libs/contracts and the
-checker). Until then they are checked by hand, not by this file.
+  * B1.4: the protected_section number;
+  * B1.1, in a parsed course.yaml: that the files named by "body" exist. validate_package checks
+    it for a package folder (test_validate_package.py);
+  * B7: that the .h5p file named by an h5p activity exists (no real .h5p is kept in the
+    repository);
+  * B7: that an ordinary optional h5p practice entry comes right after the week's guide Page
+    (list order). Video checkpoint placement is an open decision and is not covered.
+Until they are implemented they are checked by hand, not by this file.
 
 Each invalid case below must fail at the expected place with the expected schema keyword, so a
 case cannot pass for the wrong reason.
