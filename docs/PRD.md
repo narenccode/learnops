@@ -547,7 +547,12 @@ Slugs: lowercase ASCII, hyphens, immutable. Numbers zero-padded to two digits.
 ```
 
 - All paths are **relative to the lesson folder** (C-08).
-- Track roles reserved for F-1: `camera`, `screen`. A v1 reader ignores roles it doesn't play.
+- Required: `schema`, `course_slug`, `lesson_id`, `title`, `duration_s`, `tracks`, `captions`,
+  `transcript`, `chapters`. Optional: `slides`, `cues`, `summary`, `source`, `processing`.
+  `poster.jpg` (B6.2) has no manifest field; it is found by its fixed name.
+- `tracks` contains **exactly one** `main` track. Roles are open lowercase names (letters, digits,
+  single hyphens); known roles are `main`, `main-low`, and `camera`, `screen` (reserved for F-1).
+  A v1 reader ignores roles it doesn't play.
 
 ### B6.4 Media signing interface (v1, used by the extension track)
 
