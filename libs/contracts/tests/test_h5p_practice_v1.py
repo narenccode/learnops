@@ -203,6 +203,7 @@ def test_text_marks_versions_open_decisions_and_the_draft_rules(text: str) -> No
         "OPEN DECISION: video checkpoint placement",
         "Practice is optional",
         "never graded",
+        "h5p_files_not_checked",
     ):
         assert phrase in text, phrase
 

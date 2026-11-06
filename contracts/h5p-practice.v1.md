@@ -163,3 +163,8 @@ automatically enforced"): placement (section 4), video checkpoints (sections 4 a
 file named by `file` exists (section 4), interactive video only in lab demonstrations (section 3),
 `cues.json` entries (section 6), the standard week of one Page and one Assignment (B1.2 rule 1), the
 content type of the `.h5p` file, and mentor approval of AI drafts (a process rule of Studio).
+
+**Held rule `h5p_files_not_checked` (B7).** The package validator (`libs/contracts`) lists it in every
+report. It does not look for the `.h5p` file, does not check that it is valid and does not read the
+content type inside it. So "no errors" does not mean the file was found, and it does not mean that
+interactive video (lab demonstrations only) was not used.
