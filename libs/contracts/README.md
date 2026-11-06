@@ -45,7 +45,9 @@ Check vocabulary and `protected_section`. Their ownership or details are still o
 `docs/design/studio.md` §12, `docs/design/grading.md` Q39 and the pull requests of this
 library). The body files are also listed when the validator did not check them: for a parsed
 document, or for a package whose `course.yaml` has errors. Marking workflow (CK-10) is not a
-package field.
+package field. The `.h5p` file of an `h5p` activity (B7) is never looked for: not that it exists,
+not that it is valid, not its content type, so interactive video (lab demonstrations only) is not
+checked either. `h5p_files_not_checked` says so.
 
 The checker's rules (CK-01…CK-13) work on the course model (B2) and stay in Module 2.
 

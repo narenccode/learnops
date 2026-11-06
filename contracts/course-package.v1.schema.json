@@ -3,7 +3,7 @@
   "$id": "urn:learnops:contract:course-package:v1",
   "title": "LearnOps course package (B1, v1)",
   "description": "The parsed content of course.yaml in a course package (PRD B1.1). Markdown bodies and assets sit beside it and are not described here. This schema checks structure only; rules that need a view of the whole course (PRD B1.2, B1.3, B1.4) are listed under $comment and are enforced by validator code, not by this file.",
-  "$comment": "Unknown fields are allowed on purpose: after Release 0 contracts change only by adding optional fields and readers ignore unknown fields (PRD B.0, EXT-02). NOT expressible in JSON Schema, so NOT enforced here: B1.2 rule 1 (exactly one guide Page and one task Assignment per week), rule 2 (week N unlocks when the week N-1 task is submitted; unlock.after must name an earlier activity), rule 3 (graded points sum to total_points), rule 5 (completion tracking on for every activity used in an unlock rule), rule 6 (idnumbers unique within the course and never reused); B1.3 (marking table inside the assignment body: markers, columns, points sum, allowed Check values); B1.4 (protected idnumbers other than the two defaults, and section numbers that collide with the configurable protected_section). start_date is checked for calendar validity only when the validator is run with a format checker; the pattern guarantees the YYYY-MM-DD shape either way.",
+  "$comment": "Unknown fields are allowed on purpose: after Release 0 contracts change only by adding optional fields and readers ignore unknown fields (PRD B.0, EXT-02). NOT expressible in JSON Schema, so NOT enforced here: B1.2 rule 1 (exactly one guide Page and one task Assignment per week), rule 2 (week N unlocks when the week N-1 task is submitted; unlock.after must name an earlier activity), rule 3 (graded points sum to total_points), rule 5 (completion tracking on for every activity used in an unlock rule), rule 6 (idnumbers unique within the course and never reused); B1.3 (marking table inside the assignment body: markers, columns, points sum, allowed Check values); B1.4 (protected idnumbers other than the two defaults, and section numbers that collide with the configurable protected_section); B7 (that the .h5p file named by an h5p activity exists, and that an ordinary optional practice entry comes right after the week's guide Page: the list order is the order, there is no ordering field; where a video checkpoint goes is an open decision in B7). start_date is checked for calendar validity only when the validator is run with a format checker; the pattern guarantees the YYYY-MM-DD shape either way.",
   "type": "object",
   "required": ["schema", "course", "sections"],
   "properties": {
@@ -41,6 +41,16 @@
       "type": "string",
       "pattern": "^(?![A-Za-z][A-Za-z0-9+.-]*:)(?!/)(?!(?:.*/)?\\.\\.(?:/|(?![\\s\\S])))[^\\\\\\n]+(?![\\s\\S])",
       "description": "Path inside the package folder, with forward slashes. Not a URL, not absolute, no '..' segment (PRD C-08 spirit: relative paths only)."
+    },
+    "h5p_file": {
+      "allOf": [
+        { "$ref": "#/$defs/relative_path" },
+        {
+          "pattern": "^(?:.*/)?[^/]+\\.h5p(?![\\s\\S])",
+          "description": "Ends in a lowercase .h5p after a non-empty file name."
+        }
+      ],
+      "description": "Path of the practice item's .h5p file inside the package folder (PRD B7). The same rules as body (relative_path: not a URL, not absolute, no '..' segment, no backslash) and it must end in lowercase .h5p. Only the shape is checked: the schema does not look for the file, and no real .h5p file is kept in the repository."
     },
     "course": {
       "type": "object",
@@ -149,9 +159,12 @@
         {
           "if": { "properties": { "type": { "const": "h5p" } }, "required": ["type"] },
           "then": {
-            "required": ["graded"],
-            "properties": { "graded": { "const": false } },
-            "description": "H5P practice is never graded (PRD B7)."
+            "required": ["graded", "file"],
+            "properties": {
+              "graded": { "const": false },
+              "file": { "$ref": "#/$defs/h5p_file" }
+            },
+            "description": "H5P practice is never graded and names its .h5p file (PRD B7; guide's decision on Issue #44, question 2). file is defined for h5p only: on any other type it is an unknown field and is not checked."
           }
         }
       ]

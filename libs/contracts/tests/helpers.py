@@ -37,6 +37,7 @@ HELD_RULE_CODES = frozenset(
         "marking_table_not_checked",
         "check_vocabulary_not_checked",
         "protected_section_not_checked",
+        "h5p_files_not_checked",
     }
 )
 

@@ -1,0 +1,9 @@
+{
+  "schema": "learnops.h5p-practice/v1",
+  "content_types": [
+    { "name": "question set" },
+    { "name": "drag-the-words or drag-and-drop / ordering" },
+    { "name": "branching scenario" },
+    { "name": "interactive video" }
+  ]
+}

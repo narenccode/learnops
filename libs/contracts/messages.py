@@ -165,4 +165,9 @@ HELD_RULES: tuple[tuple[str, str, str], ...] = (
         "B1.4",
         "Not checked: that no section uses the protected section number.",
     ),
+    (
+        "h5p_files_not_checked",
+        "B7",
+        "Not checked: that the .h5p file named by each h5p activity exists or is valid, or which content type it holds. Interactive video (lab demonstrations only) is therefore not checked either.",
+    ),
 )
