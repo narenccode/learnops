@@ -1,0 +1,147 @@
+{
+  "_note": "Valid example for contracts/course-model.v1.schema.json (PRD B2). ILLUSTRATIVE: hand-written and fictional, not produced from a real Moodle backup. Its shape has not been checked against Moodle 4.5 or 5.3. For contract testing only.",
+  "schema": "learnops.course-model/v1",
+  "source": { "kind": "mbz" },
+  "course": {
+    "shortname": "DEMO-AI-101",
+    "fullname": "Build an AI Assistant",
+    "completion_enabled": true
+  },
+  "sections": [
+    {
+      "number": 0,
+      "idnumber": null,
+      "title": null,
+      "visible": true,
+      "availability": null,
+      "activities": []
+    },
+    {
+      "number": 1,
+      "idnumber": null,
+      "title": "Week 1 — Set up your tools",
+      "visible": true,
+      "availability": null,
+      "activities": [
+        {
+          "type": "page",
+          "idnumber": "wk-01-guide",
+          "cmid": 101,
+          "title": "Week 1 guide",
+          "visible": true,
+          "availability": null,
+          "completion": { "tracking": "manual" },
+          "grade_item": null,
+          "media_refs": ["build-ai-assistant/wk-01/slides.pdf"]
+        },
+        {
+          "type": "h5p",
+          "idnumber": "wk-01-practice",
+          "cmid": 102,
+          "title": "Week 1 practice",
+          "visible": true,
+          "availability": null,
+          "completion": { "tracking": "none" },
+          "grade_item": null
+        },
+        {
+          "type": "assignment",
+          "idnumber": "wk-01-task",
+          "cmid": 103,
+          "title": "Week 1 task",
+          "visible": true,
+          "availability": null,
+          "completion": { "tracking": "automatic", "submit": true },
+          "grade_item": { "max_grade": 40 },
+          "marking_workflow": true,
+          "marking_table": { "present": true, "points_total": 40 }
+        }
+      ]
+    },
+    {
+      "number": 2,
+      "idnumber": null,
+      "title": "Week 2 — Extend your assistant",
+      "visible": true,
+      "availability": {
+        "op": "&",
+        "c": [{ "type": "completion", "cm": 103, "e": 1 }],
+        "showc": [true]
+      },
+      "activities": [
+        {
+          "type": "page",
+          "idnumber": "wk-02-guide",
+          "cmid": 104,
+          "title": "Week 2 guide",
+          "visible": true,
+          "availability": null,
+          "completion": { "tracking": "manual" },
+          "grade_item": null
+        },
+        {
+          "type": "assignment",
+          "idnumber": "wk-02-task",
+          "cmid": 105,
+          "title": "Week 2 task",
+          "visible": true,
+          "availability": null,
+          "completion": { "tracking": "automatic", "submit": true },
+          "grade_item": { "max_grade": 40 },
+          "marking_workflow": true,
+          "marking_table": { "present": true, "points_total": 40 }
+        }
+      ]
+    },
+    {
+      "number": 3,
+      "idnumber": null,
+      "title": "Wrap-up",
+      "visible": true,
+      "availability": {
+        "op": "&",
+        "c": [{ "type": "completion", "cm": 105, "e": 1 }],
+        "showc": [true]
+      },
+      "activities": [
+        {
+          "type": "assignment",
+          "idnumber": "final-project",
+          "cmid": 106,
+          "title": "Final project",
+          "visible": true,
+          "availability": null,
+          "completion": { "tracking": "automatic", "submit": true },
+          "grade_item": { "max_grade": 20 },
+          "marking_workflow": true,
+          "marking_table": { "present": true, "points_total": 20 }
+        },
+        {
+          "type": "feedback",
+          "idnumber": "course-feedback",
+          "cmid": 107,
+          "title": "Course feedback",
+          "visible": true,
+          "availability": null,
+          "completion": { "tracking": "automatic", "submit": true },
+          "grade_item": null
+        }
+      ]
+    }
+  ],
+  "course_completion": {
+    "criteria": [
+      { "type": "activity", "cmid": 106, "idnumber": "final-project" },
+      { "type": "activity", "cmid": 107, "idnumber": "course-feedback" }
+    ]
+  },
+  "badges": [
+    {
+      "name": "Course finisher",
+      "criteria": [
+        { "type": "activity", "cmid": 106, "idnumber": "final-project" },
+        { "type": "activity", "cmid": 107, "idnumber": "course-feedback" }
+      ]
+    }
+  ]
+}
