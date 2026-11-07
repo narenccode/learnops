@@ -473,10 +473,13 @@ result = model.run(
 # result.meta      -> provider, model, input/output tokens, latency_ms, cost_estimate, prompt_version
 ```
 
+`cost_estimate` is a numeric estimate in US dollars (USD). For a local model with no billed inference cost, report `0.0`. If cost is unknown or the provider does not report it, report `null`; unknown cost must never be represented as zero. `input_tokens` and `output_tokens` may also be `null` when the provider does not report usage.
+
 ### B5.2 Providers
 
 - `local`: the lab LLM endpoint (default in the lab).
 - `hosted`: one hosted LLM API, through the provider's official SDK.
+- `fake`: a deterministic provider for automated tests that calls no model. The service refuses it unless an explicit test-only setting is on, and that setting is refused in the lab and in production.
 - Chosen by `MODEL_PROVIDER` and `MODEL_NAME`; keys from environment variables only.
 - Structured output is validated; on invalid output: one retry, then a clear error (never a silent partial result).
 
@@ -493,7 +496,12 @@ transcript = speech.transcribe(audio_path, language="en")
 # transcript.meta     -> provider, model, duration_s, latency_ms, cost_estimate
 ```
 
-Providers: `local` (lab Whisper-family service) or `hosted` (a speech-to-text API). Same rules as B5.2.
+- `start`, `end` and `duration_s` are seconds. Segment and word times count from the start of the original audio, also when the audio is processed in chunks.
+- Every segment's `end` is greater than or equal to its `start`.
+- `segments` may be `[]` (for example, silent audio), a segment's `text` may be empty, and `words` may be `[]`.
+- `cost_estimate` follows B5.1 (USD; `0.0` for a local model with no billed cost; `null` when unknown).
+
+Providers: `local` (lab Whisper-family service), `hosted` (a speech-to-text API) or `fake` (automated tests only). Same rules as B5.2.
 
 ## B6. Media paths and lesson manifest (v1)
 
