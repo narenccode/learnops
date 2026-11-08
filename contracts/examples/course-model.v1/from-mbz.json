@@ -1,7 +1,7 @@
 {
   "_note": "Valid example for contracts/course-model.v1.schema.json (PRD B2). ILLUSTRATIVE: hand-written and fictional, not produced from a real Moodle backup. Its shape has not been checked against Moodle 4.5 or 5.3. For contract testing only.",
   "schema": "learnops.course-model/v1",
-  "source": { "kind": "mbz" },
+  "source": { "kind": "mbz", "timezone": null },
   "course": {
     "shortname": "DEMO-AI-101",
     "fullname": "Build an AI Assistant",

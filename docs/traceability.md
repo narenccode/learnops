@@ -145,7 +145,8 @@ Structural schema validation only. These tests do not implement CK-01 to CK-13. 
 |---|---|---|
 | The schema is valid Draft 2020-12 and both examples validate | B.0 | `test_schema_is_a_valid_draft_2020_12_schema`, `test_example_is_valid` |
 | Required fields, types and enums on every object | B2 | `test_missing_required_field_is_rejected`, `test_wrong_type_or_value_is_rejected` |
-| A package source states its mode and its timezone (the timezone location is proposed); an assignment has marking fields, other types need none | B1.4, B2 | `test_package_source_without_mode_is_rejected`, `test_package_source_without_timezone_is_rejected`, `test_missing_required_field_is_rejected`, `test_non_assignment_needs_no_marking_fields` |
+| Package sources require a mode and a non-empty timezone; an `.mbz` source requires timezone to be null | B1.4, B2 | `test_package_source_without_mode_is_rejected`, `test_package_source_without_timezone_is_rejected`, `test_package_source_with_null_timezone_is_rejected`, `test_package_source_with_empty_timezone_is_rejected`, `test_example_is_valid`, `test_missing_required_field_is_rejected`, `test_wrong_type_or_value_is_rejected` |
+| Assignment activities have marking fields; other activity types need none | B1.4, B2 | `test_missing_required_field_is_rejected`, `test_non_assignment_needs_no_marking_fields` |
 | Unknown fields are accepted at every level | B.0, EXT-02 | `test_unknown_field_is_accepted` |
 | The schema accepts a broken course, with at least one sample input per CK rule and an unknown activity type. For CK-07 this covers missing protected items only (see below). | C2.3, C2.8 | `test_broken_course_still_validates`, `test_protected_idnumbers_are_allowed_unlike_b1` |
 | Permitted null and absent values, and `cm = -1` in availability | B2 | `test_valid_variation_is_accepted`, `test_sections_only_package_is_valid` |
@@ -163,7 +164,11 @@ any rule works.
   represented. They do not establish detection of duplicated or changed protected items. B2 holds
   no body text or attached files, so a reference-model comparison cannot see changes to them.
 - Treating a null `visible` or `completion_enabled` as "cannot judge" (the checker's job), and
-  resolving `cm = -1` (pending verification on Moodle 4.5 and 5.3).
+  resolving `cm = -1` by decision 0003 #5: the nearest earlier activity in course order with
+  manual or automatic completion tracking. Activities without tracking are skipped. If no
+  eligible activity exists, the condition cannot be met; an unresolved `-1` is reported as
+  CK-04. This resolution is documented but not automatically enforced yet; Moodle 4.5 and
+  5.3 lab verification remains pending.
 - Unique `cmid` values within a model (the model builder's job, FR-C-01).
 - The inner form of `availability`, which belongs to Moodle.
 - Comparing a package model with a `.mbz` model: `cmid` values differ, so FR-C-05 compares by

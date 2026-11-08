@@ -309,7 +309,6 @@ ACCEPTED = {
     "previous-activity reference in availability": set_at(
         WEEK2 + ("availability", "c", 0, "cm"), -1
     ),
-    "mbz source with a timezone": set_at(SOURCE + ("timezone",), "Asia/Kolkata"),
 }
 
 
@@ -324,7 +323,7 @@ def test_valid_variation_is_accepted(doc: Doc, name: str) -> None:
 # Each object in the model, with its required fields.
 REQUIRED: dict[Loc, str] = {
     (): "schema source course sections course_completion badges",
-    SOURCE: "kind",
+    SOURCE: "kind timezone",
     COURSE: "shortname completion_enabled",
     WEEK1: "number idnumber visible availability activities",
     PAGE: "type idnumber cmid visible availability completion grade_item",
@@ -357,6 +356,16 @@ def test_package_source_without_timezone_is_rejected(package_doc: Doc) -> None:
     assert (SOURCE, "required") in error_keys(package_doc)
 
 
+def test_package_source_with_null_timezone_is_rejected(package_doc: Doc) -> None:
+    package_doc["source"]["timezone"] = None
+    assert (SOURCE + ("timezone",), "type") in error_keys(package_doc)
+
+
+def test_package_source_with_empty_timezone_is_rejected(package_doc: Doc) -> None:
+    package_doc["source"]["timezone"] = ""
+    assert (SOURCE + ("timezone",), "minLength") in error_keys(package_doc)
+
+
 def test_non_assignment_needs_no_marking_fields(doc: Doc) -> None:
     assert "marking_table" not in doc["sections"][1]["activities"][0]
     assert messages(doc) == []
@@ -369,6 +378,7 @@ WRONG_VALUES: list[tuple[Any, str, list[Loc]]] = [
     ("learnops.course/v1", "const", [("schema",)]),
     ("zip", "enum", [SOURCE + ("kind",)]),
     ("partial", "enum", [SOURCE + ("mode",)]),
+    ("Asia/Kolkata", "type", [SOURCE + ("timezone",)]),
     (2, "enum", [PAGE_COMPLETION + ("tracking",)]),
     ("x", "enum", [PAGE_COMPLETION + ("tracking",)]),
     (

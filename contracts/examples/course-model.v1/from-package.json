@@ -1,5 +1,5 @@
 {
-  "_note": "Valid example for contracts/course-model.v1.schema.json (PRD B2). Hand-written model of the B1 example package in contracts/examples/course-package.v1/. Fictional content for contract testing only. cmid values are synthetic, and synthetic ids and source.timezone are unresolved proposals.",
+  "_note": "Valid example for contracts/course-model.v1.schema.json (PRD B2). Hand-written model of the B1 example package in contracts/examples/course-package.v1/. Fictional content for contract testing only. CMIDs are synthetic, numbered from 1 in document order, and meaningful only within this model. The package timezone is Asia/Kolkata.",
   "schema": "learnops.course-model/v1",
   "source": { "kind": "package", "mode": "full", "timezone": "Asia/Kolkata" },
   "course": {

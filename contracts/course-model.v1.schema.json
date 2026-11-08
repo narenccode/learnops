@@ -39,16 +39,16 @@
     },
     "availability": {
       "type": ["object", "null"],
-      "description": "Moodle's own availability JSON, kept whole so that no information is lost (PRD B2). null means no restriction. A package unlock rule is written in this same form, with its date as a Unix timestamp for 00:00 in the configured site timezone (see source.timezone). In a completion condition, cm = -1 is Moodle's previous-activity reference, not a missing activity, and CK-01 and CK-04 must resolve it before reporting. How Moodle picks that activity is pending verification on Moodle 4.5 and 5.3."
+      "description": "Moodle's own availability JSON, kept whole so that no information is lost (PRD B2). null means no restriction. A package unlock rule is written in this same form, with its date as a Unix timestamp for 00:00 in the configured site timezone (see source.timezone). In completion conditions, cm = -1 means OPTION_PREVIOUS: the nearest earlier activity in course order with manual or automatic completion tracking. Activities without tracking are skipped. If no eligible activity exists, the condition cannot be met. An unresolved -1 is reported as CK-04. This rule is documented but still requires Moodle lab verification."
     },
     "cmid": {
       "type": "integer",
       "minimum": 1,
-      "description": "Moodle's course-module id, which availability conditions, completion criteria and badges use to refer to an activity. Never compare it between models: idnumber is the stable identity. OPEN DECISION: a package has no Moodle id, and the synthetic ids used for packages are unresolved."
+      "description": "Moodle course-module ID used to reference an activity. Never compare CMIDs between models; idnumber is the stable identity. Package-derived models use synthetic positive CMIDs numbered from 1 in document order. Never use 0 or -1. Synthetic CMIDs are local to their own model."
     },
     "source": {
       "type": "object",
-      "description": "OPEN DECISION: not in the PRD key fields. Where the model came from.",
+      "description": "Where the model came from. Kind is mbz or package. OPEN DECISION: the values and requirement for mode are not yet confirmed.",
       "required": ["kind"],
       "properties": {
         "kind": {
@@ -56,16 +56,52 @@
         },
         "mode": {
           "enum": ["full", "sections-only"],
-          "description": "The package's output mode (PRD B1.4). CK-07 needs it, because a sections-only package leaves out the protected items on purpose."
+          "description": "The package's output mode (PRD B1.4). CK-07 needs it because a sections-only package leaves out protected items on purpose."
         },
         "timezone": {
-          "type": "string",
+          "type": ["string", "null"],
           "minLength": 1,
-          "description": "OPEN DECISION: this location is proposed. The guide confirmed that the model records the timezone name, not where. The configured site timezone used to convert package dates, for example Asia/Kolkata for the lab. Required for a package; optional for a .mbz, which already holds timestamps."
+          "description": "The configured site timezone used to convert package dates to 00:00, for example Asia/Kolkata for the lab. Required for all sources: non-empty for package sources and null for mbz sources."
         }
       },
-      "if": { "properties": { "kind": { "const": "package" } }, "required": ["kind"] },
-      "then": { "required": ["mode", "timezone"] }
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "package"
+              }
+            },
+            "required": ["kind"]
+          },
+          "then": {
+            "required": ["mode", "timezone"],
+            "properties": {
+              "timezone": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "mbz"
+              }
+            },
+            "required": ["kind"]
+          },
+          "then": {
+            "required": ["timezone"],
+            "properties": {
+              "timezone": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
     },
     "course": {
       "type": "object",
@@ -86,7 +122,7 @@
         "total_points": {
           "type": ["number", "null"],
           "minimum": 0,
-          "description": "OPEN DECISION: not in the PRD key fields. The target total for CK-03 when the source states one. A .mbz does not, so the target then comes from rule configuration."
+          "description": "Optional course points target. When absent or null, the checker uses the B1 default of 100."
         }
       }
     },
@@ -101,7 +137,7 @@
         },
         "idnumber": {
           "$ref": "#/$defs/idnumber",
-          "description": "OPEN DECISION: the PRD lists this, but Moodle sections are not known to have an idnumber, so it is expected to be null for a .mbz until checked against a real backup."
+          "description": "Nullable section identity. Moodle course_sections has no idnumber field, so mbz-derived models use null. Sections are matched by section number."
         },
         "title": { "$ref": "#/$defs/title" },
         "visible": { "$ref": "#/$defs/visible" },
@@ -119,7 +155,8 @@
       "required": ["tracking"],
       "properties": {
         "tracking": {
-          "enum": ["none", "manual", "automatic"]
+          "enum": ["none", "manual", "automatic"],
+          "description": "Completion tracking mode: none (Moodle value 0), manual (Moodle value 1), or automatic (Moodle value 2)."
         },
         "view": {
           "type": "boolean",
@@ -153,7 +190,7 @@
     },
     "marking_table": {
       "type": "object",
-      "description": "OPEN DECISION: the PRD lists only presence, but CK-09 also compares points.",
+      "description": "Marking table summary with present and points_total. It does not contain a valid field; marking-table validity is checked by CK-09.",
       "required": ["present"],
       "properties": {
         "present": {
@@ -190,7 +227,7 @@
         "media_refs": {
           "type": "array",
           "items": { "type": "string" },
-          "description": "OPEN DECISION: not in the PRD key fields. Every media reference found in the activity, as written, so that CK-12 can report full URLs. Empty means none found; absent means not collected."
+          "description": "Optional. Every media reference found in the activity, as written, so that CK-12 can report full URLs. Empty means none found. If absent, CK-12 cannot judge the activity's media references."
         }
       },
       "if": { "properties": { "type": { "const": "assignment" } }, "required": ["type"] },
