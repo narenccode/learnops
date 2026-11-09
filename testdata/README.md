@@ -8,7 +8,7 @@ Record the source and the licence or consent for every data set here.
   completion checklist in its README). The inventory table below is the only list of lectures.
 - **Status:** PENDING. No lecture has been recorded, no consent has been given and no transcript
   has been typed. The set is **not complete** and must not be used for any measurement yet.
-- **Method (guide decision, recorded in `docs/decisions/0003-b8-5-lecture-videos.md`):**
+- **Method (guide decision, recorded in `docs/decisions/0004-b8-5-lecture-videos.md`):**
   - at least **5** short technical lectures in **Indian English**, together approximately
     **30 minutes** of recording; the acceptance threshold is a total of at least **1800 s**;
   - recorded by the project team for this project (no faculty or NPTEL recordings); each
@@ -23,8 +23,8 @@ Record the source and the licence or consent for every data set here.
 - **Stays out of Git:** the video recordings, any audio extracted from them, and any unreviewed
   or model-made transcript draft. They are kept as described in "Original recording storage"
   below. Only outlines and reviewed reference transcripts are committed.
-- **PRD note:** PRD §B8 still says "≥ 3 h total". The guide is changing it to 30 minutes; until
-  that PRD change is merged, this set follows the guide's decision, not the current PRD text.
+- **PRD note:** PRD §B8 says "≥ 30 min total, enough for the Release 0 baseline" (updated in
+  #47), which matches the guide's decision above.
 
 ### Original recording storage
 
@@ -57,7 +57,7 @@ transcript. `PENDING` means not known yet. The validation test added with this s
 - **SHA-256:** 64 lowercase hexadecimal characters, or `PENDING`;
 - **Outline / Transcript:** paths relative to `testdata/`, in backticks;
 - **Consent:** `PENDING` until the lecture's speaker has a consent line in the decision record,
-  then `` `0003` speaker-NN `` (that speaker's line; several lectures may share it);
+  then `` `0004` speaker-NN `` (that speaker's line; several lectures may share it);
 - **Transcript review:** `pending` until Harshitha has checked the transcript, then `checked`.
 
 The **Status** line above says `PENDING` until every row is complete; then it says `COMPLETE`.

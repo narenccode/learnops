@@ -4,7 +4,7 @@ At least five short technical lectures in Indian English, approximately 30 minut
 (acceptance threshold: at least 1800 s), recorded by the project team for this project (no
 faculty or NPTEL recordings). They are used to measure the caption word error rate of the video
 pipeline (PRD G-6, App-C 7). The method is the guide's
-decision in `docs/decisions/0003-b8-5-lecture-videos.md`. The inventory, one row per lecture, is
+decision in `docs/decisions/0004-b8-5-lecture-videos.md`. The inventory, one row per lecture, is
 the B8.5 table in `testdata/README.md`.
 
 **Status: PENDING.** No lecture has been recorded, no consent has been given and no transcript
@@ -45,7 +45,7 @@ record are per speaker (`speaker-NN`), not per lecture. An ID (`lecture-NN`) sta
 | Outline the speaker talks from | Yes, Apache-2.0 | `lectures/<lecture-id>/outline.md` |
 | Reference transcript, typed or corrected by hand and checked by Harshitha | Yes, Apache-2.0 | `lectures/<lecture-id>/transcript.en.txt` |
 | Inventory: title, speaker, duration, recording file name, SHA-256, review status | Yes | `testdata/README.md`, B8.5 table |
-| Speaker consent lines | Yes | `docs/decisions/0003-b8-5-lecture-videos.md`, `## Consent lines` |
+| Speaker consent lines | Yes | `docs/decisions/0004-b8-5-lecture-videos.md`, `## Consent lines` |
 | Video recordings | **No, never** | See "Where recordings are kept" |
 | Audio extracted from a recording | **No, never** | See "Where recordings are kept" |
 | Any unreviewed transcript draft | **No, never** | Outside Git |
@@ -99,7 +99,7 @@ the original recording can check it later by computing its SHA-256 again and com
 ## Consent
 
 Every speaker gives written consent before their transcript is published, as **one line per
-speaker** in the `## Consent lines` section of `docs/decisions/0003-b8-5-lecture-videos.md`. A
+speaker** in the `## Consent lines` section of `docs/decisions/0004-b8-5-lecture-videos.md`. A
 speaker who gives several lectures writes one line. The speaker takes the next free speaker
 number and writes their own name and the date (YYYY-MM-DD), with exactly this sentence:
 
@@ -112,7 +112,7 @@ The line has this form:
 ```
 
 Each of the speaker's lectures then points to that line in the inventory's Consent column, as
-`` `0003` speaker-NN ``; until then the Consent cell says `PENDING`. The name in the line must be
+`` `0004` speaker-NN ``; until then the Consent cell says `PENDING`. The name in the line must be
 the same as in the inventory's Speaker column. Nobody writes consent for another person.
 
 Before a speaker writes their line, tell them:
@@ -140,7 +140,7 @@ Before a speaker writes their line, tell them:
 
 | | Pending placeholder | Completed entry |
 |---|---|---|
-| Inventory row | Title, Speaker, Duration (s), Recording file, SHA-256 and Consent say `PENDING`; review says `pending` | Real values from the recording and the speaker; Consent says `` `0003` speaker-NN ``; review says `checked` |
+| Inventory row | Title, Speaker, Duration (s), Recording file, SHA-256 and Consent say `PENDING`; review says `pending` | Real values from the recording and the speaker; Consent says `` `0004` speaker-NN ``; review says `checked` |
 | `outline.md` | First line starts with `PENDING` | The speaker's outline; no `PENDING` line |
 | `transcript.en.txt` | First line starts with `PENDING` | The checked reference transcript; no `PENDING` line |
 | Consent line | Not written yet (no line for this speaker) | One line per speaker: their own name, the date (YYYY-MM-DD) and the exact sentence, in the form above |
@@ -158,7 +158,7 @@ For each lecture (`lecture-01` … `lecture-05`):
 - [ ] Inventory: title, speaker, Duration (s) and Recording file filled in
 - [ ] Inventory: SHA-256 filled in
 - [ ] The speaker was told about the interim storage, then wrote their own consent line (once per
-      speaker); the inventory's Consent cell points to it as `` `0003` speaker-NN ``
+      speaker); the inventory's Consent cell points to it as `` `0004` speaker-NN ``
 - [ ] `lectures/<lecture-id>/transcript.en.txt` typed or corrected by hand (placeholder removed)
 - [ ] Transcript checked by Harshitha; inventory says `checked`
 

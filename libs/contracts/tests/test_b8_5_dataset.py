@@ -1,10 +1,10 @@
 """B8.5 lecture video set (PRD B8): the inventory in testdata/README.md and its files.
 
-The method is the guide's decision (docs/decisions/0003-b8-5-lecture-videos.md): at least 5 short
+The method is the guide's decision (docs/decisions/0004-b8-5-lecture-videos.md): at least 5 short
 technical lectures in Indian English, approximately 30 minutes in total (acceptance threshold:
 at least 1800 s), transcripts checked by Harshitha, and one consent line per speaker, written by
 the speaker, with the exact sentence. A speaker who gives several lectures writes one line; each
-lecture's Consent cell points to it (`0003` speaker-NN). The B8.5 table in testdata/README.md is
+lecture's Consent cell points to it (`0004` speaker-NN). The B8.5 table in testdata/README.md is
 the only list of lectures; this file parses it directly.
 
 A set is PENDING (placeholders allowed) or COMPLETE (every value real). Problems come in two
@@ -14,7 +14,7 @@ true: COMPLETE with any gap fails, and so does PENDING with no gap.
 AUTOMATED here:
   * errors: the ten fixed columns; at least 5 rows with unique `lecture-NN` ids; every cell in its
     documented form (PENDING or: integer seconds, a bare file name, 64 lowercase hex SHA-256, the
-    lecture's own outline/transcript path, `0003` speaker-NN, pending/checked); referenced files
+    lecture's own outline/transcript path, `0004` speaker-NN, pending/checked); referenced files
     exist; a placeholder transcript is not `checked`; the decision record states the exact
     sentence and has a `## Consent lines` section whose lines are unique and well formed (PENDING
     or name, valid date, exact sentence); a referenced consent line exists and carries the
@@ -48,7 +48,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[3]
 TESTDATA_DIR = ROOT / "testdata"
 SET_NAME = "b8-5-lecture-videos"
-DECISION_RECORD = ROOT / "docs" / "decisions" / "0003-b8-5-lecture-videos.md"
+DECISION_RECORD = ROOT / "docs" / "decisions" / "0004-b8-5-lecture-videos.md"
 
 COLUMNS = (
     "ID",
@@ -78,7 +78,7 @@ SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 STATUS_RE = re.compile(r"^- \*\*Status:\*\* (\w+)\.", re.MULTILINE)
 SET_STATUS_RE = re.compile(r"^\*\*Status: (\w+)\.\*\*", re.MULTILINE)
 TOTAL_RE = re.compile(r"^\*\*Total recorded duration:\*\* (.+)$", re.MULTILINE)
-CONSENT_CELL_RE = re.compile(r"^0003 (speaker-\d{2})$")
+CONSENT_CELL_RE = re.compile(r"^0004 (speaker-\d{2})$")
 CONSENT_LINE_RE = re.compile(r"^- (speaker-\d{2}): (.+)$", re.MULTILINE)
 # The name ends at ", <YYYY-MM-DD>: \"", so a name may itself contain commas ("Rao, Asha").
 CONSENT_GIVEN_RE = re.compile(
@@ -206,7 +206,7 @@ def check_consent_record(
     """Speaker id -> name for given consent, None for PENDING."""
     if decision is None:
         gaps.append(
-            "decision record docs/decisions/0003-b8-5-lecture-videos.md is missing"
+            "decision record docs/decisions/0004-b8-5-lecture-videos.md is missing"
         )
         return {}
     # The quoted statement line itself: the sentence inside consent lines does not count.
@@ -298,7 +298,7 @@ def check_consent_cell(
     if cell == PENDING:
         gaps.append(f"{lid}: no consent line referenced yet")
     elif match is None:
-        errors.append(f"{lid}: Consent must be {PENDING} or `0003` speaker-NN")
+        errors.append(f"{lid}: Consent must be {PENDING} or `0004` speaker-NN")
     elif record_exists and match.group(1) not in consents:
         errors.append(f"{lid}: {match.group(1)} has no line under '## Consent lines'")
     elif consents.get(match.group(1)) is None:
@@ -448,7 +448,7 @@ def complete_draft() -> Draft:
             "SHA-256": SHA,
             "Outline": f"`{SET_NAME}/lectures/lecture-{n:02d}/outline.md`",
             "Transcript": f"`{SET_NAME}/lectures/lecture-{n:02d}/transcript.en.txt`",
-            "Consent": f"`0003` speaker-{sid:02d}",
+            "Consent": f"`0004` speaker-{sid:02d}",
             "Transcript review": "checked",
         }
         for n, (name, sid) in enumerate(SPEAKERS, start=1)
@@ -553,7 +553,7 @@ def test_a_pending_set_has_no_errors_but_is_not_complete(tmp_path: Path) -> None
 def test_a_partly_filled_pending_set_has_no_errors(tmp_path: Path) -> None:
     draft = replace(pending_draft(), consent_lines=(f"speaker-01: Speaker A, {GIVEN}",))
     draft = draft.cell(0, "Speaker", "Speaker A").cell(
-        0, "Consent", "`0003` speaker-01"
+        0, "Consent", "`0004` speaker-01"
     )
     assert problems(build(tmp_path, draft.cell(0, "Duration (s)", "412"))) == []
 
@@ -618,7 +618,7 @@ BROKEN: dict[str, Callable[[Draft], Draft]] = {
     "no-consent-section": lambda d: replace(d, section=False),
     "no-exact-statement": lambda d: replace(d, statement=False),
     "consent-cell-format": lambda d: d.cell(0, "Consent", "lecture-01"),
-    "consent-cell-unknown-speaker": lambda d: d.cell(0, "Consent", "`0003` speaker-09"),
+    "consent-cell-unknown-speaker": lambda d: d.cell(0, "Consent", "`0004` speaker-09"),
     "consent-not-given": lambda d: first_line(d, "speaker-01: PENDING"),
     "consent-sentence-changed": lambda d: first_line(
         d, f'speaker-01: Speaker A, 2026-11-02: "{CONSENT_SENTENCE}."'
@@ -633,7 +633,7 @@ BROKEN: dict[str, Callable[[Draft], Draft]] = {
         d, consent_lines=(*d.consent_lines, d.consent_lines[0])
     ),
     "one-speaker-two-lines": lambda d: replace(
-        d.cell(1, "Consent", "`0003` speaker-04"),
+        d.cell(1, "Consent", "`0004` speaker-04"),
         consent_lines=(*d.consent_lines, f"speaker-04: Speaker A, {GIVEN}"),
     ),
     "unused-consent-line": lambda d: replace(

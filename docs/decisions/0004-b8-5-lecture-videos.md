@@ -42,6 +42,6 @@ One line per speaker, written by that speaker. A speaker who gives more than one
 
 `- speaker-NN: <speaker's name>, <YYYY-MM-DD>: "used to test speech recognition; video stays in the lab; transcript published under Apache-2.0"`
 
-Each lecture's row in the B8.5 inventory (`testdata/README.md`) points to its speaker's line as `0003` speaker-NN. Nobody writes a consent line for another person.
+Each lecture's row in the B8.5 inventory (`testdata/README.md`) points to its speaker's line as `0004` speaker-NN. Nobody writes a consent line for another person.
 
 No consent lines yet.
