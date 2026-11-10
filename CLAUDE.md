@@ -30,7 +30,7 @@ release you are on, unless the guide says otherwise.
 7. **Store media as relative paths only**, never full URLs (PRD C-08).
 8. **Protected course items** (final project, course feedback, badge and completion criteria) are never generated, changed or duplicated (PRD §B1.4).
 9. Every CLI supports `--dry-run`, `--check`, and has a documented undo.
-10. Licences: Apache-2.0 for our code; dependencies must be MIT, BSD or Apache-2.0 (LGPL only as an unmodified library). Check before adding one.
+10. Licences (PRD C-11): Apache-2.0 for our code; dependencies need a permissive OSI-approved licence (MIT, BSD, Apache-2.0, ISC, PSF-2.0 and similar); LGPL or MPL-2.0 only unmodified; no GPL or AGPL. Runtime dependencies go in the root `requirements.txt`, development and CI ones in `requirements-dev.txt`: one pinned version per package, with its licence as a comment. Check before adding one.
 
 ## 3. Shared contracts (PRD Part B)
 
