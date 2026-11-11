@@ -77,7 +77,8 @@ Q37: PR #27.
 
 FR-G-01 ("Fetch assignments, the marking table and submissions … through B4") and FR-G-06 ("Write
 only approved drafts to Moodle via B4"), both Release 4, are deliberately not in the table above. They
-need `libs/moodle_ws` and the grading module, which do not exist yet.
+need the grading module, which does not exist yet, and a real `libs/moodle_ws` transport: the library
+is a skeleton that cannot call Moodle (see the `libs/moodle_ws` section below).
 
 ### Enforced by automated tests
 
@@ -98,10 +99,10 @@ Test names are in `test_moodle_ws_v1.py`.
 
 | Rule | PRD |
 |---|---|
-| Only the functions listed in the contract are called (`libs/moodle_ws` builds its allow-list from the example) | B4 |
+| Only the functions listed in the contract are called. `libs/moodle_ws` builds its allow-list from the example and refuses any other function before the transport (`test_allowlist.py`: `test_the_list_equals_the_contract_example`, `test_anything_else_is_refused_before_the_transport`). Not enforced against a real Moodle: there is no real transport yet | B4 |
 | One service account per site, with a token restricted to those functions and minimum capabilities | B4, SEC-03 |
 | The token is stored only in the environment | SEC-03, C-06 |
-| A grade write uses workflow state `readyforrelease`, never `released`; only approved drafts are written | B4, C-09 |
+| A grade write uses workflow state `readyforrelease`, never `released`: `libs/moodle_ws` refuses anything else before the transport (`test_client.py`: `test_a_grade_write_with_readyforrelease_is_sent`, `test_a_grade_write_that_breaks_the_draft_rule_is_refused`, `test_released_is_refused_at_any_depth_on_both_write_functions`). Only approved drafts are written: not enforced, it needs the grading module (Release 4) | B4, C-09 |
 | Each function exists with the parameters used on Moodle 4.5 and 5.3 (all 10 lab checks are still open) | B4, App-C 1 |
 
 Open: when the lab Moodle sites are available (all ten checks in `moodle-ws.v1.md` §5 wait for
