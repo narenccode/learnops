@@ -1,0 +1,80 @@
+# B8.2 sample course: a fictional four-week project-based course (PRD B8.2, following B1).
+# Fictional test data only. No real learner data, no real course content (PRD C-07).
+# It holds the four weekly sections only. The protected items (final project, course feedback,
+# completion criteria, badge) belong to the B8.1 template and are never written here (PRD B1.4).
+schema: learnops.course/v1
+course:
+  shortname: SAMPLE-DOC-101
+  fullname: "Build a Document Question Assistant"
+  slug: build-document-assistant
+  total_points: 100
+  mode: full
+sections:
+  - number: 1
+    title: "Week 1 — Publish a starter assistant"
+    idnumber: wk-01
+    unlock:
+      after: null
+    activities:
+      - type: page
+        idnumber: wk-01-guide
+        title: "Week 1 guide"
+        body: weeks/01-guide.md
+      - type: assignment
+        idnumber: wk-01-task
+        title: "Week 1 task"
+        body: weeks/01-task.md
+        points: 25
+        submission: [onlinetext, file]
+        completion: submit
+  - number: 2
+    title: "Week 2 — Answer from a document"
+    idnumber: wk-02
+    unlock:
+      after: wk-01-task
+    activities:
+      - type: page
+        idnumber: wk-02-guide
+        title: "Week 2 guide"
+        body: weeks/02-guide.md
+      - type: assignment
+        idnumber: wk-02-task
+        title: "Week 2 task"
+        body: weeks/02-task.md
+        points: 25
+        submission: [onlinetext, file]
+        completion: submit
+  - number: 3
+    title: "Week 3 — Test it and fix weak answers"
+    idnumber: wk-03
+    unlock:
+      after: wk-02-task
+    activities:
+      - type: page
+        idnumber: wk-03-guide
+        title: "Week 3 guide"
+        body: weeks/03-guide.md
+      - type: assignment
+        idnumber: wk-03-task
+        title: "Week 3 task"
+        body: weeks/03-task.md
+        points: 25
+        submission: [onlinetext, file]
+        completion: submit
+  - number: 4
+    title: "Week 4 — Write it up and share it"
+    idnumber: wk-04
+    unlock:
+      after: wk-03-task
+    activities:
+      - type: page
+        idnumber: wk-04-guide
+        title: "Week 4 guide"
+        body: weeks/04-guide.md
+      - type: assignment
+        idnumber: wk-04-task
+        title: "Week 4 task"
+        body: weeks/04-task.md
+        points: 25
+        submission: [onlinetext, file]
+        completion: submit
