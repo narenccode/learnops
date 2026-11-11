@@ -1,7 +1,8 @@
 # B7 H5P practice output (v1)
 
-**Status:** Draft. Not approved. **Provisional: it cannot be frozen** until the H5P library versions
-are verified in the lab (guide's answer to question 5, Issue #44; PRD App-C item 5).
+**Status:** Draft. Not approved. The H5P library versions were verified in the lab on 2026-11-11
+(the guide's lab check, PRD App-C item 5) and are pinned in section 3. The open decisions that remain
+are marked OPEN DECISION in sections 4 and 6; whether they block the freeze is the guide's decision.
 **Owner:** Student 1. **Used by:** Module 1 (Course Studio), Module 2 (course checker, for CK-11) and
 Module 4 (video pipeline); M2 was added to the PRD B.0 table in this pull request (guide, Issue #44).
 **Source:** PRD §B7, B1.1, B1.2, B6.2, C-08, C-09, FR-S-12, FR-V-14, FR-C-03 (CK-11, CK-12). Where
@@ -35,33 +36,42 @@ B7 does **not** cover:
 | 2 | B1 gets a `file` field on `h5p` activities: a relative path ending in `.h5p`, same rule as `body`. Same pull request. | Section 4, B1 schema |
 | 3 | No ordering field. The list order is the order; B7 says the `h5p` entry comes right after the guide Page. Applied to ordinary optional practice only; video checkpoints stay open (sections 4 and 6). | Section 4 |
 | 4 | B7 is `h5p-practice.v1.md` plus a small schema and an example listing the allowed content types, like B4. | Sections 3 and 8 |
-| 5 | H5P library versions are provisional, marked "to verify in the lab". B7 cannot freeze before they are known. | Section 3 |
+| 5 | H5P library versions were provisional, marked "to verify in the lab". The guide's lab check of 2026-11-11 verified them on both lab sites. They are pinned in section 3 and recorded in `docs/decisions/0005-h5p-content-types.md`. | Section 3 |
 | 6 | Do not define a second format. `cues.json` belongs to B6. Which `ref` kinds it allows is for Student 4 to say. | Section 6 |
 | 7 | No real `.h5p` file in the repository. The example is a `course.yaml` that points to a path. This rule is written here because `.gitignore` does not block `.h5p`. | Section 5 |
 
 ## 3. Content types
 
-PRD B7 names these content types, and this file uses its wording. The schema
-(`h5p-practice.v1.schema.json`) allows only these four phrases, each at most once, and its example
-(`examples/h5p-practice.v1.content-types.json`) lists all four.
+PRD B7 names these content types, and this file uses its wording. The guide's lab check of
+2026-11-11 (both lab sites, Moodle 4.5 and 5.3) found the five H5P libraries below installed and
+runnable. The schema (`h5p-practice.v1.schema.json`) allows only these five names, each at most
+once, and pins each one to its library (`machine_name`) and exact `version`. Its example
+(`examples/h5p-practice.v1.content-types.json`) lists all five.
 
-| Content type (PRD B7 wording) | Where it may be used | H5P library and version |
-|---|---|---|
-| question set | Courses (checkpoints) | **to verify in the lab** |
-| drag-the-words or drag-and-drop / ordering | Courses | **to verify in the lab** |
-| branching scenario | Courses | **to verify in the lab** |
-| interactive video | Lab demonstrations only, with openly licensed videos | **to verify in the lab** |
+| Content type (PRD B7 wording) | H5P library (machine name) | Version | Where it may be used |
+|---|---|---|---|
+| question set | `H5P.QuestionSet` | 1.21.14 | Courses (checkpoints) |
+| drag-the-words | `H5P.DragText` | 1.10.50 | Courses |
+| drag-and-drop | `H5P.DragQuestion` | 1.15.37 | Courses (also used where ordering is needed) |
+| branching scenario | `H5P.BranchingScenario` | 1.11.2 | Courses |
+| interactive video | `H5P.InteractiveVideo` | 1.28.37 | Lab demonstrations only, with openly licensed videos |
 
-- **No H5P machine name and no version is invented here. OPEN DECISION: library versions.** The
-  exact library versions available on Moodle 4.5 and 5.3 are verified in the lab (PRD App-C item 5)
-  and added if needed. Until then B7 cannot be frozen. Results are recorded in `docs/decisions/`, as
-  for B4.
+- **Pinned for Release 0 (guide, PR #54, 2026-11-11).** These are the versions that Moodle's own
+  scheduled task downloaded from h5p.org on 2026-11-11. h5p.org may publish newer ones, so B7 pins
+  these exact versions for the Release 0 tests, and a change is made only through a
+  `/contract-change`. The result is recorded in `docs/decisions/0005-h5p-content-types.md` (PRD
+  App-C item 5).
+- **Two entries, and one type per practice item.** "drag-the-words" and "drag-and-drop" are two
+  separate H5P libraries, so they are two entries. Each practice item uses one of them, and in
+  general one of the five types.
+- **Ordering is not a separate content type in v1.** Where ordering is needed, it is done with
+  Drag and Drop. A later release can add a type as an optional entry (an additive change, PRD B.0
+  rule 2).
 - **Interactive video is for lab demonstrations only** (PRD B7; see the table). The schema does not
   mark this; it is a rule of this text and is not enforced (section 8). A boolean field in the data
   was considered and left out because no answer approves it; it is a question for reviewers.
-- **OPEN DECISION: the second row.** The PRD says "drag-the-words or drag-and-drop / ordering". The
-  schema keeps that phrase as one literal entry and does not decide whether it is one content type
-  or a choice between several. The lab check and the guide decide.
+- The schema checks the names and the pins. It does not check that an `.h5p` file really uses one
+  of these libraries at that version (section 8).
 
 ## 4. The practice item in a course package
 
@@ -100,6 +110,7 @@ defined by B1 (`contracts/course-package.v1.schema.json`), not by this file:
 | R3 | **AI output is a draft.** A practice item drafted with AI reaches learners only after a mentor approves it. In Studio the mentor can keep, edit, regenerate or drop each draft. | PRD C-09, FR-S-12; root `CLAUDE.md` §2 rule 5 |
 | R4 | Media is referenced by a **relative path**, never a full URL. | PRD C-08; root `CLAUDE.md` §2 rule 7 |
 | R5 | **No real `.h5p` file is kept in the repository.** Examples and tests point to a path only. `.gitignore` does not block `.h5p`, so this rule is stated here and checked by a test. | Guide, Issue #44 (answer 7); root `CLAUDE.md` §2 rule 4 |
+| R6 | A practice item uses **one** of the content types in section 3. This is not enforced: the content type is inside the `.h5p` file, and `course.yaml` holds only a path to it. | Guide, PR #54 (2026-11-11) |
 
 PRD FR-S-12's review card (question, correct answer, distractors, explanation) is behaviour of
 Studio. **B7 v1 defines no JSON structure for a draft or a review card.**
@@ -149,8 +160,8 @@ B6 schema says otherwise, the B6 schema wins and this block is corrected.
 
 "Not enforced" means nothing in the repository checks it today. The rules that schemas and tests do
 enforce (`h5p` as an allowed activity type and its `graded` and `file` fields in the B1 schema, the
-content-type list, the "nothing invented" rules, the example package, and the rule of no `.h5p`
-file) are listed with their tests and PRD references in `docs/traceability.md`, section "B7 H5P
+pinned content-type list with its machine names and versions, the example package, and the rule of
+no `.h5p` file) are listed with their tests and PRD references in `docs/traceability.md`, section "B7 H5P
 practice output contract". The placement and the standard week of the example package are checked
 on that example only, not on packages in general.
 
@@ -162,9 +173,10 @@ model, B2, where PRD B7 says "the checker enforces this"); CK-12, media referenc
 automatically enforced"): placement (section 4), video checkpoints (sections 4 and 6), whether the
 file named by `file` exists (section 4), interactive video only in lab demonstrations (section 3),
 `cues.json` entries (section 6), the standard week of one Page and one Assignment (B1.2 rule 1), the
-content type of the `.h5p` file, and mentor approval of AI drafts (a process rule of Studio).
+content type, library and version the `.h5p` file really uses, and mentor approval of AI drafts (a
+process rule of Studio).
 
 **Held rule `h5p_files_not_checked` (B7).** The package validator (`libs/contracts`) lists it in every
 report. It does not look for the `.h5p` file, does not check that it is valid and does not read the
-content type inside it. So "no errors" does not mean the file was found, and it does not mean that
+content type, library or version inside it. So "no errors" does not mean the file was found, and it does not mean that
 interactive video (lab demonstrations only) was not used.

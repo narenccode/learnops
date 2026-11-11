@@ -121,14 +121,17 @@ Left out because the PRD does not establish the mapping:
 Files: `contracts/h5p-practice.v1.md` (normative text), `contracts/h5p-practice.v1.schema.json`,
 `contracts/examples/h5p-practice.v1.content-types.json`, `contracts/examples/h5p-practice.v1/`
 (an example package, with no `.h5p` file), the `file` field in
-`contracts/course-package.v1.schema.json`, and the tests `test_h5p_practice_v1.py` and
-`test_course_package_v1.py` in `libs/contracts/tests/`. B7 has no requirement ID of its own in the
+`contracts/course-package.v1.schema.json`, the decision record
+`docs/decisions/0005-h5p-content-types.md` (the lab check, PRD App-C item 5), and the tests
+`test_h5p_practice_v1.py` and `test_course_package_v1.py` in `libs/contracts/tests/`. B7 has no
+requirement ID of its own in the
 PRD (it is a contract, PRD B.0). It is used by FR-S-12 and FR-V-14 (Release 5, stretch) and by
 FR-C-03 CK-11 (Release 1). No row in the table at the top maps to it.
 
-**Status: draft, not approved, and it cannot be frozen** until the H5P library versions are
-verified in the lab (PRD App-C item 5; guide's answer 5 on Issue #44). The B1 section above is on
-main; the B1 `file` field added with B7 is covered in the first table below.
+**Status: draft and not approved.** The H5P library versions were verified in the lab on 2026-11-11
+(the guide's lab check, reported on this pull request; PRD App-C item 5) and are pinned in the B7
+schema. Whether the open decisions below block the freeze is the guide's decision. The B1 section
+above is on main; the B1 `file` field added with B7 is covered in the first table below.
 
 ### Enforced by the B1 schema; tests in `test_course_package_v1.py`
 
@@ -145,10 +148,11 @@ Rows that say "example only" check the example package, not packages in general.
 
 | Rule | PRD | Test(s) |
 |---|---|---|
-| The content-type schema is valid and its example validates; bad lists are rejected: invented names, other capitals, machine names, half a phrase, a name listed twice, a missing name, a wrong schema name, an empty list | B.0 rule 1 | `test_schema_is_valid_and_example_validates`, `test_invalid_content_type_list_is_rejected`, `test_missing_root_field_is_rejected`, `test_unknown_fields_are_accepted` |
-| The schema enum holds exactly the four phrases PRD B7 uses, and the example lists all four; the contract text says interactive video is for lab demonstrations only (a rule of the text, not a schema field) | B7 | `test_schema_enum_and_example_hold_exactly_the_prd_phrases` |
-| The schema and example have no key `version`, `library`, `libraries` or `machine_name`, no string like `H5P.<letter>`, and no key `cue`, `cues` or `ref`. Other ways to write a version are not detected | App-C item 5, B6.2 | `test_no_listed_machine_name_version_or_cue_key_is_defined` |
-| Every content type is marked "to verify in the lab"; the text says it cannot be frozen, keeps its open decisions marked, and says practice is optional and never graded | B7 | `test_text_marks_versions_open_decisions_and_the_draft_rules` |
+| The content-type schema is valid and its example validates; bad lists are rejected: invented names, other capitals, the old PRD phrase or a machine name as a name, a name listed twice, a missing name, `machine_name` or `version`, a wrong or lower-case machine name, a wrong version, a `v` prefix, a version that is a number, the Drag the Words and Drag and Drop versions or libraries swapped, a wrong schema name, an empty list. Each of the five types alone is valid, and unknown fields are accepted | B.0 rule 1, B7 | `test_schema_is_valid_and_example_validates`, `test_invalid_content_type_list_is_rejected` (22 cases), `test_a_list_with_one_pinned_type_is_valid`, `test_missing_root_field_is_rejected`, `test_unknown_fields_are_accepted` |
+| The schema allows exactly the five names, requires `name`, `machine_name` and `version`, and pins each name to the library and exact version of the guide's lab check (written out in the test as `PINNED`); the names are words PRD B7 uses; the example lists exactly the five pinned entries; the contract text says interactive video is for lab demonstrations only (a rule of the text, not a schema field) | B7, App-C item 5 | `test_schema_pins_exactly_the_guides_table`, `test_example_lists_exactly_the_pinned_entries` |
+| The contract text table and the decision record hold the same five pairs as the test, so a swapped version in any of the four places fails; the text, the schema and this file point to the decision record | App-C item 5 | `test_contract_text_and_decision_record_agree_with_the_pins`, `test_text_schema_and_traceability_point_to_the_decision_record` |
+| The schema and example define no key `cue`, `cues` or `ref` (cues belong to B6), and the text says B7 defines no second format | B6.2 | `test_no_cue_key_is_defined_and_cues_are_left_to_b6` |
+| The text no longer marks a content type "to verify in the lab" and no longer lists the two decisions the lab check settled; it keeps the other open decisions marked, says each practice item uses one type, that ordering is done with Drag and Drop, that a later type is an optional entry and that a version change needs a `/contract-change`, and says practice is optional and never graded | B7 | `test_text_pins_the_types_and_keeps_only_the_open_decisions_still_open` |
 | `file` is defined in the `h5p` branch of the B1 schema only | Issue #44 answer 2 | `test_file_is_defined_in_the_h5p_branch_only` |
 | Example only: the package validates against B1; its week has one Page and one Assignment; its ordinary practice item is ungraded, names a lowercase `.h5p` path that does not exist, and comes right after the guide Page | B1, B7 | `test_example_package_validates_against_b1`, `test_example_week_is_standard_with_an_optional_practice_item` |
 | No `.h5p` file exists anywhere in the repository | Issue #44 answer 7 | `test_no_h5p_file_is_kept_in_the_repository` |
@@ -161,16 +165,18 @@ Rows that say "example only" check the example package, not packages in general.
 | Where a video checkpoint goes | B7 | Open decision; PRD B7 says "after the video" |
 | A practice (H5P) activity has no grade item | B7 | CK-11 (FR-C-03, Release 1), on the course model (B2) |
 | Media referenced by a full fixed URL instead of a relative path | C-08 | CK-12 (FR-C-03, Release 1) |
-| The file named by `file` exists, is valid, and uses an allowed content type | B7 | Held rule `h5p_files_not_checked`, listed in every report; no check exists (`test_h5p_files_are_listed_as_not_checked_and_never_looked_for`) |
+| The file named by `file` exists, is valid, and uses one of the pinned libraries at its pinned version | B7 | Held rule `h5p_files_not_checked`, listed in every report; no check exists (`test_h5p_files_are_listed_as_not_checked_and_never_looked_for`) |
 | Interactive video only in lab demonstrations | B7 | A rule of the contract text, named in the same held rule; no check exists |
 | AI-drafted items are approved by a mentor before they reach learners | C-09, FR-S-12 | A process rule of Studio, not a data rule |
 | `cues.json` entries are valid | B6.2, FR-V-14 | The B6 cues schema does not exist yet. Student 4 proposes `type: "h5p"` with `ref` = the practice item's `idnumber`; this is provisional, quoted in B7 section 6, and not enforced here |
 
 ### Open decisions and not mapped
 
-Open: H5P library versions and whether "drag-the-words or drag-and-drop / ordering" is one type
-(until the lab check, App-C item 5); the `ref` kinds and the cue fields (Student 4, in the B6 cues
-schema, still to come; her `h5p` + `idnumber` encoding is only a proposal); several practice items in
-one week and video checkpoint placement (the guide has not decided; B7 makes no rule). Not mapped: a
+Closed by the guide's lab check of 2026-11-11 (App-C item 5; `docs/decisions/0005-h5p-content-types.md`):
+the H5P library versions, and whether "drag-the-words or drag-and-drop / ordering" is one type (it is
+two entries). Open: the `ref` kinds and the cue fields (Student 4, in the B6 cues schema, still to
+come; her `h5p` + `idnumber` encoding is only a proposal); several practice items in one week and
+video checkpoint placement (the guide has not decided; B7 makes no rule); and whether a data field
+should mark interactive video as lab-only (a question for reviewers). Not mapped: a
 row, demo step and Bloom level for FR-S-12 and FR-V-14, because the PRD does not say schema tests
 count towards them. This pull request adds M2 to the B7 "Used by" row in PRD B.0 (guide, Issue #44).

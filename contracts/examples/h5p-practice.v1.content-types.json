@@ -1,9 +1,10 @@
 {
   "schema": "learnops.h5p-practice/v1",
   "content_types": [
-    { "name": "question set" },
-    { "name": "drag-the-words or drag-and-drop / ordering" },
-    { "name": "branching scenario" },
-    { "name": "interactive video" }
+    { "name": "question set", "machine_name": "H5P.QuestionSet", "version": "1.21.14" },
+    { "name": "drag-the-words", "machine_name": "H5P.DragText", "version": "1.10.50" },
+    { "name": "drag-and-drop", "machine_name": "H5P.DragQuestion", "version": "1.15.37" },
+    { "name": "branching scenario", "machine_name": "H5P.BranchingScenario", "version": "1.11.2" },
+    { "name": "interactive video", "machine_name": "H5P.InteractiveVideo", "version": "1.28.37" }
   ]
 }

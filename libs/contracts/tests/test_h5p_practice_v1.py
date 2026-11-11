@@ -2,13 +2,14 @@
 the example course package.
 
 AUTOMATED here:
-  * the schema is valid and the content-type example validates; the schema allows only the four
-    PRD B7 phrases (an enum, so invented names, other capitals and machine names are rejected)
-    and each at most once; a test checks that the enum equals the phrases in the PRD B7 text;
-  * the schema and example contain no key named version, library, libraries or machine_name, no
-    string of the form H5P.<letter>, and no key cue, cues or ref. Other spellings of a version are
-    NOT detected; the contract text marks every content type "to verify in the lab", keeps its
-    open decisions marked and says it cannot be frozen;
+  * the schema is valid and the content-type example validates; the schema allows only the five
+    content types below, each at most once, and pins each to its H5P library (machine_name) and
+    exact version as reported by the guide's lab check of 2026-11-11 (PRD App-C item 5). A wrong
+    name, machine name or version, and a swapped pair, are rejected. The pins are written out in
+    this file (PINNED) and the schema, the example, the contract text and the decision record
+    must each agree with them;
+  * the schema and example define no cue key (cues.json belongs to B6), and the contract text keeps
+    its other open decisions marked and no longer lists the two the lab check settled;
   * `file` is defined in the h5p branch of the B1 schema only (guide's decision, Issue #44);
   * the example package validates against B1; its ordinary practice item is ungraded, names a
     lowercase .h5p path and comes right after the guide Page; the week keeps one Page and one
@@ -17,9 +18,10 @@ AUTOMATED here:
 
 NOT automated here, so NOT claimed (contract text, section 8): placement and the one-Page,
 one-Assignment week in packages in general (B1.2 rule 1); video checkpoint placement (open); that
-the named file exists or uses an allowed type; the lab-only rule for interactive video; CK-11 and
-CK-12 (Release 1); mentor approval of AI drafts; cues.json contents (the B6 schema does not exist
-yet); library versions and the number of practice items per week.
+the named file exists or really uses a pinned library and version; the lab-only rule for
+interactive video; CK-11 and CK-12 (Release 1); mentor approval of AI drafts; cues.json contents
+(the B6 schema does not exist yet); the number of practice items per week; and the lab check
+itself, which the guide did and this repository holds no evidence of beyond the decision record.
 """
 
 from __future__ import annotations
@@ -42,19 +44,25 @@ ALLOW_LIST_PATH = CONTRACTS / "examples" / "h5p-practice.v1.content-types.json"
 PACKAGE_DIR = CONTRACTS / "examples" / "h5p-practice.v1"
 B1_SCHEMA_PATH = CONTRACTS / "course-package.v1.schema.json"
 PRD_PATH = ROOT / "docs" / "PRD.md"
+DECISIONS_DIR = ROOT / "docs" / "decisions"
+TRACEABILITY_PATH = ROOT / "docs" / "traceability.md"
 
-# The content types of PRD B7, as it writes them. The second is one phrase because whether it is
-# one type or a choice is an open decision.
-CONTENT_TYPES = {
-    "question set",
-    "drag-the-words or drag-and-drop / ordering",
-    "branching scenario",
-    "interactive video",
+# The five content types of B7 with their H5P library (machine name) and exact version, as the
+# guide reported the lab check of 2026-11-11 on both lab sites (Moodle 4.5 and 5.3): PR #54,
+# comment of 2026-11-11 09:19 UTC, PRD App-C item 5. Written out here on purpose, so that the
+# schema, the example, the contract text and the decision record must each agree with it.
+# Drag and Drop is H5P.DragQuestion 1.15.37 and Drag the Words is H5P.DragText 1.10.50: do not
+# swap their versions. The names are the words PRD B7 uses ("drag-the-words or drag-and-drop /
+# ordering" is two types, the guide's decision of 2026-11-11).
+PINNED: dict[str, tuple[str, str]] = {
+    "question set": ("H5P.QuestionSet", "1.21.14"),
+    "drag-the-words": ("H5P.DragText", "1.10.50"),
+    "drag-and-drop": ("H5P.DragQuestion", "1.15.37"),
+    "branching scenario": ("H5P.BranchingScenario", "1.11.2"),
+    "interactive video": ("H5P.InteractiveVideo", "1.28.37"),
 }
 SKIPPED = {".git", ".mypy_cache", ".pytest_cache", ".ruff_cache", ".venv", "venv"}
 SKIPPED |= {"node_modules", "__pycache__"}
-MACHINE_NAME = re.compile(r"H5P\.[A-Za-z]")
-FORBIDDEN_KEYS = {"version", "library", "libraries", "machine_name"}
 
 Doc = dict[str, Any]
 
@@ -78,6 +86,34 @@ def _walk(node: Any) -> list[str]:
     if isinstance(node, list):
         return [s for item in node for s in _walk(item)]
     return [node] if isinstance(node, str) else []
+
+
+def _cells(row: str) -> list[str]:
+    """The cells of a Markdown table row, without the backticks around a code span."""
+    return [cell.strip().strip("`") for cell in row.strip().strip("|").split("|")]
+
+
+def _entry(name: str) -> Doc:
+    machine_name, version = PINNED[name]
+    return {"name": name, "machine_name": machine_name, "version": version}
+
+
+def _without(entry: Doc, key: str) -> Doc:
+    return {k: v for k, v in entry.items() if k != key}
+
+
+def _doc(*entries: Doc) -> Doc:
+    return {"schema": "learnops.h5p-practice/v1", "content_types": list(entries)}
+
+
+def _schema_pins(schema: Doc) -> dict[str, tuple[str, str]]:
+    """name -> (machine_name, version) as the schema pins them, one if/then branch each."""
+    pins: dict[str, tuple[str, str]] = {}
+    for branch in schema["$defs"]["content_type"]["allOf"]:
+        name = branch["if"]["properties"]["name"]["const"]
+        then = branch["then"]["properties"]
+        pins[name] = (then["machine_name"]["const"], then["version"]["const"])
+    return pins
 
 
 @pytest.fixture(scope="module")
@@ -106,6 +142,13 @@ def package() -> Doc:
     return loaded
 
 
+@pytest.fixture(scope="module")
+def record_path() -> Path:
+    found = sorted(DECISIONS_DIR.glob("*-h5p-content-types.md"))
+    assert len(found) == 1, f"expected one H5P decision record, found {found}"
+    return found[0]
+
+
 # --- the schema and the content-type example -----------------------------------------------
 
 
@@ -117,46 +160,79 @@ def test_schema_is_valid_and_example_validates(
     assert [e.message for e in validator.iter_errors(allow_list)] == []
 
 
-def test_schema_enum_and_example_hold_exactly_the_prd_phrases(
-    schema: Doc, allow_list: Doc, text: str
-) -> None:
-    enum = schema["$defs"]["content_type"]["properties"]["name"]["enum"]
-    assert len(enum) == len(set(enum)) and set(enum) == CONTENT_TYPES
+def test_schema_pins_exactly_the_guides_table(schema: Doc, text: str) -> None:
+    definition = schema["$defs"]["content_type"]
+    enum = definition["properties"]["name"]["enum"]
+    assert len(enum) == len(set(enum)) and set(enum) == set(PINNED)
+    assert set(definition["required"]) == {"name", "machine_name", "version"}
+    assert _schema_pins(schema) == PINNED
     prd = _prd_b7_text()
-    assert all(name in prd for name in enum), "a phrase is not written as in PRD B7"
-    names = [item["name"] for item in allow_list["content_types"]]
-    assert sorted(names) == sorted(CONTENT_TYPES)
+    assert all(name in prd for name in enum), "a name is not written as in PRD B7"
     # Lab-only status is a rule of the text, not a schema field (design question for reviewers).
     assert "interactive video only in lab demonstrations" in prd
     row = [r for r in text.splitlines() if r.startswith("| interactive video |")]
     assert len(row) == 1 and "Lab demonstrations only" in row[0]
 
 
-CONTENT_TYPES_LIST = sorted(CONTENT_TYPES)
-CASES: list[tuple[str, Any, str]] = [
-    ("wrong schema name", {"schema": "learnops.h5p-practice/v2"}, "const"),
-    ("no content types", {"content_types": []}, "minItems"),
-    ("content types is not a list", {"content_types": {}}, "type"),
-    ("entry without a name", {"content_types": [{}]}, "required"),
-    ("entry with an empty name", {"content_types": [{"name": ""}]}, "enum"),
-    ("entry with a numeric name", {"content_types": [{"name": 5}]}, "enum"),
-    ("invented name", {"content_types": [{"name": "flashcards"}]}, "enum"),
-    ("wrong capitals", {"content_types": [{"name": "Question Set"}]}, "enum"),
-    ("machine name", {"content_types": [{"name": "H5P.QuestionSet"}]}, "enum"),
-    ("half of the drag phrase", {"content_types": [{"name": "drag-the-words"}]}, "enum"),
-    ("name listed twice", {"content_types": [{"name": "question set"}] * 2}, "maxContains"),
-    ("drag phrase twice", {"content_types": [{"name": CONTENT_TYPES_LIST[1]}] * 2}, "maxContains"),
+def test_example_lists_exactly_the_pinned_entries(allow_list: Doc) -> None:
+    assert allow_list["content_types"] == [_entry(name) for name in PINNED]
+
+
+def test_contract_text_and_decision_record_agree_with_the_pins(
+    text: str, record_path: Path
+) -> None:
+    record = record_path.read_text(encoding="utf-8")
+    for name, (machine_name, version) in PINNED.items():
+        [row] = [r for r in text.splitlines() if r.startswith(f"| {name} |")]
+        assert _cells(row)[1:3] == [machine_name, version], name
+        rows = [r for r in record.splitlines() if r.startswith("| ")]
+        [recorded] = [r for r in rows if f"`{machine_name}`" in r]
+        assert version in _cells(recorded), name
+
+
+def test_text_schema_and_traceability_point_to_the_decision_record(
+    schema: Doc, text: str, record_path: Path
+) -> None:
+    path = f"docs/decisions/{record_path.name}"
+    assert path in " ".join(text.split())
+    assert path in schema["$comment"]
+    assert path in TRACEABILITY_PATH.read_text(encoding="utf-8")
+
+
+Q, TW, DD = _entry("question set"), _entry("drag-the-words"), _entry("drag-and-drop")
+CASES: list[tuple[str, Doc, str]] = [
+    ("wrong schema name", {**_doc(Q), "schema": "learnops.h5p-practice/v2"}, "const"),
+    ("no content types", _doc(), "minItems"),
+    ("content types is not a list", {**_doc(Q), "content_types": {}}, "type"),
+    ("entry without a name", _doc(_without(Q, "name")), "required"),
+    ("entry without a machine_name", _doc(_without(Q, "machine_name")), "required"),
+    ("entry without a version", _doc(_without(Q, "version")), "required"),
+    ("entry with an empty name", _doc({**Q, "name": ""}), "enum"),
+    ("entry with a numeric name", _doc({**Q, "name": 5}), "enum"),
+    ("invented name", _doc({**Q, "name": "flashcards"}), "enum"),
+    ("wrong capitals", _doc({**Q, "name": "Question Set"}), "enum"),
+    ("the old PRD phrase as a name", _doc({**TW, "name": "drag-the-words or drag-and-drop / ordering"}), "enum"),
+    ("a machine name as the name", _doc({**Q, "name": "H5P.QuestionSet"}), "enum"),
+    ("question set listed twice", _doc(Q, Q), "maxContains"),
+    ("drag-the-words listed twice", _doc(TW, TW), "maxContains"),
+    ("machine name of another type", _doc({**Q, "machine_name": "H5P.DragText"}), "const"),
+    ("machine name in lower case", _doc({**Q, "machine_name": "h5p.questionset"}), "const"),
+    ("wrong version", _doc({**Q, "version": "1.21.15"}), "const"),
+    ("version with a v prefix", _doc({**Q, "version": "v1.21.14"}), "const"),
+    ("version is a number", _doc({**Q, "version": 1.21}), "const"),
+    ("drag-the-words with the drag-and-drop version", _doc({**TW, "version": DD["version"]}), "const"),
+    ("drag-and-drop with the drag-the-words version", _doc({**DD, "version": TW["version"]}), "const"),
+    ("drag-the-words with the drag-and-drop library", _doc({**TW, "machine_name": DD["machine_name"]}), "const"),
 ]  # fmt: skip
 
 
 @pytest.mark.parametrize(
-    ("change", "keyword"), [pytest.param(c, k, id=n) for n, c, k in CASES]
+    ("document", "keyword"), [pytest.param(d, k, id=n) for n, d, k in CASES]
 )
 def test_invalid_content_type_list_is_rejected(
-    validator: Draft202012Validator, allow_list: Doc, change: Doc, keyword: str
+    validator: Draft202012Validator, document: Doc, keyword: str
 ) -> None:
-    broken = {**allow_list, **change}
-    assert keyword in {e.validator for e in validator.iter_errors(broken)}
+    assert keyword in {e.validator for e in validator.iter_errors(document)}
 
 
 @pytest.mark.parametrize("field", ["schema", "content_types"])
@@ -167,45 +243,62 @@ def test_missing_root_field_is_rejected(
     assert "required" in {e.validator for e in validator.iter_errors(broken)}
 
 
+@pytest.mark.parametrize("name", list(PINNED))
+def test_a_list_with_one_pinned_type_is_valid(
+    validator: Draft202012Validator, name: str
+) -> None:
+    # The list need not hold all five types.
+    assert [e.message for e in validator.iter_errors(_doc(_entry(name)))] == []
+
+
 def test_unknown_fields_are_accepted(
     validator: Draft202012Validator, allow_list: Doc
 ) -> None:
     extended = {**allow_list, "future": 1}
-    extended["content_types"] = [{**allow_list["content_types"][0], "future": 1}]
+    extended["content_types"] = [{**_entry("question set"), "future": 1}]
     assert [e.message for e in validator.iter_errors(extended)] == []
 
 
-# --- nothing is invented -------------------------------------------------------------------
+# --- cues are B6's, and the text keeps what is still open ----------------------------------
 
 
-def test_no_listed_machine_name_version_or_cue_key_is_defined(
+def test_no_cue_key_is_defined_and_cues_are_left_to_b6(
     schema: Doc, allow_list: Doc, text: str
 ) -> None:
     for document in (schema, allow_list):
         words = _walk(document)
-        assert not {w for w in words if w in FORBIDDEN_KEYS}
-        assert not [w for w in words if MACHINE_NAME.search(w)]
         assert not {w for w in words if w.lower() in {"cue", "cues", "ref"}}
-    assert not MACHINE_NAME.search(text)
     assert "defines no second format" in text  # cues.json is B6's
 
 
-def test_text_marks_versions_open_decisions_and_the_draft_rules(text: str) -> None:
+def test_text_pins_the_types_and_keeps_only_the_open_decisions_still_open(
+    text: str,
+) -> None:
+    prose = " ".join(text.split())  # line wrapping in the Markdown must not matter
     rows = [line for line in text.splitlines() if line.startswith("| ")]
-    for name in CONTENT_TYPES:
+    for name in PINNED:
         row = [r for r in rows if r.startswith(f"| {name} |")]
-        assert len(row) == 1 and "to verify in the lab" in row[0], name
+        assert len(row) == 1 and "to verify in the lab" not in row[0], name
     for phrase in (
-        "cannot be frozen",
-        "OPEN DECISION: library versions",
         "OPEN DECISION: the `ref` kinds",
         "OPEN DECISION: several practice items",
         "OPEN DECISION: video checkpoint placement",
         "Practice is optional",
         "never graded",
         "h5p_files_not_checked",
+        "Each practice item uses one of them",
+        "Ordering is not a separate content type",
+        "optional entry",
+        "/contract-change",
     ):
-        assert phrase in text, phrase
+        assert phrase in prose, phrase
+    # The lab check settled these two (guide, 2026-11-11), and the text no longer lists them.
+    for phrase in (
+        "OPEN DECISION: library versions",
+        "OPEN DECISION: the second row",
+        "cannot be frozen",
+    ):
+        assert phrase not in prose, phrase
 
 
 # --- the B1 side and the example package ---------------------------------------------------
