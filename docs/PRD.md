@@ -136,7 +136,7 @@ The baseline (Releases 0–5) is built so these plug in without rework (§A9).
 | C-08 | Any media URL stored by a tool is a **relative path**, never a full fixed URL (media may be served through expiring signed links). |
 | C-09 | AI output is always a **draft** until a mentor approves it. Grades are never released by a tool. |
 | C-10 | All AI calls go through the shared model interface (§B5); all speech-to-text through the speech interface (§B5.4). |
-| C-11 | Open source under Apache-2.0. Third-party libraries must have compatible licences (MIT, BSD, Apache-2.0; LGPL only as an unmodified library). |
+| C-11 | Open source under Apache-2.0. Third-party dependencies (runtime, development and CI alike) must have a permissive OSI-approved licence (for example MIT, BSD, Apache-2.0, ISC, PSF-2.0); weak copyleft (LGPL, MPL-2.0) only as an unmodified library; no GPL or AGPL. Each dependency's licence is recorded where it is declared (runtime: root `requirements.txt`; development and CI: `requirements-dev.txt`). |
 | C-12 | Students work only inside the lab virtual machines and the lab AI services provided by the guide. |
 
 ## A8. System overview
@@ -583,7 +583,7 @@ url = media_signing.sign(relative_path, ttl_seconds=3600)
 | B8.2 Sample course | A fictional 4-week project-based course package following B1 | Student 1 |
 | B8.3 Planted-error courses | Variants of B8.2, each with known errors from the checker catalogue (§C2.3), with an answer file | Student 2 |
 | B8.4 Synthetic submissions | ≥ 30 submissions (repo + demo link + short report) across quality levels, with reference grades from at least one mentor | Student 3 |
-| B8.5 Lecture videos | ≥ 5 Indian-English technical lectures (≥ 3 h total) with reference transcripts; recorded with written consent or openly licensed (licence verified and recorded) | Student 4 |
+| B8.5 Lecture videos | ≥ 5 Indian-English technical lectures (≥ 30 min total, enough for the Release 0 baseline) with reference transcripts; recorded with written consent or openly licensed (licence verified and recorded) | Student 4 |
 | B8.6 Model comparison set | Fixed inputs and expected outputs for practice drafts, grading drafts, chapters and summaries | Student 3 |
 
 No real learner data in any set.

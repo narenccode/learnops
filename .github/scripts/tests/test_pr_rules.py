@@ -56,9 +56,53 @@ def test_feature_code_complete_pr_is_ready():
     assert r.verdict_of(r.evaluate(ctx(files))) == "ready-to-merge"
 
 
-def test_contract_change_without_process_is_violation():
+def test_contract_change_without_the_process_line_goes_back_to_the_students():
     f = r.evaluate(ctx(["contracts/course.schema.json"]))
-    assert r.verdict_of(f) == "rule-violation"
+    assert (
+        r.verdict_of(f) == "needs-rework"
+    )  # the guide is not pinged for a missing phrase
+    assert "/contract-change" in " ".join(x.message for x in f)
+
+
+def test_validators_and_tests_in_libs_contracts_are_not_contract_changes():
+    files = ["libs/contracts/validate.py", "libs/contracts/tests/test_validate.py"]
+    body = GOOD_BODY.replace("FR-S-03", "B1")
+    f = r.evaluate(ctx(files, title="Add B1 validator", body=body))
+    assert not any("contract-change" in x.message.lower() for x in f)
+    assert not any(x.level in ("violation", "judgement") for x in f)
+
+
+def test_contracts_claude_md_is_not_a_contract_change():
+    f = r.evaluate(ctx(["contracts/CLAUDE.md"]))
+    assert not any("contract-change" in x.message.lower() for x in f)
+
+
+def test_a_contract_reference_counts_for_library_work_without_an_fr_id():
+    files = ["libs/media_paths/paths.py", "libs/media_paths/tests/test_paths.py"]
+    ok = r.evaluate(
+        ctx(
+            files,
+            title="[B6.1] Media path templates",
+            body=GOOD_BODY.replace("FR-S-03", ""),
+        )
+    )
+    assert not any("No requirement ID" in x.message for x in ok)
+    bad = r.evaluate(
+        ctx(files, title="Media path templates", body=GOOD_BODY.replace("FR-S-03", ""))
+    )
+    assert any("No requirement ID" in x.message for x in bad)
+
+
+def test_module_code_still_needs_a_real_requirement_id_not_just_a_contract_ref():
+    files = [
+        "modules/studio/app.py",
+        "modules/studio/tests/t.py",
+        "docs/traceability.md",
+    ]
+    f = r.evaluate(
+        ctx(files, title="Studio B1 work", body=GOOD_BODY.replace("FR-S-03", ""))
+    )
+    assert any("No requirement ID" in x.message for x in f)
 
 
 def test_contract_change_with_process_needs_judgement():
@@ -287,3 +331,41 @@ def test_fake_password_in_a_test_is_fine_but_real_key_formats_are_not():
     assert r.verdict_of(r.evaluate(ctx(files, added=real))) == "rule-violation"
     code = {"modules/studio/a.py": ['password = "dummy-password-123"']}
     assert r.verdict_of(r.evaluate(ctx(files, added=code))) == "rule-violation"
+
+
+def test_libs_init_file_is_rework_but_a_deletion_is_fine():
+    f = r.evaluate(
+        ctx(["libs/media_paths/paths.py", "libs/__init__.py"], title="B6.1 EXT-09")
+    )
+    assert any(
+        "breaks the other libraries" in x.message and x.level == "rework" for x in f
+    )
+    c = ctx(["libs/media_paths/paths.py", "libs/__init__.py"], title="B6.1 EXT-09")
+    c.files["libs/__init__.py"] = "D"
+    assert not any("breaks the other libraries" in x.message for x in r.evaluate(c))
+
+
+def test_libs_prefix_import_is_rework_in_code_but_not_in_the_bot_scripts():
+    bad = ctx(
+        ["libs/media_paths/tests/test_paths.py"],
+        title="B6.1 EXT-09",
+        added={
+            "libs/media_paths/tests/test_paths.py": [
+                "from libs.media_paths.paths import x"
+            ]
+        },
+    )
+    assert any("libs." in x.message and x.level == "rework" for x in r.evaluate(bad))
+    ok = ctx(
+        ["libs/media_paths/tests/test_paths.py"],
+        title="B6.1 EXT-09",
+        added={
+            "libs/media_paths/tests/test_paths.py": ["from media_paths.paths import x"]
+        },
+    )
+    assert not any("import the library" in x.message for x in r.evaluate(ok))
+    bot = ctx(
+        [".github/scripts/tests/t.py"],
+        added={".github/scripts/tests/t.py": ["from libs.x import y"]},
+    )
+    assert not any("import the library" in x.message for x in r.evaluate(bot))
