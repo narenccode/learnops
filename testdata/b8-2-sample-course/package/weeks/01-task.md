@@ -16,6 +16,7 @@ Report: <your reflection>
 `Repository` is the link to your code repository and `Demo` is the link to your running assistant.
 `Report:` is followed by your report text, to the end of the submission. If there is no `Report:`
 section, a file you upload named `report.md` or `report.txt` is your report.
+The report needs at least 150 words to earn full marks on the Reflection criterion.
 
 The checks in the marking table read these parts: `http_ok:demo_url` reads `Demo`, `repo_clone`
 reads `Repository`, and `word_count` reads your report.

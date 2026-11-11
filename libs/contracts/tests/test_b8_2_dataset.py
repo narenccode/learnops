@@ -51,6 +51,10 @@ TABLE_HEADER = ["Criterion", "Points", "Full marks when", "Check"]
 _TABLE = re.compile(
     r"<!-- marking-table v1 -->\n(.*?)\n<!-- /marking-table -->", re.DOTALL
 )
+# One cell of a Markdown table's separator row: dashes, with optional alignment colons.
+_SEPARATOR_CELL = re.compile(r":?-+:?")
+# The weeks whose marking table has a word_count check, and its minimum.
+WORD_MINIMUMS = {1: 150, 4: 250}
 
 
 # --- helpers ------------------------------------------------------------------------------
@@ -78,6 +82,18 @@ def check_problems(check: str) -> list[str]:
     return problems
 
 
+def separator_problems(line: str) -> list[str]:
+    """The second row of a Markdown table: one cell of dashes per column (colons allowed)."""
+    cells = _cells(line)
+    if len(cells) == len(TABLE_HEADER) and all(
+        _SEPARATOR_CELL.fullmatch(cell) for cell in cells
+    ):
+        return []
+    return [
+        "separator row (second row) is not four cells of dashes, such as |---|---|---|---|"
+    ]
+
+
 def table_problems(body: str, points: int) -> list[str]:
     """What is wrong with the marking table in an assignment body (PRD B1.3)."""
     tables = _TABLE.findall(body)
@@ -86,18 +102,36 @@ def table_problems(body: str, points: int) -> list[str]:
     lines = tables[0].strip().splitlines()
     if len(lines) < 3 or _cells(lines[0]) != TABLE_HEADER:
         return ["header row is not Criterion | Points | Full marks when | Check"]
-    problems: list[str] = []
+    problems = separator_problems(lines[1])
     total = 0
     for line in lines[2:]:
         cells = _cells(line)
         if len(cells) != len(TABLE_HEADER) or not cells[1].isdigit():
             problems.append(f"bad row: {line}")
             continue
+        if not cells[0]:
+            problems.append(f"empty Criterion: {line}")
+        if not cells[2]:
+            problems.append(f"empty Full marks when: {line}")
         total += int(cells[1])
         problems += check_problems(cells[3])
     if total != points:
         problems.append(f"rows add up to {total}, assignment has {points}")
     return problems
+
+
+def word_minimum_problems(body: str) -> list[str]:
+    """Each word_count:N in the table must be told to the learner as 'at least N words'."""
+    prose = " ".join(body.split())  # line wrapping in the Markdown must not matter
+    return [
+        f"the body does not say 'at least {n} words'"
+        for n in re.findall(r"word_count:(\d+)", body)
+        if f"at least {n} words" not in prose
+    ]
+
+
+def _task_body(week: int) -> str:
+    return (PACKAGE_DIR / "weeks" / f"0{week}-task.md").read_text("utf-8")
 
 
 def collides(section_numbers: Iterable[int], protected_section: int) -> bool:
@@ -224,6 +258,25 @@ def test_task_explains_the_confirmed_submission_format(week: int) -> None:
     assert "`word_count` reads your report" in prose
 
 
+@pytest.mark.parametrize("week", WEEKS)
+def test_task_states_the_minimum_word_count(week: int) -> None:
+    # The marking table asks for N words, so the learner must be told N (review of PR #61).
+    body = _task_body(week)
+    found = [int(n) for n in re.findall(r"word_count:(\d+)", body)]
+    assert found == ([WORD_MINIMUMS[week]] if week in WORD_MINIMUMS else [])
+    assert word_minimum_problems(body) == []
+
+
+def test_the_word_minimum_check_catches_a_missing_or_wrong_number() -> None:
+    # Negative control: the check must fail when the sentence or the number is wrong.
+    good = _task_body(1)
+    assert word_minimum_problems(good) == []
+    assert word_minimum_problems(good.replace("at least 150 words", "a few words"))
+    assert word_minimum_problems(
+        good.replace("at least 150 words", "at least 100 words")
+    )
+
+
 def test_the_sample_does_not_use_command_checks() -> None:
     for path in (PACKAGE_DIR / "weeks").glob("*-task.md"):
         assert "command:" not in path.read_text("utf-8"), path.name
@@ -236,6 +289,53 @@ def test_the_table_check_catches_the_mistakes_it_exists_for() -> None:
     assert table_problems(good.replace("http_ok:demo_url", "ping:demo_url"), 25)
     assert table_problems(good.replace("word_count:150", "word_count"), 25)
     assert table_problems("# no table here", 25)
+
+
+# Edits to week 1's table: name -> (text to replace, replacement, text the message must contain).
+BAD_TABLE_EDITS: dict[str, tuple[str, str, str]] = {
+    "empty Criterion": ("| Working demo |", "|  |", "empty Criterion"),
+    "empty Full marks when": (
+        "| Demo link opens and the assistant answers a test question |",
+        "|  |",
+        "empty Full marks",
+    ),
+    "separator with 3 cells": ("|---|---|---|---|\n", "|---|---|---|\n", "separator"),
+    "separator with text": ("|---|---|---|---|", "|---|---|abc|---|", "separator"),
+    "separator with blank cells": (
+        "|---|---|---|---|",
+        "|   |   |   |   |",
+        "separator",
+    ),
+    "separator with a broken dash run": (
+        "|---|---|---|---|",
+        "|- -|---|---|---|",
+        "separator",
+    ),
+    "separator with a misplaced colon": (
+        "|---|---|---|---|",
+        "|--:-|---|---|---|",
+        "separator",
+    ),
+    "separator row missing": ("|---|---|---|---|\n", "", "separator"),
+}
+
+
+@pytest.mark.parametrize("name", list(BAD_TABLE_EDITS))
+def test_the_table_check_rejects_empty_cells_and_a_bad_separator(name: str) -> None:
+    old, new, expected = BAD_TABLE_EDITS[name]
+    good = _task_body(1)
+    bad = good.replace(old, new)
+    # The edit must change the table, so that a case cannot pass by accident.
+    assert bad != good
+    assert any(expected in p for p in table_problems(bad, POINTS_PER_TASK))
+
+
+@pytest.mark.parametrize(
+    "separator", ["| --- | --- | --- | --- |", "|:---|---:|:---:|---|"]
+)
+def test_the_table_check_accepts_valid_markdown_separators(separator: str) -> None:
+    body = _task_body(1).replace("|---|---|---|---|", separator)
+    assert table_problems(body, POINTS_PER_TASK) == []
 
 
 # --- B1.4: protected section --------------------------------------------------------------
