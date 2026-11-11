@@ -89,8 +89,8 @@
     },
     "relative_path": {
       "type": "string",
-      "pattern": "^(?![A-Za-z][A-Za-z0-9+.-]*:)(?!/)(?!(?:.*/)?\\.\\.(?:/|(?![\\s\\S])))[^\\\\\\n]+(?![\\s\\S])",
-      "description": "Path relative to the lesson folder, with forward slashes. Not a URL, not absolute, no '..' segment (PRD B6.3, C-08)."
+      "pattern": "^(?![A-Za-z][A-Za-z0-9+.-]*:)(?!\\.\\.?(?:/|(?![\\s\\S])))[^/\\s?#\\\\]+(?:/(?!\\.\\.?(?:/|(?![\\s\\S])))[^/\\s?#\\\\]+)*(?![\\s\\S])",
+      "description": "Path relative to the lesson folder (PRD B6.3, C-08). Non-empty; forward slashes only; no whitespace; no ?, # or backslash; no URL scheme or drive letter (nothing like https: or C: at the start); not absolute; no empty, '.' or '..' segment. Shared valid and invalid cases: contracts/test-vectors/relative-path.v1.json."
     },
     "track": {
       "type": "object",
