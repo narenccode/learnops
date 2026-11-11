@@ -7,5 +7,5 @@ Record the source and the licence or consent for every data set here.
 | Item | Value |
 |---|---|
 | Folder | `testdata/b8-2-sample-course/` (details and open decisions in its `README.md`) |
-| Source | Written for LearnOps as fictional test content; drafted with Claude Code, pending the owner's review. No real learner data, real course content or third-party material |
-| Licence or consent | Licence of the content: PENDING GUIDE CONFIRMATION. No consent needed: no real person's work is included |
+| Source | Fictional, original content written for LearnOps. No real learner data, real course content or third-party material |
+| Licence or consent | Apache-2.0, the same as the repository (PRD C-11, root `LICENSE`); confirmed by the guide on PR #61. No consent needed: no real person's work is included |

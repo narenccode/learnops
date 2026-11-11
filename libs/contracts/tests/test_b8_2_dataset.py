@@ -207,6 +207,23 @@ def test_task_has_a_valid_marking_table(doc: Doc, week: int) -> None:
     assert table_problems(_body(task), task["points"]) == []
 
 
+@pytest.mark.parametrize("week", WEEKS)
+def test_task_explains_the_confirmed_submission_format(week: int) -> None:
+    # Confirmed by the guide on PR #61 (grading design Q6, grading.md §4.3a): labelled lines in the
+    # online text, report.md or report.txt instead of a Report: section, and the check mapping.
+    body = (PACKAGE_DIR / "weeks" / f"0{week}-task.md").read_text("utf-8")
+    lines = [line.strip() for line in body.splitlines()]
+    assert "Repository: <URL>" in lines
+    assert "Demo: <URL>" in lines
+    assert any(line.startswith("Report: ") for line in lines)
+    prose = " ".join(body.split())  # line wrapping in the Markdown must not matter
+    for text in ("not case-sensitive", "`report.md`", "`report.txt`"):
+        assert text in prose, text
+    for check, part in (("http_ok:demo_url", "Demo"), ("repo_clone", "Repository")):
+        assert f"`{check}` reads `{part}`" in prose
+    assert "`word_count` reads your report" in prose
+
+
 def test_the_sample_does_not_use_command_checks() -> None:
     for path in (PACKAGE_DIR / "weeks").glob("*-task.md"):
         assert "command:" not in path.read_text("utf-8"), path.name

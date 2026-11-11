@@ -139,6 +139,7 @@ CK-03, CK-09 or any other checker rule.
 | Week N unlocks after the week N-1 task, which has `completion: submit`; week 1 is open | B1.2 rule 2 | `test_week_unlocks_when_the_previous_task_is_submitted` (4 cases) |
 | Each task is 25 points and the tasks add up to `total_points` | B1.2 rule 3 | `test_each_task_is_worth_25_and_the_tasks_add_up_to_the_total` |
 | Each task has one valid marking table: markers, header, row points add up to the assignment's points, `Check` names from C3.5; no `command:` checks are used | B1.3, C3.5 | `test_task_has_a_valid_marking_table` (4 cases), `test_the_sample_does_not_use_command_checks`, `test_the_table_check_catches_the_mistakes_it_exists_for` (negative control) |
+| Each task body explains the submission format confirmed by the guide on PR #61: `Repository:`, `Demo:` and `Report:` labels, `report.md` or `report.txt` as the report, and which part each check reads | Grading design Q6 (`grading.md` §4.3a); not yet in B1 | `test_task_explains_the_confirmed_submission_format` (4 cases) |
 | The week sections do not collide with the proposed protected section (7; a proposal, not a contract value and not confirmed by the guide) | B1.4 | `test_week_numbers_do_not_collide_with_the_working_protected_section`, `test_the_collision_check_would_catch_the_earlier_proposal_of_section_3` (negative control) |
 
 ### Not covered here
@@ -150,5 +151,6 @@ These need Studio, the checker or a Moodle site and are not claimed by this chan
   The `.mbz` comes from FR-S-06 and FR-S-07 (Release 2).
 - **PRD C2.7** "no false errors on B8.2": needs the checker (Release 1).
 - **B1.2 rules 4 and 5** (marking workflow, completion tracking): not package fields.
-- The open decisions in the dataset README (licence of the content, A2 to A4, A6, A7) are pending
-  guide confirmation. This note does not settle them.
+- The open decisions in the dataset README (A2 to A4, A6, A7) are pending guide confirmation. This
+  note does not settle them. The licence (Apache-2.0) and the submission and check formats (A12,
+  A13) were confirmed by the guide on PR #61; the formats are not yet part of the B1 contract.

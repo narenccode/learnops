@@ -2,8 +2,8 @@
 
 > **Status.** The package is written and passes the shared validator and a dataset test. No `.mbz`
 > exists and nothing has been restored on Moodle or run through the checker. Labels: **PRD** =
-> stated by the PRD. **Proposal** = put forward for the B8.2 owner where the PRD is silent; not a
-> contract value (drafted with Claude Code; pending the owner's review). **PENDING GUIDE
+> stated by the PRD. **Confirmed** = decided by the guide on PR #61 (2026-11-11). **Proposal** =
+> the B8.2 owner's choice where the PRD is silent; not a contract value. **PENDING GUIDE
 > CONFIRMATION** = open decision. **PENDING MOODLE LAB** = needs a Moodle site.
 
 ## 1. Purpose and scope
@@ -41,7 +41,8 @@ Section numbers 1 to 4 follow the PRD's B1.1 example. Every task: `completion: s
 
 Total: 4 sections, 8 activities, 100 points (`total_points: 100`, PRD B1.2 rule 3). Marking tables use
 only checks from PRD §C3.5: `http_ok:demo_url`, `repo_clone`, `repo_file:TESTS.md`,
-`readme_sections:…`, `word_count:…`, and `—` for mentor judgement.
+`readme_sections:…`, `word_count:…`, and `—` for mentor judgement. Each task body explains the
+submission format (A12); the marking tables follow the check format (A13).
 
 ## 4. Assumptions and decisions
 
@@ -55,9 +56,11 @@ only checks from PRD §C3.5: `http_ok:demo_url`, `repo_clone`, `repo_file:TESTS.
 | A6 | **Unresolved grading decision.** Whether B8.1's final-project points (100 proposed there, receiving activity not decided) count inside the combined course total. B8.2 alone totals 100; the merged course total, and the target the checker should use (CK-03), are not decided. Nothing here assumes either answer | PENDING GUIDE CONFIRMATION |
 | A7 | `full` mode never contains the protected items (PRD B1.4), so a restored B8.2 has no final project, feedback, completion criteria or badge. Whether the checker (CK-07, CK-08) must accept that for "0 errors" is open (Studio design item 25) | PENDING GUIDE CONFIRMATION |
 | A8 | Fictional theme, titles and shortname `SAMPLE-DOC-101` | Proposal |
-| A9 | No `command:` checks (the PRD reads them from "the course's check config", which B1 does not define) | Proposal |
+| A9 | No `command:` checks (the PRD reads them from "the course's check config", which B1 does not define) | Confirmed (PR #61) |
 | A10 | No start dates, no H5P, URL or Label activities (B7 practice is optional) | Proposal |
 | A11 | Package in a `package/` subfolder so this README stays outside it | Proposal |
+| A12 | **Submission format** (grading design Q6, `docs/design/grading.md` §4.3a). Online text with labelled lines `Repository: <URL>`, `Demo: <URL>` and `Report:` followed by the report text to the end. Labels are case-insensitive, one per line. A file named `report.md` or `report.txt` is the report when there is no `Report:` section. `http_ok:demo_url` reads `Demo`, `repo_clone` reads `Repository`, `word_count` reads the report. Each task body says how to label each part | Confirmed (PR #61). Not yet in the B1 contract: the B1 owner adds it with `/contract-change` before the 2026-11-20 freeze, with the five examples from §4.3a. B8.4 (PR #31) must use the same format |
+| A13 | **Check format** (grading design Q9, §4.3b). One B1.3 marking table per task, only §C3.5 checks, `;` between checks, `readme_sections:` a comma list matched case-insensitively against README heading text, `word_count:` a whole number | Confirmed (PR #61). Not yet in the B1 contract (same `/contract-change` as A12) |
 
 ## 5. Protected items in a sections-only merge
 
@@ -78,6 +81,7 @@ against is in B8.1's README (open PR #57, not merged yet).
 |---|---|
 | Shared validator (`libs/contracts`): schema, unique and non-protected `idnumber`s, body files exist | Passes (test `test_the_shared_validator_accepts_the_package`) |
 | Rules the validator lists as not checked: one Page and one Assignment per week, unlock chain, points total, marking tables and check names, no collision with a protected section | Passes in the dataset test only; the shared rules do not exist yet |
+| Each task body explains the submission format (A12) | Passes in the dataset test (`test_task_explains_the_confirmed_submission_format`) |
 | `.mbz` built from this package (FR-S-06) | PENDING: Studio, Release 2 |
 | Restored on fresh Moodle 4.5 and 5.3 | PENDING MOODLE LAB |
 | Checker reports 0 errors (PRD §C1.7, §C2.7) | PENDING: checker, Release 1, and the lab |
@@ -85,11 +89,12 @@ against is in B8.1's README (open PR #57, not merged yet).
 
 ## 7. Source and licence
 
-Written for LearnOps as fictional test content. It contains no real learner data, no real course
+Fictional, original content written for LearnOps. It contains no real learner data, no real course
 content and no third-party material (PRD C-07: test data only). The bodies hold no links, a
-dataset choice (not a PRD rule) so that no third-party material is pulled in. It was drafted with
-Claude Code and still needs the B8.2 owner's review. Licence of the content: PENDING
-GUIDE CONFIRMATION. The entry in `testdata/README.md` points here.
+dataset choice (not a PRD rule) so that no third-party material is pulled in. Licence:
+**Apache-2.0**, the same as the repository (PRD C-11, root `LICENSE`); confirmed by the guide on
+PR #61. No consent is needed: no real person's work is included. The entry in `testdata/README.md`
+points here.
 
 ## 8. Run and undo
 
