@@ -361,6 +361,8 @@ PATH_FIELDS: list[tuple[str, Loc]] = [
     ("slides", ("slides",)),
     ("cues", ("cues",)),
     ("summary", ("summary",)),
+    # Not a file, but readers build the lesson folder's path from it (C-08).
+    ("lesson_id", ("lesson_id",)),
 ]
 PATH_CASES = [
     bad(f"{label} {value!r}", loc, value, "pattern")
@@ -430,6 +432,7 @@ def test_every_path_field_in_the_schema_is_tested(schema: dict[str, Any]) -> Non
         ("properties", "slides"),
         ("properties", "cues"),
         ("properties", "summary"),
+        ("properties", "lesson_id"),
         ("$defs", "track", "properties", "file"),
         ("$defs", "caption", "properties", "file"),
     }
@@ -437,6 +440,32 @@ def test_every_path_field_in_the_schema_is_tested(schema: dict[str, Any]) -> Non
     assert _relative_path_refs(schema) == expected
     assert set(tested) == expected
     assert len(tested) == len(set(tested))  # no field listed twice
+
+
+# lesson_id: the cases from the PR #32 review, plus the lesson_id forms B6.1 and B6.3 use.
+@pytest.mark.parametrize("value", ["../../etc", "/abs/x", "https://evil/x"], ids=repr)
+def test_lesson_id_that_is_not_a_relative_path_is_rejected(
+    validator: Draft202012Validator, doc: Doc, value: str
+) -> None:
+    set_at(("lesson_id",), value)(doc)
+    assert (("lesson_id",), "pattern") in error_keys(validator, doc)
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "01-setup/02-install-python",
+        "02-first-assistant/01-call-a-model",
+        "live-2026a/03-rag-basics",
+        "01-intro",
+    ],
+    ids=repr,
+)
+def test_lesson_id_that_is_a_lesson_slug_path_is_accepted(
+    validator: Draft202012Validator, doc: Doc, value: str
+) -> None:
+    set_at(("lesson_id",), value)(doc)
+    assert messages(validator, doc) == []
 
 
 def test_path_vectors_cover_every_rule() -> None:
