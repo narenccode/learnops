@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:learnops:contract:lesson-manifest:v1",
   "title": "LearnOps lesson manifest (B6, v1)",
-  "description": "The lesson.json manifest in a lesson folder (PRD B6.2, B6.3). It lists the lesson's tracks and derived files. Every file path is relative to the lesson folder, and lesson_id to the course folder (PRD B6.3, C-08). This schema checks structure only; rules that need the lesson folder or the configuration are listed under $comment and are enforced by validator code, not by this file.",
+  "description": "The lesson.json manifest in a lesson folder (PRD B6.2, B6.3). It lists the lesson's tracks and derived files. Every path is relative to the lesson folder (PRD B6.3, C-08). This schema checks structure only; rules that need the lesson folder or the configuration are listed under $comment and are enforced by validator code, not by this file.",
   "$comment": "Unknown fields are allowed on purpose: after Release 0 contracts change only by adding optional fields and readers ignore unknown fields (PRD B.0, EXT-02). Required (guide decision, PRD B6.3): schema, course_slug, lesson_id, title, duration_s, and the fields that point to files B6.2 marks as required (tracks with exactly one main track, captions, transcript, chapters). Optional: slides, cues, summary, source, processing. Track roles are open lowercase names so new kinds of track need no contract change; main, main-low, camera and screen are the known ones and a v1 reader ignores roles it doesn't play. poster.jpg is required by B6.2 but has no manifest field: readers find it by its fixed file name in the lesson folder. transcript only names the file; its contents follow the B5.4 transcript shape, which this schema does not repeat. NOT expressible in JSON Schema, so NOT enforced here: that the named files exist in the lesson folder; that lesson.json is written last, only when every required file exists (FR-V-08); that lesson_id and course_slug match the folder's place in the B6.1 path template (the template is configurable); the file names B6.2 gives (720p.mp4, captions.en.vtt and so on), since the manifest is what readers follow. processing.completed_at: the pattern guarantees the RFC 3339 shape and field ranges (month 01-12, day 01-31, hour 00-23 and so on) with any validator; calendar validity (for example no 31 February) is checked only by a validator run with a date-time format checker, which jsonschema provides only when the rfc3339-validator package is installed (it is not in requirements-dev.txt).",
   "type": "object",
   "required": [
@@ -26,10 +26,9 @@
       "description": "The course slug used in the lesson's path (PRD B6.1, B1.1)."
     },
     "lesson_id": {
-      "$ref": "#/$defs/relative_path",
       "type": "string",
       "minLength": 1,
-      "description": "The lesson's place below the course folder, for example 01-setup/02-install-python (PRD B6.3). Readers build a path from it, so it follows the relative path rule (C-08). Its exact form follows the configurable path template (B6.1), so this schema does not fix more than that."
+      "description": "The lesson's place below the course folder, for example 01-setup/02-install-python (PRD B6.3). Its form follows the configurable path template (B6.1), so this schema does not fix it."
     },
     "title": {
       "type": "string",
@@ -90,8 +89,8 @@
     },
     "relative_path": {
       "type": "string",
-      "pattern": "^(?![A-Za-z][A-Za-z0-9+.-]*:)(?!\\.\\.?(?:/|(?![\\s\\S])))[^/\\s?#\\\\]+(?:/(?!\\.\\.?(?:/|(?![\\s\\S])))[^/\\s?#\\\\]+)*(?![\\s\\S])",
-      "description": "A relative path (PRD B6.3, C-08). The field that uses it names its base folder. Non-empty; forward slashes only; no whitespace; no ?, # or backslash; no URL scheme or drive letter (nothing like https: or C: at the start); not absolute; no empty, '.' or '..' segment. Shared valid and invalid cases: contracts/test-vectors/relative-path.v1.json."
+      "pattern": "^(?![A-Za-z][A-Za-z0-9+.-]*:)(?!/)(?!(?:.*/)?\\.\\.(?:/|(?![\\s\\S])))[^\\\\\\n]+(?![\\s\\S])",
+      "description": "Path relative to the lesson folder, with forward slashes. Not a URL, not absolute, no '..' segment (PRD B6.3, C-08)."
     },
     "track": {
       "type": "object",
