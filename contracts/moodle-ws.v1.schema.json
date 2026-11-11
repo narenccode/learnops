@@ -3,7 +3,7 @@
   "$id": "urn:learnops:contract:moodle-ws:v1",
   "title": "LearnOps Moodle web-services allow-list (B4, v1)",
   "description": "The Moodle web-services functions LearnOps may call (PRD B4), with the parameters LearnOps sends and, only where a function's name differs on a Moodle version, the replacement name. The rules (service account, token, draft rule, capabilities, lab checks) are in contracts/moodle-ws.v1.md, which is the normative text. libs/moodle_ws builds its allow-list from the example file of this schema, so contract and code cannot drift apart (guide's decision on Q1, PR #27).",
-  "$comment": "No verification state is stored here: results of the lab checks go to docs/decisions/ (guide's decision on Q1), so any property name containing 'verif' is refused. Unknown fields are otherwise allowed, as in every contract (PRD B.0, EXT-02). NOT expressible here, so checked by libs/contracts/tests/test_moodle_ws_v1.py: function names are unique and equal the PRD B4 list; every listed parameter is named in the PRD; a replacement name also appears in the PRD B4 text (the guide's rule: change the PRD in the same pull request as the replacement).",
+  "$comment": "No verification state is stored here: results of the lab checks go to docs/decisions/ (guide's decision on Q1), so any property name containing 'verif' is refused. Unknown fields are otherwise allowed, as in every contract (PRD B.0, EXT-02). NOT expressible here, so checked by libs/contracts/tests/test_moodle_ws_v1.py: function names are unique and equal the PRD B4 list; every listed parameter (required or optional) is named for its function in the PRD B4 parameter table, and no name is in both lists; a replacement name also appears in the PRD B4 text (the guide's rule: change the PRD in the same pull request as the replacement).",
   "type": "object",
   "required": ["schema", "functions"],
   "propertyNames": { "not": { "pattern": "verif" } },
@@ -39,7 +39,13 @@
           "type": "array",
           "uniqueItems": true,
           "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*(?!\\n)$" },
-          "description": "Names of the parameters LearnOps sends that the PRD names. An empty list means 'not yet determined' (lab check 1 in moodle-ws.v1.md), never 'no parameters'. Names are added only after they are checked on both lab sites."
+          "description": "Always-sent parameters: LearnOps sends them on every call, including ones that have a default in Moodle (see moodle-ws.v1.md §2). Only names the PRD B4 parameter table gives for this function (taken from the Moodle source; their behaviour is lab check 1 in moodle-ws.v1.md). An empty list means 'not yet determined', never 'no parameters'."
+        },
+        "optional_parameters": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*(?!\\n)$" },
+          "description": "Optional parameters: sent only when needed. Same naming rule as parameters. Absent when the function has none recorded. A name is never in both lists (checked by the contract tests)."
         },
         "replacements": {
           "type": "array",

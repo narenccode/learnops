@@ -453,9 +453,18 @@ information is lost.
 | Submissions | `mod_assign_get_submissions`, `mod_assign_get_submission_status` |
 | Submission files | Download through the token-authenticated file URL returned by the API |
 | Write draft grade + feedback | `mod_assign_save_grade` with marking-workflow state **`readyforrelease`** and feedback comments; never `released` |
-| Workflow state | `mod_assign_set_user_flags` (only if needed to set the state) |
 
-- **Draft rule:** grades written by LearnOps stay invisible to learners until the mentor releases them in Moodle (marking workflow). Only mentor-approved drafts are written.
+- Parameters LearnOps sends (names from the Moodle 4.5 and 5.3 source; their behaviour is still checked in the lab, App-C item 1). "Always sent" is LearnOps's rule, not Moodle's: Moodle itself requires the seven `mod_assign_save_grade` parameters and `assignid`, while `field`, `value` and `userid` on the other two functions have defaults in Moodle and are sent anyway:
+
+| Function | Always sent | Optional |
+|---|---|---|
+| `core_course_get_courses_by_field` | `field`, `value` | — |
+| `mod_assign_get_submission_status` | `assignid`, `userid` | — |
+| `mod_assign_save_grade` | `assignmentid`, `userid`, `grade`, `attemptnumber`, `addattempt`, `workflowstate`, `applytoall` | `plugindata`, `advancedgradingdata` |
+
+- **Course identification:** a course is looked up by its id (`field` = `id`) or, as an alternative, its shortname (`field` = `shortname`); never by its idnumber. Moodle returns a course's idnumber only to accounts with `moodle/course:update`, which the service account does not have.
+- **Draft rule:** grades written by LearnOps stay invisible to learners until the mentor releases them in Moodle (marking workflow). Only mentor-approved drafts are written. A grade write sends only the workflow state `readyforrelease`. After each write, LearnOps reads the result back and reports the write as done only when both are confirmed: `lastattempt.gradingstatus` is exactly `readyforrelease` (from `mod_assign_get_submission_status` for that assignment and learner), and the stored grade for that learner and attempt is numerically equal to the grade sent. If either is different, missing, ambiguous or cannot be read, the write is reported as not verified. How the grade value is read is pending the guide's decision (`contracts/moodle-ws.v1.md` §6a); until it is decided, no write is reported as done.
+- The service account's capabilities are listed in `contracts/moodle-ws.v1.md` §4.
 
 ## B5. Model and speech interface (v1)
 
