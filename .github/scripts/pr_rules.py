@@ -392,13 +392,35 @@ def evaluate(ctx: Context) -> list[Finding]:
         if p.rsplit("/", 1)[-1] not in LOCKFILES and not p.startswith("testdata/")
     )
     if total > SIZE_LIMIT:
-        out.append(
-            Finding(
-                "rework",
-                f"{total} changed lines (limit {SIZE_LIMIT}). Split into smaller PRs.",
-                "CLAUDE.md §8",
-            )
+        is_contract_pr = any(
+            p.startswith("contracts/") and p != "contracts/CLAUDE.md" for p in paths
         )
+        has_file_map = re.search(r"file map", ctx.body, flags=re.IGNORECASE) is not None
+        if is_contract_pr and has_file_map:
+            out.append(
+                Finding(
+                    "advice",
+                    f"{total} changed lines (limit {SIZE_LIMIT}). Allowed: a contract PR cannot be split and has a file map.",
+                    "PRD B.0 rule 3",
+                )
+            )
+        elif is_contract_pr:
+            out.append(
+                Finding(
+                    "rework",
+                    f"{total} changed lines (limit {SIZE_LIMIT}). A contract PR may exceed the limit only with a file map "
+                    "(each file, its length in lines, what a reviewer checks) in the description.",
+                    "CLAUDE.md §7",
+                )
+            )
+        else:
+            out.append(
+                Finding(
+                    "rework",
+                    f"{total} changed lines (limit {SIZE_LIMIT}). Split into smaller PRs.",
+                    "CLAUDE.md §7",
+                )
+            )
 
     # Description
     stripped = re.sub(r"<!--.*?-->", "", ctx.body, flags=re.DOTALL)
