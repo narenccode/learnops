@@ -58,7 +58,7 @@ PRD defaults, configurable (Owner). Completion and badge: Owner. Placement and s
 |---|---|
 | Final project | Moodle Assignment; 5 files; 1 attempt; completion on grade; no rubric (a mentor adds it) |
 | Course feedback | Moodle Feedback activity; anonymous; name "Course feedback" |
-| Points | 100. Which activity receives them, and whether they count inside the course total (kept configurable): PENDING GUIDE CONFIRMATION |
+| Points | 100 (Owner, Issue #55 item 6: "use 100", marked a proposal). Which activity receives the 100: PENDING GUIDE CONFIRMATION (the Owner's answer does not say). Whether the 100 count inside the course total: not decided (Owner); kept configurable and not designed around: PENDING GUIDE CONFIRMATION |
 | Visibility and availability rules | PENDING GUIDE CONFIRMATION |
 | Exact Moodle setting names and values on 4.5 and 5.3 | PENDING MOODLE LAB |
 
