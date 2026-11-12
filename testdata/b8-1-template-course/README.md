@@ -71,17 +71,18 @@ finished template: PENDING MOODLE LAB. Comparison method: PENDING GUIDE CONFIRMA
 
 | Setting | Value |
 |---|---|
-| Criteria | PRD §B1.4 protects them but names none. Owner (Issue #55 item 3): final project graded AND course feedback submitted |
-| Completion on the course | PRD §A11 says lab sites have completion tracking on; Owner says it is not yet switched on: PENDING MOODLE LAB |
+| Criteria | PRD §B1.4 lists "Course completion criteria and course badge" as protected and says they "Point to the two items above" (`final-project`, `course-feedback`). Owner (Issue #55 item 3): final project graded AND course feedback submitted |
+| Completion on the course | PRD §A11 says lab sites have completion tracking on. Owner (Issue #55, update of 2026-11-11): it is switched on in both lab sites (4.5 and 5.3), on by default; not yet checked by the B8.1 owner on a site. Completion settings of the template course itself: PENDING MOODLE LAB |
 | State after restore, including after a sections-only merge | PENDING MOODLE LAB |
 
 ## 6. Badge configuration
 
 | Setting | Value |
 |---|---|
-| Badge | PRD §B1.4 protects it but does not describe it. Owner (Issue #55 item 3): course badge "Template course badge"; awarded on course completion; inactive in the template; placeholder issuer |
+| Badge | PRD §B1.4 lists the course badge as protected; its row, shared with the completion criteria, says "Point to the two items above" (`final-project`, `course-feedback`), and gives no other description. Owner (Issue #55 item 3): course badge "Template course badge"; awarded on course completion; inactive in the template; placeholder issuer |
 | Description, image and image licence | PENDING GUIDE CONFIRMATION |
-| Course badges on the lab sites (Owner: not yet switched on); badge in the `.mbz` on 4.5 and 5.3; state after restore and merge | PENDING MOODLE LAB |
+| Course badges on the lab sites | Owner (Issue #55, update of 2026-11-11): switched on in both lab sites, on by default; not yet checked by the B8.1 owner on a site |
+| Badge in the `.mbz` on 4.5 and 5.3; state after restore and merge | PENDING MOODLE LAB |
 
 ## 7. Restore instructions
 
@@ -96,9 +97,10 @@ own Backup/Restore only (CLAUDE.md rule 1); an administrator restores (PRD §C1.
 
 ## 8. Verification results for Moodle 4.5 and 5.3
 
-**Nothing has been verified, and no lab verification has been attempted.** Owner: both sites exist but
-have no student accounts, and course badges and completion are not switched on; the owner will say when
-the lab is ready. Results need a real run on a fresh site (PRD §E2), stating data set, method, date,
+**Nothing has been verified, and no lab verification has been attempted.** Owner: both sites exist, with
+completion tracking and course badges switched on in both (Owner, correcting an earlier answer on
+2026-11-11: on by default), but student accounts and the B8.1 owner's access are not ready; the owner will
+say when they are. Results need a real run on a fresh site (PRD §E2), stating data set, method, date,
 evidence and who measured (PRD §E3).
 
 | Check | Moodle 4.5 | Moodle 5.3 |
@@ -110,7 +112,7 @@ evidence and who measured (PRD §E3).
 
 **Checklist for when the lab is ready** (tasks, not results):
 
-- [ ] Owner confirms: student accounts exist; course badges and completion are switched on.
+- [ ] Owner confirms: student accounts exist and the B8.1 owner has access to both sites. Then check on each site that completion tracking and course badges are on (the Owner says they are, Issue #55, 2026-11-11).
 - [ ] Build the template (§3 to §6); back it up with user data OFF; record release, format and SHA-256.
 - [ ] Upload under tag `testdata-b8-1-v1`; check the download script gives the same SHA-256.
 - [ ] Give the checker owner the `.mbz`, its SHA-256 and the §4 list.
@@ -126,5 +128,5 @@ App-C item 2 is a Release 0 verification, but the §C1.7 test uses Course Studio
 | Open item | Status |
 |---|---|
 | Sections-only backup for App-C item 2 (§8); name of the `docs/decisions/` record | PENDING GUIDE CONFIRMATION |
-| `testdata/README.md` entry: source, licence, section placement marked as a proposal (Owner), SHA-256 (not edited yet) | PENDING GUIDE CONFIRMATION |
+| `testdata/README.md` entry: added (source, section layout marked as a proposal, SHA-256 to be added when the `.mbz` exists). Licence of the content | PENDING GUIDE CONFIRMATION |
 | Whether B8.1 needs a `docs/traceability.md` entry (CLAUDE.md §7 item 3; none exists for B8 today) | PENDING GUIDE CONFIRMATION |
