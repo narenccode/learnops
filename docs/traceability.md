@@ -175,8 +175,8 @@ any rule works.
   5.3 lab verification remains pending.
 - Unique `cmid` values within a model (the model builder's job, FR-C-01).
 - The inner form of `availability`, which belongs to Moodle.
-- Comparing a package model with a `.mbz` model: `cmid` values differ, so FR-C-05 compares by
-  idnumber.
+- Comparing a package model with a `.mbz` model: `cmid` values differ, so FR-C-05 compares
+  activities by idnumber and sections by section number.
 
 ### Not mapped
 
