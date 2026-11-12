@@ -6,10 +6,12 @@ AUTOMATED here (structure only, by contracts/lesson-manifest.v1.schema.json):
     does the B6.3 example from the PRD;
   * a single-track lesson stays valid when camera and screen tracks are added (C4.7);
   * the nine required root fields (schema, course_slug, lesson_id, title, duration_s, tracks,
-    captions, transcript, chapters), types, exactly one main track, track roles as open
+    captions, transcript, chapters), types, exactly one main track, at least one English
+    caption (lang en, since B6.2 requires captions.en.vtt), track roles as open
     lowercase names (known: main, main-low, camera, screen; others such as audio accepted),
-    slug and timestamp patterns, relative paths only (B6.3, C-08), and that unknown fields are
-    accepted (PRD B.0, EXT-02).
+    slug and timestamp patterns, relative paths only (B6.3, C-08) on every path field, using
+    the shared vectors in contracts/test-vectors/relative-path.v1.json, and that unknown fields
+    are accepted (PRD B.0, EXT-02).
 
 NOT automated here, and therefore NOT claimed as enforced (the schema's $comment lists them):
   * that the files the manifest names, and poster.jpg (which has no manifest field), exist in
@@ -40,6 +42,7 @@ SCHEMA_PATH = ROOT / "contracts" / "lesson-manifest.v1.schema.json"
 EXAMPLES = ROOT / "contracts" / "examples" / "lesson-manifest.v1"
 SINGLE_TRACK = EXAMPLES / "single-track" / "lesson.json"
 CAMERA_SCREEN = EXAMPLES / "camera-screen" / "lesson.json"
+PATH_VECTORS_PATH = ROOT / "contracts" / "test-vectors" / "relative-path.v1.json"
 
 # The example in PRD B6.3, with its "…" timestamp replaced by a real one.
 PRD_EXAMPLE: dict[str, Any] = {
@@ -329,23 +332,28 @@ def test_invalid_track_is_rejected(
     assert (case.at, case.keyword) in error_keys(validator, doc)
 
 
-# --- invalid: paths (relative to the lesson folder only, PRD B6.3, C-08) -------------------
+# --- paths (relative to the lesson folder only, PRD B6.3, C-08) ----------------------------
 
-BAD_PATHS = [
-    "../720p.mp4",
-    "slides/../../x.jpg",
-    "..",
-    "/media/courses/x/720p.mp4",
-    "https://media.example.org/courses/x/720p.mp4",
-    "http://example.org/720p.mp4",
-    "s3://bucket/720p.mp4",
-    "file:///720p.mp4",
-    "C:\\media\\720p.mp4",
-    "slides\\001.jpg",
-    "",
-    "720p.mp4\n",
-    "720p\n.mp4",
-]
+# One list of valid and invalid paths, shared with libs/media_paths so both enforce one rule.
+PATH_VECTORS = load(PATH_VECTORS_PATH)
+VALID_PATHS: list[str] = [v["path"] for v in PATH_VECTORS["valid"]]
+BAD_PATHS: list[str] = [v["path"] for v in PATH_VECTORS["invalid"]]
+
+# Guide decision for B6.3: the rules every relative path must follow.
+PATH_RULES = {
+    "empty",
+    "backslash",
+    "whitespace",
+    "question-mark",
+    "hash",
+    "url-scheme",
+    "drive-letter",
+    "absolute",
+    "empty-segment",
+    "dot-segment",
+    "dot-dot-segment",
+}
+
 PATH_FIELDS: list[tuple[str, Loc]] = [
     ("track file", MAIN + ("file",)),
     ("caption file", CAPTION + ("file",)),
@@ -354,6 +362,8 @@ PATH_FIELDS: list[tuple[str, Loc]] = [
     ("slides", ("slides",)),
     ("cues", ("cues",)),
     ("summary", ("summary",)),
+    # Not a file, but readers build the lesson folder's path from it (C-08).
+    ("lesson_id", ("lesson_id",)),
 ]
 PATH_CASES = [
     bad(f"{label} {value!r}", loc, value, "pattern")
@@ -371,6 +381,103 @@ def test_path_that_is_not_relative_is_rejected(
 ) -> None:
     case.edit(doc)
     assert (case.at, case.keyword) in error_keys(validator, doc)
+
+
+@pytest.mark.parametrize(
+    ("loc", "value"),
+    [
+        pytest.param(loc, value, id=f"{label} {value!r}")
+        for label, loc in PATH_FIELDS
+        for value in VALID_PATHS
+    ],
+)
+def test_valid_relative_path_is_accepted(
+    validator: Draft202012Validator, doc: Doc, loc: Loc, value: str
+) -> None:
+    set_at(loc, value)(doc)
+    assert messages(validator, doc) == []
+
+
+def _relative_path_refs(node: Any, at: tuple[str, ...] = ()) -> set[tuple[str, ...]]:
+    """Schema locations whose value is {"$ref": "#/$defs/relative_path"}."""
+    found: set[tuple[str, ...]] = set()
+    if isinstance(node, dict):
+        if node.get("$ref") == "#/$defs/relative_path":
+            found.add(at)
+        for key, child in node.items():
+            found |= _relative_path_refs(child, at + (key,))
+    return found
+
+
+def _schema_location(schema: dict[str, Any], loc: Loc) -> tuple[str, ...]:
+    """The schema location that describes the document value at loc, following local $refs."""
+    at: tuple[str, ...] = ()
+    node: Any = schema
+    for key in loc:
+        if "$ref" in node:
+            name = node["$ref"].removeprefix("#/$defs/")
+            at, node = ("$defs", name), schema["$defs"][name]
+        if isinstance(key, int):
+            at, node = at + ("items",), node["items"]
+        else:
+            at, node = at + ("properties", key), node["properties"][key]
+    return at
+
+
+def test_every_path_field_in_the_schema_is_tested(schema: dict[str, Any]) -> None:
+    # A path field added to the schema later must also be added to PATH_FIELDS, and every
+    # PATH_FIELDS entry must point at a real path field, so the two lists cannot drift apart.
+    expected = {
+        ("properties", "transcript"),
+        ("properties", "chapters"),
+        ("properties", "slides"),
+        ("properties", "cues"),
+        ("properties", "summary"),
+        ("properties", "lesson_id"),
+        ("$defs", "track", "properties", "file"),
+        ("$defs", "caption", "properties", "file"),
+    }
+    tested = [_schema_location(schema, loc) for _, loc in PATH_FIELDS]
+    assert _relative_path_refs(schema) == expected
+    assert set(tested) == expected
+    assert len(tested) == len(set(tested))  # no field listed twice
+
+
+# lesson_id: the cases from the PR #32 review, plus the lesson_id forms B6.1 and B6.3 use.
+@pytest.mark.parametrize("value", ["../../etc", "/abs/x", "https://evil/x"], ids=repr)
+def test_lesson_id_that_is_not_a_relative_path_is_rejected(
+    validator: Draft202012Validator, doc: Doc, value: str
+) -> None:
+    set_at(("lesson_id",), value)(doc)
+    assert (("lesson_id",), "pattern") in error_keys(validator, doc)
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "01-setup/02-install-python",
+        "02-first-assistant/01-call-a-model",
+        "live-2026a/03-rag-basics",
+        "01-intro",
+    ],
+    ids=repr,
+)
+def test_lesson_id_that_is_a_lesson_slug_path_is_accepted(
+    validator: Draft202012Validator, doc: Doc, value: str
+) -> None:
+    set_at(("lesson_id",), value)(doc)
+    assert messages(validator, doc) == []
+
+
+def test_path_vectors_cover_every_rule() -> None:
+    used = {rule for v in PATH_VECTORS["invalid"] for rule in v["rules"]}
+    assert used == PATH_RULES
+    assert all(v["rules"] for v in PATH_VECTORS["invalid"])
+
+
+def test_path_vectors_have_no_duplicates() -> None:
+    every = VALID_PATHS + BAD_PATHS
+    assert len(every) == len(set(every))
 
 
 # --- invalid: course_slug ------------------------------------------------------------------
@@ -474,6 +581,34 @@ def test_wrong_type_or_value_is_rejected(
     assert (case.at, case.keyword) in error_keys(validator, doc)
 
 
+# --- English caption: B6.2 requires captions.en.vtt, so v1 needs one caption with lang en ---
+
+
+HINDI_CAPTION = {"lang": "hi", "file": "captions.hi.vtt"}
+ENGLISH_CAPTION = {"lang": "en", "file": "captions.en.vtt"}
+
+
+def test_captions_without_english_are_rejected(
+    validator: Draft202012Validator, doc: Doc
+) -> None:
+    doc["captions"] = [HINDI_CAPTION]
+    assert (("captions",), "contains") in error_keys(validator, doc)
+
+
+@pytest.mark.parametrize(
+    "captions",
+    [
+        pytest.param([ENGLISH_CAPTION], id="english only"),
+        pytest.param([HINDI_CAPTION, ENGLISH_CAPTION], id="hindi then english"),
+    ],
+)
+def test_captions_with_english_are_accepted(
+    validator: Draft202012Validator, doc: Doc, captions: list[dict[str, str]]
+) -> None:
+    doc["captions"] = copy.deepcopy(captions)
+    assert messages(validator, doc) == []
+
+
 @pytest.mark.parametrize("value", [[], "learnops.lesson/v1", None, 1], ids=repr)
 def test_document_that_is_not_an_object_is_rejected(
     validator: Draft202012Validator, value: Any
@@ -520,8 +655,6 @@ ACCEPTED = [
     Accepted(
         "live-class lesson_id", set_at(("lesson_id",), "live-2026a/03-rag-basics")
     ),
-    Accepted("path in a subfolder", set_at(("slides",), "slides/index.json")),
-    Accepted("path with '..' inside a name", set_at(("chapters",), "a/..b/c.json")),
     Accepted("timestamp with fraction", set_at(COMPLETED_AT, "2026-01-12T10:00:00.5Z")),
     Accepted(
         "timestamp with offset", set_at(COMPLETED_AT, "2026-01-12T10:00:00-03:00")
