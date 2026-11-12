@@ -30,7 +30,7 @@ release you are on, unless the guide says otherwise.
 7. **Store media as relative paths only**, never full URLs (PRD C-08).
 8. **Protected course items** (final project, course feedback, badge and completion criteria) are never generated, changed or duplicated (PRD §B1.4).
 9. Every CLI supports `--dry-run`, `--check`, and has a documented undo.
-10. Licences: Apache-2.0 for our code; dependencies must be MIT, BSD or Apache-2.0 (LGPL only as an unmodified library). Check before adding one.
+10. Licences (PRD C-11): Apache-2.0 for our code; dependencies need a permissive OSI-approved licence (MIT, BSD, Apache-2.0, ISC, PSF-2.0 and similar); LGPL or MPL-2.0 only unmodified; no GPL or AGPL. Runtime dependencies go in the root `requirements.txt`, development and CI ones in `requirements-dev.txt`: one pinned version per package, with its licence as a comment. Check before adding one.
 
 ## 3. Shared contracts (PRD Part B)
 
@@ -90,6 +90,7 @@ introduce another language, framework or database. Ask the guide first if you th
 5. Reviewed and approved by a member of **another** module; the reviewer runs the tests.
 6. No contract changed, or changed through `/contract-change`.
 7. The module's design document is `Approved`, or the work is Release 0 foundation work the guide has allowed.
+8. A pull request changes at most **800 lines**. Exception: a **contract PR** (it touches `contracts/`) cannot be split (PRD B.0 rule 3), so it may exceed 800 lines when its description has a **file map** (each file, its length in lines, and what a reviewer checks) and states the reason. Draft PRs are not checked.
 
 ## 8. How Claude Code should work in this repo
 

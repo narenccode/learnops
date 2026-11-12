@@ -20,10 +20,21 @@ jobs:
       - name: Pre-commit (format, lint, secret scan)
         run: |
           pip install pre-commit
-          SKIP=no-commit-to-branch pre-commit run --all-files
+          # gitleaks is skipped here: its pre-commit hook scans only staged files, so in a fresh
+          # checkout it scans nothing. The full-history scan is the next step.
+          SKIP=no-commit-to-branch,gitleaks pre-commit run --all-files
+
+      - name: Secret scan (gitleaks, whole history)
+        run: |
+          V=8.18.4
+          curl -fsSL -o gl.tgz "https://github.com/gitleaks/gitleaks/releases/download/v${V}/gitleaks_${V}_linux_x64.tar.gz"
+          echo "ba6dbb656933921c775ee5a2d1c13a91046e7952e9d919f9bac4cec61d628e7d  gl.tgz" | sha256sum -c -
+          tar -xzf gl.tgz gitleaks
+          ./gitleaks detect --source . --redact -v --no-banner
 
       - name: Install Python dependencies
         run: |
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
 
       - name: Type check shared libraries
@@ -36,7 +47,33 @@ jobs:
 
       - name: Unit tests
         run: |
-          if ls -d modules/*/tests libs/*/tests >/dev/null 2>&1; then pip install pytest && pytest -q; fi
+          # has_tests.sh: true when modules/*/tests OR libs/*/tests exists (see its comment).
+          # -v puts every test name in the log; -rs lists every skipped test and its reason.
+          if bash .github/scripts/has_tests.sh; then
+            pip install pytest
+            set -o pipefail  # without it a failing pytest would be hidden by tee
+            pytest -v -rs | tee "$RUNNER_TEMP/unit.log"
+          fi
+
+      - name: Symlink tests must pass, not skip
+        run: |
+          # Skips elsewhere are allowed. These three exist to prove that links cannot leave a
+          # package, so a skip (for example no symlink support on the runner) must fail the job.
+          T=libs/contracts/tests/test_validate_package.py
+          if [ ! -f "$T" ]; then
+            echo "::notice::$T does not exist yet; nothing to guard."
+            exit 0
+          fi
+          for name in \
+            test_source_refuses_a_link_that_leaves_the_package \
+            test_source_follows_a_link_that_stays_inside_the_package \
+            test_body_that_is_a_link_leaving_the_package_is_an_error; do
+            if ! grep -qF "$T::$name PASSED" "$RUNNER_TEMP/unit.log"; then
+              echo "::error::$name did not pass (skipped, failed, renamed or not run)."
+              exit 1
+            fi
+          done
+          echo "All three symlink tests passed."
 
       - name: Tests for the CI scripts
         run: |

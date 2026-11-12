@@ -136,7 +136,7 @@ The baseline (Releases 0–5) is built so these plug in without rework (§A9).
 | C-08 | Any media URL stored by a tool is a **relative path**, never a full fixed URL (media may be served through expiring signed links). |
 | C-09 | AI output is always a **draft** until a mentor approves it. Grades are never released by a tool. |
 | C-10 | All AI calls go through the shared model interface (§B5); all speech-to-text through the speech interface (§B5.4). |
-| C-11 | Open source under Apache-2.0. Third-party libraries must have compatible licences (MIT, BSD, Apache-2.0; LGPL only as an unmodified library). |
+| C-11 | Open source under Apache-2.0. Third-party dependencies (runtime, development and CI alike) must have a permissive OSI-approved licence (for example MIT, BSD, Apache-2.0, ISC, PSF-2.0); weak copyleft (LGPL, MPL-2.0) only as an unmodified library; no GPL or AGPL. Each dependency's licence is recorded where it is declared (runtime: root `requirements.txt`; development and CI: `requirements-dev.txt`). |
 | C-12 | Students work only inside the lab virtual machines and the lab AI services provided by the guide. |
 
 ## A8. System overview
@@ -316,13 +316,13 @@ Moodle sites have: completion tracking on; web services enabled with a dedicated
 
 | Contract | Owner | Used by |
 |---|---|---|
-| B1 Course package | Student 1 | M1, M2, M3, M5 |
+| B1 Course package | Student 1 | M1, M2, M3 |
 | B2 Course model | Student 2 | M1, M2 |
 | B3 LTI 1.3 launch | Student 2 (as integration lead) | M1, M2, M3, M4 |
 | B4 Moodle web-services usage | Student 3 | M2, M3 |
 | B5 Model and speech interface | Student 3 | M1, M3, M4 |
-| B6 Media paths and lesson manifest | Student 4 | M1, M4, F-1 |
-| B7 H5P practice output | Student 1 | M1, M4 |
+| B6 Media paths and lesson manifest | Student 4 | M1, M2, M4, F-1 |
+| B7 H5P practice output | Student 1 | M1, M2, M4 |
 | B8 Test data sets | Students 1, 3, 4 (per set) | All |
 
 ## B1. Course package (v1)
