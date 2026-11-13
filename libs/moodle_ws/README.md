@@ -28,14 +28,26 @@ their own. `call()` returns the transport's answer unchanged.
   `workflowstate` as `readyforrelease`. Any other value, or none, is refused. On that function, a key
   or value that is exactly `released`, at any depth, is also refused. `mod_assign_set_user_flags` is
   no longer in the B4 allow-list (guide's findings, PR #64), so it is refused as any other unlisted
-  function. This needs no parameter names, which B4 does not list yet. A sentence containing the word,
-  such as feedback text, is allowed.
+  function, even if an allow-list file still lists it. A sentence containing the word, such as
+  feedback text, is allowed.
+- **A grade write without an explicit attempt or a plain grade** (B4 R2, R9). `attemptnumber` must be
+  a whole number from 0, never `-1`; `grade` must be a plain non-negative number (`84.5` or
+  `"84.5"`; not `True`, `"1e2"` or `"NaN"`). Otherwise `GradeWriteNotAllowed`.
 - **Parameters that are not plain data**, on every function. `params` must be a mapping of text,
   numbers, booleans, `None`, lists, tuples, sets and dicts, with text or integer keys, at most 32 levels
   deep. `bytes`, `bytearray`, generators, subclasses and other objects raise `InvalidParameters`. The
   transport receives a private copy, so it cannot change the caller's data.
+- **Every direct grade write.** `call("mod_assign_save_grade", ...)` runs the guards above and then
+  raises `GradeWriteNotAllowed`. A grade write is sent only through a `WriteReceipt`: sealed,
+  single-use, bound to one client, holding its own copy of the checked parameters, with the guards
+  above run again on that path. Only the guarded write helper may issue one, after the checks
+  `call()` cannot run alone (maximum grade, locked state, marking workflow) and with a read-back.
+  **That helper is added in a later pull request; until then no grade write can be sent at all.**
+  This stops accidental bypass; it is not a boundary against code that imports private names, and a
+  test fails if any module outside this library uses them.
 
-Parameter names are not checked. An empty `parameters` list in the contract means "not yet determined"
+Apart from `workflowstate`, `attemptnumber` and `grade` on `mod_assign_save_grade`, parameter names are
+not checked. An empty `parameters` list in the contract means "not yet determined"
 (B4 §2a), not "no parameters".
 
 ## Configuration
@@ -84,6 +96,7 @@ All derive from `MoodleError`, with a `code` and a `retryable` flag.
 | `NotSupported` | `not_supported` | no |
 | `FunctionNotAllowed` | `function_not_allowed` | no |
 | `WorkflowStateNotAllowed` | `workflow_state_not_allowed` | no |
+| `GradeWriteNotAllowed` | `grade_write_not_allowed` | no |
 | `InvalidParameters` | `invalid_parameters` | no |
 | `MoodleConfigError` | `moodle_config_error` | no |
 
@@ -106,7 +119,8 @@ Each of these waits for the lab checks in `contracts/moodle-ws.v1.md` §5:
 
 - A real transport: the endpoint, how the token is sent, and the response format.
 - Mapping Moodle's error answers to these classes.
-- Parameter names, apart from `workflowstate`. The parameter for feedback comments is unknown.
+- Parameter names, apart from `workflowstate`, `attemptnumber` and `grade`. The parameter for feedback
+  comments is unknown.
 - Normalized models (`docs/design/grading.md` §4.1). Until they exist, `call()` returns data as is.
 - The file download, and the capability list.
 - A Fake Moodle built from recordings (design Q53).

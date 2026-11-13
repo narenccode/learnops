@@ -31,19 +31,19 @@ from moodle_ws import (
     load_allowlist,
 )
 
-from .conftest import FAKE_TOKEN
+from .conftest import FAKE_TOKEN, VALID_WRITE, send_checked
 from .fake_transport import FakeTransport
 
 SAVE_GRADE = "mod_assign_save_grade"
 SET_USER_FLAGS = "mod_assign_set_user_flags"
 
 
-def test_a_grade_write_with_readyforrelease_is_sent(settings: SiteSettings) -> None:
+def test_a_checked_grade_write_with_readyforrelease_is_sent(
+    settings: SiteSettings,
+) -> None:
     transport = FakeTransport()
-    MoodleClient(settings, transport).call(
-        SAVE_GRADE, {"workflowstate": "readyforrelease"}
-    )
-    assert transport.calls == [(SAVE_GRADE, {"workflowstate": "readyforrelease"})]
+    send_checked(MoodleClient(settings, transport), VALID_WRITE)
+    assert transport.calls == [(SAVE_GRADE, VALID_WRITE)]
 
 
 @pytest.mark.parametrize(
@@ -85,8 +85,8 @@ def test_a_sentence_containing_the_word_is_allowed(
     other: Any, settings: SiteSettings
 ) -> None:
     transport = FakeTransport()
-    params = {"workflowstate": "readyforrelease", "note": other}
-    MoodleClient(settings, transport).call(SAVE_GRADE, params)
+    params = {**VALID_WRITE, "note": other}
+    send_checked(MoodleClient(settings, transport), params)
     assert len(transport.calls) == 1
 
 
@@ -104,9 +104,28 @@ def test_released_is_refused_at_any_depth_on_the_write_function(
     params: dict[str, Any], settings: SiteSettings
 ) -> None:
     transport = FakeTransport()
-    values = {"workflowstate": "readyforrelease", **params}
+    values = {**VALID_WRITE, **params}
     with pytest.raises(WorkflowStateNotAllowed, match="never releases grades"):
         MoodleClient(settings, transport).call(SAVE_GRADE, values)
+    assert transport.calls == []
+
+
+def test_set_user_flags_is_refused_even_if_an_allow_list_lists_it(
+    settings: SiteSettings,
+) -> None:
+    """Guide's B4 findings (PR #64): removed from B4. The client refuses it by name, even with
+    an allow-list that lists it, as this branch's contract file still does before the rebase onto
+    #64. The test builds that list itself, so it passes on either base."""
+    base = load_allowlist()
+    listed = AllowList(
+        MappingProxyType({**base.functions, SET_USER_FLAGS: MappingProxyType({})}),
+        base.moodle_versions,
+    )
+    transport = FakeTransport()
+    with pytest.raises(FunctionNotAllowed):
+        MoodleClient(settings, transport, listed).call(
+            SET_USER_FLAGS, {"workflowstate": "readyforrelease"}
+        )
     assert transport.calls == []
 
 
@@ -151,10 +170,10 @@ def test_the_answer_is_returned_unchanged(settings: SiteSettings) -> None:
 
 def test_the_caller_cannot_change_what_was_sent(settings: SiteSettings) -> None:
     transport = FakeTransport()
-    params = {"workflowstate": "readyforrelease"}
-    MoodleClient(settings, transport).call(SAVE_GRADE, params)
+    params = dict(VALID_WRITE)
+    send_checked(MoodleClient(settings, transport), params)
     params["workflowstate"] = "released"
-    assert transport.calls[0][1] == {"workflowstate": "readyforrelease"}
+    assert transport.calls[0][1] == VALID_WRITE
 
 
 def test_a_transport_cannot_change_the_callers_parameters(
