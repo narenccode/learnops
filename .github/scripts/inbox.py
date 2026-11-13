@@ -109,6 +109,8 @@ def classify(pr: dict, bot_text: str, guide: str) -> tuple[str, list[str]]:
         return "decision", approved
     if requested:
         return "waiting", [f"changes requested by {', '.join(requested)}"]
+    if pr.get("mergeable") == "CONFLICTING":
+        return "waiting", ["merge conflicts: the author must update the branch"]
     if not checks_green(pr):
         return "waiting", ["checks are failing or still running"]
     if not approved:
@@ -255,7 +257,7 @@ def build(
 def fetch_open(repo: str) -> list[dict]:
     fields = (
         "number,title,author,labels,url,isDraft,updatedAt,createdAt,body,"
-        "reviews,files,statusCheckRollup"
+        "reviews,files,statusCheckRollup,mergeable"
     )
     return json.loads(
         gh(
