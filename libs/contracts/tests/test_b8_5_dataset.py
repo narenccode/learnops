@@ -12,18 +12,23 @@ kinds: errors are wrong in any state; gaps are what is still missing. The Status
 true: COMPLETE with any gap fails, and so does PENDING with no gap.
 
 AUTOMATED here:
-  * errors: the ten fixed columns; at least 5 rows with unique `lecture-NN` ids; every cell in its
-    documented form (PENDING or: integer seconds, a bare file name, 64 lowercase hex SHA-256, the
-    lecture's own outline/transcript path, `0004` speaker-NN, pending/checked); referenced files
-    exist; a placeholder transcript is not `checked`; the decision record states the exact
-    sentence and has a `## Consent lines` section whose lines are unique and well formed (PENDING
-    or name, valid date, exact sentence); a referenced consent line exists and carries the
-    lecture's Speaker name; one speaker has one consent line; the set folder holds exactly the
-    permitted paths (no recording, audio, draft, nested or unlisted file);
-  * gaps: any PENDING value; a transcript not checked; a placeholder outline or transcript; a
-    missing decision record; consent not given yet; a consent line no lecture uses; a total below
-    1800 s or a Total line that is not the sum;
-  * both READMEs give the same status;
+  * errors: the ten fixed columns; every row has exactly as many cells as the header (a `|`
+    inside a value is reported, never silently shifted or cut); at least 5 rows with unique
+    `lecture-NN` ids; every cell in its documented form (PENDING or: ASCII whole seconds, a bare
+    file name, 64 lowercase hex SHA-256, the lecture's own outline/transcript path, `0004`
+    speaker-NN, pending/checked); referenced files exist; a placeholder transcript is not
+    `checked`; the decision record states the exact sentence and has a `## Consent lines`
+    section whose lines are unique and well formed (PENDING or name, valid date, exact
+    sentence); a referenced consent line exists and carries the lecture's Speaker name; one
+    speaker has one consent line; the files Git tracks in the set folder are exactly the
+    permitted paths (no recording, audio, draft, nested or unlisted file; ignored or untracked
+    local files such as Thumbs.db do not count, and a failing `git ls-files` is an error);
+  * gaps: any PENDING value; a transcript not checked; an outline or transcript that is empty or
+    has a line starting with PENDING anywhere in it; a missing decision record; consent not
+    given yet; a consent line no lecture uses; a total below 1800 s or a numeric Total line that
+    is not the sum;
+  * the status: both READMEs give the same status; COMPLETE needs no gap and a real Total line;
+    PENDING needs a gap other than the Total line itself and keeps the Total line PENDING;
   * all of the above on synthetic sets, built as README and decision-record text and parsed back.
 
 NOT automated, and therefore NOT claimed:
@@ -39,7 +44,8 @@ from __future__ import annotations
 
 import datetime
 import re
-from collections.abc import Callable
+import subprocess
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, replace
 from pathlib import Path
 
@@ -74,6 +80,9 @@ TOP_LEVEL_FILES = ("README.md", ".gitignore")
 LECTURE_FILES = ("outline.md", "transcript.en.txt")
 
 LECTURE_ID_RE = re.compile(r"^lecture-\d{2}$")
+# ASCII only: str.isdigit() also accepts "³" (which int() then rejects with a traceback) and
+# "٣٦٠" or "３６０" (which int() silently reads as 360).
+WHOLE_SECONDS_RE = re.compile(r"[0-9]+")
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 STATUS_RE = re.compile(r"^- \*\*Status:\*\* (\w+)\.", re.MULTILINE)
 SET_STATUS_RE = re.compile(r"^\*\*Status: (\w+)\.\*\*", re.MULTILINE)
@@ -90,8 +99,11 @@ CONSENT_GIVEN_RE = re.compile(
 class Inventory:
     status: str
     header: tuple[str, ...]
-    rows: tuple[dict[str, str], ...]
+    rows: tuple[
+        dict[str, str], ...
+    ]  # only rows with exactly one cell per header column
     total: str
+    malformed: tuple[str, ...] = ()  # one message per row with a different cell count
 
 
 @dataclass(frozen=True)
@@ -100,6 +112,7 @@ class DataSet:
     set_status: str  # the Status line of the set's own README
     testdata_dir: Path
     decision: str | None  # the decision record's text; None if it does not exist
+    files: tuple[str, ...]  # the set folder's committed files, relative to it (POSIX)
 
     @property
     def set_dir(self) -> Path:
@@ -129,8 +142,21 @@ def parse_inventory(readme_text: str) -> Inventory:
         status and total and table
     ), "B8.5 needs a Status line, the table, a Total line"
     header = tuple(split_row(table[0]))
-    rows = tuple(dict(zip(header, split_row(line), strict=False)) for line in table[1:])
-    return Inventory(status.group(1), header, rows, total.group(1).strip())
+    rows: list[dict[str, str]] = []
+    malformed: list[str] = []
+    for number, line in enumerate(table[1:], start=1):
+        cells = split_row(line)
+        if len(cells) == len(header):
+            rows.append(dict(zip(header, cells, strict=True)))
+        else:
+            # Kept out of `rows`: a shifted row would only produce misleading cell errors.
+            malformed.append(
+                f"table row {number} ({cells[0]!r}): {len(cells)} cells, the header has "
+                f"{len(header)}; a value must not contain '|'"
+            )
+    return Inventory(
+        status.group(1), header, tuple(rows), total.group(1).strip(), tuple(malformed)
+    )
 
 
 def consent_entries(decision: str) -> list[tuple[str, str]] | None:
@@ -146,8 +172,13 @@ def unquote(cell: str) -> str:
 
 
 def is_placeholder(path: Path) -> bool:
-    lines = path.read_text(encoding="utf-8").strip().splitlines()
-    return not lines or lines[0].startswith(PENDING)
+    """Empty, or any line starts with PENDING: a completed file has no PENDING line."""
+    lines = [line.strip() for line in path.read_text(encoding="utf-8").splitlines()]
+    return not any(lines) or any(line.startswith(PENDING) for line in lines)
+
+
+def is_whole_seconds(text: str) -> bool:
+    return WHOLE_SECONDS_RE.fullmatch(text) is not None
 
 
 def is_iso_date(text: str) -> bool:
@@ -165,15 +196,41 @@ def total_text(seconds: int) -> str:
 # --- checks --------------------------------------------------------------------------------
 
 
-def unexpected_files(set_dir: Path, lecture_ids: list[str]) -> list[str]:
-    """Every file in the set folder that is not at one of the exact permitted paths."""
+class GitInspectionError(RuntimeError):
+    """`git ls-files` could not list the set folder; never read as an empty, clean folder."""
+
+
+def tracked_files(set_dir: Path) -> tuple[str, ...]:
+    """The files Git tracks in the set folder, relative to it.
+
+    Git's index, not the disk: ignored or untracked local files (Thumbs.db, desktop.ini, editor
+    swap and backup files) are not part of the committed set and must not fail the check.
+    """
+    hint = "Run the tests with Git installed, inside a clone of the repository."
+    try:
+        result = subprocess.run(
+            ["git", "ls-files", "-z", "--", "."],
+            cwd=set_dir,
+            capture_output=True,
+            check=False,
+        )
+    except OSError as exc:
+        raise GitInspectionError(f"cannot run git in {set_dir}: {exc}. {hint}") from exc
+    if result.returncode != 0:
+        stderr = result.stderr.decode("utf-8", errors="replace").strip()
+        raise GitInspectionError(
+            f"git ls-files failed in {set_dir} (exit {result.returncode}): {stderr}. {hint}"
+        )
+    # -z: paths are NUL-separated, unquoted, and relative to cwd (the set folder).
+    return tuple(sorted(p for p in result.stdout.decode("utf-8").split("\0") if p))
+
+
+def unexpected_files(files: Iterable[str], lecture_ids: list[str]) -> list[str]:
+    """Every committed file that is not at one of the exact permitted paths."""
     permitted = set(TOP_LEVEL_FILES) | {
         f"lectures/{lid}/{name}" for lid in lecture_ids for name in LECTURE_FILES
     }
-    found = (
-        p.relative_to(set_dir).as_posix() for p in set_dir.rglob("*") if p.is_file()
-    )
-    return sorted(path for path in found if path not in permitted)
+    return sorted(path for path in files if path not in permitted)
 
 
 def check(ds: DataSet) -> tuple[list[str], list[str]]:
@@ -181,7 +238,7 @@ def check(ds: DataSet) -> tuple[list[str], list[str]]:
     inv = ds.inventory
     if inv.header != COLUMNS:
         return [f"table columns are {list(inv.header)}, expected {list(COLUMNS)}"], []
-    errors: list[str] = []
+    errors: list[str] = list(inv.malformed)
     gaps: list[str] = []
     ids = [row.get("ID", "") for row in inv.rows]
     if len(ids) < MIN_LECTURES:
@@ -194,8 +251,7 @@ def check(ds: DataSet) -> tuple[list[str], list[str]]:
     check_speakers(inv.rows, consents, errors, gaps)
     check_total(inv, gaps)
     errors += [
-        f"not permitted in the set folder: {p}"
-        for p in unexpected_files(ds.set_dir, ids)
+        f"not permitted in the set folder: {p}" for p in unexpected_files(ds.files, ids)
     ]
     return errors, gaps
 
@@ -241,11 +297,9 @@ def check_row(
     errors: list[str],
     gaps: list[str],
 ) -> None:
-    lid = row.get("ID", "")
-    if len(row) != len(COLUMNS) or not LECTURE_ID_RE.match(lid):
-        errors.append(
-            f"row {lid!r}: needs {len(COLUMNS)} cells and an id like lecture-01"
-        )
+    lid = row["ID"]  # parse_inventory() keeps only rows with one cell per column
+    if not LECTURE_ID_RE.match(lid):
+        errors.append(f"row {lid!r}: needs an id like lecture-01")
         return
     pending = [column for column in FILLED_BY_HAND if row[column] == PENDING]
     if pending:
@@ -253,7 +307,7 @@ def check_row(
     if not row["Title"] or not row["Speaker"]:
         errors.append(f"{lid}: Title and Speaker must not be empty (write {PENDING})")
     duration = row["Duration (s)"]
-    if duration != PENDING and not (duration.isdigit() and int(duration) > 0):
+    if duration != PENDING and not (is_whole_seconds(duration) and int(duration) > 0):
         errors.append(f"{lid}: Duration (s) must be whole seconds: {duration!r}")
     if row["Recording file (lab only)"] != PENDING and re.search(
         r"[/\\:]", row["Recording file (lab only)"]
@@ -336,12 +390,14 @@ def check_speakers(
 
 def check_total(inv: Inventory, gaps: list[str]) -> None:
     durations = [row.get("Duration (s)", PENDING) for row in inv.rows]
-    if not all(d.isdigit() for d in durations):
-        return  # PENDING durations are already reported
+    if not all(is_whole_seconds(d) for d in durations):
+        return  # PENDING or invalid durations are already reported
     total = sum(int(d) for d in durations)
     if total < MIN_TOTAL_S:
         gaps.append(f"total duration {total} s is below {MIN_TOTAL_S} s")
-    if inv.total != total_text(total):
+    # A PENDING Total line is a status marker, not missing evidence: counting it as a gap would
+    # let a finished set keep saying PENDING. status_problems() judges it against the Status.
+    if inv.total != PENDING and inv.total != total_text(total):
         gaps.append(f"Total line says {inv.total!r}, expected {total_text(total)!r}")
 
 
@@ -355,6 +411,8 @@ def status_problems(ds: DataSet, gaps: list[str]) -> list[str]:
         ]
     if status == "COMPLETE" and gaps:
         return ["Status is COMPLETE but the set is not:", *gaps]
+    if status == "COMPLETE" and ds.inventory.total == PENDING:
+        return [f"Status is COMPLETE but the Total line still says {PENDING}"]
     if status == PENDING and not gaps:
         return ["nothing is missing any more: change both Status lines to COMPLETE"]
     if status == PENDING and ds.inventory.total != PENDING:
@@ -387,6 +445,7 @@ def real_data_set() -> DataSet:
             if DECISION_RECORD.is_file()
             else None
         ),
+        files=tracked_files(TESTDATA_DIR / SET_NAME),
     )
 
 
@@ -425,6 +484,7 @@ class Draft:
     total: str | None = None  # None: the correct total of the rows
     header: tuple[str, ...] = COLUMNS
     placeholders: tuple[str, ...] = ()  # paths in the set folder written as PENDING
+    texts: tuple[tuple[str, str], ...] = ()  # (path in the set folder, exact file text)
     missing: tuple[str, ...] = ()  # lecture files not written
     extra_files: tuple[str, ...] = ()  # other files written into the set folder
     record: bool = True
@@ -479,7 +539,7 @@ def render_readme(d: Draft) -> str:
     durations = [row.get("Duration (s)", "") for row in d.rows]
     computed = (
         total_text(sum(map(int, durations)))
-        if all(map(str.isdigit, durations))
+        if all(map(is_whole_seconds, durations))
         else PENDING
     )
     total = (
@@ -492,7 +552,8 @@ def render_readme(d: Draft) -> str:
         "",
         f"| {' | '.join(d.header)} |",
         f"|{'---|' * len(d.header)}",
-        *(f"| {' | '.join(row.get(c, '') for c in d.header)} |" for row in d.rows),
+        # A row without a column's key gets no cell at all, so a short row can be written.
+        *(f"| {' | '.join(row[c] for c in d.header if c in row)} |" for row in d.rows),
         "",
         f"**Total recorded duration:** {total}",
         "",
@@ -511,12 +572,13 @@ def render_decision(d: Draft) -> str:
 
 def build(tmp_path: Path, d: Draft) -> DataSet:
     set_dir = tmp_path / SET_NAME
+    texts = dict(d.texts)
     for row in d.rows:
         for name in LECTURE_FILES:
             relative = f"lectures/{row['ID']}/{name}"
             if relative in d.missing:
                 continue
-            text = (
+            text = texts.get(relative) or (
                 "PENDING: placeholder\n"
                 if relative in d.placeholders
                 else "Synthetic.\n"
@@ -531,7 +593,21 @@ def build(tmp_path: Path, d: Draft) -> DataSet:
         set_status=d.set_status or d.status,
         testdata_dir=tmp_path,
         decision=render_decision(d) if d.record else None,
+        # Not a Git repository: every file written here stands for a committed one.
+        # tracked_files() itself is tested on a real repository further down.
+        files=tuple(
+            sorted(
+                p.relative_to(set_dir).as_posix()
+                for p in set_dir.rglob("*")
+                if p.is_file()
+            )
+        ),
     )
+
+
+def assert_reported(found: list[str], expected: str) -> None:
+    """The exact message, so that an unrelated problem cannot keep a negative test passing."""
+    assert expected in found, f"expected {expected!r} among {found}"
 
 
 def test_a_complete_set_passes_and_parses_back(tmp_path: Path) -> None:
@@ -558,86 +634,265 @@ def test_a_partly_filled_pending_set_has_no_errors(tmp_path: Path) -> None:
     assert problems(build(tmp_path, draft.cell(0, "Duration (s)", "412"))) == []
 
 
-STATUS_CASES: dict[str, Callable[[], Draft]] = {
-    "pending-set-claims-complete": lambda: replace(pending_draft(), status="COMPLETE"),
-    "complete-set-still-pending": lambda: replace(complete_draft(), status=PENDING),
-    "readmes-disagree": lambda: replace(complete_draft(), set_status=PENDING),
-    "unknown-status": lambda: replace(complete_draft(), status="DONE"),
+STILL_PENDING = "nothing is missing any more: change both Status lines to COMPLETE"
+
+# Each case: how to make the draft, and the exact message its check must produce.
+STATUS_CASES: dict[str, tuple[Callable[[], Draft], str]] = {
+    "pending-set-claims-complete": (
+        lambda: replace(pending_draft(), status="COMPLETE"),
+        "Status is COMPLETE but the set is not:",
+    ),
+    "complete-set-still-pending": (
+        lambda: replace(complete_draft(), status=PENDING),
+        STILL_PENDING,
+    ),
+    "complete-set-still-pending-with-pending-total": (
+        lambda: replace(complete_draft(), status=PENDING, total=PENDING),
+        STILL_PENDING,
+    ),
+    "complete-status-with-pending-total": (
+        lambda: replace(complete_draft(), total=PENDING),
+        f"Status is COMPLETE but the Total line still says {PENDING}",
+    ),
+    "pending-set-with-numeric-total": (
+        lambda: replace(pending_draft(), total="1800 s (30 min 0 s)"),
+        f"a PENDING set keeps the Total line as {PENDING}",
+    ),
+    "readmes-disagree": (
+        lambda: replace(complete_draft(), set_status=PENDING),
+        "the set README says PENDING, testdata/README.md says COMPLETE",
+    ),
+    "unknown-status": (
+        lambda: replace(complete_draft(), status="DONE"),
+        "Status must be PENDING or COMPLETE, not 'DONE'",
+    ),
 }
 
 
-@pytest.mark.parametrize("make", STATUS_CASES.values(), ids=STATUS_CASES.keys())
-def test_a_false_status_fails(tmp_path: Path, make: Callable[[], Draft]) -> None:
-    assert problems(build(tmp_path, make())) != []
+@pytest.mark.parametrize(
+    ("make", "expected"), STATUS_CASES.values(), ids=STATUS_CASES.keys()
+)
+def test_a_false_status_fails(
+    tmp_path: Path, make: Callable[[], Draft], expected: str
+) -> None:
+    assert_reported(problems(build(tmp_path, make())), expected)
+
+
+def test_a_finished_set_cannot_hide_behind_a_pending_total(tmp_path: Path) -> None:
+    """Regression: all evidence in, both Status lines and the Total line still PENDING."""
+    ds = build(tmp_path, replace(complete_draft(), status=PENDING, total=PENDING))
+    assert check(ds) == ([], [])
+    assert problems(ds) == [STILL_PENDING]
 
 
 def first_line(d: Draft, line: str) -> Draft:
     return replace(d, consent_lines=(line, *d.consent_lines[1:]))
 
 
-def extra(*paths: str) -> Callable[[Draft], Draft]:
-    return lambda d: replace(d, extra_files=paths)
+def extra(*paths: str) -> tuple[Callable[[Draft], Draft], str]:
+    return (
+        lambda d: replace(d, extra_files=paths),
+        f"not permitted in the set folder: {paths[0]}",
+    )
 
 
-BROKEN: dict[str, Callable[[Draft], Draft]] = {
+def text_of(relative: str, text: str) -> Callable[[Draft], Draft]:
+    return lambda d: replace(d, texts=((relative, text),))
+
+
+def without(index: int, column: str) -> Callable[[Draft], Draft]:
+    """Row `index` written with one cell fewer than the header."""
+
+    def mutate(d: Draft) -> Draft:
+        rows = [dict(row) for row in d.rows]
+        del rows[index][column]
+        return replace(d, rows=tuple(rows))
+
+    return mutate
+
+
+def whole_seconds(value: str) -> tuple[Callable[[Draft], Draft], str]:
+    return (
+        lambda d: d.cell(0, "Duration (s)", value),
+        f"lecture-01: Duration (s) must be whole seconds: {value!r}",
+    )
+
+
+LATER_PENDING = "Real first line.\nPENDING: rest not typed yet\n"
+MUST_READ = 'speaker-01: must read <name>, <YYYY-MM-DD>: "<exact sentence>"'
+RECORDING_NAME_ONLY = (
+    "lecture-01: Recording file must be a file name only, no path or URL"
+)
+SHA_FORM = "lecture-01: SHA-256 must be 64 lowercase hex characters"
+IDS = [f"lecture-0{n}" for n in range(1, 6)]
+
+# Each case: how to break a complete draft, and the exact message its check must produce.
+BROKEN: dict[str, tuple[Callable[[Draft], Draft], str]] = {
     # count and duration
-    "four-lectures": lambda d: replace(
-        d, rows=tuple({**r, "Duration (s)": "450"} for r in d.rows[:4])
+    "four-lectures": (
+        lambda d: replace(
+            d, rows=tuple({**r, "Duration (s)": "450"} for r in d.rows[:4])
+        ),
+        "4 lectures listed, at least 5 needed",
     ),
-    "below-1800-s": lambda d: d.cell(0, "Duration (s)", "359"),
-    "wrong-total-line": lambda d: replace(d, total="1900 s (31 min 40 s)"),
+    "below-1800-s": (
+        lambda d: d.cell(0, "Duration (s)", "359"),
+        "total duration 1799 s is below 1800 s",
+    ),
+    "wrong-total-line": (
+        lambda d: replace(d, total="1900 s (31 min 40 s)"),
+        "Total line says '1900 s (31 min 40 s)', expected '1800 s (30 min 0 s)'",
+    ),
     # inventory cells and structure
-    "pending-cell": lambda d: d.cell(2, "Title", PENDING),
-    "duration-text": lambda d: d.cell(0, "Duration (s)", "6 min"),
-    "duration-zero": lambda d: d.cell(0, "Duration (s)", "0"),
-    "recording-path": lambda d: d.cell(0, "Recording file (lab only)", "share/l1.mp4"),
-    "recording-url": lambda d: d.cell(
-        0, "Recording file (lab only)", "https://example.invalid/l1.mp4"
+    "pending-cell": (
+        lambda d: d.cell(2, "Title", PENDING),
+        f"lecture-03: Title still {PENDING}",
     ),
-    "sha-short": lambda d: d.cell(0, "SHA-256", "ABC"),
-    "sha-uppercase": lambda d: d.cell(0, "SHA-256", SHA.upper()),
-    "wrong-outline-path": lambda d: d.cell(
-        0, "Outline", f"`{SET_NAME}/lectures/lecture-02/outline.md`"
+    "duration-text": whole_seconds("6 min"),
+    "duration-zero": whole_seconds("0"),
+    "duration-negative": whole_seconds("-360"),
+    "duration-plus-sign": whole_seconds("+360"),
+    "duration-decimal": whole_seconds("360.5"),
+    # Unicode digits: "³" used to crash int(); the other two were silently read as 360.
+    "duration-superscript": whole_seconds("³"),
+    "duration-superscript-in-number": whole_seconds("36⁰"),
+    "duration-arabic-indic-digits": whole_seconds("٣٦٠"),
+    "duration-fullwidth-digits": whole_seconds("３６０"),
+    "recording-path": (
+        lambda d: d.cell(0, "Recording file (lab only)", "share/l1.mp4"),
+        RECORDING_NAME_ONLY,
     ),
-    "review-pending": lambda d: d.cell(0, "Transcript review", "pending"),
-    "review-unknown": lambda d: d.cell(0, "Transcript review", "approved"),
-    "duplicate-ids": lambda d: replace(d, rows=(*d.rows, d.rows[0])),
-    "wrong-columns": lambda d: replace(d, header=COLUMNS[:-1]),
+    "recording-url": (
+        lambda d: d.cell(
+            0, "Recording file (lab only)", "https://example.invalid/l1.mp4"
+        ),
+        RECORDING_NAME_ONLY,
+    ),
+    "sha-short": (lambda d: d.cell(0, "SHA-256", "ABC"), SHA_FORM),
+    "sha-uppercase": (lambda d: d.cell(0, "SHA-256", SHA.upper()), SHA_FORM),
+    "wrong-outline-path": (
+        lambda d: d.cell(0, "Outline", f"`{SET_NAME}/lectures/lecture-02/outline.md`"),
+        f"lecture-01: Outline must be `{SET_NAME}/lectures/lecture-01/outline.md`",
+    ),
+    "review-pending": (
+        lambda d: d.cell(0, "Transcript review", "pending"),
+        "lecture-01: transcript not checked by Harshitha yet",
+    ),
+    "review-unknown": (
+        lambda d: d.cell(0, "Transcript review", "approved"),
+        "lecture-01: Transcript review must be pending or checked: 'approved'",
+    ),
+    "duplicate-ids": (
+        lambda d: replace(d, rows=(*d.rows, d.rows[0])),
+        f"duplicate lecture ids: {[*IDS, 'lecture-01']}",
+    ),
+    "wrong-columns": (
+        lambda d: replace(d, header=COLUMNS[:-1]),
+        f"table columns are {list(COLUMNS[:-1])}, expected {list(COLUMNS)}",
+    ),
+    # malformed rows: never shifted or cut silently
+    "pipe-in-a-value": (
+        lambda d: d.cell(0, "Title", "Pipes | in a title"),
+        "table row 1 ('lecture-01'): 11 cells, the header has 10; "
+        "a value must not contain '|'",
+    ),
+    # The old parser cut this row back to ten valid-looking cells and passed it.
+    "extra-trailing-cell": (
+        lambda d: d.cell(1, "Transcript review", "checked | surplus"),
+        "table row 2 ('lecture-02'): 11 cells, the header has 10; "
+        "a value must not contain '|'",
+    ),
+    "missing-cell": (
+        without(2, "Transcript review"),
+        "table row 3 ('lecture-03'): 9 cells, the header has 10; "
+        "a value must not contain '|'",
+    ),
     # transcript and outline files
-    "placeholder-outline": lambda d: replace(
-        d, placeholders=("lectures/lecture-03/outline.md",)
+    "placeholder-outline": (
+        lambda d: replace(d, placeholders=("lectures/lecture-03/outline.md",)),
+        "lecture-03: outline.md is still a placeholder",
     ),
-    "placeholder-transcript": lambda d: replace(
-        d, placeholders=("lectures/lecture-03/transcript.en.txt",)
+    "placeholder-transcript": (
+        lambda d: replace(d, placeholders=("lectures/lecture-03/transcript.en.txt",)),
+        "lecture-03: transcript.en.txt is still a placeholder",
     ),
-    "missing-outline": lambda d: replace(
-        d, missing=("lectures/lecture-02/outline.md",)
+    "placeholder-transcript-checked": (
+        lambda d: replace(d, placeholders=("lectures/lecture-03/transcript.en.txt",)),
+        "lecture-03: a placeholder transcript cannot be checked",
+    ),
+    "outline-pending-on-a-later-line": (
+        text_of("lectures/lecture-03/outline.md", LATER_PENDING),
+        "lecture-03: outline.md is still a placeholder",
+    ),
+    "transcript-pending-on-a-later-line": (
+        text_of("lectures/lecture-03/transcript.en.txt", LATER_PENDING),
+        "lecture-03: transcript.en.txt is still a placeholder",
+    ),
+    "transcript-blank-lines-only": (
+        text_of("lectures/lecture-03/transcript.en.txt", "\n  \n\n"),
+        "lecture-03: transcript.en.txt is still a placeholder",
+    ),
+    "missing-outline": (
+        lambda d: replace(d, missing=("lectures/lecture-02/outline.md",)),
+        f"lecture-02: {SET_NAME}/lectures/lecture-02/outline.md does not exist",
     ),
     # consent record
-    "no-decision-record": lambda d: replace(d, record=False),
-    "no-consent-section": lambda d: replace(d, section=False),
-    "no-exact-statement": lambda d: replace(d, statement=False),
-    "consent-cell-format": lambda d: d.cell(0, "Consent", "lecture-01"),
-    "consent-cell-unknown-speaker": lambda d: d.cell(0, "Consent", "`0004` speaker-09"),
-    "consent-not-given": lambda d: first_line(d, "speaker-01: PENDING"),
-    "consent-sentence-changed": lambda d: first_line(
-        d, f'speaker-01: Speaker A, 2026-11-02: "{CONSENT_SENTENCE}."'
+    "no-decision-record": (
+        lambda d: replace(d, record=False),
+        "decision record docs/decisions/0004-b8-5-lecture-videos.md is missing",
     ),
-    "consent-date-invalid": lambda d: first_line(
-        d, f'speaker-01: Speaker A, 2026-13-40: "{CONSENT_SENTENCE}"'
+    "no-consent-section": (
+        lambda d: replace(d, section=False),
+        "decision record has no '## Consent lines' section",
     ),
-    "consent-name-differs": lambda d: first_line(
-        d, f"speaker-01: Someone Else, {GIVEN}"
+    "no-exact-statement": (
+        lambda d: replace(d, statement=False),
+        "decision record does not state the exact consent sentence",
     ),
-    "consent-line-twice": lambda d: replace(
-        d, consent_lines=(*d.consent_lines, d.consent_lines[0])
+    "consent-cell-format": (
+        lambda d: d.cell(0, "Consent", "lecture-01"),
+        f"lecture-01: Consent must be {PENDING} or `0004` speaker-NN",
     ),
-    "one-speaker-two-lines": lambda d: replace(
-        d.cell(1, "Consent", "`0004` speaker-04"),
-        consent_lines=(*d.consent_lines, f"speaker-04: Speaker A, {GIVEN}"),
+    "consent-cell-unknown-speaker": (
+        lambda d: d.cell(0, "Consent", "`0004` speaker-09"),
+        "lecture-01: speaker-09 has no line under '## Consent lines'",
     ),
-    "unused-consent-line": lambda d: replace(
-        d, consent_lines=(*d.consent_lines, f"speaker-04: Speaker D, {GIVEN}")
+    "consent-not-given": (
+        lambda d: first_line(d, "speaker-01: PENDING"),
+        "lecture-01: speaker-01 has not given consent yet",
+    ),
+    "consent-sentence-changed": (
+        lambda d: first_line(
+            d, f'speaker-01: Speaker A, 2026-11-02: "{CONSENT_SENTENCE}."'
+        ),
+        MUST_READ,
+    ),
+    "consent-date-invalid": (
+        lambda d: first_line(
+            d, f'speaker-01: Speaker A, 2026-13-40: "{CONSENT_SENTENCE}"'
+        ),
+        MUST_READ,
+    ),
+    "consent-name-differs": (
+        lambda d: first_line(d, f"speaker-01: Someone Else, {GIVEN}"),
+        "lecture-01: the consent name differs from the Speaker column",
+    ),
+    "consent-line-twice": (
+        lambda d: replace(d, consent_lines=(*d.consent_lines, d.consent_lines[0])),
+        "speaker-01: more than one consent line",
+    ),
+    "one-speaker-two-lines": (
+        lambda d: replace(
+            d.cell(1, "Consent", "`0004` speaker-04"),
+            consent_lines=(*d.consent_lines, f"speaker-04: Speaker A, {GIVEN}"),
+        ),
+        "Speaker A: one consent line per speaker, found ['speaker-01', 'speaker-04']",
+    ),
+    "unused-consent-line": (
+        lambda d: replace(
+            d, consent_lines=(*d.consent_lines, f"speaker-04: Speaker D, {GIVEN}")
+        ),
+        "speaker-04: consent line not used by any lecture",
     ),
     # files that must not be in the set folder
     "audio-wav": extra("lectures/lecture-01/lecture-01.wav"),
@@ -650,11 +905,11 @@ BROKEN: dict[str, Callable[[Draft], Draft]] = {
 }
 
 
-@pytest.mark.parametrize("mutate", BROKEN.values(), ids=BROKEN.keys())
+@pytest.mark.parametrize(("mutate", "expected"), BROKEN.values(), ids=BROKEN.keys())
 def test_a_broken_complete_set_fails(
-    tmp_path: Path, mutate: Callable[[Draft], Draft]
+    tmp_path: Path, mutate: Callable[[Draft], Draft], expected: str
 ) -> None:
-    assert problems(build(tmp_path, mutate(complete_draft()))) != []
+    assert_reported(problems(build(tmp_path, mutate(complete_draft()))), expected)
 
 
 def test_a_speaker_name_with_a_comma_is_accepted(tmp_path: Path) -> None:
@@ -664,7 +919,26 @@ def test_a_speaker_name_with_a_comma_is_accepted(tmp_path: Path) -> None:
     mismatch = draft.cell(
         1, "Speaker", "Rao"
     )  # still compared in full, not cut at the comma
-    assert problems(build(tmp_path / "mismatch", mismatch)) != []
+    assert_reported(
+        problems(build(tmp_path / "mismatch", mismatch)),
+        "lecture-02: the consent name differs from the Speaker column",
+    )
+
+
+def test_completed_text_without_a_pending_line_is_not_a_placeholder(
+    tmp_path: Path,
+) -> None:
+    text = (
+        "First point.\n\nThe request stays pending until it is reviewed.\nLast point.\n"
+    )
+    draft = replace(
+        complete_draft(),
+        texts=(
+            ("lectures/lecture-01/outline.md", text),
+            ("lectures/lecture-01/transcript.en.txt", text),
+        ),
+    )
+    assert problems(build(tmp_path, draft)) == []
 
 
 def test_consent_lines_outside_the_section_are_not_counted() -> None:
@@ -678,7 +952,59 @@ def test_consent_lines_outside_the_section_are_not_counted() -> None:
 
 def test_only_the_exact_permitted_paths_are_allowed(tmp_path: Path) -> None:
     ds = build(tmp_path, replace(complete_draft(), extra_files=TOP_LEVEL_FILES))
-    assert unexpected_files(ds.set_dir, [r["ID"] for r in ds.inventory.rows]) == []
-    assert unexpected_files(ds.set_dir, ["lecture-01"]) == [
+    assert unexpected_files(ds.files, [r["ID"] for r in ds.inventory.rows]) == []
+    assert unexpected_files(ds.files, ["lecture-01"]) == [
         f"lectures/lecture-0{n}/{name}" for n in range(2, 6) for name in LECTURE_FILES
     ]
+
+
+def run_git(cwd: Path, *args: str) -> None:
+    subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True)
+
+
+def test_only_files_tracked_by_git_are_inspected(tmp_path: Path) -> None:
+    run_git(tmp_path, "init", "-q")
+    set_dir = tmp_path / SET_NAME
+    committed = ("README.md", "lectures/lecture-01/outline.md", "notes.md")
+    local_only = (
+        "Thumbs.db",
+        "desktop.ini",
+        "lectures/lecture-01/.outline.md.swp",
+        "lectures/lecture-01/outline.md~",
+        "lectures/lecture-01/lecture-01.wav",
+    )
+    for relative in (*committed, *local_only):
+        (set_dir / relative).parent.mkdir(parents=True, exist_ok=True)
+        (set_dir / relative).write_text("x\n", encoding="utf-8")
+    run_git(tmp_path, "add", "--", *(f"{SET_NAME}/{p}" for p in committed))
+
+    files = tracked_files(set_dir)
+
+    assert (
+        files == committed
+    )  # sorted, relative to the set folder, local files left out
+    assert unexpected_files(files, ["lecture-01"]) == ["notes.md"]  # still caught
+
+
+def test_a_failing_git_command_is_an_error_not_a_clean_set(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def failing(*args: object, **kwargs: object) -> subprocess.CompletedProcess[bytes]:
+        return subprocess.CompletedProcess(
+            ["git"], 128, b"", b"fatal: not a git repository"
+        )
+
+    monkeypatch.setattr(subprocess, "run", failing)
+    with pytest.raises(GitInspectionError, match="git ls-files failed .*exit 128"):
+        tracked_files(tmp_path)
+
+
+def test_missing_git_is_an_error_not_a_clean_set(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def missing(*args: object, **kwargs: object) -> subprocess.CompletedProcess[bytes]:
+        raise FileNotFoundError("git")
+
+    monkeypatch.setattr(subprocess, "run", missing)
+    with pytest.raises(GitInspectionError, match="cannot run git"):
+        tracked_files(tmp_path)
