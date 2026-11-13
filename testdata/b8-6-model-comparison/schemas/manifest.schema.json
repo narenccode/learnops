@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:learnops:testdata:b8-6:manifest:v1",
+  "title": "B8.6 model comparison set: manifest (PROVISIONAL)",
+  "description": "Index of the B8.6 set (PRD B8: fixed inputs and expected outputs for practice drafts, grading drafts, chapters and summaries), used by the comparison study (FR-M-03). PROVISIONAL: a Release 0 proposal by Student 3, not agreed by Students 1 and 4 (design Q12) or the guide.",
+  "$comment": "Cross-file rules (ids unique, input and expected files exist, inputs referenced by items exist, transcript and chapter consistency) are checked by libs/contracts/tests/test_b8_6_dataset.py, not here.",
+  "type": "object",
+  "required": ["schema", "status", "rubric", "inputs", "items"],
+  "properties": {
+    "schema": { "const": "learnops.testdata.b8-6/v1" },
+    "status": {
+      "enum": ["provisional", "final"],
+      "description": "provisional until Q12 is agreed, the rubric is fixed and every expected output is reviewed."
+    },
+    "rubric": { "const": "rubric.yaml" },
+    "inputs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/input" }
+    },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/item" }
+    }
+  },
+  "$defs": {
+    "set_path": {
+      "type": "string",
+      "description": "Path relative to the set folder, with forward slashes and no '..' segment.",
+      "pattern": "^(?!/)(?!(.*/)?\\.\\.(/|$))[A-Za-z0-9._/-]+$"
+    },
+    "input": {
+      "type": "object",
+      "required": ["id", "kind", "path", "source_note", "provisional"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^t[0-9]{3}$" },
+        "kind": {
+          "enum": ["transcript"],
+          "description": "transcript: a B5.4-shaped transcript. Grading inputs come from B8.4 and practice inputs from Module 1; their kinds are added when they are agreed."
+        },
+        "path": { "$ref": "#/$defs/set_path" },
+        "source_note": { "$ref": "#/$defs/set_path" },
+        "provisional": { "type": "boolean" }
+      }
+    },
+    "item": {
+      "type": "object",
+      "required": ["id", "task", "status", "provisional"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^(gd|ch|su|pr)-[0-9]{3}$" },
+        "task": { "enum": ["grade_draft", "chapters", "summary", "practice"] },
+        "status": {
+          "enum": ["ready", "pending", "placeholder"],
+          "description": "ready: input and expected output exist; pending: waits on a named dependency; placeholder: kept so the task kind is not forgotten, nothing agreed yet."
+        },
+        "provisional": { "type": "boolean" },
+        "input": { "type": "string", "pattern": "^t[0-9]{3}$" },
+        "expected": { "$ref": "#/$defs/set_path" },
+        "expected_review": {
+          "type": "object",
+          "required": ["status"],
+          "properties": {
+            "status": { "enum": ["not_reviewed", "reviewed"] },
+            "reviewed_by": { "type": "string", "pattern": "^mentor-[0-9]{2}$" },
+            "reviewed_at": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
+          },
+          "if": { "properties": { "status": { "const": "reviewed" } } },
+          "then": { "required": ["reviewed_by", "reviewed_at"] }
+        },
+        "authored_by": { "type": "string", "minLength": 1 },
+        "depends_on": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "note": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "ready" } } },
+          "then": { "required": ["input", "expected", "expected_review", "authored_by"] }
+        },
+        {
+          "if": { "properties": { "status": { "enum": ["pending", "placeholder"] } } },
+          "then": {
+            "required": ["depends_on"],
+            "not": { "anyOf": [{ "required": ["input"] }, { "required": ["expected"] }] }
+          }
+        },
+        {
+          "if": { "properties": { "task": { "const": "chapters" } } },
+          "then": { "properties": { "id": { "pattern": "^ch-" } } }
+        },
+        {
+          "if": { "properties": { "task": { "const": "summary" } } },
+          "then": { "properties": { "id": { "pattern": "^su-" } } }
+        },
+        {
+          "if": { "properties": { "task": { "const": "grade_draft" } } },
+          "then": { "properties": { "id": { "pattern": "^gd-" } } }
+        },
+        {
+          "if": { "properties": { "task": { "const": "practice" } } },
+          "then": { "properties": { "id": { "pattern": "^pr-" } } }
+        }
+      ]
+    }
+  }
+}

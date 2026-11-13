@@ -1,0 +1,7 @@
+[
+  { "start": 0.0, "end": 52.0, "title": "What a cache is" },
+  { "start": 52.0, "end": 104.0, "title": "Why caches work: locality" },
+  { "start": 104.0, "end": 156.0, "title": "Eviction policies: LRU and FIFO" },
+  { "start": 156.0, "end": 210.0, "title": "Keeping cached data correct" },
+  { "start": 210.0, "end": 238.0, "title": "Summary and this week's exercise" }
+]
