@@ -12,20 +12,25 @@ import moodle_ws
 from moodle_ws import (
     FunctionNotAllowed,
     InvalidParameters,
+    MoodleClient,
     MoodleConfigError,
     MoodleError,
     MoodleUnreachable,
     NotSupported,
     PermissionDenied,
+    SiteSettings,
     TokenInvalid,
     UnexpectedResponse,
     WorkflowStateNotAllowed,
+    load_allowlist,
     load_site,
     messages,
 )
 
 from .conftest import FAKE_TOKEN
+from .fake_transport import FakeTransport
 
+FUNCTION = "core_course_get_contents"
 CLASSES: list[type[MoodleError]] = [
     MoodleUnreachable,
     TokenInvalid,
@@ -111,6 +116,24 @@ def test_a_refusal_message_has_no_place_for_the_refused_value(name: str) -> None
     assert fields(MESSAGES[name]) <= {"allowed"}
 
 
+@pytest.mark.parametrize("value", [FAKE_TOKEN, UNSAFE_VALUE, "core_user_get_users"])
+def test_a_refused_function_is_not_repeated(value: str, settings: SiteSettings) -> None:
+    transport = FakeTransport()
+    with pytest.raises(FunctionNotAllowed) as caught:
+        MoodleClient(settings, transport).call(value)
+    assert value not in visible(caught.value)
+    assert "allow-list" in str(caught.value)
+    assert transport.calls == []
+
+
+@pytest.mark.parametrize("value", [FAKE_TOKEN, UNSAFE_VALUE, "5.0"])
+def test_a_refused_version_is_not_repeated(value: str) -> None:
+    with pytest.raises(NotSupported) as caught:
+        load_allowlist().resolve("core_course_get_contents", value)
+    assert value not in visible(caught.value)
+    assert "4.5 or 5.3" in str(caught.value)
+
+
 @pytest.mark.parametrize("value", [FAKE_TOKEN, UNSAFE_VALUE, "moodle40"])
 def test_a_refused_site_is_not_repeated(value: str) -> None:
     with pytest.raises(MoodleConfigError) as caught:
@@ -119,11 +142,29 @@ def test_a_refused_site_is_not_repeated(value: str) -> None:
     assert "moodle45, moodle53" in str(caught.value)
 
 
+def test_a_workflow_state_equal_to_the_token_is_not_repeated(
+    settings: SiteSettings,
+) -> None:
+    client = MoodleClient(settings, FakeTransport())
+    with pytest.raises(WorkflowStateNotAllowed) as caught:
+        client.call("mod_assign_save_grade", {"workflowstate": FAKE_TOKEN})
+    assert FAKE_TOKEN not in visible(caught.value)
+
+
 def test_a_setting_equal_to_a_token_is_not_repeated() -> None:
     with pytest.raises(MoodleConfigError) as caught:
         load_site("moodle45", {"MOODLE45_WS_TOKEN": FAKE_TOKEN})
     assert FAKE_TOKEN not in visible(caught.value)
     assert "MOODLE45_URL" in str(caught.value)
+
+
+def test_a_transport_error_holding_the_token_is_cleaned(
+    settings: SiteSettings,
+) -> None:
+    transport = FakeTransport(failure=TokenInvalid(f"rejected {FAKE_TOKEN}"))
+    with pytest.raises(TokenInvalid) as caught:
+        MoodleClient(settings, transport).call("core_course_get_contents")
+    assert FAKE_TOKEN not in visible(caught.value)
 
 
 def test_every_error_is_listed_here() -> None:
@@ -156,3 +197,20 @@ def test_codes_match_the_design_failure_table(
 
 def test_only_an_unreachable_moodle_is_worth_retrying() -> None:
     assert [error for error in CLASSES if error.retryable] == [MoodleUnreachable]
+
+
+@pytest.mark.parametrize(
+    ("failure", "expected", "hint"),
+    [
+        (OSError(), MoodleUnreachable, "Try again"),
+        (TimeoutError(), MoodleUnreachable, "Try again"),
+        (ConnectionError(), MoodleUnreachable, "Try again"),
+        (ValueError(), UnexpectedResponse, "Ask your administrator"),
+        (KeyError("x"), UnexpectedResponse, "Ask your administrator"),
+    ],
+)
+def test_other_failures_map_to_a_typed_error_that_says_what_to_do(
+    failure: Exception, expected: type[MoodleError], hint: str, settings: SiteSettings
+) -> None:
+    with pytest.raises(expected, match=hint):
+        MoodleClient(settings, FakeTransport(failure=failure)).call(FUNCTION)

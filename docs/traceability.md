@@ -123,7 +123,7 @@ Test names are in `test_moodle_ws_v1.py`.
 
 | Rule | PRD |
 |---|---|
-| Only the functions listed in the contract are called. `libs/moodle_ws` builds its allow-list from the example (`test_allowlist.py`: `test_the_list_equals_the_contract_example`); the client that refuses any other function follows. Not enforced against a real Moodle: there is no real transport yet | B4 |
+| Only the functions listed in the contract are called. `libs/moodle_ws` builds its allow-list from the example and refuses any other function before the transport (`test_allowlist.py`: `test_the_list_equals_the_contract_example`, `test_anything_else_is_refused_before_the_transport`). Not enforced against a real Moodle: there is no real transport yet | B4 |
 | One service account per site, with a token restricted to those functions and the capabilities in rules §4 (the lists are tested; that they are enough is lab check 9) | B4, SEC-03 |
 | The token is stored only in the environment | SEC-03, C-06 |
 | A grade write uses workflow state `readyforrelease`, never `released`, and counts as done only when both the state and the grade value are confirmed; the grade value is read with `mod_assign_get_grades` (R1); the write rules R1 to R11 are contract text here, and their enforcement in `libs/moodle_ws` is a separate follow-up; only approved drafts are written | B4, C-09 |
@@ -148,9 +148,11 @@ FR-G-06. Neither requirement is implemented by this skeleton.
 
 | Rule | Source | Test |
 |---|---|---|
+| Only allow-listed functions are sent; the list comes from the contract example | B4 §2a, guide on Q1 | `test_allowlist.py` |
+| A grade write sends `readyforrelease`, never `released` | B4 §3, C-09 | `test_client.py` |
 | One token per site, from the environment only | B4 §1, Q24, SEC-03, C-06 | `test_config.py` |
 | Tokens and full URLs stay out of logs and errors | SEC-03, OPS-04, design §4.1 | `test_redaction.py` |
 | One error family with stable codes | Design §4.1, §10.2 (library documentation, Q37) | `test_errors.py` |
 
-Not covered: the library is being built in steps and cannot call Moodle. Nothing has been checked
-against Moodle (every check in `contracts/moodle-ws.v1.md` §5 is open).
+Not covered: all of this runs against a scripted fake transport. No real transport exists, and nothing
+has been checked against Moodle (every check in `contracts/moodle-ws.v1.md` §5 is open).
