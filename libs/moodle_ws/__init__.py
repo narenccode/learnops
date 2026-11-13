@@ -24,6 +24,13 @@ from .errors import (
     UnexpectedResponse,
     WorkflowStateNotAllowed,
 )
+from .grade_write import (
+    Outcome,
+    WriteResult,
+    grading_status,
+    result_for,
+    stored_grade_matches,
+)
 from .grades import grade_in_range, parse_grade
 from .redact import RedactingFilter, redact, safe_url, sanitize, sanitize_value
 from .secrets import Token
@@ -40,6 +47,7 @@ __all__ = [
     "MoodleTransport",
     "MoodleUnreachable",
     "NotSupported",
+    "Outcome",
     "PermissionDenied",
     "RedactingFilter",
     "Site",
@@ -48,14 +56,18 @@ __all__ = [
     "TokenInvalid",
     "UnexpectedResponse",
     "WorkflowStateNotAllowed",
+    "WriteResult",
     "create_client",
     "grade_in_range",
+    "grading_status",
     "load_allowlist",
     "load_site",
     "messages",
     "parse_grade",
     "redact",
+    "result_for",
     "safe_url",
     "sanitize",
     "sanitize_value",
+    "stored_grade_matches",
 ]
