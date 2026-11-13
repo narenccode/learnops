@@ -22,6 +22,7 @@ from contracts import (
 from .helpers import (
     HELD_RULE_CODES,
     PACKAGE_HELD_RULE_CODES,
+    ROOT,
     WEEK1_GUIDE,
     WEEK2_GUIDE,
     Doc,
@@ -87,6 +88,17 @@ def test_example_package_has_no_errors(package_dir: Path) -> None:
     report = validate_package(DirectorySource(package_dir))
     assert report.errors == ()
     assert not_checked_codes(report) == PACKAGE_HELD_RULE_CODES
+
+
+def test_h5p_files_are_listed_as_not_checked_and_never_looked_for() -> None:
+    # The B7 example names a .h5p file that is not in the repository (B7 rule R5).
+    source = DirectorySource(ROOT / "contracts" / "examples" / "h5p-practice.v1")
+    report = validate_package(source)
+    assert report.ok and report.errors == ()
+    notice = {i.code: i for i in report.not_checked}["h5p_files_not_checked"]
+    assert notice.rule == "B7" and notice.fix_hint
+    assert "exists or is valid" in notice.message
+    assert "Interactive video" in notice.message
 
 
 def test_missing_course_yaml_is_an_error(package_dir: Path) -> None:

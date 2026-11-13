@@ -70,7 +70,7 @@ claimed as fully implemented.
 | `validate_course_document()` refuses a `config` that is not a `ValidationConfig` (a dict, a list, a string, the class itself) with a `ConfigError` that says what to pass, before the document is read; it never ignores it | B1.4 | `test_an_unsupported_config_type_is_refused_not_ignored` |
 | The library reads no environment variables; validation does not change the document it is given | CLAUDE.md §2.3 | `test_the_library_reads_no_environment_variables`, `test_the_document_is_not_changed_by_validation` |
 | The idnumber rules run only when the schema finds no error anywhere in the document (an unrelated schema error holds them back too, and so does a document that is not an object). The report then adds `cross_rules_not_checked`, whose text names no rule so that it stays true as more rules are implemented | n/a | `test_any_schema_error_holds_back_the_idnumber_rules`, `test_a_document_that_is_not_an_object_is_an_error` (also checks the notice), `test_the_course_level_notice_names_no_rule` (a valid document has no such notice: `test_held_rules_are_reported_as_not_checked_never_skipped_silently`) |
-| Rules that are not implemented are listed as "not checked" in every report, so that "no errors" is not read as "fully checked" (a design choice, not a PRD rule). A report for a parsed document lists nine (see the next section). A report for a package lists eight, because it checked the body files | n/a | `test_held_rules_are_reported_as_not_checked_never_skipped_silently`, `test_a_document_with_weekly_structure_problems_is_not_judged_here`, `test_example_package_has_no_errors` |
+| Rules that are not implemented are listed as "not checked" in every report, so that "no errors" is not read as "fully checked" (a design choice, not a PRD rule). A report for a parsed document lists ten (see the next section). A report for a package lists nine, because it checked the body files | n/a | `test_held_rules_are_reported_as_not_checked_never_skipped_silently`, `test_a_document_with_weekly_structure_problems_is_not_judged_here`, `test_example_package_has_no_errors` |
 | A package folder is read through a `PackageSource`; `DirectorySource` never reads outside the folder: a path with `..`, an absolute path or a link that leaves the folder is refused, a link that stays inside is followed. A refused file is never read | B1.1 | `test_source_reads_an_existing_file`, `test_source_tells_a_missing_file_from_a_folder`, `test_source_refuses_paths_that_leave_the_package`, `test_source_refuses_a_link_that_leaves_the_package`, `test_source_follows_a_link_that_stays_inside_the_package` (the two link tests run on the Linux CI) |
 | `validate_package()` reads `course.yaml` from the folder. A missing file, text that is not UTF-8, bad YAML (also an unquoted impossible date), and a file that is not an object are errors with a fix hint, never an exception; an unquoted real date fails the schema | B1.1 | `test_missing_course_yaml_is_an_error`, `test_course_yaml_that_cannot_be_read_is_an_error`, `test_an_unquoted_yaml_date_is_an_error`, `test_course_yaml_that_is_not_an_object_fails_the_schema` |
 | **Body files exist** (B1.1: the package is a folder with `course.yaml` plus the Markdown files; implied, not a numbered rule). Each `body` must name a file inside the package, in both modes. A missing file, a folder and a link leaving the folder are errors at the activity, in document order, after the idnumber errors. A shared body file and an activity without a body are not errors. Only existence is checked, never the content | B1.1 | `test_missing_body_file_is_an_error_at_the_activity`, `test_every_missing_body_file_is_reported_in_document_order`, `test_body_that_is_a_folder_is_an_error`, `test_body_that_is_a_link_leaving_the_package_is_an_error`, `test_a_body_file_may_be_shared_and_an_activity_may_have_no_body`, `test_duplicate_idnumbers_are_reported_before_missing_body_files`, `test_any_package_source_works_and_only_course_yaml_is_read` |
@@ -83,7 +83,7 @@ this library does not build.
 ### Documented but not automatically enforced
 
 Nothing in the repository enforces these yet. Each is listed as "not checked" in every report the
-validator returns (eight entries, plus the body files when they were not checked; the B1.3 row
+validator returns (eight B1 entries, `h5p_files_not_checked` (B7, below), plus the body files when they were not checked; the B1.3 row
 has two of them, and rule 4 has none because it is not a package field).
 The schema's `$comment` lists them too, and also lists the two parts that the validator now
 enforces (rule 6 within one package, configured protected idnumbers). Updating that comment
@@ -115,3 +115,68 @@ Left out because the PRD does not establish the mapping:
   validator reports the two default idnumbers with a clear message (tested above); the Course
   Studio screen and CLI that show it do not exist yet.
 - **Requirement IDs for the contract work itself.** None in the PRD.
+
+## B7 H5P practice output contract (v1), Release 0 foundation, DRAFT
+
+Files: `contracts/h5p-practice.v1.md` (normative text), `contracts/h5p-practice.v1.schema.json`,
+`contracts/examples/h5p-practice.v1.content-types.json`, `contracts/examples/h5p-practice.v1/`
+(an example package, with no `.h5p` file), the `file` field in
+`contracts/course-package.v1.schema.json`, the decision record
+`docs/decisions/0005-h5p-content-types.md` (the lab check, PRD App-C item 5), and the tests
+`test_h5p_practice_v1.py` and `test_course_package_v1.py` in `libs/contracts/tests/`. B7 has no
+requirement ID of its own in the
+PRD (it is a contract, PRD B.0). It is used by FR-S-12 and FR-V-14 (Release 5, stretch) and by
+FR-C-03 CK-11 (Release 1). No row in the table at the top maps to it.
+
+**Status: draft and not approved.** The H5P library versions were verified in the lab on 2026-11-11
+(the guide's lab check, reported on this pull request; PRD App-C item 5) and are pinned in the B7
+schema. Whether the open decisions below block the freeze is the guide's decision. The B1 section
+above is on main; the B1 `file` field added with B7 is covered in the first table below.
+
+### Enforced by the B1 schema; tests in `test_course_package_v1.py`
+
+| Rule | PRD | Test(s) |
+|---|---|---|
+| An `h5p` activity must have `graded: false` and `file` | B7, Issue #44 answer 2 | `test_missing_required_field_is_rejected`, `test_wrong_type_or_value_is_rejected`, `test_h5p_missing_field_is_named_and_only_that_field` |
+| `file` is a relative path ending in lowercase `.h5p`; URLs, absolute paths, `..`, backslashes, other or upper-case extensions and an empty name are rejected | B7, C-08 | `test_h5p_file_that_is_not_a_relative_h5p_path_is_rejected` |
+| `file` is not checked on other activity types (it is an unknown field there) | Issue #44 answer 2 | `test_valid_variation_is_accepted` |
+| An `h5p` activity cannot take a protected idnumber | B1.4 | `test_h5p_with_a_protected_idnumber_is_rejected` |
+
+### Enforced by the B7 schema; tests in `test_h5p_practice_v1.py`
+
+Rows that say "example only" check the example package, not packages in general.
+
+| Rule | PRD | Test(s) |
+|---|---|---|
+| The content-type schema is valid and its example validates; bad lists are rejected: invented names, other capitals, the old PRD phrase or a machine name as a name, a name listed twice, a missing name, `machine_name` or `version`, a wrong or lower-case machine name, a wrong version, a `v` prefix, a version that is a number, the Drag the Words and Drag and Drop versions or libraries swapped, a wrong schema name, an empty list. Each of the five types alone is valid, and unknown fields are accepted | B.0 rule 1, B7 | `test_schema_is_valid_and_example_validates`, `test_invalid_content_type_list_is_rejected` (22 cases), `test_a_list_with_one_pinned_type_is_valid`, `test_missing_root_field_is_rejected`, `test_unknown_fields_are_accepted` |
+| The schema allows exactly the five names, requires `name`, `machine_name` and `version`, and pins each name to the library and exact version of the guide's lab check (written out in the test as `PINNED`); the names are words PRD B7 uses; the example lists exactly the five pinned entries; the contract text says interactive video is for lab demonstrations only (a rule of the text, not a schema field) | B7, App-C item 5 | `test_schema_pins_exactly_the_guides_table`, `test_example_lists_exactly_the_pinned_entries` |
+| The contract text table and the decision record hold the same five pairs as the test, so a swapped version in any of the four places fails; the text, the schema and this file point to the decision record | App-C item 5 | `test_contract_text_and_decision_record_agree_with_the_pins`, `test_text_schema_and_traceability_point_to_the_decision_record` |
+| The schema and example define no key `cue`, `cues` or `ref` (cues belong to B6), and the text says B7 defines no second format | B6.2 | `test_no_cue_key_is_defined_and_cues_are_left_to_b6` |
+| The text no longer marks a content type "to verify in the lab" and no longer lists the two decisions the lab check settled; it keeps the other open decisions marked, says each practice item uses one type, that ordering is done with Drag and Drop, that a later type is an optional entry and that a version change needs a `/contract-change`, and says practice is optional and never graded | B7 | `test_text_pins_the_types_and_keeps_only_the_open_decisions_still_open` |
+| `file` is defined in the `h5p` branch of the B1 schema only | Issue #44 answer 2 | `test_file_is_defined_in_the_h5p_branch_only` |
+| Example only: the package validates against B1; its week has one Page and one Assignment; its ordinary practice item is ungraded, names a lowercase `.h5p` path that does not exist, and comes right after the guide Page | B1, B7 | `test_example_package_validates_against_b1`, `test_example_week_is_standard_with_an_optional_practice_item` |
+| No `.h5p` file exists anywhere in the repository | Issue #44 answer 7 | `test_no_h5p_file_is_kept_in_the_repository` |
+
+### Documented but not automatically enforced
+
+| Rule | PRD | Where the PRD places it |
+|---|---|---|
+| An ordinary practice entry comes right after the week's guide Page, and a week has one Page and one Assignment, in a package in general | B7, B1.2 rule 1 | Needs validator code; B1.2 rule 1 is itself not enforced yet |
+| Where a video checkpoint goes | B7 | Open decision; PRD B7 says "after the video" |
+| A practice (H5P) activity has no grade item | B7 | CK-11 (FR-C-03, Release 1), on the course model (B2) |
+| Media referenced by a full fixed URL instead of a relative path | C-08 | CK-12 (FR-C-03, Release 1) |
+| The file named by `file` exists, is valid, and uses one of the pinned libraries at its pinned version | B7 | Held rule `h5p_files_not_checked`, listed in every report; no check exists (`test_h5p_files_are_listed_as_not_checked_and_never_looked_for`) |
+| Interactive video only in lab demonstrations | B7 | A rule of the contract text, named in the same held rule; no check exists |
+| AI-drafted items are approved by a mentor before they reach learners | C-09, FR-S-12 | A process rule of Studio, not a data rule |
+| `cues.json` entries are valid | B6.2, FR-V-14 | The B6 cues schema does not exist yet. Student 4 proposes `type: "h5p"` with `ref` = the practice item's `idnumber`; this is provisional, quoted in B7 section 6, and not enforced here |
+
+### Open decisions and not mapped
+
+Closed by the guide's lab check of 2026-11-11 (App-C item 5; `docs/decisions/0005-h5p-content-types.md`):
+the H5P library versions, and whether "drag-the-words or drag-and-drop / ordering" is one type (it is
+two entries). Open: the `ref` kinds and the cue fields (Student 4, in the B6 cues schema, still to
+come; her `h5p` + `idnumber` encoding is only a proposal); several practice items in one week and
+video checkpoint placement (the guide has not decided; B7 makes no rule); and whether a data field
+should mark interactive video as lab-only (a question for reviewers). Not mapped: a
+row, demo step and Bloom level for FR-S-12 and FR-V-14, because the PRD does not say schema tests
+count towards them. This pull request adds M2 to the B7 "Used by" row in PRD B.0 (guide, Issue #44).
