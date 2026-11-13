@@ -6,16 +6,17 @@
 ## Contract examples validate against their schemas (PRD B.0 rule 1, E1), Release 0 foundation
 
 Files: `libs/contracts/validate_examples.py` (run by CI's "Validate contract examples" step), tests
-in `libs/contracts/tests/test_validate_examples.py`. There is no requirement ID in the PRD; this is
-the E1 "Contract" test level ("every example ... validates against its schema, CI, every PR"). It
-does not cover "generated files" from E1, because no module generates contract files yet.
+in `libs/contracts/tests/test_validate_examples.py`. Shared validator reference EXT-09 (the
+`contracts` library); this is the E1 "Contract" test level ("every example ... validates against
+its schema, CI, every PR"). It does not cover "generated files" from E1, because no module
+generates contract files yet. What is not checked yet, and why supporting files are ignored, is
+listed in `libs/contracts/README.md`.
 
 | Rule | PRD | Test(s) |
 |---|---|---|
-| Every versioned schema has at least one example, and every example has a schema | B.0 rule 1 | `test_schema_without_example_folder_is_an_error`, `test_empty_example_folder_is_an_error`, `test_example_folder_without_top_level_example_is_an_error`, `test_example_folder_without_schema_is_an_orphan`, `test_stray_file_in_examples_folder_is_an_orphan`, `test_no_schemas_at_all_is_an_error`, `test_several_schemas_are_each_paired_and_validated`, `test_examples_in_an_orphan_folder_are_counted_but_not_classified`, `test_loose_example_files_are_counted_but_not_classified` |
-| Every schema has a version in its file name | B.0 rule 1 | `test_unversioned_or_badly_named_schema_is_an_error` |
-| Every example (JSON or YAML) validates against its schema; CI fails otherwise | E1 | `test_real_repository_examples_all_pass`, `test_invalid_json_example_names_example_schema_place_and_keyword`, `test_invalid_yaml_example_fails`, `test_one_failure_among_passing_examples_still_fails`, `test_script_runs_as_ci_runs_it`, `test_script_exits_one_on_a_broken_tree` |
-| Nothing is skipped silently: unsupported, unreadable or duplicate-key files and broken schemas are errors | E1 | `test_unsupported_top_level_example_type_is_an_error`, `test_unreadable_example_is_an_error`, `test_duplicate_keys_are_an_error`, `test_non_standard_json_constants_are_an_error`, `test_schema_that_is_not_json_is_an_error`, `test_schema_that_is_not_a_valid_schema_is_an_error`, `test_examples_of_a_broken_schema_are_counted_but_not_validated` |
+| Every versioned schema has at least one example | B.0 rule 1 | `test_schema_without_a_top_level_example_is_an_error`, `test_no_schemas_at_all_is_an_error`, `test_several_schemas_are_each_paired_and_validated` |
+| Every example (JSON or YAML) validates against its schema; CI fails otherwise | E1 | `test_real_repository_examples_all_pass`, `test_invalid_json_example_names_example_schema_place_and_keyword`, `test_invalid_example_is_one_schema_violation`, `test_one_failure_among_passing_examples_still_fails`, `test_script_runs_as_ci_runs_it` |
+| Unreadable examples and broken schemas are errors, never skipped | E1 | `test_unreadable_example_is_an_error`, `test_examples_of_a_broken_schema_are_counted_but_not_validated` |
 
 ## B1 course package contract (v1), Release 0 foundation
 

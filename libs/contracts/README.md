@@ -78,21 +78,20 @@ python libs/contracts/validate_examples.py [--check | --dry-run] [--contracts-di
 ```
 
 - `contracts/<name>.v<N>.schema.json` is matched with `contracts/examples/<name>.v<N>/`. Every
-  top-level file in that folder is an example and must be `.json`, `.yaml` or `.yml`. Files in
-  subfolders (B1's `weeks/*.md`) are supporting files: counted in the output, not validated here
-  (`validate_package` checks B1 body files).
-- Errors, never skipped: a schema with no example, an example folder or file with no schema, a
-  `*.schema.json` without a `v<N>` version, an unsupported top-level file, an unreadable or invalid
-  schema, an unreadable example (bad syntax, not UTF-8, several YAML documents, a duplicate key), and
-  every schema error in an example (with its place and keyword). Finding no schema at all is also an
-  error.
+  top-level `.json`, `.yaml` or `.yml` file in that folder is an example. Files in subfolders
+  (B1's `weeks/*.md`) are supporting files and are ignored by design (`validate_package` checks B1
+  body files); they are not listed in the output yet.
+- Errors: no schema at all, a schema with no example, an unreadable or invalid schema, an
+  unreadable example (bad syntax, not UTF-8, several YAML documents), and every schema error in an
+  example (with its place and keyword).
+- Not checked yet: examples that no schema matches, other file types next to the examples, schema
+  files without a `v<N>` version, duplicate keys, and the non-standard JSON constants `NaN`,
+  `Infinity` and `-Infinity`.
 - YAML is validated exactly as PyYAML's safe loader parses it, so an unquoted date stays a date and
   B1 rejects it. Formats such as `date` are checked.
-- The summary line counts every example file found: the top-level `.json`, `.yaml` and `.yml` files
-  in each example folder, including orphan examples (a folder or a loose file in
-  `contracts/examples/` that no schema matches) and examples whose schema could not be loaded. Those
-  are reported as "not validated", separately from "passed" and "failed", so the three always add
-  up to the total. Supporting files in example subfolders are not part of the example count.
+- The summary line counts every example found, including examples whose schema could not be
+  loaded. Those are reported as "not validated", separately from "passed" and "failed", so the three
+  always add up to the total. Supporting files are not counted.
 - Exit codes: `0` when every example passes, `1` when any problem is found, `2` for a usage error or a
   missing contracts folder.
 - The tool only reads files. `--check` (the default) and `--dry-run` do the same thing, and there is

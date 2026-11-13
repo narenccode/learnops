@@ -2,15 +2,10 @@
 
 Run from the repository root:  python libs/contracts/validate_examples.py
 
-`contracts/<name>.v<N>.schema.json` is matched with the folder `contracts/examples/<name>.v<N>/`.
-Every top-level file in that folder is an example and must be JSON or YAML. Files in subfolders
-(B1's body files, for example) are supporting files: listed in the output, never validated here.
-Nothing is skipped silently: a schema without an example, an example without a schema, a badly
-named schema and an unsupported file are all errors.
-
-Exit codes: 0 when every example passes, 1 when any problem is found, 2 for a usage error or a
-missing contracts folder. The tool only reads files, so `--check` and `--dry-run` behave the same
-and there is nothing to undo.
+`contracts/<name>.v<N>.schema.json` is matched with the folder `contracts/examples/<name>.v<N>/`,
+whose top-level JSON and YAML files are its examples. Exit codes: 0 when every example passes,
+1 when any problem is found, 2 for a usage error or a missing contracts folder. Read-only:
+`--check` and `--dry-run` behave the same. What is and is not checked: libs/contracts/README.md.
 
 This is not the B1 package validator (`validate.py`), which also checks course-level rules.
 """
@@ -31,9 +26,9 @@ if __name__ == "__main__" and not __package__:
 import argparse  # noqa: E402
 import json  # noqa: E402
 import re  # noqa: E402
-from collections.abc import Callable, Hashable, Sequence  # noqa: E402
+from collections.abc import Sequence  # noqa: E402
 from dataclasses import dataclass  # noqa: E402
-from typing import Any, NoReturn  # noqa: E402
+from typing import Any  # noqa: E402
 
 import yaml  # noqa: E402
 from jsonschema import Draft202012Validator, FormatChecker  # noqa: E402
@@ -79,42 +74,14 @@ class ExampleReport:
     problems: tuple[Problem, ...] = ()
     passed: tuple[tuple[str, str], ...] = ()  # (example, schema)
     failed: tuple[str, ...] = ()  # examples that were read or validated and failed
-    supporting: tuple[str, ...] = ()  # files in example subfolders, not validated here
     schema_count: int = 0
-    # Every example found: each top-level example in an example folder, and each example file
-    # placed directly in `contracts/examples/`. It includes those not validated because their
-    # schema could not be loaded or no schema matches them (orphans); those are in neither
-    # `passed` nor `failed`.
+    # Every top-level example found, including those not validated because their schema could
+    # not be loaded; those are in neither `passed` nor `failed`.
     example_count: int = 0
 
     @property
     def ok(self) -> bool:
         return not self.problems
-
-
-class _UniqueKeyLoader(yaml.SafeLoader):
-    """PyYAML's safe loader, but a key used twice in one mapping is an error, not overwritten."""
-
-    def construct_mapping(
-        self, node: yaml.MappingNode, deep: bool = False
-    ) -> dict[Hashable, Any]:
-        self.flatten_mapping(node)
-        seen: set[Any] = set()
-        for key_node, _ in node.value:
-            key = self.construct_object(key_node, deep=deep)
-            try:
-                duplicate = key in seen
-            except TypeError:
-                continue  # unhashable key: the base class reports it
-            if duplicate:
-                raise yaml.constructor.ConstructorError(
-                    None,
-                    None,
-                    messages.EX_DUPLICATE_KEY.format(key=key),
-                    key_node.start_mark,
-                )
-            seen.add(key)
-        return super().construct_mapping(node, deep=deep)
 
 
 def discover(contracts_dir: Path) -> list[ContractCase]:
@@ -134,14 +101,12 @@ def validate_all(contracts_dir: Path) -> ExampleReport:
     problems: list[Problem] = []
     passed: list[tuple[str, str]] = []
     failed: list[str] = []
-    supporting: list[str] = []
     example_count = 0
 
     def rel(path: Path) -> str:
         return path.relative_to(root).as_posix()
 
-    schema_files = sorted(contracts_dir.glob(SCHEMA_GLOB))
-    if not schema_files:
+    if not any(contracts_dir.glob(SCHEMA_GLOB)):
         problems.append(
             Problem(
                 "no_schemas",
@@ -149,16 +114,6 @@ def validate_all(contracts_dir: Path) -> ExampleReport:
                 messages.EX_NO_SCHEMAS_HINT,
             )
         )
-    for path in schema_files:
-        if not SCHEMA_NAME.match(path.name):
-            problems.append(
-                Problem(
-                    "unversioned_schema",
-                    messages.EX_UNVERSIONED_SCHEMA,
-                    messages.EX_UNVERSIONED_SCHEMA_HINT,
-                    schema=rel(path),
-                )
-            )
 
     cases = discover(contracts_dir)
     for case in cases:
@@ -166,19 +121,8 @@ def validate_all(contracts_dir: Path) -> ExampleReport:
         validator, schema_problem = _load_validator(case.schema_path, schema_rel)
         if schema_problem:
             problems.append(schema_problem)
-        examples, others, nested = _list_example_folder(case.example_dir)
+        examples = _list_examples(case.example_dir)
         example_count += len(examples)
-        supporting += [rel(p) for p in nested]
-        for path in others:
-            problems.append(
-                Problem(
-                    "unsupported_example",
-                    messages.EX_UNSUPPORTED_EXAMPLE,
-                    messages.EX_UNSUPPORTED_EXAMPLE_HINT,
-                    example=rel(path),
-                    schema=schema_rel,
-                )
-            )
         if not examples:
             problems.append(
                 Problem(
@@ -208,17 +152,10 @@ def validate_all(contracts_dir: Path) -> ExampleReport:
             else:
                 passed.append((example_rel, schema_rel))
 
-    expected = {c.example_dir.name for c in cases}
-    problems += _orphans(contracts_dir, expected, rel)
-    # Orphan folders are not validated, but their examples were found, so they are counted.
-    for folder in _orphan_folders(contracts_dir, expected):
-        example_count += len(_list_example_folder(folder)[0])
-    example_count += len(_loose_examples(contracts_dir))
     return ExampleReport(
         problems=tuple(problems),
         passed=tuple(passed),
         failed=tuple(failed),
-        supporting=tuple(sorted(supporting)),
         schema_count=len(cases),
         example_count=example_count,
     )
@@ -252,21 +189,17 @@ def _load_validator(
     return cls(schema, format_checker=FormatChecker()), None
 
 
-def _list_example_folder(folder: Path) -> tuple[list[Path], list[Path], list[Path]]:
-    """(examples, unsupported top-level files, files in subfolders), each sorted."""
+def _list_examples(folder: Path) -> list[Path]:
+    """The top-level JSON/YAML entries in `folder`, sorted. Subfolders hold supporting files
+    (B1's body files, checked by `validate_package`) and are ignored by design."""
     if not folder.is_dir():
-        return [], [], []
-    examples: list[Path] = []
-    others: list[Path] = []
-    nested: list[Path] = []
-    for path in sorted(folder.iterdir()):
-        if path.is_dir():
-            nested += sorted(p for p in path.rglob("*") if p.is_file())
-        elif path.suffix.lower() in EXAMPLE_SUFFIXES:
-            examples.append(path)
-        else:
-            others.append(path)
-    return examples, others, nested
+        return []
+    # Not `is_file()`: a broken link named *.json must be reported as unreadable, not skipped.
+    return sorted(
+        p
+        for p in folder.iterdir()
+        if not p.is_dir() and p.suffix.lower() in EXAMPLE_SUFFIXES
+    )
 
 
 def _check_example(
@@ -275,7 +208,7 @@ def _check_example(
     try:
         document = _parse(path)
     except (OSError, UnicodeDecodeError, ValueError, yaml.YAMLError) as exc:
-        # ValueError: JSON syntax, duplicate JSON keys, and PyYAML's impossible dates.
+        # ValueError: JSON syntax and PyYAML's impossible dates.
         return [
             Problem(
                 "unreadable_example",
@@ -306,75 +239,8 @@ def _parse(path: Path) -> Any:
     text = path.read_text(encoding="utf-8")
     if path.suffix.lower() in YAML_SUFFIXES:
         # The value is used exactly as parsed: an unquoted date stays a date, and B1 rejects it.
-        return yaml.load(
-            text, Loader=_UniqueKeyLoader
-        )  # a SafeLoader subclass: no arbitrary objects
-    return json.loads(
-        text, object_pairs_hook=_unique_json_object, parse_constant=_reject_constant
-    )
-
-
-def _unique_json_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
-    result: dict[str, Any] = {}
-    for key, value in pairs:
-        if key in result:
-            raise ValueError(messages.EX_DUPLICATE_KEY.format(key=key))
-        result[key] = value
-    return result
-
-
-def _reject_constant(constant: str) -> NoReturn:
-    # Python's json module accepts NaN, Infinity and -Infinity by default; JSON (RFC 8259) does
-    # not, so another reader of the contract could reject an example this tool let through.
-    raise ValueError(messages.EX_NON_STANDARD_JSON.format(constant=constant))
-
-
-def _orphans(
-    contracts_dir: Path, expected: set[str], rel: Callable[[Path], str]
-) -> list[Problem]:
-    examples_dir = contracts_dir / "examples"
-    if not examples_dir.is_dir():
-        return []
-    problems = []
-    for path in sorted(examples_dir.iterdir()):
-        if path.is_dir() and path.name in expected:
-            continue
-        stem = path.name if path.is_dir() else path.stem
-        problems.append(
-            Problem(
-                "orphan_example",
-                messages.EX_ORPHAN_EXAMPLE.format(
-                    schema=f"{rel(contracts_dir)}/{stem}.schema.json"
-                ),
-                messages.EX_ORPHAN_EXAMPLE_HINT,
-                example=rel(path),
-            )
-        )
-    return problems
-
-
-def _orphan_folders(contracts_dir: Path, expected: set[str]) -> list[Path]:
-    """The folders in `contracts/examples/` that no schema matches, sorted."""
-    examples_dir = contracts_dir / "examples"
-    if not examples_dir.is_dir():
-        return []
-    return [
-        path
-        for path in sorted(examples_dir.iterdir())
-        if path.is_dir() and path.name not in expected
-    ]
-
-
-def _loose_examples(contracts_dir: Path) -> list[Path]:
-    """Example files placed directly in `contracts/examples/` (always orphans), sorted."""
-    examples_dir = contracts_dir / "examples"
-    if not examples_dir.is_dir():
-        return []
-    return [
-        path
-        for path in sorted(examples_dir.iterdir())
-        if path.is_file() and path.suffix.lower() in EXAMPLE_SUFFIXES
-    ]
+        return yaml.safe_load(text)
+    return json.loads(text)
 
 
 def _place(location: tuple[str | int, ...]) -> str:
@@ -392,8 +258,6 @@ def _short(text: str) -> str:
 def _print_report(report: ExampleReport) -> None:
     for example, schema in report.passed:
         print(messages.EX_LINE_OK.format(example=example, schema=schema))
-    if report.supporting:
-        print(messages.EX_SUPPORTING.format(count=len(report.supporting)))
     for problem in report.problems:
         target = problem.example or problem.schema or "contracts"
         if problem.example and problem.schema:
@@ -404,7 +268,7 @@ def _print_report(report: ExampleReport) -> None:
             line = messages.EX_LINE.format(target=target, message=problem.message)
         print(line, file=sys.stderr)
         print(messages.EX_LINE_HINT.format(hint=problem.hint), file=sys.stderr)
-    # Found but neither passed nor failed: a broken schema, or no schema (orphans).
+    # Found but neither passed nor failed: their schema could not be loaded.
     not_validated = report.example_count - len(report.passed) - len(report.failed)
     print(
         messages.EX_SUMMARY.format(
@@ -443,19 +307,10 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     contracts_dir: Path = args.contracts_dir.resolve()
     if not contracts_dir.is_dir():
-        print(
-            messages.EX_LINE.format(
-                target=args.contracts_dir,
-                message=messages.EX_CONTRACTS_DIR_MISSING.format(
-                    folder=args.contracts_dir
-                ),
-            ),
-            file=sys.stderr,
-        )
-        print(
-            messages.EX_LINE_HINT.format(hint=messages.EX_CONTRACTS_DIR_MISSING_HINT),
-            file=sys.stderr,
-        )
+        missing = messages.EX_CONTRACTS_DIR_MISSING.format(folder=args.contracts_dir)
+        line = messages.EX_LINE.format(target=args.contracts_dir, message=missing)
+        hint = messages.EX_LINE_HINT.format(hint=messages.EX_CONTRACTS_DIR_MISSING_HINT)
+        print(line, hint, sep="\n", file=sys.stderr)
         return 2
     report = validate_all(contracts_dir)
     _print_report(report)

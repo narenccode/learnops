@@ -109,14 +109,6 @@ EX_NO_SCHEMAS_HINT = (
 )
 EX_CONTRACTS_DIR_MISSING = "The contracts folder {folder} does not exist."
 EX_CONTRACTS_DIR_MISSING_HINT = "Run the script from a repository checkout, or pass --contracts-dir with an existing folder."
-EX_UNVERSIONED_SCHEMA = (
-    "The schema file name does not follow <name>.v<N>.schema.json (lowercase name, version 1 "
-    "or higher)."
-)
-EX_UNVERSIONED_SCHEMA_HINT = (
-    "Rename it, for example to course-package.v1.schema.json (PRD B.0 rule 1: every contract "
-    "has a version)."
-)
 EX_UNREADABLE_SCHEMA = "The schema could not be read: {reason}."
 EX_UNREADABLE_SCHEMA_HINT = "Save the schema as UTF-8 JSON and fix the syntax error."
 EX_INVALID_SCHEMA = "The file is not a valid JSON Schema: {reason}."
@@ -128,33 +120,16 @@ EX_MISSING_EXAMPLE_HINT = (
     "Add at least one valid .json, .yaml or .yml example at the top of that folder "
     "(PRD B.0 rule 1)."
 )
-EX_ORPHAN_EXAMPLE = "No schema matches this example (expected {schema})."
-EX_ORPHAN_EXAMPLE_HINT = (
-    "Put the example in contracts/examples/<name>.v<N>/ next to "
-    "contracts/<name>.v<N>.schema.json, or remove it."
-)
-EX_UNSUPPORTED_EXAMPLE = "An example must be a .json, .yaml or .yml file."
-EX_UNSUPPORTED_EXAMPLE_HINT = (
-    "Convert it to JSON or YAML, or move supporting files into a subfolder."
-)
 EX_UNREADABLE_EXAMPLE = "The example could not be read: {reason}."
 EX_UNREADABLE_EXAMPLE_HINT = (
-    "Fix the problem described above: save the example as UTF-8, use standard JSON or YAML "
-    "syntax (the reason gives a line and column when the parser reports one), and use each "
-    "key only once."
+    "Fix the problem described above: save the example as UTF-8 and use JSON or YAML syntax "
+    "(the reason gives a line and column when the parser reports one)."
 )
-EX_DUPLICATE_KEY = "duplicate key {key!r}"
-EX_NON_STANDARD_JSON = "non-standard JSON constant {constant!r} is not allowed"
 EX_LINE_WITH_SCHEMA = "FAIL {target} (schema {schema}): {message}"
 EX_LINE = "FAIL {target}: {message}"
 EX_LINE_HINT = "     next: {hint}"
 EX_LINE_OK = "OK {example} (schema {schema})"
-EX_SUPPORTING = (
-    "{count} supporting files in example subfolders were not validated as examples "
-    "(for example B1 body files; validate_package checks those)."
-)
-# "found", not "checked": the count includes examples that were not validated (a broken schema,
-# or no schema at all), and those are counted separately from passed and failed.
+# "found", not "checked": it includes examples whose schema could not be loaded (not validated).
 EX_SUMMARY = (
     "{examples} examples found, {schemas} schemas: {passed} passed, {failed} failed, "
     "{not_validated} not validated; {problems} problems found."
