@@ -1,7 +1,8 @@
 """Shared Moodle web-services client (PRD B4). Release 0 skeleton; no real transport yet.
 
-This part provides the error family, the user-facing messages, the Token type and the site
-settings. The client itself follows in a later pull request. See README.md in this folder.
+This part provides the error family, the user-facing messages, the Token type, the site
+settings and redaction. The client itself follows in a later pull request. See README.md in
+this folder.
 """
 
 from . import messages
@@ -18,6 +19,7 @@ from .errors import (
     UnexpectedResponse,
     WorkflowStateNotAllowed,
 )
+from .redact import RedactingFilter, redact, safe_url, sanitize, sanitize_value
 from .secrets import Token
 
 __all__ = [
@@ -28,6 +30,7 @@ __all__ = [
     "MoodleUnreachable",
     "NotSupported",
     "PermissionDenied",
+    "RedactingFilter",
     "Site",
     "SiteSettings",
     "Token",
@@ -36,4 +39,8 @@ __all__ = [
     "WorkflowStateNotAllowed",
     "load_site",
     "messages",
+    "redact",
+    "safe_url",
+    "sanitize",
+    "sanitize_value",
 ]

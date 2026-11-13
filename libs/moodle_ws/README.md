@@ -4,8 +4,8 @@ Every Moodle web-services call in LearnOps goes through this library (PRD B4, C-
 Moodle directly.
 
 **Status: Release 0 skeleton, built in steps.** This part adds the error family, the user-facing
-messages, the `Token` type and the site settings. Redaction, the allow-list and the client follow in
-later pull requests. **It cannot call a real Moodle.**
+messages, the `Token` type, the site settings and redaction. The allow-list and the client follow
+in later pull requests. **It cannot call a real Moodle.**
 
 Contract: `contracts/moodle-ws.v1.md`, with the allow-list in `contracts/moodle-ws.v1.schema.json` and
 `contracts/examples/moodle-ws.v1.functions.json`. Nothing in it is verified on a Moodle site yet.
@@ -23,6 +23,22 @@ error names the variable, never the value.
 `SiteSettings` makes the same checks when built by hand. The version must match the site, and the URL
 must be `http` or `https` with a host and no credentials, query, fragment or whitespace. `repr()` never
 shows the URL.
+
+## Tokens and logs
+
+- `Token` shows only `***` in `repr()`, `str()` and format strings. Only a transport calls `reveal()`.
+- `redact(text, tokens)` removes token values from text, as written and percent-encoded.
+- `sanitize(text, tokens)` also cuts every URL to scheme and host.
+- `safe_url(url)` keeps only scheme and host. Log this, never a request URL.
+- `sanitize_value(value, tokens)` does the same through dicts, lists, tuples, sets and frozensets.
+  Numbers, booleans and `None` pass. Other objects, `bytes`, and anything deeper than 32 levels become
+  `***`.
+- `RedactingFilter(tokens)` sanitizes the formatted message, its arguments, exception text, stack text
+  and `extra` fields. If a record cannot be cleaned, its content is dropped and a fixed message is
+  logged, so logging never raises. **It is not attached automatically.** Each service must attach it to
+  each log handler, because a filter on a logger does not cover its child loggers.
+- Only the token as written and percent-encoded is matched. Other encodings are not, because no
+  transport requires one yet. Check this when a real transport is written.
 
 ## Errors
 

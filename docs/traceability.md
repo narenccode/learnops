@@ -149,6 +149,7 @@ FR-G-06. Neither requirement is implemented by this skeleton.
 | Rule | Source | Test |
 |---|---|---|
 | One token per site, from the environment only | B4 §1, Q24, SEC-03, C-06 | `test_config.py` |
+| Tokens and full URLs stay out of logs and errors | SEC-03, OPS-04, design §4.1 | `test_redaction.py` |
 | One error family with stable codes | Design §4.1, §10.2 (library documentation, Q37) | `test_errors.py` |
 
 Not covered: the library is being built in steps and cannot call Moodle. Nothing has been checked
