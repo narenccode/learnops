@@ -1,11 +1,12 @@
 """Shared Moodle web-services client (PRD B4). Release 0 skeleton; no real transport yet.
 
 This part provides the error family, the user-facing messages, the Token type, the site
-settings and redaction. The client itself follows in a later pull request. See README.md in
-this folder.
+settings, redaction, the allow-list and the transport interface. The client itself follows in
+a later pull request. See README.md in this folder.
 """
 
 from . import messages
+from .allowlist import AllowList, load_allowlist
 from .config import Site, SiteSettings, load_site
 from .errors import (
     FunctionNotAllowed,
@@ -21,12 +22,15 @@ from .errors import (
 )
 from .redact import RedactingFilter, redact, safe_url, sanitize, sanitize_value
 from .secrets import Token
+from .transport import MoodleTransport
 
 __all__ = [
+    "AllowList",
     "FunctionNotAllowed",
     "InvalidParameters",
     "MoodleConfigError",
     "MoodleError",
+    "MoodleTransport",
     "MoodleUnreachable",
     "NotSupported",
     "PermissionDenied",
@@ -37,6 +41,7 @@ __all__ = [
     "TokenInvalid",
     "UnexpectedResponse",
     "WorkflowStateNotAllowed",
+    "load_allowlist",
     "load_site",
     "messages",
     "redact",
