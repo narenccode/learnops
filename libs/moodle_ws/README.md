@@ -41,8 +41,8 @@ their own. `call()` returns the transport's answer unchanged.
   raises `GradeWriteNotAllowed`. A grade write is sent only through a `WriteReceipt`: sealed,
   single-use, bound to one client, holding its own copy of the checked parameters, with the guards
   above run again on that path. Only the guarded write helper may issue one, after the checks
-  `call()` cannot run alone (maximum grade, locked state, marking workflow) and with a read-back.
-  **That helper is added in a later pull request; until then no grade write can be sent at all.**
+  `call()` cannot run alone (maximum grade, locked state, marking workflow) and with a read-back:
+  `write_draft_grade()` (below).
   This stops accidental bypass; it is not a boundary against code that imports private names, and a
   test fails if any module outside this library uses them.
 
@@ -53,8 +53,8 @@ not checked. An empty `parameters` list in the contract means "not yet determine
 ## Outcomes of a draft-grade write (B4 §3a, §3b)
 
 `moodle_ws.grade_write` holds the outcome values and the pure checks the guarded write helper uses.
-Nothing in it contacts Moodle; the helper itself is added in a later pull request. Only `VERIFIED` is
-success (R10).
+Only `VERIFIED` is success (R10). `write_draft_grade()` is the one function in it that contacts
+Moodle ([Writing one draft grade](#writing-one-draft-grade-b4-3a-r1-to-r11)).
 
 | Outcome | Meaning |
 |---|---|
@@ -88,6 +88,42 @@ by the guide's decision, recorded in the contract (B4 §6):
 | State missing or unknown before the write | `REFUSED_STATE_UNKNOWN`, nothing sent | LearnOps cannot show the grade is not locked (R3) |
 | Answer lost, read-back matches | `NEEDS_MENTOR_CONFIRMATION`, not success | R11 says the mentor decides |
 | Any warning in the `mod_assign_get_grades` answer | `NOT_VERIFIED` | Stricter than §3b |
+| `PermissionDenied` / `TokenInvalid` from the write | `ACCESS_DENIED`, no read-back, not resent | Moodle answered and refused |
+
+## Writing one draft grade (B4 §3a, R1 to R11)
+
+```python
+from moodle_ws import write_draft_grade
+
+result = write_draft_grade(client, save_grade_params, max_grade)
+if not result.succeeded:
+    show(result.outcome, result.message)  # never counted as written
+```
+
+`write_draft_grade` is the only way a grade write reaches Moodle. It copies the parameters once, uses
+that copy for every check and for the write, and sends `mod_assign_save_grade` **at most once**:
+
+1. Refuses a grade below 0 or above `max_grade` (`REFUSED_OUT_OF_RANGE`, R9). Moodle would ignore it
+   silently. The caller reads `max_grade` from the assignment (lab check 2).
+2. Reads the learner's state and writes only over an unlocked marking-workflow state (see
+   [Outcomes](#outcomes-of-a-draft-grade-write-b4-3a-3b)). A permission error is `ACCESS_DENIED` (R10).
+3. Writes, through a receipt. If the answer is lost or cannot be understood, it does **not** write
+   again (R11). A permission or token error from the write is `ACCESS_DENIED`, with no read-back and
+   no resend.
+4. Reads back with `mod_assign_get_submission_status` and `mod_assign_get_grades`. Only an exact
+   numeric match of the grade, for the same learner and attempt, with the state `readyforrelease`, is
+   `VERIFIED`. Anything else, including a failed read-back, is `NOT_VERIFIED` (R8, §3b). If the write's
+   answer was lost, the result has `uncertain=True`: a matching read-back is then
+   `NEEDS_MENTOR_CONFIRMATION`, and a mismatch is `NOT_VERIFIED`.
+
+Results are values, not exceptions, so a caller's loop continues with the next learner. That loop, the
+mentor's approval and the follow-up after `NOT_VERIFIED` belong to the grading module (FR-G-01, FR-G-06,
+Release 4).
+
+**On 4.5 and 5.3:** the tests use `tests/source_fake.py`, which behaves as the Moodle **source**
+says: 5.3 keeps a locked grade while the call looks successful, 4.5 overwrites it, and both ignore an
+out-of-range grade. None of this is lab-verified (lab checks 4 and 12 to 16). On 4.5 only the pre-write
+check in step 2 protects a locked grade.
 
 ## Configuration
 

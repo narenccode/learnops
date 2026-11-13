@@ -2,8 +2,8 @@
 
 MoodleClient.call() runs the draft rule and the attempt and grade guards on mod_assign_save_grade
 and then refuses it. Only a sealed, single-use WriteReceipt can send one, and the guards run again
-on that path. The guarded helper that issues receipts (maximum grade, locked state, marking
-workflow, read-back) is added in a later PR; until then no grade write can be sent at all.
+on that path. Only grade_write.write_draft_grade issues receipts, after the maximum-grade,
+locked-state and marking-workflow checks; it also reads the result back (test_grade_write.py).
 """
 
 from __future__ import annotations
@@ -264,8 +264,8 @@ def test_no_module_outside_the_library_uses_the_private_write_path() -> None:
     assert offenders == []
 
 
-def test_inside_the_library_only_the_client_issues_or_sends_receipts() -> None:
-    """Until the guarded write helper exists, nothing in the library issues a receipt."""
+def test_inside_the_library_only_grade_write_issues_or_sends_receipts() -> None:
+    """The client defines the receipt; only the guarded write helper uses it."""
     library = ROOT / "libs" / "moodle_ws"
     users = sorted(
         path.name
@@ -275,4 +275,4 @@ def test_inside_the_library_only_the_client_issues_or_sends_receipts() -> None:
             path.read_text(encoding="utf-8"),
         )
     )
-    assert users == ["client.py"]
+    assert users == ["client.py", "grade_write.py"]
