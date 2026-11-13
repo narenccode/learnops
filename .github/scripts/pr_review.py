@@ -468,6 +468,7 @@ VERDICT_TEXT = {
     "rule-violation": "Rule violation: the guide decides",
     "needs-rework": "Needs rework: see the bot comment",
     "needs-judgement": "Needs the guide's judgement",
+    "awaiting-owners": "Waiting for every affected owner's review",
     "awaiting-peer": "Waiting for one peer approval",
     "ready-to-merge": "Peer approved, bot review passed: may merge",
 }

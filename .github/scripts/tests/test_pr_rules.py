@@ -105,13 +105,25 @@ def test_module_code_still_needs_a_real_requirement_id_not_just_a_contract_ref()
     assert any("No requirement ID" in x.message for x in f)
 
 
-def test_contract_change_with_process_needs_judgement():
+def test_contract_change_with_process_waits_for_the_owners_not_the_guide():
     f = r.evaluate(
         ctx(
             ["contracts/course.schema.json"],
             body=GOOD_BODY + "\nUses /contract-change.",
         )
     )
+    assert r.verdict_of(f) == "awaiting-owners"
+    assert r.VERDICTS["awaiting-owners"][1] != r.VERDICTS["needs-judgement"][1]
+
+
+def test_a_real_guide_question_beats_the_owners_wait():
+    f = r.evaluate(
+        ctx(
+            ["contracts/course.schema.json"],
+            body=GOOD_BODY + "\nUses /contract-change.",
+        )
+    )
+    f.append(r.Finding("judgement", "A real question for the guide."))
     assert r.verdict_of(f) == "needs-judgement"
 
 
