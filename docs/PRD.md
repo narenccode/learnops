@@ -453,17 +453,20 @@ information is lost.
 | Submissions | `mod_assign_get_submissions`, `mod_assign_get_submission_status` |
 | Submission files | Download through the token-authenticated file URL returned by the API |
 | Write draft grade + feedback | `mod_assign_save_grade` with marking-workflow state **`readyforrelease`** and feedback comments; never `released` |
+| Stored-grade read-back | `mod_assign_get_grades` |
 
-- Parameters LearnOps sends (names from the Moodle 4.5 and 5.3 source; their behaviour is still checked in the lab, App-C item 1). "Always sent" is LearnOps's rule, not Moodle's: Moodle itself requires the seven `mod_assign_save_grade` parameters and `assignid`, while `field`, `value` and `userid` on the other two functions have defaults in Moodle and are sent anyway:
+- Parameters LearnOps sends (names from the Moodle 4.5 and 5.3 source; their behaviour is still checked in the lab, App-C item 1). "Always sent" is LearnOps's rule, not Moodle's: Moodle itself requires the seven `mod_assign_save_grade` parameters, `assignid` and `assignmentids`, while `field`, `value` and `userid` on the other two functions have defaults in Moodle and are sent anyway:
 
 | Function | Always sent | Optional |
 |---|---|---|
 | `core_course_get_courses_by_field` | `field`, `value` | — |
 | `mod_assign_get_submission_status` | `assignid`, `userid` | — |
 | `mod_assign_save_grade` | `assignmentid`, `userid`, `grade`, `attemptnumber`, `addattempt`, `workflowstate`, `applytoall` | `plugindata`, `advancedgradingdata` |
+| `mod_assign_get_grades` | `assignmentids` | — |
 
 - **Course identification:** a course is looked up by its id (`field` = `id`) or, as an alternative, its shortname (`field` = `shortname`); never by its idnumber. Moodle returns a course's idnumber only to accounts with `moodle/course:update`, which the service account does not have.
-- **Draft rule:** grades written by LearnOps stay invisible to learners until the mentor releases them in Moodle (marking workflow). Only mentor-approved drafts are written. A grade write sends only the workflow state `readyforrelease`. After each write, LearnOps reads the result back and reports the write as done only when both are confirmed: `lastattempt.gradingstatus` is exactly `readyforrelease` (from `mod_assign_get_submission_status` for that assignment and learner), and the stored grade for that learner and attempt is numerically equal to the grade sent. If either is different, missing, ambiguous or cannot be read, the write is reported as not verified. How the grade value is read is pending the guide's decision (`contracts/moodle-ws.v1.md` §6a); until it is decided, no write is reported as done.
+- **Draft rule:** grades written by LearnOps stay invisible to learners until the mentor releases them in Moodle (marking workflow). Only mentor-approved drafts are written. A grade write sends only the workflow state `readyforrelease`. After each write, LearnOps reads the result back and reports the write as done only when both are confirmed: `lastattempt.gradingstatus` is exactly `readyforrelease` (from `mod_assign_get_submission_status` for that assignment and learner), and the stored grade for that learner and attempt is numerically equal to the grade sent. If either is different, missing, ambiguous or cannot be read, the write is reported as not verified. The stored grade is read with `mod_assign_get_grades` and compared as a number after parsing, never as text, with no tolerance.
+- **Write rules** (guide's decisions on PR #64; full text in `contracts/moodle-ws.v1.md` §3): `attemptnumber` is always the explicit attempt being graded, never `-1`, and the read-back matches that attempt. A write is refused before anything is sent if the learner's state is already `readyforrelease` or `released`, or if the grade is below zero or above the assignment's maximum. A failed read-back is reported as not verified and the write is never repeated. A write whose outcome is unknown is never retried automatically: it is read back and the mentor decides what happens next. Suspended learners are skipped and reported as skipped. A missing submission, a missing grade and an access failure are separate outcomes, never reported as success, and the other learners are still processed.
 - The service account's capabilities are listed in `contracts/moodle-ws.v1.md` §4.
 
 ## B5. Model and speech interface (v1)
