@@ -22,6 +22,19 @@ RELEASE_REFUSED: Final = (
     "{function} tried to send the state '{state}', so nothing was sent to Moodle. LearnOps never "
     "releases grades; a mentor releases them in Moodle."
 )
+WRITE_NEEDS_HELPER: Final = (
+    "A grade write is sent only through write_draft_grade(), which checks the maximum grade, the "
+    "learner's state and marking workflow and reads the result back, so nothing was sent to "
+    "Moodle. Call write_draft_grade() instead."
+)
+ATTEMPT_REQUIRED: Final = (
+    "mod_assign_save_grade needs the explicit attempt being graded (a whole number from 0, never "
+    "-1), so nothing was sent to Moodle. Pass the attempt number you graded."
+)
+GRADE_NOT_A_NUMBER: Final = (
+    "The grade is not a plain number of 0 or more, so nothing was sent to Moodle. Pass the "
+    "approved grade as a number, for example 84.5."
+)
 MISSING_SETTING: Final = (
     "{variable} is not set. Set it in the environment before contacting Moodle."
 )

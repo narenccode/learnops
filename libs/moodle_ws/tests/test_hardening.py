@@ -29,7 +29,7 @@ from moodle_ws import (
 )
 from moodle_ws.messages import INVALID_PARAMETERS, LOG_NOT_CLEANED
 
-from .conftest import FAKE_TOKEN, FAKE_URL
+from .conftest import FAKE_TOKEN, FAKE_URL, VALID_WRITE, send_checked
 from .fake_transport import FakeTransport
 
 READ = "core_course_get_contents"
@@ -85,23 +85,23 @@ class CopyRunsCode:
 
 
 class ChangesBetweenReads(Mapping[str, Any]):
-    """A grade write whose key "a" shows a safe value on the first read and `released`
+    """A valid grade write whose key "a" shows a safe value on the first read and `released`
     afterwards."""
 
     def __init__(self) -> None:
         self.reads = 0
 
-    def __getitem__(self, key: str) -> str:
-        if key == "workflowstate":
-            return "readyforrelease"
+    def __getitem__(self, key: str) -> Any:
+        if key != "a":
+            return VALID_WRITE[key]
         self.reads += 1
         return "safe" if self.reads == 1 else "released"
 
     def __iter__(self) -> Iterator[str]:
-        return iter(["workflowstate", "a"])
+        return iter([*VALID_WRITE, "a"])
 
     def __len__(self) -> int:
-        return 2
+        return len(VALID_WRITE) + 1
 
 
 class FailsWhenRead(Mapping[str, Any]):
@@ -187,7 +187,7 @@ def test_a_key_named_released_is_refused_on_the_write_function(
     params: dict[str, Any], settings: SiteSettings
 ) -> None:
     transport = FakeTransport()
-    values = {"workflowstate": "readyforrelease", **params}
+    values = {**VALID_WRITE, **params}
     with pytest.raises(WorkflowStateNotAllowed):
         MoodleClient(settings, transport).call(SAVE_GRADE, values)
     assert transport.calls == []
@@ -261,10 +261,8 @@ def test_a_mapping_is_read_once_so_it_cannot_change_after_the_check(
     settings: SiteSettings,
 ) -> None:
     transport = FakeTransport()
-    MoodleClient(settings, transport).call(SAVE_GRADE, ChangesBetweenReads())
-    assert transport.calls == [
-        (SAVE_GRADE, {"workflowstate": "readyforrelease", "a": "safe"})
-    ]
+    send_checked(MoodleClient(settings, transport), ChangesBetweenReads())
+    assert transport.calls == [(SAVE_GRADE, {**VALID_WRITE, "a": "safe"})]
 
 
 def test_no_params_means_an_empty_mapping(settings: SiteSettings) -> None:

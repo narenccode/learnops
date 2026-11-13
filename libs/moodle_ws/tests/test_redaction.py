@@ -210,7 +210,8 @@ def test_no_traceback_frame_holds_the_original_exception(
             frames += 1
             assert failure not in tb.tb_frame.f_locals.values()
         tb = tb.tb_next
-    assert frames == 1
+    # call() delegates to _send(); every client frame is checked, however many there are.
+    assert frames >= 1
 
 
 def test_a_public_error_logged_without_a_filter_shows_no_token(
