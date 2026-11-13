@@ -4,8 +4,8 @@ Every Moodle web-services call in LearnOps goes through this library (PRD B4, C-
 Moodle directly.
 
 **Status: Release 0 skeleton, built in steps.** This part adds the error family, the user-facing
-messages, the `Token` type, the site settings and redaction. The allow-list and the client follow
-in later pull requests. **It cannot call a real Moodle.**
+messages, the `Token` type, the site settings, redaction, the allow-list and the transport
+interface. The client follows in a later pull request. **It cannot call a real Moodle.**
 
 Contract: `contracts/moodle-ws.v1.md`, with the allow-list in `contracts/moodle-ws.v1.schema.json` and
 `contracts/examples/moodle-ws.v1.functions.json`. Nothing in it is verified on a Moodle site yet.
