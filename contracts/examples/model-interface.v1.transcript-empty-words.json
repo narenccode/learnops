@@ -1,0 +1,17 @@
+{
+  "segments": [
+    {
+      "start": 0.0,
+      "end": 1.5,
+      "text": "Good morning.",
+      "words": []
+    }
+  ],
+  "meta": {
+    "provider": "hosted",
+    "model": "example-hosted-speech-model",
+    "duration_s": 1.5,
+    "latency_ms": 420,
+    "cost_estimate": 0.0001
+  }
+}

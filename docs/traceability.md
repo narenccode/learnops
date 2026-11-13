@@ -115,3 +115,36 @@ Left out because the PRD does not establish the mapping:
   validator reports the two default idnumbers with a clear message (tested above); the Course
   Studio screen and CLI that show it do not exist yet.
 - **Requirement IDs for the contract work itself.** None in the PRD.
+
+## B5 model and speech interface contract (v1), Release 0 foundation
+
+Files: `contracts/model-interface.v1.schema.json`, `contracts/examples/model-interface.v1.*.json`
+(flat, one file per case), `libs/contracts/tests/test_model_interface_v1.py`. Guide decisions: `docs/decisions/0001-b5-model-interface-v1.md`.
+
+FR-M-01 ("Shared model interface library (B5.1–B5.3)", R0) and FR-M-02 ("Speech interface library
+(B5.4)", R0) are deliberately not in the table above. This work covers the data shapes and two
+rules the libraries must follow. It does not implement FR-M-01 or FR-M-02, which still need the
+`model.run` call, the providers themselves, one retry, versioned prompts, logging, and
+`speech.transcribe`. FR-M-01 and FR-M-02 get their rows in the pull request that completes them.
+
+### Enforced by the JSON Schema and covered by automated tests
+
+Structure only. Test names are in `test_model_interface_v1.py`.
+
+| Rule | PRD | Test(s) |
+|---|---|---|
+| `result.meta` has provider, model, input and output tokens, `latency_ms`, `cost_estimate`, `prompt_version` | B5.1, B5.3 | `test_missing_required_field_is_rejected`, `test_wrong_type_or_value_is_rejected` |
+| `provider` is `local`, `hosted` or `fake` (meta and transcript meta) | B5.2, B5.4 | `test_wrong_type_or_value_is_rejected`, `test_wrong_type_or_value_is_rejected`, `test_examples_cover_every_provider` |
+| Token counts and `cost_estimate` are required but may be `null` (not reported) | B5.1, B5.4 | `test_missing_required_field_is_rejected`, `test_valid_variation_is_accepted`, `test_valid_variation_is_accepted`, `test_examples_show_known_and_unknown_usage`, `test_transcript_examples_show_known_and_unknown_cost` |
+| Examples follow the cost rule: local reports `0.0`, unknown usage and cost are `null` | B5.1 | `test_examples_follow_the_cost_rule` |
+| A transcript has `segments` (start, end, text, words) and `meta`; each word has start, end, word | B5.4 | `test_missing_required_field_is_rejected`, `test_wrong_type_or_value_is_rejected` |
+| `transcript.meta` has provider, model, `duration_s`, `latency_ms`, `cost_estimate` | B5.4 | same two tests |
+| A document is either a meta record or a transcript, never neither and never both (no discriminator field) | B5 | `test_document_that_is_neither_kind_is_rejected`, `test_document_that_is_both_kinds_is_rejected` |
+| `segments: []`, `words: []` and empty segment `text` are valid, and examples show each | B5.4 | `test_valid_variation_is_accepted`, `test_transcript_examples_cover_the_empty_cases` |
+| An example shows times after a chunk boundary, counted from the start of the original audio | B5.4 | `test_chunked_example_keeps_times_from_the_start_of_the_audio` |
+| Unknown fields are accepted (including the Q38 names and `language`, which are not part of v1) | B.0 rule 2, EXT-02 | `test_valid_variation_is_accepted`, `test_valid_variation_is_accepted` |
+| The schema is valid, and every example validates against the whole schema and its definition | B.0 rule 1 | `test_schema_is_a_valid_draft_2020_12_schema`, `test_example_is_valid_against_the_whole_schema`, `test_example_is_valid_against_its_definition`, `test_every_example_file_is_listed` |
+
+Chosen in the schema rather than stated in the PRD: token counts and `latency_ms` are non-negative
+integers; seconds and `cost_estimate` are non-negative numbers; `model`, `prompt_version` and `word`
+are non-empty strings; `prompt_version` has no set format.
