@@ -78,6 +78,23 @@ def test_contract_pr_without_approval_waits_for_reviewers_not_for_the_guide():
     assert "Nothing needs you right now" in text
 
 
+OWNERS_HEAD = "### Automated review: **Waiting for every affected owner**\n\n**Waiting for the owners' reviews**\n"
+
+
+def test_awaiting_owners_label_follows_the_same_waiting_and_merge_rules():
+    text = make([pr(20, ["awaiting-owners"])], bot={20: OWNERS_HEAD + STANDING_LINE})
+    assert "#20" in section(text, 4) and "#20" not in section(text, 1)
+    assert "Nothing needs you right now" in text
+    done = make(
+        [pr(21, ["awaiting-owners"], reviews=[("s1", "APPROVED")])],
+        bot={21: OWNERS_HEAD + STANDING_LINE},
+    )
+    assert "#21" in section(done, 2) and "#21" not in section(done, 1)
+    # a missing bot comment is still shown to the guide, with the label named (no crash)
+    odd = make([pr(22, ["awaiting-owners"])])
+    assert "#22" in section(odd, 1) and "awaiting-owners" in section(odd, 1)
+
+
 def test_approved_and_green_goes_to_merge_with_missing_owners_named():
     p = pr(2, ["needs-judgement"], reviews=[("s1", "APPROVED")])
     text = make([p], bot={2: STANDING_ONLY})

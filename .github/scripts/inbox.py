@@ -23,10 +23,13 @@ from pr_rules import gh
 
 TITLE = "Guide inbox"
 DECISION_LABELS = ("rule-violation", "needs-judgement")
+# `awaiting-owners` is not a decision label, but the inbox still tracks it: when the owners have approved and
+# the checks are green it moves to the merge list (the guide merges last).
+TRACKED_LABELS = (*DECISION_LABELS, "awaiting-owners")
 WAITING_LABELS = ("awaiting-peer", "needs-rework", "awaiting-ai")
 IST = timezone(timedelta(hours=5, minutes=30))
 REASON = re.compile(
-    r"\*\*(?:Rule violations[^*]*|Needs the guide's judgement)\*\*\s*\n((?:- .*(?:\n|$))+)"
+    r"\*\*(?:Rule violations[^*]*|Needs the guide's judgement|Waiting for the owners' reviews)\*\*\s*\n((?:- .*(?:\n|$))+)"
 )
 MAX_REASONS = 2
 # The bot raises this line on EVERY contract change. It is the standing process rule (all affected owners
@@ -154,7 +157,7 @@ def build(
     issue_comments: dict[int, list[dict]] | None = None,
 ) -> str:
     ready = [p for p in open_prs if not p.get("isDraft")]
-    decide = [p for p in ready if labels(p) & set(DECISION_LABELS)]
+    decide = [p for p in ready if labels(p) & set(TRACKED_LABELS)]
     mergeable, undecided, held = [], [], []
     for p in decide:
         where, detail = classify(p, bot_text.get(p["number"], ""), guide)
@@ -183,7 +186,7 @@ def build(
     for p in undecided:
         why = reasons_from(bot_text.get(p["number"], ""))
         what = (
-            f" `{sorted(labels(p) & set(DECISION_LABELS))[0]}`"
+            f" `{sorted(labels(p) & set(TRACKED_LABELS))[0]}`"
             + (f". {' '.join(why)}" if why else ". See the bot comment on the PR.")
             + ("" if checks_green(p) else " Checks are not green yet.")
         )

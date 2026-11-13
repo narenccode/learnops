@@ -44,6 +44,11 @@ VERDICTS = {
         "fbca04",
         "A call only the guide can make",
     ),
+    "awaiting-owners": (
+        "Waiting for every affected owner",
+        "c5def5",
+        "Contract change: the affected owners review, then the guide merges",
+    ),
     "awaiting-peer": (
         "Waiting for the peer review",
         "c5def5",
@@ -243,7 +248,7 @@ def evaluate(ctx: Context) -> list[Finding]:
         else:
             out.append(
                 Finding(
-                    "judgement",
+                    "owners",
                     "Contract change: every affected owner and the guide must review "
                     "(GitHub only enforces one).",
                     "PRD §B.0",
@@ -462,6 +467,8 @@ def verdict_of(findings: list[Finding]) -> str:
         return "needs-rework"
     if "judgement" in levels:
         return "needs-judgement"
+    if "owners" in levels:
+        return "awaiting-owners"
     return "ready-to-merge"
 
 
@@ -549,6 +556,7 @@ def next_step(verdict: str, peer: str = "", others: tuple[str, ...] = ()) -> str
         "needs-rework": "Fix the items listed in the bot comment and push. The bot re-checks by itself.",
         "rule-violation": "Do not merge. The guide will decide.",
         "needs-judgement": "Do not merge. The guide will decide.",
+        "awaiting-owners": "Ask every affected owner to review. The guide merges last. Do not merge it yourself.",
         "awaiting-peer": review + "The AI review runs right after.",
         "awaiting-ai": "The AI review is not available right now. The bot tries again "
         "by itself; you do not need to do anything.",
@@ -571,6 +579,7 @@ def render(
         ("violation", "Rule violations (the guide decides: reject or rework)"),
         ("rework", "Fix before merging"),
         ("judgement", "Needs the guide's judgement"),
+        ("owners", "Waiting for the owners' reviews"),
         ("advice", "Better ways to do it (advice)"),
         ("unverified", "Could not verify"),
     ]
