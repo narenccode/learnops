@@ -5,6 +5,7 @@ from __future__ import annotations
 import copy
 import logging
 import pickle
+import traceback
 from collections.abc import Iterator
 from dataclasses import asdict
 from typing import Any
@@ -12,9 +13,14 @@ from typing import Any
 import pytest
 
 from moodle_ws import (
+    MoodleClient,
+    MoodleError,
+    MoodleUnreachable,
     RedactingFilter,
     SiteSettings,
     Token,
+    TokenInvalid,
+    UnexpectedResponse,
     redact,
     safe_url,
     sanitize,
@@ -22,8 +28,15 @@ from moodle_ws import (
 )
 
 from .conftest import FAKE_TOKEN
+from .fake_transport import FakeTransport
 
+FUNCTION = "core_course_get_contents"
 URL_WITH_TOKEN = f"https://site.invalid/some/path?key={FAKE_TOKEN}"
+LEARNER_DATA = "made-up-learner-data"
+
+
+def formatted(error: BaseException) -> str:
+    return "".join(traceback.format_exception(error))
 
 
 def test_a_token_never_prints_its_value() -> None:
@@ -78,6 +91,10 @@ def test_a_copy_of_settings_keeps_the_token_masked(settings: SiteSettings) -> No
 def test_printed_settings_never_show_the_token(settings: SiteSettings) -> None:
     assert FAKE_TOKEN not in repr(settings)
     assert FAKE_TOKEN not in str(settings)
+
+
+def test_a_client_never_shows_the_token(settings: SiteSettings) -> None:
+    assert FAKE_TOKEN not in repr(MoodleClient(settings, FakeTransport()))
 
 
 def test_redact_replaces_every_occurrence() -> None:
@@ -149,6 +166,72 @@ def test_redact_covers_every_token() -> None:
 )
 def test_safe_url_keeps_only_scheme_and_host(url: str, expected: str) -> None:
     assert safe_url(url) == expected
+
+
+def test_a_transport_error_is_redacted(settings: SiteSettings) -> None:
+    transport = FakeTransport(failure=TokenInvalid(f"rejected {FAKE_TOKEN}"))
+    with pytest.raises(TokenInvalid) as caught:
+        MoodleClient(settings, transport).call(FUNCTION)
+    assert FAKE_TOKEN not in str(caught.value)
+
+
+@pytest.mark.parametrize(
+    ("failure", "expected"),
+    [
+        (OSError(URL_WITH_TOKEN), MoodleUnreachable),
+        (TimeoutError(URL_WITH_TOKEN), MoodleUnreachable),
+        (ValueError(URL_WITH_TOKEN), UnexpectedResponse),
+        (TokenInvalid(URL_WITH_TOKEN), TokenInvalid),
+    ],
+)
+def test_no_failure_keeps_the_original_exception(
+    failure: Exception, expected: type[MoodleError], settings: SiteSettings
+) -> None:
+    with pytest.raises(expected) as caught:
+        MoodleClient(settings, FakeTransport(failure=failure)).call(FUNCTION)
+    error = caught.value
+    assert error.__cause__ is None
+    assert error.__context__ is None
+    for text in (str(error), repr(error), formatted(error)):
+        assert FAKE_TOKEN not in text
+        assert "/some/path" not in text
+
+
+def test_no_traceback_frame_holds_the_original_exception(
+    settings: SiteSettings,
+) -> None:
+    failure = OSError(URL_WITH_TOKEN)
+    with pytest.raises(MoodleUnreachable) as caught:
+        MoodleClient(settings, FakeTransport(failure=failure)).call(FUNCTION)
+    tb = caught.value.__traceback__
+    frames = 0
+    while tb is not None:
+        if tb.tb_frame.f_code.co_filename.endswith("client.py"):
+            frames += 1
+            assert failure not in tb.tb_frame.f_locals.values()
+        tb = tb.tb_next
+    assert frames == 1
+
+
+def test_a_public_error_logged_without_a_filter_shows_no_token(
+    settings: SiteSettings, caplog: pytest.LogCaptureFixture
+) -> None:
+    log = logging.getLogger("moodle_ws.tests.plain")
+    with pytest.raises(TokenInvalid) as caught:
+        MoodleClient(
+            settings, FakeTransport(failure=TokenInvalid(URL_WITH_TOKEN))
+        ).call(FUNCTION)
+    log.error("call failed: %s", caught.value, exc_info=caught.value)
+    assert "call failed" in caplog.text
+    assert FAKE_TOKEN not in caplog.text
+    assert "/some/path" not in caplog.text
+
+
+def test_an_error_never_shows_the_parameters(settings: SiteSettings) -> None:
+    transport = FakeTransport(failure=OSError("down"))
+    with pytest.raises(MoodleUnreachable) as caught:
+        MoodleClient(settings, transport).call(FUNCTION, {"learner": LEARNER_DATA})
+    assert LEARNER_DATA not in formatted(caught.value)
 
 
 @pytest.fixture
