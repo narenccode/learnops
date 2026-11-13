@@ -126,7 +126,7 @@ Test names are in `test_moodle_ws_v1.py`.
 | Only the functions listed in the contract are called. `libs/moodle_ws` builds its allow-list from the example and refuses any other function before the transport (`test_allowlist.py`: `test_the_list_equals_the_contract_example`, `test_anything_else_is_refused_before_the_transport`). Not enforced against a real Moodle: there is no real transport yet | B4 |
 | One service account per site, with a token restricted to those functions and the capabilities in rules §4 (the lists are tested; that they are enough is lab check 9) | B4, SEC-03 |
 | The token is stored only in the environment | SEC-03, C-06 |
-| A grade write uses workflow state `readyforrelease`, never `released`, and counts as done only when both the state and the grade value are confirmed; the grade value is read with `mod_assign_get_grades` (R1); the write rules R1 to R11 are contract text here, and their enforcement in `libs/moodle_ws` is a separate follow-up; only approved drafts are written | B4, C-09 |
+| A grade write uses workflow state `readyforrelease`, never `released`, and counts as done only when both the state and the grade value are confirmed; the grade value is read with `mod_assign_get_grades` (R1); `libs/moodle_ws` enforces the write rules in `write_draft_grade`, the only grade-write path (see the `libs/moodle_ws` section below); only approved drafts are written | B4, C-09 |
 | Each function exists and behaves as expected with the parameters used on Moodle 4.5 and 5.3 (all 16 lab checks are still open) | B4, App-C 1 |
 
 Open: when the lab Moodle sites are available (all sixteen checks in `moodle-ws.v1.md` §5 wait for
@@ -161,6 +161,21 @@ FR-G-06. Neither requirement is implemented by this skeleton.
 | Only an unlocked marking-workflow state may be written over; locked, marking workflow off and unknown states are refused (the last two proposed, fail closed, B4 §6) | B4 §3a R3; PRD B4 draft rule; B4 §6 | `test_outcomes.py`: `test_only_an_unlocked_marking_workflow_state_may_be_written_over`, `test_the_state_sets_do_not_overlap` |
 | R6: a missing or malformed `lastattempt` gives no state | B4 §3a | `test_outcomes.py`: `test_r6_*` |
 | R5, R10, R11: separate outcomes, only `VERIFIED` is success; a lost answer tells the mentor to decide or confirm | B4 §3a | `test_outcomes.py`: `test_r5_*`, `test_r10_*`, `test_r11_*` |
+| Every grade write goes through `write_draft_grade`: a direct call never writes over a locked learner or with marking workflow off | B4 §3, §3a | `test_grade_write.py`: `test_a_direct_call_*` |
+| R1: the merged contract lists `mod_assign_get_grades`; the read-back asks for the one assignment written; the state alone is never enough | B4 §3a, §3b | `test_grade_write.py`: `test_r1_*` |
+| R2: `write_draft_grade` refuses `-1` before reading anything | B4 §3a | `test_grade_write.py`: `test_r2_*` |
+| R3: `readyforrelease` / `released` refused before sending; a lock after the check is caught on 5.3; on 4.5 only the pre-write check protects (source fake) | B4 §3a | `test_grade_write.py`: `test_r3_*` |
+| Marking workflow off and unknown states send nothing; each unlocked state is written (proposed, fail closed, B4 §6) | PRD B4 draft rule; B4 §6 | `test_grade_write.py`: `test_marking_workflow_off_*`, `test_an_unknown_state_*`, `test_each_unlocked_*` |
+| R6: no readable state before the write sends nothing; a state hidden after it is not verified | B4 §3a | `test_grade_write.py`: `test_r6_*` |
+| R8: a failed read-back is `NOT_VERIFIED` and the write is sent once | B4 §3a | `test_grade_write.py`: `test_r8_*` |
+| R9: out-of-range refused before sending; a silently ignored grade is caught by the read-back | B4 §3a | `test_grade_write.py`: `test_r9_*` |
+| R10: an access failure is its own outcome; one learner failing does not stop the next | B4 §3a | `test_grade_write.py`: `test_r10_*` |
+| R11: a lost or garbled answer is read back once, never rewritten; a match needs the mentor's confirmation (proposed, fail closed) | B4 §3a | `test_grade_write.py`: `test_r11_*` |
+| The parameters are read once, so the checks and the write see the same values | B4 §3a | `test_grade_write.py`: `test_write_draft_grade_reads_the_parameters_once` |
+
+R4 and R7 (capabilities kept out, `reviewgrades` on both versions) have no library code; they are
+tested in the contract. The 4.5 / 5.3 behaviour in `tests/source_fake.py` is read from the Moodle source,
+not recorded: lab checks 4 and 12 to 16 are open.
 
 Not covered: all of this runs against a scripted fake transport. No real transport exists, and nothing
 has been checked against Moodle (every check in `contracts/moodle-ws.v1.md` §5 is open).
