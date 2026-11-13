@@ -62,8 +62,12 @@ non-protected content to leave alone. The `tpl-` prefix keeps these `idnumber`s 
 | 2 | `Sample week` | Page `Sample guide` (`tpl-sample-guide`) and Assignment `Sample task` (`tpl-sample-task`) |
 | 3 | `Final project` | The two protected items (§4) |
 
-Not given by the owner, so still open: the text of the two Pages, and the settings of `Sample task`
-(submission types, grading): PENDING GUIDE CONFIRMATION.
+`Sample task` is **ungraded**. Proposal (Owner, 2026-11-12, Points): the Final project Assignment gets
+the 100 points and is the only graded item (§4). The owner did not name `Sample task` in that answer; it
+is ungraded because the Final project is the only graded item.
+
+Not given by the owner, so still open: the text of the two Pages, and the other settings of `Sample task`
+(for example the submission types): PENDING GUIDE CONFIRMATION.
 
 ## 4. Protected items
 
@@ -90,7 +94,7 @@ that holds the two activities; it is not one of the four items.
 | Final project | Proposal (Owner, Issue #55, 2026-11-07, item 6): Moodle Assignment; 5 files; 1 attempt; completion on grade; no rubric (a mentor adds it) |
 | Course feedback: type, name, idnumber | Owner (Issue #55, 2026-11-07, item 2): Moodle's own Feedback activity, named "Course feedback", idnumber `course-feedback` (the PRD default) |
 | Course feedback: anonymous | **Conflicting owner answers, not resolved here.** Item 2 of the 2026-11-07 reply states it as part of the answer ("Moodle's own Feedback activity, anonymous, ..."). Item 6 of the same reply lists "an anonymous Feedback activity" among the settings the owner said to mark as proposals. PENDING GUIDE CONFIRMATION: whether anonymity is confirmed or a proposal. Until answered, this README does not treat it as confirmed |
-| Points | Proposal (Owner, 2026-11-12): the Final project Assignment gets the 100 points and is the only graded item. The Moodle default is left, so the points count in the course total. The owner said not to design around it |
+| Points | Proposal (Owner, 2026-11-12): the Final project Assignment gets the 100 points and is the only graded item, so `Sample task` (§3) is ungraded. The Moodle default is left, so the points count in the course total. The owner said not to design around it |
 | Final project Assignment name | Owner (the 14:43 reply): `Final project`, idnumber `final-project` |
 | Exact Moodle setting names and values on 4.5 and 5.3 | PENDING MOODLE LAB |
 
