@@ -11,10 +11,16 @@ NOW = datetime(2026, 11, 2, 4, 0, tzinfo=timezone.utc)
 RULES = r.parse_codeowners(
     "* @s1 @s2 @guide\n/contracts/ @s1 @s2 @s3 @guide\n/CLAUDE.md @guide\n"
 )
-BOT_TEXT = (
-    "### Automated review: **Needs your judgement**\n\n"
-    "**Needs the guide's judgement**\n"
-    "- Contract change: every affected owner must review. _(PRD §B.0)_\n\n"
+STANDING_LINE = (
+    "- Contract change: every affected owner and the guide must review "
+    "(GitHub only enforces one). _(PRD §B.0)_\n"
+)
+HEAD = "### Automated review: **Needs your judgement**\n\n**Needs the guide's judgement**\n"
+STANDING_ONLY = HEAD + STANDING_LINE
+REAL_QUESTION = (
+    HEAD
+    + STANDING_LINE
+    + "- The schema renames a field that Studio already reads; confirm the break. _(PRD A9)_\n\n"
     "**Better ways**\n- advice\n"
 )
 
@@ -60,48 +66,111 @@ def test_empty_inbox_says_nothing_needs_you():
     assert "Nothing needs you right now" in make([pr(1, ["awaiting-peer"])])
 
 
-def test_decision_pr_shows_the_bots_reason_without_the_citation():
-    text = make([pr(1, ["needs-judgement"])], bot={1: BOT_TEXT})
-    s = section(text, 1)
-    assert "#1" in s and "every affected owner must review" in s and "PRD" not in s
-    assert "Nothing needs you" not in text
+# --- whose turn is it: the permanent rules -------------------------------------------------------
+
+
+def test_contract_pr_without_approval_waits_for_reviewers_not_for_the_guide():
+    text = make([pr(1, ["needs-judgement"])], bot={1: STANDING_ONLY})
+    assert "#1" not in section(text, 1) and "#1" not in section(text, 2)
+    waiting = section(text, 4)
+    assert "#1" in waiting and "no reviewer has approved yet" in waiting
+    assert "s1, s2, s3" in waiting  # the owners who still have to review
+    assert "Nothing needs you right now" in text
+
+
+OWNERS_HEAD = "### Automated review: **Waiting for every affected owner**\n\n**Waiting for the owners' reviews**\n"
+
+
+def test_awaiting_owners_label_follows_the_same_waiting_and_merge_rules():
+    text = make([pr(20, ["awaiting-owners"])], bot={20: OWNERS_HEAD + STANDING_LINE})
+    assert "#20" in section(text, 4) and "#20" not in section(text, 1)
+    assert "Nothing needs you right now" in text
+    done = make(
+        [pr(21, ["awaiting-owners"], reviews=[("s1", "APPROVED")])],
+        bot={21: OWNERS_HEAD + STANDING_LINE},
+    )
+    assert "#21" in section(done, 2) and "#21" not in section(done, 1)
+    # a missing bot comment is still shown to the guide, with the label named (no crash)
+    odd = make([pr(22, ["awaiting-owners"])])
+    assert "#22" in section(odd, 1) and "awaiting-owners" in section(odd, 1)
 
 
 def test_approved_and_green_goes_to_merge_with_missing_owners_named():
     p = pr(2, ["needs-judgement"], reviews=[("s1", "APPROVED")])
-    text = make([p])
-    assert "#2" not in section(text, 1)
+    text = make([p], bot={2: STANDING_ONLY})
     s = section(text, 2)
-    assert "approved by s1" in s and "s2, s3" in s and "bypass" in s
+    assert "#2" in s and "approved by s1" in s and "s2, s3" in s and "bypass" in s
+    assert "#2" not in section(text, 1) and "Nothing needs you" not in text
 
 
-def test_red_or_pending_checks_keep_it_under_decision():
-    p = pr(3, ["rule-violation"], reviews=[("s1", "APPROVED")], checks=("FAILURE",))
-    text = make([p])
-    assert "#3" in section(text, 1) and "Checks are not green" in section(text, 1)
-    assert "#3" not in section(text, 2)
+def test_merge_conflicts_wait_on_the_author_not_the_guide():
+    p = pr(30, ["needs-judgement"], reviews=[("s1", "APPROVED")])
+    p["mergeable"] = "CONFLICTING"
+    text = make([p], bot={30: STANDING_ONLY})
+    assert "#30" not in section(text, 2) and "#30" not in section(text, 1)
+    assert "#30" in section(text, 4) and "merge conflicts" in section(text, 4)
+    p["mergeable"] = "MERGEABLE"  # fixed by the author: it goes to the merge list again
+    assert "#30" in section(make([p], bot={30: STANDING_ONLY}), 2)
 
 
-def test_the_guides_own_approval_and_a_later_changes_request_do_not_count():
-    own = pr(4, ["needs-judgement"], reviews=[("guide", "APPROVED")])
-    assert "#4" in section(make([own]), 1)
-    flip = pr(
-        5,
+def test_red_or_pending_checks_wait_on_the_author_not_the_guide():
+    p = pr(3, ["needs-judgement"], reviews=[("s1", "APPROVED")], checks=("FAILURE",))
+    text = make([p], bot={3: STANDING_ONLY})
+    assert "#3" in section(text, 4) and "checks are failing" in section(text, 4)
+    assert "#3" not in section(text, 1) and "#3" not in section(text, 2)
+
+
+def test_changes_requested_waits_on_the_author():
+    p = pr(
+        4,
         ["needs-judgement"],
-        reviews=[("s1", "APPROVED"), ("s1", "CHANGES_REQUESTED")],
+        reviews=[("s1", "APPROVED"), ("s2", "CHANGES_REQUESTED")],
     )
-    assert "#5" in section(make([flip]), 1)
+    text = make([p], bot={4: STANDING_ONLY})
+    assert "changes requested by s2" in section(text, 4)
+    assert "#4" not in section(text, 2)
+
+
+def test_the_guides_own_approval_does_not_count_as_a_reviewer():
+    p = pr(5, ["needs-judgement"], reviews=[("guide", "APPROVED")])
+    text = make([p], bot={5: STANDING_ONLY})
+    assert "no reviewer has approved yet" in section(text, 4)
+
+
+def test_a_real_question_goes_to_the_guide_even_without_approval():
+    text = make([pr(6, ["needs-judgement"])], bot={6: REAL_QUESTION})
+    s = section(text, 1)
+    assert "#6" in s and "confirm the break" in s
+    assert (
+        "every affected owner" not in s
+    )  # the standing line is not shown as a question
+    assert "Nothing needs you" not in text
+
+
+def test_a_rule_violation_always_goes_to_the_guide():
+    text = make([pr(7, ["rule-violation"])], bot={7: STANDING_ONLY})
+    assert "#7" in section(text, 1)
+
+
+def test_missing_or_unreadable_bot_text_fails_safe_to_the_guide():
+    text = make([pr(8, ["needs-judgement"])])  # no bot comment found
+    assert "#8" in section(text, 1) and "See the bot comment" in section(text, 1)
+    odd = make([pr(9, ["needs-judgement"])], bot={9: "something else entirely"})
+    assert "#9" in section(odd, 1)
+
+
+# --- questions, waiting, merged ------------------------------------------------------------------
 
 
 def test_question_waits_until_the_guide_answers_after_it():
-    p = pr(6, ["awaiting-peer"], body="Hi @guide, please confirm")
-    assert "#6" in section(make([p]), 3)
+    p = pr(10, ["awaiting-peer"], body="Hi @guide, please confirm")
+    assert "#10" in section(make([p]), 3)
     answered = {
-        6: [{"user": "guide", "createdAt": "2026-10-31T00:00:00Z", "body": "ok"}]
+        10: [{"user": "guide", "createdAt": "2026-10-31T00:00:00Z", "body": "ok"}]
     }
-    assert "#6" not in section(make([p], comments=answered), 3)
+    assert "#10" not in section(make([p], comments=answered), 3)
     again = {
-        6: answered[6]
+        10: answered[10]
         + [
             {
                 "user": "s4",
@@ -110,13 +179,12 @@ def test_question_waits_until_the_guide_answers_after_it():
             }
         ]
     }
-    assert "one more" not in section(make([p], comments=again), 3)
-    assert "#6" in section(make([p], comments=again), 3)
+    assert "#10" in section(make([p], comments=again), 3)
 
 
-def test_bot_and_guide_mentions_are_not_questions():
+def test_bot_mentions_are_not_questions():
     c = {
-        7: [
+        11: [
             {
                 "user": "github-actions[bot]",
                 "createdAt": "2026-11-01T00:00:00Z",
@@ -124,25 +192,59 @@ def test_bot_and_guide_mentions_are_not_questions():
             }
         ]
     }
-    assert "#7" not in section(make([pr(7, ["needs-judgement"])], comments=c), 3)
+    assert "#11" not in section(
+        make([pr(11, ["needs-judgement"])], comments=c, bot={11: STANDING_ONLY}), 3
+    )
 
 
 def test_waiting_students_and_drafts_and_merged_flags():
-    open_prs = [pr(8, ["awaiting-peer"]), pr(9, ["needs-rework"], draft=True)]
+    open_prs = [pr(12, ["awaiting-peer"]), pr(13, ["needs-rework"], draft=True)]
     merged = [
-        pr(10, ["ready-to-merge"]),
-        pr(11, ["needs-rework"]),
-        pr(12, [], author="guide"),
+        pr(14, ["ready-to-merge"]),
+        pr(15, ["needs-rework"]),
+        pr(16, [], author="guide"),
     ]
     text = make(open_prs, merged)
-    assert "#8" in section(text, 4) and "#9" not in text.split("### 5.")[0]
+    assert "#12" in section(text, 4) and "#13" not in text.split("### 5.")[0]
     s5 = text.split("### 5.")[1]
-    assert (
-        "(2)" in s5 and s5.count("without a green bot verdict") == 1 and "#12" not in s5
-    )
+    assert "(2)" in s5 and s5.count("without a green bot verdict") == 1
+    assert "#16" not in s5
     assert "1 ready, 1 draft" in text and "IST" in text
 
 
 def test_checks_green_ignores_the_bots_own_status():
     assert i.checks_green(pr(1))
     assert not i.checks_green(pr(1, checks=("SUCCESS", "")))
+
+
+def test_a_question_in_an_issue_reaches_the_guide_until_he_answers():
+    issue = {
+        "number": 44,
+        "title": "B7 clarifications",
+        "url": "https://x/issues/44",
+        "author": {"login": "s1"},
+        "createdAt": "2026-11-01T00:00:00Z",
+        "body": "Hi @guide, a few questions",
+    }
+    text = make([])
+    assert "Nothing needs you right now" in text
+    asked = i.build([], [], {}, {}, NOW, "guide", RULES, [issue], {44: []})
+    assert "Issue [#44]" in section(asked, 3)
+    assert "Nothing needs you right now" not in asked
+    answered = {
+        44: [{"user": "guide", "createdAt": "2026-11-02T00:00:00Z", "body": "ok"}]
+    }
+    done = i.build([], [], {}, {}, NOW, "guide", RULES, [issue], answered)
+    assert "#44" not in section(done, 3)
+    again = {
+        44: answered[44]
+        + [
+            {
+                "user": "s1",
+                "createdAt": "2026-11-03T00:00:00Z",
+                "body": "@guide two more",
+            }
+        ]
+    }
+    reopened = i.build([], [], {}, {}, NOW, "guide", RULES, [issue], again)
+    assert "#44" in section(reopened, 3)

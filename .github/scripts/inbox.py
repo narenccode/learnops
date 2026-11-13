@@ -23,12 +23,19 @@ from pr_rules import gh
 
 TITLE = "Guide inbox"
 DECISION_LABELS = ("rule-violation", "needs-judgement")
+# `awaiting-owners` is not a decision label, but the inbox still tracks it: when the owners have approved and
+# the checks are green it moves to the merge list (the guide merges last).
+TRACKED_LABELS = (*DECISION_LABELS, "awaiting-owners")
 WAITING_LABELS = ("awaiting-peer", "needs-rework", "awaiting-ai")
 IST = timezone(timedelta(hours=5, minutes=30))
 REASON = re.compile(
-    r"\*\*(?:Rule violations[^*]*|Needs the guide's judgement)\*\*\s*\n((?:- .*(?:\n|$))+)"
+    r"\*\*(?:Rule violations[^*]*|Needs the guide's judgement|Waiting for the owners' reviews)\*\*\s*\n((?:- .*(?:\n|$))+)"
 )
 MAX_REASONS = 2
+# The bot raises this line on EVERY contract change. It is the standing process rule (all affected owners
+# review, then the guide), not a question for the guide. Any other reason, or a missing reason, is a
+# real decision: when in doubt the PR is shown to the guide.
+STANDING = re.compile(r"^Contract change: every affected owner", re.IGNORECASE)
 
 
 def labels(pr: dict) -> set[str]:
@@ -67,12 +74,48 @@ def owners_for(pr: dict, rules: list, guide: str) -> list[str]:
     return sorted(found - {author, guide})
 
 
-def reasons_from(comment: str) -> list[str]:
-    """The bullet points under the bot's guide-facing headings."""
+def all_reasons(comment: str) -> list[str]:
+    """Every bullet point under the bot's guide-facing headings, citation removed."""
     out: list[str] = []
     for block in REASON.findall(comment or ""):
         out += [ln[2:].strip() for ln in block.splitlines() if ln.startswith("- ")]
-    return [re.sub(r"\s*_\([^)]*\)_$", "", x)[:220] for x in out][:MAX_REASONS]
+    return [re.sub(r"\s*_\([^)]*\)_$", "", x)[:220] for x in out]
+
+
+def reasons_from(comment: str) -> list[str]:
+    """The reasons that are a real question for the guide (the standing contract rule is left out)."""
+    return [x for x in all_reasons(comment) if not STANDING.match(x)][:MAX_REASONS]
+
+
+def classify(pr: dict, bot_text: str, guide: str) -> tuple[str, list[str]]:
+    """Whose turn is it? -> ("decision" | "merge" | "waiting", approvers or the reason it waits).
+
+    A PR carrying a guide label is the guide's turn only when there is a real question for him, or
+    when the standing contract rule is satisfied: a reviewer approved and the checks are green.
+    Otherwise it waits on the reviewers or the author.
+    """
+    reasons = all_reasons(bot_text)
+    states = latest_states(pr.get("reviews") or [])
+    approved = sorted(u for u, s in states.items() if s == "APPROVED" and u != guide)
+    requested = sorted(
+        u for u, s in states.items() if s == "CHANGES_REQUESTED" and u != guide
+    )
+    real_question = (
+        "rule-violation" in labels(pr)
+        or not reasons
+        or any(not STANDING.match(x) for x in reasons)
+    )
+    if real_question:
+        return "decision", approved
+    if requested:
+        return "waiting", [f"changes requested by {', '.join(requested)}"]
+    if pr.get("mergeable") == "CONFLICTING":
+        return "waiting", ["merge conflicts: the author must update the branch"]
+    if not checks_green(pr):
+        return "waiting", ["checks are failing or still running"]
+    if not approved:
+        return "waiting", ["no reviewer has approved yet"]
+    return "merge", approved
 
 
 def mentions_guide(text: str, guide: str) -> bool:
@@ -112,35 +155,41 @@ def build(
     now: datetime,
     guide: str,
     rules: list,
+    issues: list[dict] | None = None,
+    issue_comments: dict[int, list[dict]] | None = None,
 ) -> str:
     ready = [p for p in open_prs if not p.get("isDraft")]
-    decide = [p for p in ready if labels(p) & set(DECISION_LABELS)]
-    mergeable, undecided = [], []
+    decide = [p for p in ready if labels(p) & set(TRACKED_LABELS)]
+    mergeable, undecided, held = [], [], []
     for p in decide:
-        reviews = latest_states(p.get("reviews") or [])
-        approved = sorted(
-            u for u, s in reviews.items() if s == "APPROVED" and u != guide
-        )
-        if approved and checks_green(p):
-            mergeable.append((p, approved))
-        else:
+        where, detail = classify(p, bot_text.get(p["number"], ""), guide)
+        if where == "merge":
+            mergeable.append((p, detail))
+        elif where == "decision":
             undecided.append(p)
+        else:
+            held.append((p, detail))
 
     questions = []
     for p in ready:
         for who, when in waiting_questions(p, comments.get(p["number"], []), guide):
             questions.append(f"- {link(p)}: @​{who} asked you on {when}")
+    for issue in issues or []:
+        for who, when in waiting_questions(
+            issue, (issue_comments or {}).get(issue["number"], []), guide
+        ):
+            questions.append(f"- Issue {link(issue)}: @​{who} asked you on {when}")
 
     out = [f"## {TITLE}", ""]
-    if not (decide or questions):
+    if not (undecided or mergeable or questions):
         out += ["**Nothing needs you right now.**", ""]
 
     out.append("### 1. Needs your decision")
     for p in undecided:
         why = reasons_from(bot_text.get(p["number"], ""))
         what = (
-            f" `{sorted(labels(p) & set(DECISION_LABELS))[0]}`"
-            + (f". {' '.join(why)}" if why else "")
+            f" `{sorted(labels(p) & set(TRACKED_LABELS))[0]}`"
+            + (f". {' '.join(why)}" if why else ". See the bot comment on the PR.")
             + ("" if checks_green(p) else " Checks are not green yet.")
         )
         out.append(f"- {link(p)}{what}")
@@ -165,6 +214,11 @@ def build(
     out += ["", "### 3. Questions waiting for you", *(questions or ["Nothing."])]
 
     waiting = []
+    for p, why in held:
+        approved = latest_states(p.get("reviews") or [])
+        todo = [o for o in owners_for(p, rules, guide) if approved.get(o) != "APPROVED"]
+        who = f" Reviewers still to approve: {', '.join(todo)}." if todo else ""
+        waiting.append(f"- {link(p)} contract change: {why[0]}.{who}")
     for p in ready:
         hit = sorted(labels(p) & set(WAITING_LABELS))
         if hit and p not in decide:
@@ -203,7 +257,7 @@ def build(
 def fetch_open(repo: str) -> list[dict]:
     fields = (
         "number,title,author,labels,url,isDraft,updatedAt,createdAt,body,"
-        "reviews,files,statusCheckRollup"
+        "reviews,files,statusCheckRollup,mergeable"
     )
     return json.loads(
         gh(
@@ -219,6 +273,30 @@ def fetch_open(repo: str) -> list[dict]:
             fields,
         )  # fmt: skip
     )
+
+
+def fetch_issues(repo: str) -> list[dict]:
+    """Open issues written by people (not the bot's own: the inbox and the weekly digest)."""
+    fields = "number,title,author,url,createdAt,body"
+    out = json.loads(
+        gh(
+            "issue",
+            "list",
+            "--repo",
+            repo,
+            "--state",
+            "open",
+            "--limit",
+            "100",
+            "--json",
+            fields,
+        )
+    )
+    return [
+        i
+        for i in out
+        if i["title"] != TITLE and "github-actions" not in i["author"]["login"]
+    ]
 
 
 def fetch_comments(repo: str, number: int) -> list[dict]:
@@ -280,7 +358,11 @@ def main() -> int:
         )
         for number, items in comments.items()
     }
-    body = build(open_prs, merged, comments, bot_text, now, guide, rules)
+    issues = fetch_issues(repo)
+    issue_comments = {i["number"]: fetch_comments(repo, i["number"]) for i in issues}
+    body = build(
+        open_prs, merged, comments, bot_text, now, guide, rules, issues, issue_comments
+    )
     print(body)
     if args.post and not args.dry_run:
         number, old = find_issue(repo)

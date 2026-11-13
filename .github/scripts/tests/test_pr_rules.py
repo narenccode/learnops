@@ -105,13 +105,25 @@ def test_module_code_still_needs_a_real_requirement_id_not_just_a_contract_ref()
     assert any("No requirement ID" in x.message for x in f)
 
 
-def test_contract_change_with_process_needs_judgement():
+def test_contract_change_with_process_waits_for_the_owners_not_the_guide():
     f = r.evaluate(
         ctx(
             ["contracts/course.schema.json"],
             body=GOOD_BODY + "\nUses /contract-change.",
         )
     )
+    assert r.verdict_of(f) == "awaiting-owners"
+    assert r.VERDICTS["awaiting-owners"][1] != r.VERDICTS["needs-judgement"][1]
+
+
+def test_a_real_guide_question_beats_the_owners_wait():
+    f = r.evaluate(
+        ctx(
+            ["contracts/course.schema.json"],
+            body=GOOD_BODY + "\nUses /contract-change.",
+        )
+    )
+    f.append(r.Finding("judgement", "A real question for the guide."))
     assert r.verdict_of(f) == "needs-judgement"
 
 
@@ -369,3 +381,22 @@ def test_libs_prefix_import_is_rework_in_code_but_not_in_the_bot_scripts():
         added={".github/scripts/tests/t.py": ["from libs.x import y"]},
     )
     assert not any("import the library" in x.message for x in r.evaluate(bot))
+
+
+def test_contract_pr_over_the_limit_needs_a_file_map_not_a_split():
+    c = ctx(
+        ["contracts/x.json"], title="Contract x FR-S-03 contract-change", author="guide"
+    )
+    c.numstat = {"contracts/x.json": 900}
+    f = r.evaluate(c)
+    assert any("file map" in x.message and x.level == "rework" for x in f)
+    c.body = GOOD_BODY + "\n## File map\n- contracts/x.json (900): the schema\n"
+    f = r.evaluate(c)
+    assert not any(x.level == "rework" and "changed lines" in x.message for x in f)
+    assert any("Allowed" in x.message for x in f)
+
+
+def test_non_contract_pr_over_the_limit_still_needs_a_split_even_with_a_file_map():
+    c = ctx(["docs/a.md"], body=GOOD_BODY + "\nfile map\n")
+    c.numstat = {"docs/a.md": 900}
+    assert r.verdict_of(r.evaluate(c)) == "needs-rework"
