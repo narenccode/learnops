@@ -136,6 +136,9 @@ def test_non_string_base_url_is_rejected(base_url: object) -> None:
             "https://media.example.com/courses/python/100%25.mp4",
         ),
         ("ünï.mp4", "https://media.example.com/%C3%BCn%C3%AF.mp4"),
+        # A colon is allowed by the contract; encoding it keeps "12:30.mp4"
+        # from ever being read as a scheme or a port.
+        ("slides/12:30.mp4", "https://media.example.com/slides/12%3A30.mp4"),
         # A literal "%2e%2e" folder name stays literal: "%" is encoded, so the
         # media host can never decode it into a ".." segment.
         (
