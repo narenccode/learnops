@@ -1,0 +1,36 @@
+# PROVISIONAL author's expected outcome. NOT a reference grade: no scores.
+# Rubric: B1 contract example wk-02-task (not B8.2).
+schema: learnops.testdata.b8-4.expected-outcome/v1
+submission_id: s001
+rubric: b1-example-wk-02-task
+provisional: true
+criteria:
+  - criterion: Repository
+    checks:
+      - check: repo_clone
+        expected: pass
+        reason: hosting.publish_repo is true.
+    judgement: meets
+    rationale: The repository link is published and clones.
+  - criterion: Document answers
+    checks:
+      - check: http_ok:demo_url
+        expected: pass
+        reason: hosting.demo_stub is answers.
+    judgement: meets
+    rationale: >-
+      The stub demo answers a question from the handbook, and the code in the repository answers
+      from handbook.md.
+  - criterion: README
+    checks:
+      - check: readme_sections:Setup,Usage
+        expected: pass
+        reason: repo/README.md has "## Setup" and "## Usage" headings.
+    judgement: meets
+    rationale: Both required sections are present and say what to run.
+  - criterion: Weak answers
+    checks: []
+    judgement: meets
+    rationale: >-
+      The report names two questions the assistant answers badly (sander for two weeks; Sunday
+      opening) and explains each cause (no comparison of durations; word overlap matches "open").

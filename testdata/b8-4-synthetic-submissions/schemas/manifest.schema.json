@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:learnops:testdata:b8-4:manifest:v1",
+  "title": "B8.4 synthetic submissions: manifest (PROVISIONAL)",
+  "description": "Index of the B8.4 test set (PRD B8): the rubrics (marking tables, PRD B1.3) the submissions are written against, and one entry per submission. PROVISIONAL: the format is a Release 0 proposal by Student 3 and is not yet agreed by the other contract owners or the guide (see the set's README, open decisions).",
+  "$comment": "Cross-file rules (ids unique, rubric and submission references resolve, folders exist, marking tables parse, expected outcomes agree with the files) are not expressible here and are checked by libs/contracts/tests/test_b8_4_dataset.py.",
+  "type": "object",
+  "required": ["schema", "status", "rubrics", "submissions"],
+  "properties": {
+    "schema": { "const": "learnops.testdata.b8-4/v1" },
+    "status": {
+      "enum": ["provisional", "final"],
+      "description": "provisional until B8.2 is merged, Q32 is resolved and the format is agreed."
+    },
+    "rubrics": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/rubric" }
+    },
+    "submissions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/submission" }
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+    "submission_id": { "type": "string", "pattern": "^s[0-9]{3}$" },
+    "repo_path": {
+      "type": "string",
+      "description": "Path relative to the repository root, with forward slashes and no '..' segment.",
+      "pattern": "^(?!/)(?!(.*/)?\\.\\.(/|$))[A-Za-z0-9._/-]+$"
+    },
+    "rubric": {
+      "type": "object",
+      "required": ["id", "course_package", "assignment_idnumber", "task_body", "provisional"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "course_package": {
+          "$ref": "#/$defs/repo_path",
+          "description": "The course.yaml that defines the assignment and its points."
+        },
+        "assignment_idnumber": { "$ref": "#/$defs/id" },
+        "task_body": {
+          "$ref": "#/$defs/repo_path",
+          "description": "The assignment body holding the task text (the question) and its marking table (the rubric)."
+        },
+        "provisional": { "type": "boolean" },
+        "note": { "type": "string" }
+      }
+    },
+    "submission": {
+      "type": "object",
+      "required": [
+        "id",
+        "rubric",
+        "learner_ref",
+        "intended_level",
+        "edge_cases",
+        "ambiguous",
+        "split",
+        "authored_by",
+        "provisional"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/submission_id" },
+        "rubric": { "$ref": "#/$defs/id" },
+        "learner_ref": {
+          "type": "string",
+          "pattern": "^learner-[0-9]{2}$",
+          "description": "Fictional placeholder. Never a name, email, LTI sub or Moodle id."
+        },
+        "intended_level": {
+          "enum": ["strong", "partial", "weak", "incorrect"],
+          "description": "What the author wrote the submission to be. Not a grade: reference grades come only from a mentor."
+        },
+        "edge_cases": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "readme_missing",
+              "readme_section_missing",
+              "report_under_word_count",
+              "demo_unreachable",
+              "repo_not_cloneable",
+              "near_duplicate",
+              "check_passes_but_criterion_unmet",
+              "off_topic",
+              "ambiguous_judgement",
+              "command_check_undetermined"
+            ]
+          }
+        },
+        "ambiguous": {
+          "type": "boolean",
+          "description": "True when a reasonable mentor could judge at least one criterion either way."
+        },
+        "split": {
+          "enum": ["unassigned", "development", "test"],
+          "description": "unassigned until the guide decides the split (design Q47)."
+        },
+        "authored_by": { "type": "string", "minLength": 1 },
+        "provisional": { "type": "boolean" },
+        "resubmission_of": { "$ref": "#/$defs/submission_id" },
+        "near_duplicate_of": { "$ref": "#/$defs/submission_id" }
+      }
+    }
+  }
+}

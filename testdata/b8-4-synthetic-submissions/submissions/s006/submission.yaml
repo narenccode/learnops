@@ -1,0 +1,12 @@
+# PROVISIONAL pilot submission. Fictional; written for this project.
+# The repository folder exists here so the content can be reviewed, but hosting.publish_repo is
+# false: the publish step must NOT publish it, so the repository URL does not clone.
+schema: learnops.testdata.b8-4.submission/v1
+id: s006
+repository_url: https://git.lab.invalid/learner-06/unit-converter.git
+demo_url: https://demo.lab.invalid/learner-06/
+report: report.md
+repo_dir: repo
+hosting:
+  publish_repo: false
+  demo_stub: unrelated_page
