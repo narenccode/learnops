@@ -1151,6 +1151,68 @@ repositories, to run before the gate in the last row of this table is met.
 | Clone audit record (Q57, §9.2) | The sandbox-host role has no table grants (§5.3), so it cannot write `shared.audit_log` | Who writes the record, and is a clone a state-changing operation under OPS-06? |
 | Run id (Q70, §5.3) | `job` has no run column, and `shared.audit_log` belongs to Module 2 (§5.3) | Where is the id stored? A change to the audit log needs Module 2 |
 
+### 12.5 Release 4 comparison prompt dependency (review note: unresolved, awaiting the guide's judgement)
+
+**Question (unresolved):** whose prompts does the Release 4 comparison use for chapters, summaries
+and practice?
+
+This note records a possible dependency. It does not change the PRD, the release dependency table
+or §13, and it does not decide anything. Release 3 and Release 5 are **not** confirmed dependencies
+of Release 4: the PRD lists only R0 and R1 (CK-09) for it. The question is open, and the guide's
+judgement is awaited.
+
+**Documented facts** (each can be checked in the document named):
+
+- PRD B8, row B8.6: "Fixed inputs and expected outputs for practice drafts, grading drafts,
+  chapters and summaries."
+- PRD FR-M-03 (Release 4): "run B8.6 on the local small model and the hosted API; report quality
+  (wrong-answer rate, agreement), mentor review time and cost per task."
+- PRD C3.7: "Comparison report delivered with all three measures for both providers."
+- PRD release table: Release 4 depends on "R0, R1 (CK-09)". Nothing else is listed.
+- Chapters and summaries are produced by the video pipeline (FR-V-05 chapters, FR-V-06 summary,
+  both through the B5.1 model interface), which is Release 3 (module 4).
+- Practice drafts are FR-S-12, which is Release 5 (stretch).
+- `modules/grading/CLAUDE.md`, rule 7: "The comparison study uses the fixed set B8.6 and the same
+  prompts for every provider."
+- §11.4 of this document: grading inputs come from B8.4; practice, chapter and summary inputs must
+  be agreed with Students 1 and 4 (Q12); the set and its rubric are fixed before any comparison run.
+- §13 of this document, work breakdown: PR 26 (`model-bench` and report) depends on PR 7
+  (`model_interface`), PR 11 (the B8.6 set) and PR 20 (the draft worker with the `grade_draft` prompt
+  v1). No chapter, summary or practice prompt appears in the list.
+- B8.6 README (PR #33), open decisions: O1 (who supplies chapter, summary and practice inputs) and
+  O7 (practice task shape and output format).
+
+**Author's interpretation** (not a documented fact):
+
+The comparison runs "the same prompts" on both providers, and the fixed set includes chapters,
+summaries and practice. The grading draft prompt (PR 20) is planned inside Release 4. The chapter
+and summary prompts belong to Release 3 and the practice prompt to Release 5, and none of the
+three appears in the Release 4 work breakdown or in the Release 4 dependencies. The documents do
+not say:
+
+- a) whether the Release 4 report must cover chapters, summaries and practice, or only grading
+  drafts;
+- b) if it covers them, which prompt versions it uses, and who freezes them and records the
+  provider they were developed on (§11.2, fairness notes);
+- c) whether that makes Release 3 (and, for practice, Release 5) a dependency of FR-M-03.
+
+**Options** (for the guide; no recommendation):
+
+- A. The Release 4 report covers grading drafts only. Chapters, summaries and practice are
+  reported as "not run", with the reason. FR-M-03 and C3.7 would then need a stated scope.
+- B. The report covers grading drafts, chapters and summaries. It uses the prompts of Release 3,
+  so Release 3 becomes a stated dependency of FR-M-03. Practice is reported as "not run".
+- C. The report covers all four tasks. It needs the Release 5 practice prompt, so Release 5 is a
+  stated dependency. Because Release 5 is stretch, the report could not be completed without it.
+- D. The comparison writes its own prompt versions for the study. They would differ from the
+  production prompts, so the result says less about what runs in production; module rule 7 (same
+  prompts for every provider) would still hold.
+
+Each option changes what "all three measures for both providers" in C3.7 means in practice.
+
+**Status: OPEN.** No option is selected or recommended here, and no dependency is added to the
+PRD, the release table or §13 until the guide decides.
+
 ## 13. Work breakdown
 
 One requirement (or one tightly related group) per pull request. "Gate" is something that must be true before the pull request is merged or before its artifact is run. Every pull request updates `docs/traceability.md` and the README where relevant. The order below changes the earlier order so that lab verification comes before any fixture recorded from Moodle.
