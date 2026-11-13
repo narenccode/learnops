@@ -1,12 +1,15 @@
 # B8.1 Template Course Backup
 
 > **Status: skeleton.** No `.mbz` exists; nothing is verified on Moodle. Labels: **PRD** = stated by
-> the PRD. **Owner** = confirmed by the project owner in a GitHub reply. Sources used in this file:
-> Issue #55 (replies of 2026-11-07, 2026-11-11 and 2026-11-12; a plain "Owner" means this one), Issue #65
-> (2026-11-12, section identity) and Issue #61 (2026-11-11, licence; the 2026-11-12 reply on #55 refers to
-> it). A row that cites another source says so. **Proposal** = marked a proposal by the owner or in a Draft
-> design document, configurable, not a confirmed requirement. **PENDING GUIDE CONFIRMATION** = open
-> decision. **PENDING MOODLE LAB** = a fact only a Moodle site can show.
+> the PRD. **Owner** = confirmed by the project owner in a GitHub reply. Sources used in this file: five
+> owner replies on Issue #55, cited by date or by name: 2026-11-07; 2026-11-11; 2026-11-12 at 06:46 UTC
+> (cited as 2026-11-12); 2026-11-12 at 14:43 UTC (cited as "the 14:43 reply"); and 2026-11-13 at 09:36 UTC
+> (cited as "the 09:36 reply", a separate, later reply). A plain "Owner" with no date means an owner reply
+> on Issue #55. Other sources: Issue #65 (2026-11-12, section identity) and Issue #61 (2026-11-11, licence;
+> the 2026-11-12 reply on #55 refers to it). A row that cites another source says so. **Proposal** = marked
+> a proposal by the owner or in a Draft design document, configurable, not a confirmed requirement.
+> **PENDING GUIDE CONFIRMATION** = open decision. **PENDING MOODLE LAB** = a fact only a Moodle site can
+> show.
 
 ## 1. Purpose and scope
 
@@ -88,14 +91,22 @@ that holds the two activities; it is not one of the four items.
 | Course feedback: type, name, idnumber | Owner (Issue #55, 2026-11-07, item 2): Moodle's own Feedback activity, named "Course feedback", idnumber `course-feedback` (the PRD default) |
 | Course feedback: anonymous | **Conflicting owner answers, not resolved here.** Item 2 of the 2026-11-07 reply states it as part of the answer ("Moodle's own Feedback activity, anonymous, ..."). Item 6 of the same reply lists "an anonymous Feedback activity" among the settings the owner said to mark as proposals. PENDING GUIDE CONFIRMATION: whether anonymity is confirmed or a proposal. Until answered, this README does not treat it as confirmed |
 | Points | Proposal (Owner, 2026-11-12): the Final project Assignment gets the 100 points and is the only graded item. The Moodle default is left, so the points count in the course total. The owner said not to design around it |
-| Final project Assignment name | PENDING GUIDE CONFIRMATION (the owner gave the idnumber `final-project` and the section title, not the activity name) |
+| Final project Assignment name | Owner (the 14:43 reply): `Final project`, idnumber `final-project` |
 | Exact Moodle setting names and values on 4.5 and 5.3 | PENDING MOODLE LAB |
 
 **Baseline for the merge test.** PRD §C1.7 expects the protected items "unchanged (same idnumbers,
 same count, badge and completion criteria intact)"; the list above is the baseline. Totals for the
-finished template: PENDING MOODLE LAB. Comparison method: PENDING GUIDE CONFIRMATION (*Proposal*,
-`docs/design/studio.md` Draft: compare `idnumber`s, count, badge and completion criteria; whether to
-agree it with the checker owner first has not been answered).
+finished template: PENDING MOODLE LAB.
+
+**Comparison method (Owner, the 14:43 reply).** Before and after the sections-only merge, write down the
+same table for each protected item, with these fields taken from Moodle's own screens: type, name,
+idnumber, section number, points, completion setting and visibility. The two tables must be equal. The
+B8.1 owner was to send this field list to Shraddha, so that the checker later compares the same fields:
+**sent** (reported by the B8.1 owner; no date or channel is recorded here). Her response and the alignment
+with the checker are **pending**; no confirmation from her is recorded. How the fields apply to the course
+completion criteria and the badge, which have no section number or points: PENDING GUIDE CONFIRMATION (the
+owner said "each protected item" and did not say). The earlier Draft proposal in `docs/design/studio.md`
+(compare `idnumber`s, count, badge and completion criteria) is not the confirmed method.
 
 ## 5. Course completion configuration
 
@@ -120,13 +131,17 @@ agree it with the checker owner first has not been answered).
 
 **Not written yet:** the restore steps are not verified (PRD App-C items 2 and 3). **Fixed:** Moodle's
 own Backup/Restore only (CLAUDE.md rule 1). Owner (2026-11-12): the site administrator restores backups,
-using Moodle's own Restore (PRD §A5); App-C item 10 still verifies the roles. A sections-only backup is
-merged into a course made from the template (PRD §B1.4).
+using Moodle's own Restore (PRD §A5); App-C item 10 still verifies the roles. For this manual test the
+route is Moodle's own Restore page in the browser, as the site administrator (Owner, the 14:43 reply). The
+command-line route is the harness's separate question (App-C item 3). A sections-only backup is merged into
+a course made from the template (PRD §B1.4).
 
-| Not yet known | Value |
+| Item (Owner decision, or pending lab detail) | Status |
 |---|---|
-| Restore route for the harness (App-C item 3: admin CLI or browser automation); exact steps and options to create a course and to merge; clean-up after a test restore | PENDING MOODLE LAB |
-| Whether a backup made on 5.3 restores on 4.5, and which cross-version tests to run and record | PENDING GUIDE CONFIRMATION (the owner said a 4.5 backup restores on 5.3, and did not address the other direction). The 4.5-to-5.3 statement is the owner's and is not yet verified in the Moodle lab: PENDING MOODLE LAB |
+| Restore route for the harness (App-C item 3: admin CLI or browser automation) | The harness's own question, separate from B8.1 (Owner, the 14:43 reply). Not decided here |
+| Exact steps and options to create a course and to merge | PENDING MOODLE LAB |
+| Clean-up after a test restore | Owner (the 09:36 reply): Every course created for a test is deleted after its result is recorded and checked. The merge-test course follows the merge-test sequence below. How to delete a course: PENDING MOODLE LAB. Whether the sections-only copy and failed builds count as courses created for a test, and what happens to local copies: PENDING GUIDE CONFIRMATION |
+| Cross-version restore | Owner (the 14:43 reply): build the template once, on 4.5, and test the restore on 4.5 and on 5.3. Do not test 5.3 to 4.5: the owner says Moodle's documentation says restoring into an older version is not supported. For each restore, record the Moodle version, the date and the outcome. That a 4.5 backup restores on 5.3 is the owner's statement and is not yet verified in the Moodle lab: PENDING MOODLE LAB |
 
 ### Release 0 sections-only backup
 
@@ -147,9 +162,31 @@ been run. Moodle menu and option names are filled in when the steps are run (PEN
 3. *(From the owner's method)* Give the sections for the merge test section numbers 4 and up.
 4. *(From the owner's method; options are not decided)* Make the backup of the copy with Moodle's Backup
    page. Backup settings: PENDING GUIDE CONFIRMATION.
-5. *(Draft)* Merge-restore that backup into a course created from the template (PRD §B1.4, App-C item 2).
-6. *(Draft)* Compare the protected items with the §4 baseline (PRD §C1.7). Method: PENDING GUIDE
-   CONFIRMATION (§4).
+5. *(Draft; the sequence it points to is the owner's, below)* Run the merge-test sequence below with that
+   backup (PRD §B1.4, §C1.7, App-C item 2).
+
+**Merge-test sequence (Owner, the 09:36 reply).** The merge target is a course restored from the template,
+so it is a test course like any other. Once a course is deleted nothing can be re-checked, so the order
+below is fixed. Nothing here has been run.
+
+1. Restore the template into a new course.
+2. Record the "before" table for every protected item: type, name, idnumber, section number, points,
+   completion setting and visibility, taken from Moodle's own screens.
+3. Merge the sections-only backup into that course.
+4. Record the "after" table with the same fields.
+5. If the two tables are equal: record the text-only results table in the decision record, with the names of
+   the local screenshots and logs, and then delete the course. The results must be in the decision record
+   before the course is deleted.
+6. If the two tables differ: keep the course and report the difference on Issue #55 before taking further
+   action. A difference means the merge changed a protected item.
+
+**Our mapping (not the owner's words).** The sections-only backup for step 3 is made first, by draft steps 1
+to 4 above. How the §4 fields apply to the course completion criteria and the badge in step 2 is PENDING
+GUIDE CONFIRMATION (§4).
+
+Screenshots and logs stay local and are not committed (§8). The decision-record number is still taken when
+you merge, after rebasing (Owner, Issue #55, 2026-11-12); no numbering convention is assumed here. How the
+record is held before then is PENDING GUIDE CONFIRMATION (§9).
 
 **Exact backup contents and missing details: all PENDING GUIDE CONFIRMATION. No solution is assumed.**
 
@@ -167,8 +204,11 @@ been run. Moodle menu and option names are filled in when the steps are run (PEN
 **Nothing has been verified, and no lab verification has been attempted.** Owner: both sites exist, with
 completion tracking and course badges switched on in both (Owner, correcting an earlier answer on
 2026-11-11: on by default). Student accounts and the B8.1 owner's access are not ready; the owner will
-say when they are, and gave no date (Owner, 2026-11-12). Results need a real run on a fresh site (PRD
-§E2), stating data set, method, date, evidence and who measured (PRD §E3).
+say when they are, and gave no date (Owner, 2026-11-12; the 14:43 reply: the guide prepares the sites and
+the accounts and will say here when they are ready). Results need a real run (PRD §E2), stating data set,
+method, date, evidence and who measured (PRD §E3). Until the harness approach to fresh sites is decided,
+test on the existing lab sites: restore into a new course each time, record the result, and delete the
+course by the clean-up rule in §7 (Owner, the 14:43 and 09:36 replies).
 
 | Check | Moodle 4.5 | Moodle 5.3 |
 |---|---|---|
@@ -177,10 +217,11 @@ say when they are, and gave no date (Owner, 2026-11-12). Results need a real run
 | Protected items, completion criteria and badge match §4 to §6 | PENDING MOODLE LAB | PENDING MOODLE LAB |
 | Sections-only merge leaves protected items unchanged (PRD §C1.7) | PENDING MOODLE LAB | PENDING MOODLE LAB |
 
-| Open question | Status |
+| Question | Status |
 |---|---|
-| Who prepares fresh 4.5 and 5.3 sites for each restore test, and when | PENDING GUIDE CONFIRMATION (not answered) |
-| Where screenshots, logs and comparison tables are kept (local or committed, and where) | PENDING GUIDE CONFIRMATION (not answered). Until then they stay local and nothing is committed; they are checked for personal data first |
+| Test sites for the restore tests | Owner (the 14:43 reply): the existing lab sites, a new course for each restore, deleted by the clean-up rule in §7, until the harness approach to fresh sites is decided. The guide prepares the sites and the accounts and will say when they are ready: PENDING GUIDE CONFIRMATION (no date) |
+| Where screenshots, logs and comparison tables are kept | Owner (the 14:43 reply): screenshots and logs stay local and nothing from them is committed. Check each for personal data first. A short, text-only results table goes in the decision record and names the local files |
+| Whether this §8 table is also filled in, or the results go only in the decision record | PENDING GUIDE CONFIRMATION (the owner asked for the table in the decision record and did not say) |
 
 **Checklist for when the lab is ready** (tasks, not results):
 
@@ -188,31 +229,32 @@ say when they are, and gave no date (Owner, 2026-11-12). Results need a real run
 - [ ] Build the template on Moodle 4.5 (§3 to §6); back it up with user data OFF; record release, format and SHA-256.
 - [ ] Upload under tag `testdata-b8-1-v1`; check the download script gives the same SHA-256.
 - [ ] Give the checker owner the `.mbz`, its SHA-256 and the §4 list.
-- [ ] Restore on fresh 4.5 and 5.3 sites; fill in the table; make the sections-only backup (§7); run the merge test; record App-C item 2 in `docs/decisions/` (PRD).
+- [ ] Comparison field list (§4): sent to Shraddha, so that the checker later compares the same fields (Owner, the 14:43 reply). Her response and the alignment with the checker are pending; no confirmation from her is recorded.
+- [ ] Restore on 4.5 and on 5.3 (not 5.3 to 4.5), on the existing lab sites, into a new course each time, deleting each course by the clean-up rule in §7; record the Moodle version, the date and the outcome of each restore; make the sections-only backup (§7); run the merge test with the §4 tables.
+- [ ] Keep screenshots and logs local (not committed), check them for personal data, and record App-C item 2 in `docs/decisions/` (PRD) with a short, text-only results table that names the local files, before the merge-test course is deleted (Owner, the 14:43 and 09:36 replies).
 
 ## 9. Known limitations and pending decisions
 
 - No `.mbz` exists and nothing is tested. Every Proposal above can change; none is a confirmed requirement.
 
-**Decided by the owner (2026-11-12), work still to do:**
+**Owner decisions and remaining work (2026-11-12 and 2026-11-13):**
 
 | Item | Status |
 |---|---|
-| Decision record for App-C item 2 | Path `docs/decisions/NNNN-b8-1-template-course.md`. The next free number must be selected when the decision record is created (the owner said: when merging). No number is assigned here. Not written yet |
-| `docs/traceability.md` | Owner: one B8.1 entry, following the B1 and B8 pattern, no FR id, citing PRD B8.1 and B1.4. Not added yet |
+| Decision record for App-C item 2 | Path `docs/decisions/NNNN-b8-1-template-course.md`. The next free number is taken when you merge, after rebasing (Owner, Issue #55, 2026-11-12). No number is assigned here. The record also holds a short, text-only results table that names the local evidence files (Owner, the 14:43 reply). The results must be in the record before the merge-test course is deleted (Owner, the 09:36 reply); how the record is held before its number is taken: PENDING GUIDE CONFIRMATION. Not written yet |
+| `docs/traceability.md` | Owner: one B8.1 entry, following the B1 and B8 pattern, no FR id, citing PRD B8.1 and B1.4. Added in PR #57 (commit `928c6a8`), not merged |
 | `testdata/README.md` entry | Updated for the 2026-11-12 owner answers. It now records the owner-confirmed Apache-2.0 licence and the owner-confirmed section titles and activity idnumbers. The protected-section number and the final-project settings remain proposals. The `.mbz` file and its SHA-256 are still pending, because no backup exists yet |
 
 **Still open:**
 
 | Open item | Status |
 |---|---|
-| Student accounts and the B8.1 owner's access to both Moodle sites | PENDING GUIDE CONFIRMATION (not ready; no date) |
-| Who prepares fresh 4.5 and 5.3 sites, and when | PENDING GUIDE CONFIRMATION |
-| Where evidence (screenshots, logs, comparison tables) is stored | PENDING GUIDE CONFIRMATION |
-| Final project Assignment name | PENDING GUIDE CONFIRMATION |
+| Student accounts and the B8.1 owner's access to both Moodle sites (the guide prepares the sites and the accounts and will say when they are ready) | PENDING GUIDE CONFIRMATION (not ready; no date) |
 | Text of the Pages, settings of `Sample task`, placeholder issuer text, badge image tool and location | PENDING GUIDE CONFIRMATION |
-| Restore from 5.3 to 4.5, and the cross-version tests to record | PENDING GUIDE CONFIRMATION |
-| Comparison method for the merge test, and whether to agree it with the checker owner | PENDING GUIDE CONFIRMATION |
+| How the §4 comparison fields apply to the course completion criteria and the badge (no section number or points) | PENDING GUIDE CONFIRMATION |
+| Whether the §8 results table is also filled in, or the results go only in the decision record | PENDING GUIDE CONFIRMATION |
+| How the decision record is held before its number is taken at merge, because the results must be in it before the merge-test course is deleted (§7) | PENDING GUIDE CONFIRMATION (the owner has not said; no numbering or naming convention is assumed) |
+| Comparison field list for Shraddha (an action, not a decision) | Owner's instruction (the 14:43 reply). Sent (reported by the B8.1 owner). Her response and the alignment with the checker: pending; no confirmation from her is recorded |
 | Exact contents of the sections-only backup (which sections are in or out; which of the four PRD §B1.4 protected items are removed: final project assignment, course feedback activity, course completion criteria, course badge; whether the protected section 3 is in the copy or the backup; backup settings; content of generated sections); see §7 | PENDING GUIDE CONFIRMATION |
 | Whether the course feedback activity is anonymous as a confirmed setting or a proposal (conflicting owner answers, §4) | PENDING GUIDE CONFIRMATION |
 | The 4.5-to-5.3 restore compatibility the owner stated | PENDING MOODLE LAB (not verified) |
