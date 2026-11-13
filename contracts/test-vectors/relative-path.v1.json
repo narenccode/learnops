@@ -1,0 +1,64 @@
+{
+  "$comment": "Shared test vectors for the B6 relative path rule (PRD B6.3, C-08): the $defs/relative_path pattern in contracts/lesson-manifest.v1.schema.json. Every 'valid' path must be accepted and every 'invalid' path rejected by the schema and by any library that validates media paths (libs/media_paths). 'rules' names every rule the path breaks. Rule ids: empty (the path is empty); backslash (forward slashes only); whitespace (no whitespace anywhere); question-mark and hash (no ? or #); url-scheme (no scheme such as https:); drive-letter (no C: and so on); absolute (no leading /); empty-segment (no // and no trailing /); dot-segment (no '.' segment); dot-dot-segment (no '..' segment). Test data only.",
+  "valid": [
+    { "path": "720p.mp4", "why": "file in the lesson folder" },
+    { "path": "captions.en.vtt", "why": "dots inside a name" },
+    { "path": "transcript.en.json", "why": "B6.2 file name" },
+    { "path": "slides/001.jpg", "why": "file in a subfolder" },
+    { "path": "slides/index.json", "why": "file in a subfolder" },
+    { "path": "01-setup/02-install-python/720p.mp4", "why": "several segments" },
+    { "path": "lecture-2_final.v2.mp4", "why": "hyphen, underscore and dots in a name" },
+    { "path": "a/..b/c.json", "why": "'..' inside a name is not a '..' segment" },
+    { "path": "a/b../c.json", "why": "'..' at the end of a name is not a '..' segment" },
+    { "path": ".hidden", "why": "a name starting with a dot is not a '.' segment" },
+    { "path": "...", "why": "three dots is a name, not a '.' or '..' segment" },
+    { "path": "notes/b:c.md", "why": "a colon after the first segment is not a scheme" },
+    { "path": "12:30.mp4", "why": "a scheme starts with a letter, so this is not one" },
+    { "path": "vidéo.mp4", "why": "non-ASCII letters are allowed" }
+  ],
+  "invalid": [
+    { "path": "", "rules": ["empty"] },
+
+    { "path": "slides\\001.jpg", "rules": ["backslash"] },
+    { "path": "\\\\server\\share\\720p.mp4", "rules": ["backslash"] },
+
+    { "path": "lesson name.mp4", "rules": ["whitespace"] },
+    { "path": " 720p.mp4", "rules": ["whitespace"] },
+    { "path": "720p.mp4 ", "rules": ["whitespace"] },
+    { "path": "720p.mp4\n", "rules": ["whitespace"] },
+    { "path": "720p\n.mp4", "rules": ["whitespace"] },
+    { "path": "a\tb.mp4", "rules": ["whitespace"] },
+    { "path": "a\u00a0b.mp4", "rules": ["whitespace"] },
+
+    { "path": "720p.mp4?sig=abc", "rules": ["question-mark"] },
+    { "path": "720p.mp4#t=10", "rules": ["hash"] },
+
+    { "path": "https://example.org/x/lesson.json", "rules": ["url-scheme", "empty-segment"] },
+    { "path": "http://example.org/lesson.json", "rules": ["url-scheme", "empty-segment"] },
+    { "path": "s3://bucket/720p.mp4", "rules": ["url-scheme", "empty-segment"] },
+    { "path": "file:///720p.mp4", "rules": ["url-scheme", "empty-segment"] },
+    { "path": "data:video/mp4;base64,AAAA", "rules": ["url-scheme"] },
+    { "path": "mailto:mentor@example.org", "rules": ["url-scheme"] },
+
+    { "path": "C:/media/720p.mp4", "rules": ["drive-letter"] },
+    { "path": "c:720p.mp4", "rules": ["drive-letter"] },
+    { "path": "C:\\media\\720p.mp4", "rules": ["drive-letter", "backslash"] },
+
+    { "path": "/media/courses/x/720p.mp4", "rules": ["absolute"] },
+    { "path": "/", "rules": ["absolute"] },
+    { "path": "//cdn.example.org/720p.mp4", "rules": ["absolute", "empty-segment"] },
+
+    { "path": "slides//001.jpg", "rules": ["empty-segment"] },
+    { "path": "slides/", "rules": ["empty-segment"] },
+
+    { "path": ".", "rules": ["dot-segment"] },
+    { "path": "./720p.mp4", "rules": ["dot-segment"] },
+    { "path": "slides/./001.jpg", "rules": ["dot-segment"] },
+    { "path": "slides/.", "rules": ["dot-segment"] },
+
+    { "path": "..", "rules": ["dot-dot-segment"] },
+    { "path": "../720p.mp4", "rules": ["dot-dot-segment"] },
+    { "path": "slides/../../x.jpg", "rules": ["dot-dot-segment"] },
+    { "path": "slides/..", "rules": ["dot-dot-segment"] }
+  ]
+}
