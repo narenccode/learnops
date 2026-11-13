@@ -422,7 +422,7 @@ A normalised JSON description of a course, read by the checker. Produced from a 
 Key fields: course (shortname, completion enabled), sections (number, idnumber, visibility,
 availability rules), activities (type, idnumber, visibility, availability rules, completion rule,
 grade item and max grade, marking-workflow flag, presence of a marking table), course completion
-criteria, badges (criteria), H5P activities (graded or not). The schema in `/contracts/course-model.v1.json`
+criteria, badges (criteria), H5P activities (graded or not). The schema in `/contracts/course-model.v1.schema.json`
 is the authority; availability rules are kept in Moodle's own availability JSON form so no
 information is lost.
 
@@ -641,7 +641,7 @@ Provides: B1, B7. Uses: B2 (validation via checker library), B3, B5 (stretch), B
 - [ ] B8.2 sample course: package → `.mbz` (full) → restored on fresh 4.5 and 5.3 → M2 checker reports 0 errors.
 - [ ] Sections-only build restored by merge into B8.1 template: protected items unchanged (same idnumbers, same count, badge and completion criteria intact).
 - [ ] A package containing a protected idnumber is rejected with a clear message.
-- [ ] Reverse import of the restored course → package → rebuild produces an equivalent course (checker diff: no differences in structure, rules or points).
+- [ ] Reverse import of the restored course → package → rebuild produces an equivalent course (checker diff: no differences in structure, rules or points; sections are matched by section number, and section idnumber is ignored).
 - [ ] Measured mentor time for loading B8.2 (from finished text to restored course) ≤ 15 min.
 - [ ] *(Stretch)* Mentor review of one week's AI-drafted practice ≤ 5 min; practice activities restore ungraded.
 

@@ -115,3 +115,71 @@ Left out because the PRD does not establish the mapping:
   validator reports the two default idnumbers with a clear message (tested above); the Course
   Studio screen and CLI that show it do not exist yet.
 - **Requirement IDs for the contract work itself.** None in the PRD.
+
+## B2 course model contract (v1), Release 0 foundation
+
+**Status: draft. Not approved and not frozen.** Confirmed decisions and open items are in
+`docs/decisions/0003-b2-course-model.md`.
+
+Files: `contracts/course-model.v1.schema.json`, `contracts/examples/course-model.v1/`,
+`libs/contracts/tests/test_course_model_v1.py`. B2 has no requirement ID of its own in the PRD (it
+is a contract, PRD B.0), so no row in the table at the top of this file maps to it.
+
+FR-C-01 ("Build the course model (B2)") is deliberately not in that table. It needs the backup
+parser and package reader, which do not exist yet. FR-C-01 gets its row in the pull request that
+implements it.
+
+### Project-level blocker: contract tests do not run in CI
+
+**Needs the guide's attention.** This affects every contract, not only B2.
+
+The `Unit tests` step in `.github/workflows/ci.yml` runs `pytest` only if
+`ls -d modules/*/tests libs/*/tests` succeeds. No `modules/*/tests` folder exists, so `ls` fails and
+the step skips `pytest`. The B1 and B2 contract tests are therefore not run by CI. They have been run
+locally only. The gate was reproduced locally in Git Bash, not observed in a GitHub Actions run.
+
+`.github/` is guide-owned, so `ci.yml` is not changed in this work.
+
+### Enforced by the JSON Schema and covered by automated tests
+
+Structural schema validation only. These tests do not implement CK-01 to CK-13. Test names are in
+`test_course_model_v1.py`.
+
+| Rule | PRD | Test(s) |
+|---|---|---|
+| The schema is valid Draft 2020-12 and both examples validate | B.0 | `test_schema_is_a_valid_draft_2020_12_schema`, `test_example_is_valid` |
+| Required fields, types and enums on every object | B2 | `test_missing_required_field_is_rejected`, `test_wrong_type_or_value_is_rejected` |
+| Package sources require a mode and a non-empty timezone; an `.mbz` source requires timezone to be null | B1.4, B2 | `test_package_source_without_mode_is_rejected`, `test_package_source_without_timezone_is_rejected`, `test_package_source_with_null_timezone_is_rejected`, `test_package_source_with_empty_timezone_is_rejected`, `test_example_is_valid`, `test_missing_required_field_is_rejected`, `test_wrong_type_or_value_is_rejected` |
+| Assignment activities have marking fields; other activity types need none | B1.4, B2 | `test_missing_required_field_is_rejected`, `test_non_assignment_needs_no_marking_fields` |
+| Unknown fields are accepted at every level | B.0, EXT-02 | `test_unknown_field_is_accepted` |
+| The schema accepts a broken course, with at least one sample input per CK rule and an unknown activity type. For CK-07 this covers missing protected items only (see below). | C2.3, C2.8 | `test_broken_course_still_validates`, `test_protected_idnumbers_are_allowed_unlike_b1` |
+| Permitted null and absent values, and `cm = -1` in availability | B2 | `test_valid_variation_is_accepted`, `test_sections_only_package_is_valid` |
+| The package example matches the B1 example, including `completion: submit` and an unlock date at 00:00 in the site timezone | B1, B2 | `test_package_example_matches_b1_example`, `test_package_example_unlock_rule_matches_b1_example` |
+| The examples contain every field in the CK-rule-to-field mapping (`CK_FIELDS` in the test file). The mapping is **proposed and unapproved**, because the PRD's rules do not name model fields. Presence only. | C2.3 | `test_examples_carry_the_fields_a_rule_needs` |
+
+### Documented but not automatically enforced
+
+The schema must not enforce the CK rules: a course that breaks them has to validate so that the
+checker can report it. No parser, evaluator or rule engine exists yet, so no test here shows that
+any rule works.
+
+- Rules CK-01 to CK-13 (FR-C-03, Release 1).
+- CK-07 beyond representation: the tests show that a course with its protected items missing can be
+  represented. They do not establish detection of duplicated or changed protected items. B2 holds
+  no body text or attached files, so a reference-model comparison cannot see changes to them.
+- Treating a null `visible` or `completion_enabled` as "cannot judge" (the checker's job), and
+  resolving `cm = -1` by decision 0003 #5: the nearest earlier activity in course order with
+  manual or automatic completion tracking. Activities without tracking are skipped. If no
+  eligible activity exists, the condition cannot be met; an unresolved `-1` is reported as
+  CK-04. This resolution is documented but not automatically enforced yet; Moodle 4.5 and
+  5.3 lab verification remains pending.
+- Unique `cmid` values within a model (the model builder's job, FR-C-01).
+- The inner form of `availability`, which belongs to Moodle.
+- Comparing a package model with a `.mbz` model: `cmid` values differ, so FR-C-05 compares
+  activities by idnumber and sections by section number.
+
+### Not mapped
+
+- **FR-C-01, FR-C-02, FR-C-03, FR-C-05.** They use B2 but need code that does not exist yet, and the
+  PRD does not say that schema tests count towards them.
+- **Requirement IDs for the contract work itself.** None in the PRD.
