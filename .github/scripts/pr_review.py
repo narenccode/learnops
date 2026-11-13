@@ -489,8 +489,28 @@ def event_from_pr(repo: str, number: int) -> dict:
     return {"pull_request": pr, "repository": {"full_name": repo}}
 
 
+STANDING_CONTRACT = "Contract change: every affected owner"
+
+
+def only_standing_contract_rule(findings: list) -> bool:
+    """True when the only reason for the guide's label is the standing contract rule (PRD B.0).
+
+    That rule is not a question: the PR waits for the affected owners' reviews. The inbox already
+    leaves it out of "needs your decision", so the email ping must leave it out too.
+    """
+    reasons = [f for f in findings if f.level in ("violation", "rework", "judgement")]
+    return bool(reasons) and all(
+        f.message.startswith(STANDING_CONTRACT) for f in reasons
+    )
+
+
 def notification(
-    label: str, author: str, peer: str, guide: str, others: tuple[str, ...] = ()
+    label: str,
+    author: str,
+    peer: str,
+    guide: str,
+    others: tuple[str, ...] = (),
+    ping_guide: bool = True,
 ) -> str:
     """The short comment that actually notifies people when the verdict changes."""
     title = rules_mod.VERDICTS[label][0]
@@ -503,7 +523,7 @@ def notification(
             names = ", ".join("@​" + o for o in others)
             text += f" If you are busy, any one of {names} can approve instead."
         text += " The AI review runs right after one approval."
-    if label in ("rule-violation", "needs-judgement") and guide:
+    if label in ("rule-violation", "needs-judgement") and guide and ping_guide:
         text += f" @{guide}: your decision is needed."
     return text + " Details are in the bot comment above."
 
@@ -719,7 +739,15 @@ def main() -> int:
                     "api",
                     f"repos/{repo}/issues/{number}/comments",
                     "-f",
-                    f"body={notification(label, ctx.author, peer, guide, others)}",
+                    "body="
+                    + notification(
+                        label,
+                        ctx.author,
+                        peer,
+                        guide,
+                        others,
+                        ping_guide=not only_standing_contract_rule(findings),
+                    ),
                 )
             except Exception as error:
                 print(f"::warning::could not notify: {error}")
