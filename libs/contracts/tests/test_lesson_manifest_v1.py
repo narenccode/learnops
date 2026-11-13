@@ -444,7 +444,17 @@ def test_every_path_field_in_the_schema_is_tested(schema: dict[str, Any]) -> Non
 
 
 # lesson_id: the cases from the PR #32 review, plus the lesson_id forms B6.1 and B6.3 use.
-@pytest.mark.parametrize("value", ["../../etc", "/abs/x", "https://evil/x"], ids=repr)
+@pytest.mark.parametrize(
+    "value",
+    [
+        "../../etc",
+        "../../etc/passwd",
+        "/abs/x",
+        "https://evil/x",
+        "https://evil.example/x",
+    ],
+    ids=repr,
+)
 def test_lesson_id_that_is_not_a_relative_path_is_rejected(
     validator: Draft202012Validator, doc: Doc, value: str
 ) -> None:
@@ -588,10 +598,12 @@ HINDI_CAPTION = {"lang": "hi", "file": "captions.hi.vtt"}
 ENGLISH_CAPTION = {"lang": "en", "file": "captions.en.vtt"}
 
 
+# lang must be exactly "en": other spellings and region tags do not count as the English caption.
+@pytest.mark.parametrize("lang", ["hi", "EN", "en-US"], ids=repr)
 def test_captions_without_english_are_rejected(
-    validator: Draft202012Validator, doc: Doc
+    validator: Draft202012Validator, doc: Doc, lang: str
 ) -> None:
-    doc["captions"] = [HINDI_CAPTION]
+    doc["captions"] = [{"lang": lang, "file": f"captions.{lang}.vtt"}]
     assert (("captions",), "contains") in error_keys(validator, doc)
 
 

@@ -546,7 +546,15 @@ Slugs: lowercase ASCII, hyphens, immutable. Numbers zero-padded to two digits.
 }
 ```
 
-- All paths are **relative to the lesson folder** (C-08).
+- The seven file paths (`tracks[].file`, `captions[].file`, `transcript`, `chapters`, `slides`,
+  `cues`, `summary`) are **relative to the lesson folder**; `lesson_id` identifies the lesson below
+  the course folder (for example `01-setup/02-install-python`) (C-08).
+- All eight path fields, `lesson_id` included, follow exactly the same relative-path rule: not
+  empty; not absolute; no URL scheme or drive letter; forward slashes only, no backslashes; no
+  whitespace; no `?` or `#`; no empty, `.` or `..` segment. Shared test cases:
+  `contracts/test-vectors/relative-path.v1.json`.
+- `captions` contains at least one entry with `lang` exactly `"en"` (the required
+  `captions.en.vtt`, B6.2).
 - Required: `schema`, `course_slug`, `lesson_id`, `title`, `duration_s`, `tracks`, `captions`,
   `transcript`, `chapters`. Optional: `slides`, `cues`, `summary`, `source`, `processing`.
   `poster.jpg` (B6.2) has no manifest field; it is found by its fixed name.
