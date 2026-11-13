@@ -107,3 +107,17 @@ Test names are in `test_moodle_ws_v1.py`.
 Open: when the lab Moodle sites are available (all ten checks in `moodle-ws.v1.md` §5 wait for
 them; B4 cannot be frozen until they pass), and the parameter name for feedback comments on
 `mod_assign_save_grade` (not in the PRD; lab check 1). Q1, Q24 and Q37 are decided (PR #27).
+
+## `libs/moodle_ws` skeleton, Release 0 foundation
+
+Files: `libs/moodle_ws/`. The library has no requirement ID of its own (design Q7, Q43, open), so no
+row in the table above maps to it. Interim, per design §2: read side under FR-G-01, write side under
+FR-G-06. Neither requirement is implemented by this skeleton.
+
+| Rule | Source | Test |
+|---|---|---|
+| One token per site, from the environment only | B4 §1, Q24, SEC-03, C-06 | `test_config.py` |
+| One error family with stable codes | Design §4.1, §10.2 (library documentation, Q37) | `test_errors.py` |
+
+Not covered: the library is being built in steps and cannot call Moodle. Nothing has been checked
+against Moodle (all ten checks in `contracts/moodle-ws.v1.md` §5 are open).
