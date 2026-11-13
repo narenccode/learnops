@@ -103,6 +103,16 @@ def test_approved_and_green_goes_to_merge_with_missing_owners_named():
     assert "#2" not in section(text, 1) and "Nothing needs you" not in text
 
 
+def test_merge_conflicts_wait_on_the_author_not_the_guide():
+    p = pr(30, ["needs-judgement"], reviews=[("s1", "APPROVED")])
+    p["mergeable"] = "CONFLICTING"
+    text = make([p], bot={30: STANDING_ONLY})
+    assert "#30" not in section(text, 2) and "#30" not in section(text, 1)
+    assert "#30" in section(text, 4) and "merge conflicts" in section(text, 4)
+    p["mergeable"] = "MERGEABLE"  # fixed by the author: it goes to the merge list again
+    assert "#30" in section(make([p], bot={30: STANDING_ONLY}), 2)
+
+
 def test_red_or_pending_checks_wait_on_the_author_not_the_guide():
     p = pr(3, ["needs-judgement"], reviews=[("s1", "APPROVED")], checks=("FAILURE",))
     text = make([p], bot={3: STANDING_ONLY})
