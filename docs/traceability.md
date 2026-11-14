@@ -157,6 +157,10 @@ FR-G-06. Neither requirement is implemented by this skeleton.
 | No direct grade write: `call()` refuses `mod_assign_save_grade` after its guards; only a sealed, single-use, client-bound receipt can send one, and the guards run on that path too; no module outside the library uses it | B4 §3, §3a | `test_grade_guards.py` |
 | R2: `attemptnumber` is explicit (a whole number from 0, never `-1`) on every grade-write path | B4 §3a | `test_grade_guards.py`: `test_r2_*` |
 | R9: a grade is a plain non-negative number, parsed exactly (no exponent, `NaN`, whitespace or bool); the range check accepts 0 to the maximum | B4 §3a | `test_grade_guards.py`: `test_r9_*` |
+| §3b and R2: the stored grade counts only for exactly one entry and one row, the same explicit attempt and an exact numeric match, with no warning | B4 §3a, §3b | `test_outcomes.py`: `test_r2_*`, `test_3b_*` |
+| Only an unlocked marking-workflow state may be written over; locked, marking workflow off and unknown states are refused (the last two proposed, fail closed, B4 §6) | B4 §3a R3; PRD B4 draft rule; B4 §6 | `test_outcomes.py`: `test_only_an_unlocked_marking_workflow_state_may_be_written_over`, `test_the_state_sets_do_not_overlap` |
+| R6: a missing or malformed `lastattempt` gives no state | B4 §3a | `test_outcomes.py`: `test_r6_*` |
+| R5, R10, R11: separate outcomes, only `VERIFIED` is success; a lost answer tells the mentor to decide or confirm | B4 §3a | `test_outcomes.py`: `test_r5_*`, `test_r10_*`, `test_r11_*` |
 
 Not covered: all of this runs against a scripted fake transport. No real transport exists, and nothing
 has been checked against Moodle (every check in `contracts/moodle-ws.v1.md` §5 is open).

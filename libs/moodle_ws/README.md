@@ -50,6 +50,45 @@ Apart from `workflowstate`, `attemptnumber` and `grade` on `mod_assign_save_grad
 not checked. An empty `parameters` list in the contract means "not yet determined"
 (B4 §2a), not "no parameters".
 
+## Outcomes of a draft-grade write (B4 §3a, §3b)
+
+`moodle_ws.grade_write` holds the outcome values and the pure checks the guarded write helper uses.
+Nothing in it contacts Moodle; the helper itself is added in a later pull request. Only `VERIFIED` is
+success (R10).
+
+| Outcome | Meaning |
+|---|---|
+| `VERIFIED` | Written and read back: state `readyforrelease`, and the stored grade equals the grade sent |
+| `NOT_VERIFIED` | Written, or maybe written, and not confirmed (R8, R11) |
+| `NEEDS_MENTOR_CONFIRMATION` | The write's answer was lost but the read-back matches: not success until the mentor confirms (proposed) |
+| `REFUSED_OUT_OF_RANGE` | Grade below 0 or above the maximum; nothing sent (R9) |
+| `REFUSED_LOCKED` | State already `readyforrelease` or `released`; nothing sent (R3) |
+| `REFUSED_WORKFLOW_OFF` | State `graded` or `notgraded`: marking workflow is off; nothing sent (proposed) |
+| `REFUSED_STATE_UNKNOWN` | State missing, unreadable or not a known value; nothing sent (proposed) |
+| `ACCESS_DENIED` | The service account may not see or grade this submission (R10) |
+| `NO_SUBMISSION`, `NO_GRADE`, `SKIPPED_SUSPENDED` | Decided by the caller with `result_for()` (R5, R10) |
+
+- `stored_grade_matches()` applies B4 §3b to a `mod_assign_get_grades` answer: exactly one entry for
+  the assignment, exactly one row for the learner, the same explicit attempt (R2), and a stored grade
+  that parses and equals the grade sent as an exact number (R9). Any warning fails it: stricter than
+  §3b, because a warning's link to an assignment is not verified.
+- `grading_status()` reads `lastattempt.gradingstatus`; it is `None` when Moodle leaves it out (R6).
+- A draft is written only over an unlocked marking-workflow state: `notmarked`, `inmarking`,
+  `readyforreview` or `inreview`. Matching is exact. These names come from the Moodle source (B4 §7)
+  and are not lab-verified (lab check 4).
+
+### Proposed decisions, fail closed, for the guide to confirm
+
+The guide's decisions (R1 to R11) do not settle these. Each takes the safest choice and changes only
+by the guide's decision, recorded in the contract (B4 §6):
+
+| Case | Behaviour | Why |
+|---|---|---|
+| Marking workflow off (`graded` / `notgraded`) | `REFUSED_WORKFLOW_OFF`, nothing sent | The grade could reach the gradebook and the learner at once, against the PRD B4 draft rule. Lab check 4 is open |
+| State missing or unknown before the write | `REFUSED_STATE_UNKNOWN`, nothing sent | LearnOps cannot show the grade is not locked (R3) |
+| Answer lost, read-back matches | `NEEDS_MENTOR_CONFIRMATION`, not success | R11 says the mentor decides |
+| Any warning in the `mod_assign_get_grades` answer | `NOT_VERIFIED` | Stricter than §3b |
+
 ## Configuration
 
 | Variable | Meaning |
