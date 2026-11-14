@@ -44,6 +44,11 @@ VERDICTS = {
         "fbca04",
         "A call only the guide can make",
     ),
+    "awaiting-owners": (
+        "Waiting for every affected owner",
+        "c5def5",
+        "Contract change: the affected owners review, then the guide merges",
+    ),
     "awaiting-peer": (
         "Waiting for the peer review",
         "c5def5",
@@ -243,7 +248,7 @@ def evaluate(ctx: Context) -> list[Finding]:
         else:
             out.append(
                 Finding(
-                    "judgement",
+                    "owners",
                     "Contract change: every affected owner and the guide must review "
                     "(GitHub only enforces one).",
                     "PRD §B.0",
@@ -392,13 +397,35 @@ def evaluate(ctx: Context) -> list[Finding]:
         if p.rsplit("/", 1)[-1] not in LOCKFILES and not p.startswith("testdata/")
     )
     if total > SIZE_LIMIT:
-        out.append(
-            Finding(
-                "rework",
-                f"{total} changed lines (limit {SIZE_LIMIT}). Split into smaller PRs.",
-                "CLAUDE.md §8",
-            )
+        is_contract_pr = any(
+            p.startswith("contracts/") and p != "contracts/CLAUDE.md" for p in paths
         )
+        has_file_map = re.search(r"file map", ctx.body, flags=re.IGNORECASE) is not None
+        if is_contract_pr and has_file_map:
+            out.append(
+                Finding(
+                    "advice",
+                    f"{total} changed lines (limit {SIZE_LIMIT}). Allowed: a contract PR cannot be split and has a file map.",
+                    "PRD B.0 rule 3",
+                )
+            )
+        elif is_contract_pr:
+            out.append(
+                Finding(
+                    "rework",
+                    f"{total} changed lines (limit {SIZE_LIMIT}). A contract PR may exceed the limit only with a file map "
+                    "(each file, its length in lines, what a reviewer checks) in the description.",
+                    "CLAUDE.md §7",
+                )
+            )
+        else:
+            out.append(
+                Finding(
+                    "rework",
+                    f"{total} changed lines (limit {SIZE_LIMIT}). Split into smaller PRs.",
+                    "CLAUDE.md §7",
+                )
+            )
 
     # Description
     stripped = re.sub(r"<!--.*?-->", "", ctx.body, flags=re.DOTALL)
@@ -440,6 +467,8 @@ def verdict_of(findings: list[Finding]) -> str:
         return "needs-rework"
     if "judgement" in levels:
         return "needs-judgement"
+    if "owners" in levels:
+        return "awaiting-owners"
     return "ready-to-merge"
 
 
@@ -527,6 +556,7 @@ def next_step(verdict: str, peer: str = "", others: tuple[str, ...] = ()) -> str
         "needs-rework": "Fix the items listed in the bot comment and push. The bot re-checks by itself.",
         "rule-violation": "Do not merge. The guide will decide.",
         "needs-judgement": "Do not merge. The guide will decide.",
+        "awaiting-owners": "Ask every affected owner to review. The guide merges last. Do not merge it yourself.",
         "awaiting-peer": review + "The AI review runs right after.",
         "awaiting-ai": "The AI review is not available right now. The bot tries again "
         "by itself; you do not need to do anything.",
@@ -549,6 +579,7 @@ def render(
         ("violation", "Rule violations (the guide decides: reject or rework)"),
         ("rework", "Fix before merging"),
         ("judgement", "Needs the guide's judgement"),
+        ("owners", "Waiting for the owners' reviews"),
         ("advice", "Better ways to do it (advice)"),
         ("unverified", "Could not verify"),
     ]

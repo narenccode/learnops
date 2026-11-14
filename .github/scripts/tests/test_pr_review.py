@@ -242,6 +242,24 @@ def test_notification_pings_author_peer_and_guide_only_where_needed():
     assert r.MARKER not in ready  # must never be mistaken for the main comment
 
 
+def test_standing_contract_rule_alone_does_not_ping_the_guide():
+    contract = r.Finding(
+        "judgement",
+        "Contract change: every affected owner and the guide must review (GitHub only enforces one).",
+        "PRD §B.0",
+    )
+    advice = r.Finding("advice", "999 changed lines (limit 800).")
+    other = r.Finding(
+        "judgement", "AI review limit (3 runs) reached; the guide decides."
+    )
+    assert v.only_standing_contract_rule([contract, advice])
+    assert not v.only_standing_contract_rule([contract, other])
+    assert not v.only_standing_contract_rule([advice])
+    quiet = v.notification("needs-judgement", "s1", "s2", "guide", ping_guide=False)
+    assert "@s1" in quiet and "@guide" not in quiet
+    assert "@guide" in v.notification("needs-judgement", "s1", "s2", "guide")
+
+
 def test_render_ends_with_verdict_marker_and_next_step():
     text = r.render("needs-rework", [], "abcdef1", step=r.next_step("needs-rework"))
     assert "**Next step:**" in text

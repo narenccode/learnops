@@ -90,6 +90,7 @@ introduce another language, framework or database. Ask the guide first if you th
 5. Reviewed and approved by a member of **another** module; the reviewer runs the tests.
 6. No contract changed, or changed through `/contract-change`.
 7. The module's design document is `Approved`, or the work is Release 0 foundation work the guide has allowed.
+8. A pull request changes at most **800 lines**. Exception: a **contract PR** (it touches `contracts/`) cannot be split (PRD B.0 rule 3), so it may exceed 800 lines when its description has a **file map** (each file, its length in lines, and what a reviewer checks) and states the reason. Draft PRs are not checked.
 
 ## 8. How Claude Code should work in this repo
 
