@@ -11,6 +11,7 @@ import pytest
 import moodle_ws
 from moodle_ws import (
     FunctionNotAllowed,
+    GradeWriteNotAllowed,
     InvalidParameters,
     MoodleClient,
     MoodleConfigError,
@@ -39,6 +40,7 @@ CLASSES: list[type[MoodleError]] = [
     NotSupported,
     FunctionNotAllowed,
     WorkflowStateNotAllowed,
+    GradeWriteNotAllowed,
     MoodleConfigError,
     InvalidParameters,
 ]
