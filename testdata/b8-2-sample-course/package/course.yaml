@@ -1,7 +1,11 @@
 # B8.2 sample course: a fictional four-week project-based course (PRD B8.2, following B1).
 # Fictional test data only. No real learner data, no real course content (PRD C-07).
-# It holds the four weekly sections only. The protected items (final project, course feedback,
-# completion criteria, badge) belong to the B8.1 template and are never written here (PRD B1.4).
+# It holds the four weekly sections only, numbered 4 to 7: the B8.1 template holds sections 1 to 3,
+# and generated sections must be numbered after the template's last section (Owner, Issue #55,
+# 2026-11-12). The protected items (final project, course feedback, completion criteria, badge)
+# belong to the B8.1 template and are never written here (PRD B1.4).
+# The section idnumbers wk-01 to wk-04 are kept for now. Issue #65 makes the section idnumber
+# optional in B1; update them here (and in the README and the dataset test) when that lands.
 schema: learnops.course/v1
 course:
   shortname: SAMPLE-DOC-101
@@ -10,7 +14,7 @@ course:
   total_points: 100
   mode: full
 sections:
-  - number: 1
+  - number: 4
     title: "Week 1 — Publish a starter assistant"
     idnumber: wk-01
     unlock:
@@ -27,7 +31,7 @@ sections:
         points: 25
         submission: [onlinetext, file]
         completion: submit
-  - number: 2
+  - number: 5
     title: "Week 2 — Answer from a document"
     idnumber: wk-02
     unlock:
@@ -44,7 +48,7 @@ sections:
         points: 25
         submission: [onlinetext, file]
         completion: submit
-  - number: 3
+  - number: 6
     title: "Week 3 — Test it and fix weak answers"
     idnumber: wk-03
     unlock:
@@ -61,7 +65,7 @@ sections:
         points: 25
         submission: [onlinetext, file]
         completion: submit
-  - number: 4
+  - number: 7
     title: "Week 4 — Write it up and share it"
     idnumber: wk-04
     unlock:

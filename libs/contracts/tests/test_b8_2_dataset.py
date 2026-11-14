@@ -29,12 +29,19 @@ WEEKS = (1, 2, 3, 4)
 POINTS_PER_TASK = 25
 TOTAL_POINTS = 100
 
+# The B8.1 template holds sections 1 to 3. Generated sections for a merge test must be numbered
+# after the template's last section (Owner, Issue #55, 2026-11-12), so the four weeks are
+# sections 4 to 7. The week labels (1 to 4) and the idnumbers (wk-01 to wk-04) do not change.
+TEMPLATE_LAST_SECTION = 3
+SECTION_NUMBERS = tuple(TEMPLATE_LAST_SECTION + week for week in WEEKS)
+
 # The two default protected idnumbers (PRD B1.4).
 DEFAULT_PROTECTED = frozenset({"final-project", "course-feedback"})
 
 # PROPOSAL for test data, not a contract value. PRD B1.4 makes protected_section
 # configurable and gives no default; the contract and the validator must never hard-code it.
-WORKING_PROTECTED_SECTION = 7
+# The B8.1 README proposes section 3 (Owner, Issue #55, 2026-11-07; the number stays a proposal).
+WORKING_PROTECTED_SECTION = 3
 
 # PRD C3.5 vocabulary: check name -> whether it takes an argument. B8.2 chooses not to use
 # `command:` (the PRD says it reads "the course's check config", which B1 does not define).
@@ -175,8 +182,11 @@ def test_course_is_full_mode_with_a_total_of_100(doc: Doc) -> None:
     assert doc["course"]["total_points"] == TOTAL_POINTS
 
 
-def test_there_are_four_week_sections_numbered_1_to_4(doc: Doc) -> None:
-    assert [s["number"] for s in doc["sections"]] == list(WEEKS)
+def test_there_are_four_week_sections_numbered_4_to_7(doc: Doc) -> None:
+    assert (
+        [s["number"] for s in doc["sections"]] == list(SECTION_NUMBERS) == [4, 5, 6, 7]
+    )
+    # The section idnumbers are kept until the B1 section-idnumber change (Issue #65) lands.
     assert [s["idnumber"] for s in doc["sections"]] == [f"wk-0{n}" for n in WEEKS]
 
 
@@ -348,10 +358,16 @@ def test_week_numbers_do_not_collide_with_the_working_protected_section(
     assert not collides(numbers, WORKING_PROTECTED_SECTION)
 
 
-def test_the_collision_check_would_catch_the_earlier_proposal_of_section_3(
-    doc: Doc,
-) -> None:
-    # Negative control: with the protected section at 3 (the earlier B8.1 proposal) week 3 would
-    # sit on it. This is why the proposal puts it after the weeks.
+def test_week_sections_are_numbered_after_the_templates_last_section(doc: Doc) -> None:
+    # Owner, Issue #55, 2026-11-12: a merge restore keeps the name and summary of a section that
+    # already exists at that number, so generated sections must come after the template's last.
     numbers = [s["number"] for s in doc["sections"]]
-    assert collides(numbers, 3)
+    assert min(numbers) > TEMPLATE_LAST_SECTION
+
+
+def test_the_numbering_checks_would_catch_the_old_numbering_1_to_4() -> None:
+    # Negative control: the earlier numbering (weeks as sections 1 to 4) sat on the template's
+    # sections 1 to 3, including the protected section, and the two checks above must reject it.
+    old_numbers = list(WEEKS)
+    assert collides(old_numbers, WORKING_PROTECTED_SECTION)
+    assert not min(old_numbers) > TEMPLATE_LAST_SECTION
