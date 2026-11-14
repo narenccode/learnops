@@ -62,6 +62,11 @@ def grades_answer(**row_change: Any) -> dict[str, Any]:
         pytest.param(
             {**grades_answer(), "warnings": [{"warningcode": "1"}]}, id="a warning"
         ),
+        pytest.param(
+            {"assignments": grades_answer()["assignments"]}, id="warnings absent"
+        ),
+        pytest.param({**grades_answer(), "warnings": None}, id="warnings is None"),
+        pytest.param({**grades_answer(), "warnings": {}}, id="warnings is not a list"),
         pytest.param({"assignments": [], "warnings": []}, id="no assignment"),
         pytest.param(
             {"assignments": grades_answer()["assignments"] * 2, "warnings": []},

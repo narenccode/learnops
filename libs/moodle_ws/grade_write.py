@@ -138,11 +138,13 @@ def stored_grade_matches(
 ) -> bool:
     """B4 §3b, on a mod_assign_get_grades answer. Anything unexpected is False (not verified).
 
-    Stricter than §3b in one place, on purpose: any warning at all fails the check, because a
-    warning's link to an assignment is not verified."""
+    Stricter than §3b in two places, on purpose: any warning at all fails the check, because a
+    warning's link to an assignment is not verified; and the `warnings` field must be present and
+    an empty list, because an answer without it is incomplete and cannot confirm a stored grade."""
     if not isinstance(answer, Mapping):
         return False
-    warnings = answer.get("warnings", [])
+    # No default: a missing field must fail (fail closed).
+    warnings = answer.get("warnings")
     if not isinstance(warnings, list) or warnings:
         return False
     assignments = _rows(answer.get("assignments"))
