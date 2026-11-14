@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 
-from moodle_ws import MoodleConfigError, Site, load_site
+from moodle_ws import MoodleConfigError, Site, Token, load_site
 
 URL = "https://site.invalid"
 ENV = {
@@ -102,3 +102,18 @@ def test_a_configuration_error_never_shows_a_value() -> None:
     with pytest.raises(MoodleConfigError) as caught:
         load_site(Site.MOODLE45, {"MOODLE45_WS_TOKEN": "made-up-45"})
     assert "made-up-45" not in str(caught.value)
+
+
+@pytest.mark.parametrize(
+    "value", [None, 12345, b"made-up-bytes", ["made-up-list"], object()]
+)
+def test_a_token_must_be_a_string(value: Any) -> None:
+    """A wrong type fails here with a clear error, not later as an AttributeError in SiteSettings."""
+    with pytest.raises(MoodleConfigError) as caught:
+        Token(value)
+    assert "'token'" in str(caught.value)
+    assert "made-up" not in str(caught.value)
+
+
+def test_a_string_token_is_still_accepted() -> None:
+    assert Token("made-up-45").reveal() == "made-up-45"

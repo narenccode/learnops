@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import Any, Final, NoReturn, Self
 
 from . import messages
+from .errors import MoodleConfigError
 
 MASK: Final = "***"
 
@@ -18,6 +19,10 @@ class Token:
     __slots__ = ("_value",)
 
     def __init__(self, value: str) -> None:
+        # Checked here, so a wrong type is a clear configuration error now and not an AttributeError
+        # later inside SiteSettings. The message names the field only, never the value.
+        if not isinstance(value, str):
+            raise MoodleConfigError(messages.INVALID_SITE_SETTING.format(field="token"))
         self._value = value
 
     def reveal(self) -> str:
