@@ -146,3 +146,48 @@ These are pending and are not claimed by this change:
   screenshots and logs stay local and are not committed.
 - **The open decisions** in the B8.1 README (§9) are pending guide confirmation. This entry does
   not settle them.
+
+## B8.2 sample course (test data), Release 0 foundation
+
+Files: `testdata/b8-2-sample-course/` (`package/course.yaml` in `full` mode, eight Markdown bodies
+under `package/weeks/`, and a `README.md` with the expected structure and open decisions); its
+test `libs/contracts/tests/test_b8_2_dataset.py`; the entry in `testdata/README.md`. B8.2 is a test
+data set (PRD §B8) and has no requirement ID of its own, so no row in the table at the top maps to
+it.
+
+The dataset test checks this one package only. The rules that the shared validator lists as "not
+checked" (see "Documented but not automatically enforced" above) are checked here for B8.2 alone,
+with test-local helpers. That does not enforce those rules for any other package, and it is not
+CK-03, CK-09 or any other checker rule.
+
+| What is checked | PRD | Test(s) |
+|---|---|---|
+| The package passes the shared validator (schema, idnumbers unique and not protected, body files exist) | B1.1, B1.2 rule 6 (first half), B1.4 | `test_the_shared_validator_accepts_the_package` |
+| `full` mode, `total_points: 100`; four week sections numbered 4 to 7 (after the B8.1 template's sections 1 to 3; Owner, Issue #55, 2026-11-12) with idnumbers `wk-01` … `wk-04` (kept until the B1 section-idnumber change of Issue #65 is implemented) | B8, B1.1 | `test_course_is_full_mode_with_a_total_of_100`, `test_there_are_four_week_sections_numbered_4_to_7` |
+| Twelve unique idnumbers following the week pattern; no default protected idnumber, no protected item and no `.mbz` in the dataset | B1.2 rule 6, B1.4 | `test_idnumbers_are_the_week_pattern_and_never_protected`, `test_no_protected_item_and_no_backup_file_is_in_the_dataset` |
+| The bodies hold no links (a dataset choice so that no third-party material is pulled in; not a PRD rule) | n/a (supports C-07) | `test_bodies_hold_no_links` |
+| One guide Page then one task Assignment per week | B1.2 rule 1 | `test_week_has_one_guide_page_then_one_task_assignment` (4 cases) |
+| Week N unlocks after the week N-1 task, which has `completion: submit`; week 1 is open | B1.2 rule 2 | `test_week_unlocks_when_the_previous_task_is_submitted` (4 cases) |
+| Each task is 25 points and the tasks add up to `total_points` | B1.2 rule 3 | `test_each_task_is_worth_25_and_the_tasks_add_up_to_the_total` |
+| Each task has one valid marking table: markers, header, a valid Markdown separator row, non-empty Criterion and Full marks cells, row points add up to the assignment's points, `Check` names from C3.5; no `command:` checks are used | B1.3, C3.5 | `test_task_has_a_valid_marking_table` (4 cases), `test_the_sample_does_not_use_command_checks`, `test_the_table_check_catches_the_mistakes_it_exists_for`, `test_the_table_check_rejects_empty_cells_and_a_bad_separator` (8 negative cases), `test_the_table_check_accepts_valid_markdown_separators` (2 positive controls) |
+| A task whose table has a `word_count:N` check tells the learner the report needs at least N words (weeks 1 and 4: 150 and 250) | B1.3, C3.5 (`word_count:<min>`) | `test_task_states_the_minimum_word_count` (4 cases), `test_the_word_minimum_check_catches_a_missing_or_wrong_number` (negative control) |
+| Each task body explains the submission format confirmed by the guide on PR #61: `Repository:`, `Demo:` and `Report:` labels, `report.md` or `report.txt` as the report, and which part each check reads | Grading design Q6 (`grading.md` §4.3a); not yet in B1 | `test_task_explains_the_confirmed_submission_format` (4 cases) |
+| The week sections are numbered after the template's last section (3), and do not collide with the proposed protected section (3; a proposal, not a contract value and not confirmed by the guide) | B1.4 | `test_week_sections_are_numbered_after_the_templates_last_section`, `test_week_numbers_do_not_collide_with_the_working_protected_section`, `test_the_numbering_checks_would_catch_the_old_numbering_1_to_4` (negative control) |
+
+### Not covered here
+
+These need Studio, the checker or a Moodle site and are not claimed by this change:
+
+- **PRD C1.7** "B8.2 sample course: package → `.mbz` (full) → restored on fresh 4.5 and 5.3 → M2
+  checker reports 0 errors", the sections-only merge into B8.1, and the ≤ 15 min loading time.
+  The `.mbz` comes from FR-S-06 and FR-S-07 (Release 2).
+- **PRD C2.7** "no false errors on B8.2": needs the checker (Release 1).
+- **B1.2 rules 4 and 5** (marking workflow, completion tracking): not package fields.
+- The open decisions in the dataset README (A2, A6, A7) are pending guide confirmation, and A4 is
+  pending the Moodle lab. A1 and A3 record the owner's numbering rule and the B8.1 template layout
+  (Issue #55, 2026-11-12). This note does not settle the open ones: the protected section number
+  (3, a proposal), the CK-03 target total for the merged course (A6), and A7. The licence
+  (Apache-2.0) and the submission and check formats (A12, A13) were confirmed by the guide on
+  PR #61; the formats are not yet part of the B1 contract.
+- The section idnumbers `wk-01` … `wk-04` are kept for now. They need updating when the B1
+  section-idnumber contract change (Issue #65) is implemented.
