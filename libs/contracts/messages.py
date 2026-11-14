@@ -95,6 +95,46 @@ CONFIG_PROTECTED_NOT_TEXT = (
     "'capstone-gate'."
 )
 
+# --- contract examples (validate_examples.py, PRD B.0 rule 1, E1) --------------------------
+
+EX_PLACE_DOCUMENT = "(document)"
+EX_SCHEMA_VIOLATION = "{where}: {detail} [{keyword}]"
+EX_SCHEMA_VIOLATION_HINT = (
+    "Change the example so that it matches the schema. If the schema is wrong instead, change "
+    "it only through /contract-change (PRD B.0)."
+)
+EX_NO_SCHEMAS = "No *.schema.json file was found in {folder}."
+EX_NO_SCHEMAS_HINT = (
+    "Check that --contracts-dir points at the repository's contracts folder."
+)
+EX_CONTRACTS_DIR_MISSING = "The contracts folder {folder} does not exist."
+EX_CONTRACTS_DIR_MISSING_HINT = "Run the script from a repository checkout, or pass --contracts-dir with an existing folder."
+EX_UNREADABLE_SCHEMA = "The schema could not be read: {reason}."
+EX_UNREADABLE_SCHEMA_HINT = "Save the schema as UTF-8 JSON and fix the syntax error."
+EX_INVALID_SCHEMA = "The file is not a valid JSON Schema: {reason}."
+EX_INVALID_SCHEMA_HINT = "Fix the schema so that it passes its meta-schema."
+EX_NOT_VALIDATED = "Not validated, because its schema could not be loaded."
+EX_NOT_VALIDATED_HINT = "Fix the schema problem reported above, then validate again."
+EX_MISSING_EXAMPLE = "The schema has no example in {folder}."
+EX_MISSING_EXAMPLE_HINT = (
+    "Add at least one valid .json, .yaml or .yml example at the top of that folder "
+    "(PRD B.0 rule 1)."
+)
+EX_UNREADABLE_EXAMPLE = "The example could not be read: {reason}."
+EX_UNREADABLE_EXAMPLE_HINT = (
+    "Fix the problem described above: save the example as UTF-8 and use JSON or YAML syntax "
+    "(the reason gives a line and column when the parser reports one)."
+)
+EX_LINE_WITH_SCHEMA = "FAIL {target} (schema {schema}): {message}"
+EX_LINE = "FAIL {target}: {message}"
+EX_LINE_HINT = "     next: {hint}"
+EX_LINE_OK = "OK {example} (schema {schema})"
+# "found", not "checked": it includes examples whose schema could not be loaded (not validated).
+EX_SUMMARY = (
+    "{examples} examples found, {schemas} schemas: {passed} passed, {failed} failed, "
+    "{not_validated} not validated; {problems} problems found."
+)
+
 # --- rules that did not run -----------------------------------------------------------------
 
 NOT_CHECKED_HINT = "Check this by hand until the validator supports it."

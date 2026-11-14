@@ -3,6 +3,21 @@
 | Requirement | Test(s) | Demo step | Bloom level |
 |---|---|---|---|
 
+## Contract examples validate against their schemas (PRD B.0 rule 1, E1), Release 0 foundation
+
+Files: `libs/contracts/validate_examples.py` (run by CI's "Validate contract examples" step), tests
+in `libs/contracts/tests/test_validate_examples.py`. Shared validator reference EXT-09 (the
+`contracts` library); this is the E1 "Contract" test level ("every example ... validates against
+its schema, CI, every PR"). It does not cover "generated files" from E1, because no module
+generates contract files yet. What is not checked yet, and why supporting files are ignored, is
+listed in `libs/contracts/README.md`.
+
+| Rule | PRD | Test(s) |
+|---|---|---|
+| Every versioned schema has at least one example | B.0 rule 1 | `test_schema_without_a_top_level_example_is_an_error`, `test_no_schemas_at_all_is_an_error`, `test_several_schemas_are_each_paired_and_validated` |
+| Every example (JSON or YAML) validates against its schema; CI fails otherwise | E1 | `test_real_repository_examples_all_pass`, `test_invalid_json_example_names_example_schema_place_and_keyword`, `test_invalid_example_is_one_schema_violation`, `test_one_failure_among_passing_examples_still_fails`, `test_script_runs_as_ci_runs_it` |
+| Unreadable examples and broken schemas are errors, never skipped | E1 | `test_unreadable_example_is_an_error`, `test_examples_of_a_broken_schema_are_counted_but_not_validated` |
+
 ## B1 course package contract (v1), Release 0 foundation
 
 Files: `contracts/course-package.v1.schema.json`, `contracts/examples/course-package.v1/`,
