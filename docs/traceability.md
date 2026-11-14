@@ -129,17 +129,6 @@ FR-C-01 ("Build the course model (B2)") is deliberately not in that table. It ne
 parser and package reader, which do not exist yet. FR-C-01 gets its row in the pull request that
 implements it.
 
-### Project-level blocker: contract tests do not run in CI
-
-**Needs the guide's attention.** This affects every contract, not only B2.
-
-The `Unit tests` step in `.github/workflows/ci.yml` runs `pytest` only if
-`ls -d modules/*/tests libs/*/tests` succeeds. No `modules/*/tests` folder exists, so `ls` fails and
-the step skips `pytest`. The B1 and B2 contract tests are therefore not run by CI. They have been run
-locally only. The gate was reproduced locally in Git Bash, not observed in a GitHub Actions run.
-
-`.github/` is guide-owned, so `ci.yml` is not changed in this work.
-
 ### Enforced by the JSON Schema and covered by automated tests
 
 Structural schema validation only. These tests do not implement CK-01 to CK-13. Test names are in
@@ -176,10 +165,41 @@ any rule works.
 - Unique `cmid` values within a model (the model builder's job, FR-C-01).
 - The inner form of `availability`, which belongs to Moodle.
 - Comparing a package model with a `.mbz` model: `cmid` values differ, so FR-C-05 compares
-  activities by idnumber and sections by section number.
+  activities by idnumber and sections by section number; section idnumber is ignored.
 
 ### Not mapped
 
 - **FR-C-01, FR-C-02, FR-C-03, FR-C-05.** They use B2 but need code that does not exist yet, and the
   PRD does not say that schema tests count towards them.
 - **Requirement IDs for the contract work itself.** None in the PRD.
+
+## B8.1 template course backup (test data), Release 0 foundation
+
+Files: `testdata/b8-1-template-course/README.md` (the requirements, the proposals and the open
+decisions, and a plain list of the expected protected items for the checker); the B8.1 entry in
+`testdata/README.md`. B8.1 is a test data set (PRD §B8, B1.4) and has no requirement ID of its own,
+so no row in the table at the top maps to it. This change is documentation only: no `.mbz`, no code
+and no test exist for B8.1 yet.
+
+| What is documented | PRD | Test(s) |
+|---|---|---|
+| The template course backup holds the four protected items: the final project assignment (`final-project`), the course feedback activity (`course-feedback`), the course completion criteria and the course badge. The idnumbers are the PRD defaults and are configurable. The protected section number (3) is a proposal | B8.1, B1.4 | None yet: the `.mbz` does not exist |
+| A plain list of the expected protected items (idnumber, type, section, count) for the checker, which builds its model from the `.mbz` | B8.1, B1.4 | None yet |
+| A sections-only backup is merged into the template and the protected items stay unchanged. The intended comparison writes down the same table for each protected item before and after the merge, with the fields type, name, idnumber, section number, points, completion setting and visibility, and the two tables must be equal (Owner, Issue #55, 2026-11-12); no check or test implements this yet. The Release 0 backup procedure is written as an untested draft | B1.4, C1.7, App-C item 2 | None yet: needs a Moodle site |
+| Moodle 4.5 is the owner-confirmed build version. The owner stated that a 4.5 backup restores into the same or a newer Moodle version, including 5.3. That 4.5-to-5.3 restore is the owner's statement, not a result. The owner decided to build once on 4.5, test the restore on 4.5 and on 5.3, and not test 5.3 to 4.5, recording the Moodle version, the date and the outcome of each restore (Issue #55, 2026-11-12) | C-03 | None yet: not verified; needs Moodle lab testing on 4.5 and 5.3 |
+
+### Not covered here
+
+These are pending and are not claimed by this change:
+
+- **The `.mbz` backup, its SHA-256, the release asset (tag `testdata-b8-1-v1`) and the download
+  script.** None of them exists yet.
+- **Moodle 4.5 and 5.3 verification:** the restore, the protected items, the completion criteria,
+  the badge and the sections-only merge (PRD C1.7, App-C item 2). The owner's statement that a 4.5
+  backup restores on 5.3 has not been verified.
+- **The decision record for App-C item 2** (`docs/decisions/NNNN-b8-1-template-course.md`). It is
+  not written; the next free number is taken when you merge, after rebasing (Owner, Issue #55). The
+  owner also asks for a short, text-only results table in it that names the local evidence files;
+  screenshots and logs stay local and are not committed.
+- **The open decisions** in the B8.1 README (§9) are pending guide confirmation. This entry does
+  not settle them.
