@@ -94,7 +94,6 @@ NESTED_RELEASED = [
     pytest.param({"a": "released"}, id="top level"),
     pytest.param({"a": {"b": ["x", "Released"]}}, id="nested dict and list"),
     pytest.param({"a": ("released",)}, id="tuple"),
-    pytest.param({"a": {"released"}}, id="set"),
     pytest.param({"a": [[[{"b": " released "}]]]}, id="deep and padded"),
 ]
 

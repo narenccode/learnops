@@ -132,6 +132,12 @@ UNSUPPORTED = [
     pytest.param(object(), id="plain object"),
     pytest.param(lambda: "released", id="function"),
     pytest.param(memoryview(b"released"), id="memoryview"),
+    # Not JSON: the transport could not send these (guide-review question on #76).
+    pytest.param({"released"}, id="set"),
+    pytest.param(frozenset({"released"}), id="frozenset"),
+    pytest.param(float("nan"), id="nan"),
+    pytest.param(float("inf"), id="infinity"),
+    pytest.param(float("-inf"), id="negative infinity"),
 ]
 
 
@@ -208,8 +214,6 @@ def test_plain_values_all_reach_the_transport(settings: SiteSettings) -> None:
         "nothing": None,
         "list": [1, "a"],
         "tuple": (1,),
-        "set": {1},
-        "frozenset": frozenset({1}),
         "dict": {"a": 1, 2: "b"},
     }
     transport = FakeTransport()
@@ -282,7 +286,6 @@ class ChangingTransport(FakeTransport):
     ) -> Any:
         params["nested"]["key"] = "changed"
         params["items"].append("changed")
-        params["sets"].add("changed")
         params["deep"][0]["key"] = "changed"
         return None
 
@@ -291,14 +294,12 @@ def test_a_transport_cannot_change_nested_values(settings: SiteSettings) -> None
     params = {
         "nested": {"key": "kept"},
         "items": ["kept"],
-        "sets": {"kept"},
         "deep": ({"key": "kept"},),
     }
     MoodleClient(settings, ChangingTransport()).call(READ, params)
     assert params == {
         "nested": {"key": "kept"},
         "items": ["kept"],
-        "sets": {"kept"},
         "deep": ({"key": "kept"},),
     }
 

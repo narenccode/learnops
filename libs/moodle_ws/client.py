@@ -6,6 +6,7 @@ call never reaches Moodle. This is a second guard behind the restricted external
 
 from __future__ import annotations
 
+import math
 from collections.abc import Mapping
 from typing import Any, Final
 
@@ -48,12 +49,11 @@ def _copy_value(value: Any, path: frozenset[int]) -> Any:
     runs an object's own code. An object cannot pass the draft rule by hiding what it holds."""
     kind = type(value)
     if kind in _PLAIN_VALUES:
+        # NaN and infinity are not valid JSON, so the transport could not send them.
+        if kind is float and not math.isfinite(value):
+            raise InvalidParameters(messages.INVALID_PARAMETERS)
         return value
-    if (
-        kind not in (dict, list, tuple, set, frozenset)
-        or id(value) in path
-        or len(path) >= MAX_DEPTH
-    ):
+    if kind not in (dict, list, tuple) or id(value) in path or len(path) >= MAX_DEPTH:
         raise InvalidParameters(messages.INVALID_PARAMETERS)
     inner = path | {id(value)}
     if kind is dict:
@@ -61,7 +61,7 @@ def _copy_value(value: Any, path: frozenset[int]) -> Any:
             raise InvalidParameters(messages.INVALID_PARAMETERS)
         return {key: _copy_value(item, inner) for key, item in value.items()}
     copied = [_copy_value(item, inner) for item in value]
-    return copied if kind is list else kind(copied)
+    return copied if kind is list else tuple(copied)
 
 
 def _copy_params(params: Mapping[str, Any] | None) -> dict[str, Any]:
@@ -94,7 +94,7 @@ def _holds_released(params: dict[str, Any]) -> bool:
         elif isinstance(value, dict):
             pending.extend(value.keys())
             pending.extend(value.values())
-        elif isinstance(value, list | tuple | set | frozenset):
+        elif isinstance(value, list | tuple):
             pending.extend(value)
     return False
 

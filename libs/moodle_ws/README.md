@@ -31,8 +31,8 @@ their own. `call()` returns the transport's answer unchanged.
   function. This needs no parameter names, which B4 does not list yet. A sentence containing the word,
   such as feedback text, is allowed.
 - **Parameters that are not plain data**, on every function. `params` must be a mapping of text,
-  numbers, booleans, `None`, lists, tuples, sets and dicts, with text or integer keys, at most 32 levels
-  deep. `bytes`, `bytearray`, generators, subclasses and other objects raise `InvalidParameters`. The
+  numbers, booleans, `None`, lists, tuples and dicts, with text or integer keys, at most 32 levels
+  deep. Sets, frozensets, NaN and infinity are refused too, because they are not valid JSON and a transport could not send them. `bytes`, `bytearray`, generators, subclasses and other objects raise `InvalidParameters`. The
   transport receives a private copy, so it cannot change the caller's data.
 
 Parameter names are not checked. An empty `parameters` list in the contract means "not yet determined"
