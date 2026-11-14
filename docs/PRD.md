@@ -551,8 +551,11 @@ Slugs: lowercase ASCII, hyphens, immutable. Numbers zero-padded to two digits.
   the course folder (for example `01-setup/02-install-python`) (C-08).
 - All eight path fields, `lesson_id` included, follow exactly the same relative-path rule: not
   empty; not absolute; no URL scheme or drive letter; forward slashes only, no backslashes; no
-  whitespace; no `?` or `#`; no empty, `.` or `..` segment. Shared test cases:
-  `contracts/test-vectors/relative-path.v1.json`.
+  whitespace; no `?` or `#`; no empty, `.` or `..` segment; no control or format character, that
+  is, nothing in the Unicode 15.0.0 categories Cc and Cf (the complete categories, as listed in
+  the schema's `relative_path` description; private-use, surrogate and unassigned code points are
+  not rejected as categories). The list is pinned to Unicode 15.0.0; moving to a newer version is
+  a contract change. Shared test cases: `contracts/test-vectors/relative-path.v1.json`.
 - `captions` contains at least one entry with `lang` exactly `"en"` (the required
   `captions.en.vtt`, B6.2).
 - Required: `schema`, `course_slug`, `lesson_id`, `title`, `duration_s`, `tracks`, `captions`,

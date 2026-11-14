@@ -1,5 +1,5 @@
 {
-  "$comment": "Shared test vectors for the B6 relative path rule (PRD B6.3, C-08): the $defs/relative_path pattern in contracts/lesson-manifest.v1.schema.json. Every 'valid' path must be accepted and every 'invalid' path rejected by the schema and by any library that validates media paths (libs/media_paths). 'rules' names every rule the path breaks. Rule ids: empty (the path is empty); backslash (forward slashes only); whitespace (no whitespace anywhere); question-mark and hash (no ? or #); url-scheme (no scheme such as https:); drive-letter (no C: and so on); absolute (no leading /); empty-segment (no // and no trailing /); dot-segment (no '.' segment); dot-dot-segment (no '..' segment). Test data only.",
+  "$comment": "Shared test vectors for the B6 relative path rule (PRD B6.3, C-08): the $defs/relative_path pattern in contracts/lesson-manifest.v1.schema.json. Every 'valid' path must be accepted and every 'invalid' path rejected by the schema and by any library that validates media paths (libs/media_paths). 'rules' names every rule the path breaks. Rule ids: empty (the path is empty); backslash (forward slashes only); whitespace (no whitespace anywhere); question-mark and hash (no ? or #); url-scheme (no scheme such as https:); drive-letter (no C: and so on); absolute (no leading /); empty-segment (no // and no trailing /); dot-segment (no '.' segment); dot-dot-segment (no '..' segment); control-character (no character in the Unicode 15.0.0 category Cc); format-character (no character in the Unicode 15.0.0 category Cf). Test data only.",
   "valid": [
     { "path": "720p.mp4", "why": "file in the lesson folder" },
     { "path": "captions.en.vtt", "why": "dots inside a name" },
@@ -25,10 +25,23 @@
     { "path": "lesson name.mp4", "rules": ["whitespace"] },
     { "path": " 720p.mp4", "rules": ["whitespace"] },
     { "path": "720p.mp4 ", "rules": ["whitespace"] },
-    { "path": "720p.mp4\n", "rules": ["whitespace"] },
-    { "path": "720p\n.mp4", "rules": ["whitespace"] },
-    { "path": "a\tb.mp4", "rules": ["whitespace"] },
+    { "path": "720p.mp4\n", "rules": ["whitespace", "control-character"] },
+    { "path": "720p\n.mp4", "rules": ["whitespace", "control-character"] },
+    { "path": "a\tb.mp4", "rules": ["whitespace", "control-character"] },
     { "path": "a\u00a0b.mp4", "rules": ["whitespace"] },
+
+    { "path": "720p\u0000.mp4", "rules": ["control-character"] },
+    { "path": "720p\u001b.mp4", "rules": ["control-character"] },
+    { "path": "720p\u007f.mp4", "rules": ["control-character"] },
+    { "path": "720p\u0080.mp4", "rules": ["control-character"] },
+    { "path": "720p\u009f.mp4", "rules": ["control-character"] },
+
+    { "path": "720p\u00ad.mp4", "rules": ["format-character"] },
+    { "path": "720p\u061c.mp4", "rules": ["format-character"] },
+    { "path": "720p\u200b.mp4", "rules": ["format-character"] },
+    { "path": "720p\u202e.mp4", "rules": ["format-character"] },
+    { "path": "slides/\ufeff001.jpg", "rules": ["format-character"] },
+    { "path": "720p\udb40\udc01.mp4", "rules": ["format-character"] },
 
     { "path": "720p.mp4?sig=abc", "rules": ["question-mark"] },
     { "path": "720p.mp4#t=10", "rules": ["hash"] },

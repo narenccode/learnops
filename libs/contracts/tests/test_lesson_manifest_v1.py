@@ -11,7 +11,12 @@ AUTOMATED here (structure only, by contracts/lesson-manifest.v1.schema.json):
     lowercase names (known: main, main-low, camera, screen; others such as audio accepted),
     slug and timestamp patterns, relative paths only (B6.3, C-08) on every path field, using
     the shared vectors in contracts/test-vectors/relative-path.v1.json, and that unknown fields
-    are accepted (PRD B.0, EXT-02).
+    are accepted (PRD B.0, EXT-02);
+  * no Unicode control or format character in a path (guide decision): the complete
+    Unicode 15.0.0 categories Cc and Cf, checked for every code point, at the edges and
+    inside every range, next to every range, and on all eight path fields; private-use,
+    surrogate and unassigned code points stay accepted. The expected sets come from Python's
+    Unicode database, and a test fails if that is not version 15.0.0.
 
 NOT automated here, and therefore NOT claimed as enforced (the schema's $comment lists them):
   * that the files the manifest names, and poster.jpg (which has no manifest field), exist in
@@ -19,7 +24,11 @@ NOT automated here, and therefore NOT claimed as enforced (the schema's $comment
   * that lesson.json is written last, only when every required file exists (FR-V-08);
   * that course_slug and lesson_id match the folder's place in the B6.1 path template;
   * the contents of the transcript file (B5.4 shape, owned by B5) and of the chapters, slides
-    and cues files (B6.2), which have no schema yet.
+    and cues files (B6.2), which have no schema yet;
+  * that the pattern behaves the same in an ECMA-262 (JavaScript) validator: no JavaScript
+    validator is part of the stack. The schema description says why it needs the u flag;
+  * that libs/media_paths uses the same Cc/Cf table: that library is not on main yet, and the
+    comparison test belongs to it.
 
 Each invalid case below must fail at the expected place with the expected schema keyword, so a
 case cannot pass for the wrong reason.
@@ -29,6 +38,8 @@ from __future__ import annotations
 
 import copy
 import json
+import re
+import unicodedata
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -352,6 +363,8 @@ PATH_RULES = {
     "empty-segment",
     "dot-segment",
     "dot-dot-segment",
+    "control-character",
+    "format-character",
 }
 
 PATH_FIELDS: list[tuple[str, Loc]] = [
@@ -488,6 +501,154 @@ def test_path_vectors_cover_every_rule() -> None:
 def test_path_vectors_have_no_duplicates() -> None:
     every = VALID_PATHS + BAD_PATHS
     assert len(every) == len(set(every))
+
+
+# --- paths: Unicode Cc and Cf (guide decision, PRD B6.3) -----------------------------------
+#
+# The schema rejects the complete Unicode 15.0.0 categories Cc and Cf. The expected sets
+# are taken from Python's Unicode database, which is 15.0.0 in Python 3.12; the first test
+# fails if it is not, because the schema's list is pinned and must not follow Python.
+
+UNICODE_VERSION = "15.0.0"
+CONTROL_AND_FORMAT = ("Cc", "Cf")
+
+
+def _code_points_in(categories: tuple[str, ...]) -> list[int]:
+    return [p for p in range(0x110000) if unicodedata.category(chr(p)) in categories]
+
+
+def _ranges(code_points: list[int]) -> list[tuple[int, int]]:
+    ranges: list[tuple[int, int]] = []
+    for p in code_points:
+        if ranges and ranges[-1][1] == p - 1:
+            ranges[-1] = (ranges[-1][0], p)
+        else:
+            ranges.append((p, p))
+    return ranges
+
+
+FORBIDDEN = set(_code_points_in(CONTROL_AND_FORMAT))
+FORBIDDEN_RANGES = _ranges(sorted(FORBIDDEN))
+
+
+def _name(code_point: int) -> str:
+    return f"U+{code_point:04X}"
+
+
+@pytest.fixture(scope="module")
+def path_validator(schema: dict[str, Any]) -> Draft202012Validator:
+    """A validator for $defs/relative_path alone, the definition all eight fields share."""
+    return Draft202012Validator(schema["$defs"]["relative_path"])
+
+
+def test_python_unicode_database_is_the_pinned_version() -> None:
+    assert unicodedata.unidata_version == UNICODE_VERSION, (
+        f"This Python uses Unicode {unicodedata.unidata_version}; the B6.3 relative-path "
+        f"rule is pinned to Unicode {UNICODE_VERSION}. A new Unicode version needs a "
+        "reviewed contract decision (PRD B.0) for the schema and libs/media_paths together."
+    )
+
+
+def test_unicode_15_0_has_2_cc_and_21_cf_ranges() -> None:
+    # UCD 15.0.0 DerivedGeneralCategory.txt: Cc 65 code points, Cf 170.
+    cc, cf = (_code_points_in((c,)) for c in CONTROL_AND_FORMAT)
+    assert (len(_ranges(cc)), len(cc), len(_ranges(cf)), len(cf)) == (2, 65, 21, 170)
+
+
+def test_schema_rejects_exactly_cc_and_cf_among_all_code_points(
+    schema: dict[str, Any],
+) -> None:
+    # Every code point, inside a name, through the schema's own pattern (jsonschema checks
+    # "pattern" with re.search, as here). Whitespace and the ASCII rules reject a few
+    # more; nothing else may differ.
+    pattern = re.compile(schema["$defs"]["relative_path"]["pattern"])
+    whitespace = {p for p in range(0x110000) if re.fullmatch(r"\s", chr(p))}
+    rejected = FORBIDDEN | whitespace | {ord(c) for c in ":\\?#"}
+    wrong = [
+        _name(p)
+        for p in range(0x110000)
+        if (pattern.search(f"a{chr(p)}.mp4") is None) != (p in rejected)
+    ]
+    assert wrong == []
+
+
+# First, middle and last code point of every range.
+INSIDE = sorted(
+    {p for start, end in FORBIDDEN_RANGES for p in (start, (start + end) // 2, end)}
+)
+# Just before and just after every range, unless whitespace (for example U+0020 after
+# the C0 controls), which the whitespace rule rejects.
+OUTSIDE = sorted(
+    {
+        p
+        for start, end in FORBIDDEN_RANGES
+        for p in (start - 1, end + 1)
+        if p >= 0 and p not in FORBIDDEN and not re.fullmatch(r"\s", chr(p))
+    }
+)
+
+
+@pytest.mark.parametrize("code_point", INSIDE, ids=_name)
+def test_every_cc_and_cf_range_is_rejected_at_its_edges_and_inside(
+    path_validator: Draft202012Validator, code_point: int
+) -> None:
+    for path in (
+        f"a{chr(code_point)}.mp4",
+        f"{chr(code_point)}a/b",
+        f"a/b{chr(code_point)}",
+    ):
+        assert ((), "pattern") in error_keys(path_validator, path)
+
+
+@pytest.mark.parametrize("code_point", OUTSIDE, ids=_name)
+def test_code_point_next_to_a_cc_or_cf_range_is_accepted(
+    path_validator: Draft202012Validator, code_point: int
+) -> None:
+    assert messages(path_validator, f"a{chr(code_point)}.mp4") == []
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "a\ue000.mp4",  # Co: private use
+        "a\U000f0000.mp4",  # Co: supplementary private use
+        "a\ud800.mp4",  # Cs: lone high surrogate
+        "a\udfff.mp4",  # Cs: lone low surrogate
+        "a\uffff.mp4",  # Cn: a noncharacter
+        "a\u2065.mp4",  # Cn: unassigned, between two Cf ranges
+        "a\U0001f600.mp4",  # So: an emoji outside the BMP
+        "a\U00011083.mp4",  # Lo: Kaithi letter, same high surrogate as U+110BD
+    ],
+    ids=repr,
+)
+def test_private_use_surrogate_and_unassigned_are_not_rejected_by_category(
+    path_validator: Draft202012Validator, path: str
+) -> None:
+    # Guide decision: only Cc and Cf are rejected as categories.
+    assert messages(path_validator, path) == []
+
+
+@pytest.mark.parametrize(
+    "char",
+    [
+        "\x00",
+        "\x7f",
+        "\x9f",
+        "\u00ad",
+        "\u061c",
+        "\u202e",
+        "\u2066",
+        "\ufeff",
+        "\U000e0001",
+    ],
+    ids=lambda c: _name(ord(c)),
+)
+@pytest.mark.parametrize(("label", "loc"), PATH_FIELDS, ids=[f for f, _ in PATH_FIELDS])
+def test_every_path_field_rejects_control_and_format_characters(
+    validator: Draft202012Validator, doc: Doc, label: str, loc: Loc, char: str
+) -> None:
+    set_at(loc, f"720p{char}.mp4" if label != "lesson_id" else f"01-setup{char}")(doc)
+    assert (loc, "pattern") in error_keys(validator, doc)
 
 
 # --- invalid: course_slug ------------------------------------------------------------------
