@@ -20,6 +20,7 @@ import pytest
 from moodle_ws import (
     GradeWriteNotAllowed,
     MoodleClient,
+    MoodleUnreachable,
     Site,
     SiteSettings,
     WorkflowStateNotAllowed,
@@ -186,7 +187,8 @@ def test_a_receipt_is_used_up_even_if_the_send_fails(settings: SiteSettings) -> 
     transport = FakeTransport(failure=TimeoutError("lost"))
     client = MoodleClient(settings, transport)
     receipt = _issue_receipt(client, VALID_WRITE)
-    with pytest.raises(Exception):
+    # A raw TimeoutError from the transport becomes the library's own MoodleUnreachable.
+    with pytest.raises(MoodleUnreachable):
         client._send_checked_write(receipt)
     transport.failure = None
     with pytest.raises(GradeWriteNotAllowed):

@@ -2,7 +2,9 @@
 
 call() enforces the allow-list and the draft rule before the transport is touched, so a refused
 call never reaches Moodle. This is a second guard behind the restricted external service. A grade
-write is never sent by call(): only grade_write.write_draft_grade can send one (see WriteReceipt).
+write is never sent by call(): the supported path is grade_write.write_draft_grade, and a sealed,
+single-use WriteReceipt stops a send that skips its checks by mistake. Python has no private names,
+so the receipt cannot stop code that deliberately imports them (see WriteReceipt).
 """
 
 from __future__ import annotations
