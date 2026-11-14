@@ -123,7 +123,7 @@ Test names are in `test_moodle_ws_v1.py`.
 
 | Rule | PRD |
 |---|---|
-| Only the functions listed in the contract are called (`libs/moodle_ws` will build its allow-list from the example; the library does not exist yet) | B4 |
+| Only the functions listed in the contract are called. `libs/moodle_ws` builds its allow-list from the example (`test_allowlist.py`: `test_the_list_equals_the_contract_example`); the client that refuses any other function follows. Not enforced against a real Moodle: there is no real transport yet | B4 |
 | One service account per site, with a token restricted to those functions and the capabilities in rules §4 (the lists are tested; that they are enough is lab check 9) | B4, SEC-03 |
 | The token is stored only in the environment | SEC-03, C-06 |
 | A grade write uses workflow state `readyforrelease`, never `released`, and counts as done only when both the state and the grade value are confirmed; the grade value is read with `mod_assign_get_grades` (R1); the write rules R1 to R11 are contract text here, and their enforcement in `libs/moodle_ws` is a separate follow-up; only approved drafts are written | B4, C-09 |
