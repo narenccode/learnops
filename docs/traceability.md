@@ -17,6 +17,23 @@ runs it in CI yet. What is not checked yet is listed in `libs/contracts/README.m
 | Unreadable examples, unusable schemas (unreadable, invalid, a `$schema` that is not a string) and content nested too deeply are reported with a hint instead of a traceback. A `$ref` that cannot be resolved is reported the same way, **but only when an example reaches it** | E1, B.0 rule 4 | `test_check_unreadable_example_is_an_error`, `test_check_non_string_schema_keyword_is_an_invalid_schema`, `test_check_deeply_nested_example_is_unreadable_not_a_traceback`, `test_check_recursion_while_validating_is_reported_for_each_affected_example`, `test_check_deeply_nested_schema_is_reported_and_its_examples_not_validated`, `test_check_examples_of_an_unusable_schema_are_not_validated`, `test_check_reference_reached_by_the_last_example_leaves_none_passed`, `test_check_broken_schema_without_examples_reports_only_the_schema` |
 | Known limits are stated and pinned by tests, so the documents cannot promise more than the code does: a dangling `$ref` no example reaches is not found; `date` is checked but `date-time` is not; `referencing`, imported directly, is a pinned and licensed dependency | CLAUDE.md §2.10 | `test_check_dangling_reference_in_a_branch_no_example_reaches_is_not_found`, `test_check_asserts_date_but_not_date_time`, `test_check_documented_format_lists_match_the_installed_checker`, `test_referencing_is_a_declared_pinned_dependency_with_its_licence` |
 
+## Contract examples validate against their schemas (PRD B.0 rule 1, E1), Release 0 foundation
+
+Files: `libs/contracts/validate_examples.py` (run by CI's "Validate contract examples" step), tests
+in `libs/contracts/tests/test_validate_examples.py`. Shared validator reference EXT-09 (the
+`contracts` library); this is the E1 "Contract" test level ("every example ... validates against
+its schema, CI, every PR"). It does not cover "generated files" from E1, because no module
+generates contract files yet. What is not checked yet is listed in `libs/contracts/README.md`. Each schema and its examples are checked by the engine
+(previous section).
+
+| Rule | PRD | Test(s) |
+|---|---|---|
+| Every versioned schema has at least one example | B.0 rule 1 | `test_schema_without_an_example_in_either_layout_is_an_error`, `test_no_schemas_at_all_is_an_error`, `test_several_schemas_are_each_paired_with_their_own_examples`, `test_both_example_layouts_work_alone_and_together` |
+| Every example (JSON or YAML) validates against its schema; CI fails otherwise | E1 | `test_real_repository_examples_all_pass`, `test_invalid_example_names_example_schema_place_and_keyword`, `test_invalid_example_is_one_schema_violation`, `test_one_failure_among_passing_examples_still_fails`, `test_script_runs_as_ci_runs_it` |
+| Unreadable examples and broken schemas are errors, never skipped | E1 | `test_unreadable_example_is_an_error`, `test_examples_of_an_unusable_schema_are_counted_but_not_validated` |
+| A `$ref` that cannot be resolved is reported with a hint, never a traceback | B.0 rule 4 | `test_examples_of_an_unusable_schema_are_counted_but_not_validated` (cases `dangling-local-ref`, `external-ref`) |
+| Examples in the folder layout and in the flat layout `<name>.v<N>.<suffix>.json` are both validated; `v1` never takes `v10` | B.0 rule 1 | `test_both_example_layouts_work_alone_and_together`, `test_several_schemas_are_each_paired_with_their_own_examples`, `test_invalid_example_names_example_schema_place_and_keyword` (flat case) |
+
 ## B1 course package contract (v1), Release 0 foundation
 
 Files: `contracts/course-package.v1.schema.json`, `contracts/examples/course-package.v1/`,
