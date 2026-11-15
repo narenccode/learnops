@@ -11,8 +11,8 @@
   "$defs": {
     "relative_path": {
       "type": "string",
-      "pattern": "^(?![\\s\\S]*[\\u0000-\\u001F\\u007F-\\u009F\\u00AD\\u0600-\\u0605\\u061C\\u06DD\\u070F\\u0890-\\u0891\\u08E2\\u180E\\u200B-\\u200F\\u202A-\\u202E\\u2060-\\u2064\\u2066-\\u206F\\uFEFF\\uFFF9-\\uFFFB\ud804\udcbd\ud804\udccd\ud80d\udc30-\ud80d\udc3f\ud82f\udca0-\ud82f\udca3\ud834\udd73-\ud834\udd7a\udb40\udc01\udb40\udc20-\udb40\udc7f])(?![A-Za-z][A-Za-z0-9+.-]*:)(?!\\.\\.?(?:/|(?![\\s\\S])))[^/\\s?#\\\\]+(?:/(?!\\.\\.?(?:/|(?![\\s\\S])))[^/\\s?#\\\\]+)*(?![\\s\\S])",
-      "description": "The relative-path rule of the lesson manifest (contracts/lesson-manifest.v1.schema.json, $defs/relative_path; PRD B6.3, C-08), copied here with the same pattern text so that this file can be used on its own. A test fails if the two patterns differ. The path is relative to the lesson folder."
+      "pattern": "^(?![\\s\\S]*[\\u0000-\\u001F\\u007F-\\u009F\\u00AD\\u0600-\\u0605\\u061C\\u06DD\\u070F\\u0890-\\u0891\\u08E2\\u180E\\u200B-\\u200F\\u202A-\\u202E\\u2060-\\u2064\\u2066-\\u206F\\uFEFF\\uFFF9-\\uFFFB\ud804\udcbd\ud804\udccd\ud80d\udc30-\ud80d\udc3f\ud82f\udca0-\ud82f\udca3\ud834\udd73-\ud834\udd7a\udb40\udc01\udb40\udc20-\udb40\udc7f])(?![A-Za-z][A-Za-z0-9+.-]*:)(?!\\.\\.?(?:/|(?![\\s\\S])))[^/\\s?#%\\\\]+(?:/(?!\\.\\.?(?:/|(?![\\s\\S])))[^/\\s?#%\\\\]+)*(?![\\s\\S])",
+      "description": "The relative-path rule of the lesson manifest (contracts/lesson-manifest.v1.schema.json, $defs/relative_path; PRD B6.3, C-08), copied here with the same pattern text so that this file can be used on its own. A test fails if the two patterns differ. The path is relative to the lesson folder. No percent sign (%) anywhere, so no percent-encoded form such as %2e or %252e (guide decision, as in the manifest)."
     },
     "slide": {
       "type": "object",

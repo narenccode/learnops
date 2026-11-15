@@ -391,6 +391,33 @@ def test_slide_thumbnail_breaking_the_relative_path_rule_is_rejected(
     assert validate_slides([slide(thumb=thumb)]).errors
 
 
+# --- no percent sign in a path (guide decision, B6.3 relative_path) ------------------------
+
+
+@pytest.mark.parametrize(
+    "thumb",
+    [
+        "slides/%2e.jpg",
+        "slides/%2E.jpg",
+        "slides/%252e.jpg",
+        "slides/%25%32%65.jpg",
+        "slides/100%.jpg",
+        "slides/a%2fb.jpg",
+        "slides/%/001.jpg",
+        "slides/%2e%2e/001.jpg",
+    ],
+)
+def test_slide_thumbnail_with_a_percent_sign_is_rejected(thumb: str) -> None:
+    assert validate_slides([slide(thumb=thumb)]).errors
+
+
+@pytest.mark.parametrize(
+    "thumb", ["slides/001.jpg", "slides/12.jpg", "slides/week-1/001.jpg"]
+)
+def test_slide_thumbnail_without_a_percent_sign_is_accepted(thumb: str) -> None:
+    assert validate_slides([slide(thumb=thumb)]).ok
+
+
 @pytest.mark.parametrize(
     "bad",
     [
@@ -582,6 +609,33 @@ def test_url_ref_is_not_subject_to_the_relative_path_rule() -> None:
     assert (
         relative.search(ref) is None
     ), "the example url must break the relative-path rule"
+    assert validate_cues([cue(type="url", ref=ref)]).ok
+
+
+@pytest.mark.parametrize(
+    "ref",
+    [
+        "%2e%2e/x.png",
+        "images/%252e%252e/x.png",
+        "images/a%5cb.png",
+        "images/%25%32%65.png",
+        "100%.png",
+        "%",
+    ],
+)
+def test_image_ref_with_a_percent_sign_is_rejected(ref: str) -> None:
+    assert validate_cues([cue(type="image", ref=ref)]).errors
+
+
+@pytest.mark.parametrize(
+    "ref",
+    [
+        "https://example.org/a%20b",
+        "https://example.org/a%2Fb?q=100%25#top",
+    ],
+)
+def test_url_ref_with_a_percent_sign_is_accepted(ref: str) -> None:
+    # The no-% rule is the path rule (C-08) and does not apply to a url ref.
     assert validate_cues([cue(type="url", ref=ref)]).ok
 
 
