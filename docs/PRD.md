@@ -394,6 +394,21 @@ HTML table in the Moodle assignment description; the grading assistant parses it
 
 - `Points` sum to the assignment's `points`.
 - `Check` is optional; allowed values are defined in §C3.5 (machine checks). `—` means mentor judgement only.
+- **Check formats (v1).** An assignment body has one marking table and uses only the checks of
+  §C3.5. When a `Check` cell has several checks, they are separated by `;` (as in the example
+  above).
+  - `readme_sections:<a,b,c>`: a comma-separated list of section names. Each name is matched
+    case-insensitively, ignoring spaces around it, against the text of the Markdown headings (any
+    level) of the repository's README. Every listed section must exist. A section name cannot
+    contain a comma.
+  - `word_count:<n>`: `n` is a whole number of at least 1, the minimum number of words in the
+    report. A word is a piece of the report text between whitespace. Markup is removed before
+    counting only when the report comes from online text (§B1.5); a report file is counted as it
+    is.
+  - `http_ok:<field>`: `demo_url` is the only field in v1.
+  - An unknown check name fails validation (§C3.5). The `command:<name>` check and its
+    configuration, the argument format of `repo_file:<path>`, and the other parsing details of a
+    marking table are not defined here.
 - The HTML rendering keeps the `data-marking-table="v1"` attribute so the table can be parsed back.
 
 ### B1.4 Protected activities and output modes
@@ -413,6 +428,100 @@ duplicated** by LearnOps:
   excluded. The generated sections' numbers must not collide with the template's protected section
   (configurable `protected_section` number).
 - The validator rejects a package that contains a protected `idnumber` in either mode.
+
+### B1.5 Submission content
+
+A learner's submission carries the parts that a marking table's checks read: a repository link, a
+demo link and a report. This section says how a reader of submissions finds each part. It does not
+say how a check decides pass or fail. A submission has online text and, where `submission` (B1.1)
+includes `file`, may have uploaded files. The online text carries labelled lines:
+
+1. **Labels.** The labels are `Repository:`, `Demo:` and `Report:`. A label is matched without
+   regard to case, at the start of a line; spaces before the label are ignored. One label per line.
+2. **Values.** The value of `Repository:` and `Demo:` is the text after the colon, with the spaces
+   at both ends removed. B1 does not require `https`; whether a link works is decided by the check
+   that reads it.
+3. **Report.** The report is the text after `Report:` (text on the same line counts), up to the end
+   of the online text. A line inside the report that starts with a label, for example `Demo:`, is
+   part of the report and is not a label.
+4. **Report file.** When the online text has no `Report:` section and the assignment accepts
+   files, a file named `report.md` is the report; if there is none, a file named `report.txt`.
+   Other uploaded files are ignored by grading in v1.
+5. **HTML.** Online text may arrive as editor HTML. The markup is removed first, and each paragraph
+   or line break ends a line. Then rules 1 to 4 apply. *The exact result for HTML is unverified
+   until the lab check on Moodle 4.5 and 5.3 (App-C); the contract can only gain optional fields
+   after the freeze (EXT-02).*
+6. **Nothing is repaired.** Text that does not match rule 1, such as a misspelled label or a label
+   that is not at the start of a line, is not a label.
+7. **Missing and repeated labels.** If `Repository:` or `Demo:` is not found, the check that reads
+   it is recorded as `error` with reason `field_missing`. If it is found more than once before
+   the report starts, the check is recorded as `error` with reason `field_repeated` (the first
+   one does not win). If there is no report (no `Report:` section and no report file), the check
+   that reads the report is recorded as `error` with reason `field_missing`.
+8. **What each check reads.** `repo_clone` reads `Repository`; `http_ok:demo_url` reads `Demo`;
+   `word_count` reads the report.
+9. **Task text.** A task body should tell the learner how to label each part, for example with the
+   three lines of example 1 below. This is guidance and is not validated.
+
+**Not defined in v1.** This section does not say how a reader treats an empty label value, line
+endings and trailing blank lines, HTML details beyond rule 5 (such as character entities and
+links), or an assignment whose `submission` has only `onlinetext` or only `file`. These are open
+decisions, listed in `docs/traceability.md`.
+
+**Examples.** Shared test cases, with the expected results, are in
+`contracts/test-vectors/submission.v1.json`. Every module that reads submissions must give these
+results. The five examples:
+
+1. *All labels.*
+
+   ```text
+   Repository: https://example.org/alice/demo-assistant
+   Demo: https://example.org/alice/demo
+   Report: I built a small assistant. It worked after I fixed the prompt.
+   ```
+
+   All three parts are found. The report has 12 words.
+
+2. *Labels in HTML* (expected result unverified until the lab check).
+
+   ```text
+   <p>Repository: https://example.org/alice/demo-assistant</p><p>Demo: https://example.org/alice/demo</p><p>Report: I built a small assistant.<br>It worked after I fixed the prompt.</p>
+   ```
+
+   The same three parts are found. The report is two lines and has 12 words.
+
+3. *Missing demo.*
+
+   ```text
+   Repository: https://example.org/bob/demo-assistant
+   Report: Short note.
+   ```
+
+   The `http_ok:demo_url` check is `error` with reason `field_missing`. The repository and the
+   report (2 words) are found.
+
+4. *Report as a file.* The online text has no `Report:` section:
+
+   ```text
+   Repository: https://example.org/carol/demo-assistant
+   Demo: https://example.org/carol/demo
+   ```
+
+   and the learner uploads `report.md` with the text `# Reflection`, an empty line, and
+   `I built an assistant and it answered badly at first.`. The report is `report.md`, counted as it
+   is (12 words, the `#` is one of them).
+
+5. *A report that contains `Demo:`.*
+
+   ```text
+   Repository: https://example.org/dave/demo-assistant
+   Demo: https://example.org/dave/demo
+   Report: The next line starts with the word Demo, and it is part of this report.
+   Demo: https://example.org/dave/other
+   ```
+
+   The demo is the first `Demo:` line. The last line is part of the report (17 words), so it is not
+   a repeated label.
 
 ## B2. Course model (v1)
 

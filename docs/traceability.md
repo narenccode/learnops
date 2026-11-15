@@ -102,6 +102,48 @@ committed.
 | Marking table present and valid: markers, columns, points sum, allowed `Check` names | B1.3, C3.5 | CK-09 |
 | `protected_section` collision (configured protected idnumbers are enforced above) | B1.4 | `protected_section` has no default in the PRD; CK-07 covers the course model |
 
+### B1 submission content (Q6, Q9): vectors, tests and open decisions
+
+Files: the PRD text (B1.3 "Check formats" and the new B1.5), `contracts/test-vectors/submission.v1.json`
+and `libs/contracts/tests/test_submission_vectors_v1.py`. The rules were decided by the guide on
+PR #61 (2026-11-11 and 2026-11-13). No schema, example package, validator or library code changes.
+The tests check the data and the text only: no reader of submissions exists yet.
+
+| What is checked | PRD | Test(s) |
+|---|---|---|
+| The vectors file is LF JSON with a version and eleven cases with unique ids; each case has the exact shape and closed vocabularies; expected values are consistent (a word count equals the words of the report, a report file named as the source is in the input, a part has a value or an error, never both); the status is `derived` or `unverified-until-lab`, and only the HTML case is unverified | B1.5 | `test_vectors_file_is_lf_json_with_a_version_and_eleven_cases`, `test_case_has_the_required_shape_and_consistent_expected_values` (every case), `test_only_the_html_case_is_unverified_until_the_lab` |
+| The shape check and the duplicate-id check catch the mistakes they exist for (a missing key, the retired status `confirmed`, an unknown or repeated reason code, a wrong word count, a value with an error, a file source with no file, an HTML case marked `derived`, an unknown rule id or input key, a rule that a result cannot show, a word count that `covers` does not declare) | B1.5 | `test_the_shape_check_catches_what_it_exists_for` (one negative control for each mistake listed), `test_the_duplicate_id_check_catches_a_repeated_id` |
+| `covers` says what a case shows: rules 8 and 9 are never listed (a result that lists the three parts cannot show them); the word count is listed exactly when the report has a word count; an expected error lists rule 7, an HTML case rule 5, a report from a file rule 4; rules 1 to 7 and the word count are each covered by at least one of the eleven cases | B1.5 | `test_case_has_the_required_shape_and_consistent_expected_values` (every case), `test_every_rule_a_vector_can_show_is_covered_by_a_vector` |
+| The five PRD examples are the five required vectors: same text, word counts and reason codes; example 4 quotes the same report file | B1.5 | `test_prd_examples_are_the_five_required_vectors` |
+| The PRD has the B1.3 check formats (`;`, `readme_sections`, `word_count`, `http_ok:demo_url` only, unknown names fail) and says what it does not define | B1.3, C3.5 | `test_prd_b13_has_the_check_formats_and_names_what_it_does_not_define` |
+| B1.5 has nine numbered rules, both reason codes, the "should" rule for task text and the unverified HTML note; every `covers` entry of a vector names a rule that exists; the PRD names the vectors file | B1.5 | `test_prd_b15_has_nine_numbered_rules_and_both_reason_codes`, `test_every_covers_entry_names_a_rule_the_prd_has`, `test_the_prd_mentions_the_vectors_file` |
+| The open points are written down, not decided: B1.5 says "Not defined in v1", this section lists each open decision with who decides it, and no vector covers one (no carriage return, empty label value, HTML entity or link, or trailing whitespace; URLs only on `example.org`) | B1.5 | `test_prd_b15_says_what_v1_does_not_define`, `test_traceability_lists_the_open_decisions_and_who_decides_them`, `test_case_does_not_decide_an_open_point` (every case), `test_the_open_point_check_catches_what_it_exists_for` (one negative control for each kind of open point listed) |
+
+**Not enforced (no reader exists).** The marking-table parser (Module 2, `libs/contracts`, used first
+by CK-09) and the submission extractor (Module 3, Release 4) are not written; the extractor must
+pass these vectors, and B8.4 (PR #31) must use the same vectors. The held rules
+`marking_table_not_checked` and `check_vocabulary_not_checked` stay held. The HTML expected result
+is unverified until the lab check on Moodle 4.5 and 5.3. The ten other expected results are
+`derived`: the rules are the guide's, but each example and its result still need a reviewer's
+confirmation. The "should" rule for task text (B1.5 rule 9) is guidance and is not validated.
+
+#### Open decisions (B1 submission content)
+
+Not decided in this change and not turned into rules. B1.5 and B1.3 say "not defined"; no vector
+covers them.
+
+| Open decision | Who decides | In v1 for now |
+|---|---|---|
+| An empty label value (`Demo:` with nothing after it) | The guide | Not defined |
+| Line endings and trailing blank lines (does online text reach a reader with `\r\n`?) | The guide, with Harshitha (M3) | Not defined |
+| HTML details beyond rule 5: character entities, links, nested tags, non-breaking spaces | The guide, after the lab check | Not defined; the HTML vector is unverified |
+| An assignment whose `submission` has only `onlinetext` or only `file` | The guide | Only the condition in rule 4 is stated |
+| The argument format of `repo_file:<path>`, how a check's name is split from its argument, and criterion keys (`docs/design/grading.md` §4.3b) | The guide, with Shraddha's input (M2) | Not defined here |
+| Whether the B1.3 bullet is enough for the marking-table parser, and whether parser test vectors are wanted | Shraddha (M2) | The bullet as written; no parser vectors |
+| Whether the vector layout fits the extractor, whether `field_missing` and `field_repeated` match the grading result vocabulary, and which extra cases to add | Harshitha (M3) | The layout as written; eleven cases |
+| A test-only reference extractor so that the vectors run now | The guide, only if wanted | None: tests check data and text only |
+| A decision record (`docs/decisions/`) for Q6 and Q9 | The guide, only if wanted | None: the decisions are on PR #61 and in the PRD text |
+
 ### Not mapped
 
 Left out because the PRD does not establish the mapping:
