@@ -147,6 +147,47 @@ These are pending and are not claimed by this change:
 - **The open decisions** in the B8.1 README (§9) are pending guide confirmation. This entry does
   not settle them.
 
+## B8.5 lecture video test data set, Release 0 foundation
+
+Files: `testdata/b8-5-lecture-videos/` (README, folder `.gitignore`, placeholder outlines and
+transcripts), the B8.5 inventory in `testdata/README.md`, the guide's decision
+`docs/decisions/0004-b8-5-lecture-videos.md`, and the validation test
+`libs/contracts/tests/test_b8_5_dataset.py`. B8.5 is a test data set (PRD B8), not a functional
+requirement, so it has no FR ID and no row in the table at the top. It is the data for PRD G-6
+(caption word error rate, Release 3), App-C 7 (the error-rate target from a first baseline run)
+and App-C 8 (licence or consent for every B8.5 video).
+
+**Status: PENDING.** No lecture is recorded, no consent line is written and no transcript is
+typed. The tests show that the committed placeholders are well formed and that the PENDING status
+is true. They do **not** show that B8.5 or App-C 8 is met.
+
+### Enforced by the test and covered by automated tests
+
+The checker in `test_b8_5_dataset.py` runs on the real set in this pull request, through two tests:
+
+| Rule | Source | Test(s) |
+|---|---|---|
+| The committed set has no errors: the ten fixed columns and well-formed rows, at least 5 lectures with unique `lecture-NN` ids, each cell in its documented form, outlines and transcripts that exist, a decision record with the exact consent sentence and a well-formed `## Consent lines` section, and the files Git tracks in the set folder are exactly the permitted paths | B8.5, decision 0004, set README | `test_the_real_set_has_no_errors` |
+| The Status is true: both READMEs agree; COMPLETE needs no gap and a real Total line; PENDING needs something still missing and keeps the Total line PENDING; the total is checked against 1800 s once durations are filled in | B8.5 (at least 30 minutes, PRD §B8 as updated in #47), decision 0004 | `test_the_real_status_is_true` |
+
+### Not yet covered by tests
+
+The checker also contains rules that the real set (PENDING, no consent lines) does not exercise,
+for example duration and SHA-256 forms, consent-line forms, placeholder detection, the Total line
+and Git inspection. Tests that run the checker on broken, partly filled and complete synthetic
+sets, and on `git ls-files` itself, are not in this pull request. Until they are added, those
+rules are implemented but **not shown to work**.
+
+### Not verified (by this test or anything else in the repository)
+
+- That a recording exists, that its duration and SHA-256 are right, that the speech is Indian
+  English, or that the speaker spoke from the outline (checked by people).
+- That a transcript is accurate (Harshitha's check) and which model, if any, drafted it.
+- That recordings are stored as agreed, and that speakers were told about the interim storage.
+- That a speaker personally wrote their consent line (shown by Git history and review).
+- Any use of the set by the video pipeline or the caption error-rate measurement (G-6, App-C 7);
+  no Moodle restore, checker, BigBlueButton or Moodle 4.5/5.3 integration is involved or tested.
+
 ## B5 model and speech interface contract (v1), Release 0 foundation
 
 Files: `contracts/model-interface.v1.schema.json`, `contracts/examples/model-interface.v1.*.json`
