@@ -1,3 +1,4 @@
+import posixpath
 from collections.abc import Callable
 from string import Formatter
 
@@ -20,6 +21,7 @@ from media_paths.paths import (
     course_lesson_path,
     live_class_path,
 )
+from media_paths.validation import validate_relative_path
 
 # Required placeholders in a lesson / live-class template, for tests that add
 # one more placeholder or literal text around them.
@@ -77,6 +79,18 @@ def test_default_templates_are_loaded_checked_templates() -> None:
         COURSE_LESSON_TEMPLATE
     )
     assert DEFAULT_LIVE_CLASS_TEMPLATE == LiveClassTemplate(LIVE_CLASS_TEMPLATE)
+
+
+def test_posixpath_join_adds_a_file_name_to_a_folder_with_or_without_a_slash() -> None:
+    custom = check_course_lesson_template(LESSON_IDS.rstrip("/"))
+    folders = [
+        course_lesson_path("python", 1, "basics", 2, "intro"),
+        live_class_path("python", "batch-01", 1, "recap"),
+        course_lesson_path("python", 1, "basics", 2, "intro", template=custom),
+    ]
+    assert [folder.endswith("/") for folder in folders] == [True, True, False]
+    assert all(validate_relative_path(posixpath.join(f, "720p.mp4")) for f in folders)
+    assert not any(validate_relative_path(f + "/720p.mp4") for f in folders[:2])
 
 
 def test_required_placeholders_are_the_guide_decision() -> None:

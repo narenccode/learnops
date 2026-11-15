@@ -19,65 +19,60 @@ courses/{course_slug}/{module_nn}-{module_slug}/{lesson_nn}-{lesson_slug}/
 courses/{course_slug}/live-{cohort}/{nn}-{topic_slug}/
 ```
 
-### Placeholders
-
-A custom template may use only the placeholders of its own path type, by plain name:
-
-| Path type | Placeholder | Filled from | Example |
-|---|---|---|---|
-| Course lesson | `{course_slug}` | `course_slug` | `build-ai-assistant` |
-| | `{module_nn}` | `module_number`, zero-padded | `01` |
-| | `{module_slug}` | `module_slug` | `setup` |
-| | `{lesson_nn}` | `lesson_number`, zero-padded | `02` |
-| | `{lesson_slug}` | `lesson_slug` | `install-python` |
-| Live class | `{course_slug}` | `course_slug` | `build-ai-assistant` |
-| | `{cohort}` | `cohort` | `batch-01` |
-| | `{nn}` | `number`, zero-padded | `01` |
-| | `{topic_slug}` | `topic_slug` | `python-introduction` |
-
-Numbers are zero-padded to two digits.
+A custom template may use only the placeholders of the default template of its own path type,
+by plain name. `{module_nn}`, `{lesson_nn}` and `{nn}` are filled from `module_number`,
+`lesson_number` and `number`, zero-padded to two digits. Slugs and `cohort` are lowercase ASCII
+letters and digits separated by single hyphens (`2026-01` is a valid cohort); numbers are an `int`
+from 1 to 99 (`bool`, `float` and `str` are rejected). A wrong type raises `TypeError`; a wrong
+value raises `ValueError`.
 
 ### Loading a custom template
 
-A custom template (for example `MEDIA_PATH_TEMPLATE`) is checked **once, when it is loaded**, not
-on every call. Load it with `check_course_lesson_template(text)` or `check_live_class_template(text)`
-and pass the result as `template=`:
+A custom template (for example `MEDIA_PATH_TEMPLATE`) is checked **once, when it is loaded**.
+Load it with `check_course_lesson_template(text)` or `check_live_class_template(text)`, pass the
+result as `template=`, and add a file name with `posixpath.join`, checking the result:
 
 ```python
 import os
+import posixpath
 
-from media_paths import check_course_lesson_template, course_lesson_path
+from media_paths import check_course_lesson_template, course_lesson_path, validate_relative_path
 
 template = check_course_lesson_template(os.environ["MEDIA_PATH_TEMPLATE"])  # at start-up
 folder = course_lesson_path("python", 1, "basics", 2, "intro", template=template)
+path = posixpath.join(folder, "720p.mp4")  # not folder + "/" + "720p.mp4"
+assert validate_relative_path(path)
 ```
+
+The defaults end with `/`; a custom template need not (no rule on this has been decided).
+`posixpath.join` handles both. `folder + "/" + "720p.mp4"` gives `.../intro//720p.mp4` for the
+defaults (an empty segment, rejected by `validate_relative_path`); `folder + "720p.mp4"` gives
+`.../intro720p.mp4` for a custom folder without a trailing `/`.
 
 The path functions accept only a loaded `CourseLessonTemplate` / `LiveClassTemplate`; a plain
 string raises `TypeError`. A template is rejected with a `ValueError` that names the problem if it:
 
-- leaves out a placeholder that identifies the item: `{course_slug}`, `{module_slug}` and
-  `{lesson_slug}` for lessons; `{course_slug}`, `{cohort}` and `{topic_slug}` for live classes.
-  Without them two items could share one folder and overwrite each other. The number
-  placeholders are optional;
-- puts two of those identifying placeholders in one path segment, such as
-  `{course_slug}{module_slug}/` (guide decision): `ab` + `c` and `a` + `bc` would share a folder.
-  A number placeholder may share the segment (`{module_nn}-{module_slug}`);
-- uses any other placeholder (including `{}`, `{0}`, `{name.attr}`, `{name[0]}`);
-- has a format spec or conversion (`{module_nn:>3}`, `{course_slug!r}`);
-- has unbalanced braces (write a literal brace as `{{` or `}}`);
-- produces a path that is not a safe relative path (see Validation below).
+- leaves out a placeholder that identifies the item (lessons: `{course_slug}`, `{module_slug}`,
+  `{lesson_slug}`; live classes: `{course_slug}`, `{cohort}`, `{topic_slug}`), so two items
+  could share one folder. Number placeholders are optional;
+- puts two of those in one path segment, such as `{course_slug}{module_slug}/` (guide decision:
+  `ab` + `c` and `a` + `bc` would share a folder). A number may share it (`{module_nn}-{module_slug}`);
+- uses any other placeholder (`{}`, `{0}`, `{name.attr}`, `{name[0]}`), has a format spec or
+  conversion (`{module_nn:>3}`) or unbalanced braces (use `{{` or `}}`), or produces a path that
+  is not a safe relative path (see Validation below).
 
-The result is the template's text with the values filled in. The default templates end with `/`;
-a custom template without a trailing `/` is accepted (no rule on this has been decided), so join a
-file name to the folder with an explicit `/` rather than by plain concatenation.
+**Custom templates can collide.** Nothing checks the two templates against each other, so the
+library does **not** prevent a lesson and a live class from getting the same folder (no rule on
+this has been decided). The defaults cannot collide (a lesson's module segment starts with two
+digits, a live-class segment with `live-`), but custom templates can, in either direction. Keep
+the two types apart yourself.
 
-### Input rules
-
-- Slugs and `cohort`: lowercase ASCII letters and digits separated by single hyphens (`2026-01`
-  is a valid cohort).
-- `module_number`, `lesson_number`, `number`: an `int` from 1 to 99 (`bool`, `float` and `str`
-  are rejected).
-- A wrong type raises `TypeError`; a wrong value raises `ValueError`.
+- Custom lesson template `courses/{course_slug}/{module_slug}/{lesson_slug}/`, `module_slug` =
+  `live-batch-01`, `lesson_slug` = `01-recap`: `courses/python/live-batch-01/01-recap/`, the
+  default live-class folder for cohort `batch-01`, number 1, topic `recap`.
+- Custom live-class template `courses/{course_slug}/{cohort}/{nn}-{topic_slug}/`, `cohort` =
+  `01-basics`, number 2, topic `intro`: `courses/python/01-basics/02-intro/`, the default lesson
+  folder for module 1 `basics`, lesson 2 `intro`.
 
 ## Validation
 
