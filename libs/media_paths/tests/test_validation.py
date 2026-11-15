@@ -28,6 +28,7 @@ import pytest
 from media_paths.validation import (
     CC_RANGES,
     CF_RANGES,
+    SLUG_PATTERN,
     UNICODE_VERSION,
     require_int_in_range,
     require_positive_int,
@@ -73,6 +74,12 @@ def test_invalid_slugs_are_rejected(slug: str) -> None:
 )
 def test_traversal_and_non_ascii_slugs_are_rejected(slug: str) -> None:
     assert validate_slug(slug) is False
+
+
+def test_slug_pattern_does_not_match_a_trailing_newline() -> None:
+    # Regression: with "$" a consumer calling SLUG_PATTERN.match("a\n") accepted it.
+    assert SLUG_PATTERN.match("a\n") is None
+    assert SLUG_PATTERN.match("a") is not None
 
 
 @pytest.mark.parametrize("value", [None, 1, 1.5, True, b"python", ["python"]])

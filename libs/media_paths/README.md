@@ -14,7 +14,9 @@ Shared Python library for validating LearnOps media paths.
   (`contracts/lesson-manifest.v1.schema.json`), one rule for both (guide decision). Not empty;
   forward slashes only; no whitespace; no `?`, `#` or `\`; no URL scheme or drive letter at the
   start (`https:`, `C:`); not absolute; no empty, `.` or `..` segment. A colon elsewhere
-  (`notes/b:c.md`, `12:30.mp4`) is allowed. Non-strings return `False`.
+  (`notes/b:c.md`, `12:30.mp4`) is allowed. A first segment that starts with letters and a colon
+  looks like a scheme and is rejected, for example `intro:part1.mp4` (`notes/intro:part1.mp4` is
+  allowed). Non-strings return `False`.
 - No `%` anywhere (guide decision): the B6.4 `none` signer appends the path to the media base
   URL, and a layer that decodes it, once or more, could turn an encoded form (`%2e`, `%252e`,
   `%25%32%65`, ...) into a dot or separator. Rejecting the sign covers every encoding depth; paths
@@ -24,7 +26,9 @@ Shared Python library for validating LearnOps media paths.
   rejected. Cf includes the bidi controls (U+061C, U+200E–U+200F, U+202A–U+202E,
   U+2066–U+2069), zero-width characters, the byte order mark (U+FEFF), the soft hyphen (U+00AD)
   and U+0600–U+0605, U+06DD. Private-use (Co), surrogate (Cs) and unassigned (Cn) code points
-  are **not** rejected as categories.
+  are **not** rejected as categories. A valid path can therefore contain a lone surrogate (for
+  example `"a\ud800.mp4"`), and encoding it with `path.encode("utf-8")` raises
+  `UnicodeEncodeError`. A caller that writes a path to disk, JSON or a URL must handle that error.
 - The Cc and Cf ranges are an explicit table in `validation.py` (`CC_RANGES`, `CF_RANGES`),
   copied from the Unicode Character Database 15.0.0
   ([`DerivedGeneralCategory.txt`](https://www.unicode.org/Public/15.0.0/ucd/extracted/DerivedGeneralCategory.txt)),

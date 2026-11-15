@@ -1,7 +1,7 @@
 import re
 from bisect import bisect_right
 
-SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*\Z")
 
 # The rule below is the B6.3 contract's `$defs/relative_path` pattern
 # (contracts/lesson-manifest.v1.schema.json, PR #32), which the guide made the
