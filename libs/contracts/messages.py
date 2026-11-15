@@ -114,6 +114,13 @@ EX_UNRESOLVABLE_REFERENCE_HINT = (
     "Fix the $ref so that it points at a definition inside this schema (for example "
     "'#/$defs/name'). References to other files are not loaded by this validator."
 )
+EX_SCHEMA_KEYWORD_NOT_TEXT = (
+    "the `$schema` keyword must be a string (a meta-schema URI)"
+)
+EX_NESTED_TOO_DEEP = "it is nested too deeply"
+EX_TOO_DEEP_TO_VALIDATE = (
+    "it is nested too deeply for the schema to check, or the schema's references loop"
+)
 EX_NOT_VALIDATED = "Not validated, because its schema could not be loaded."
 EX_NOT_VALIDATED_HINT = "Fix the schema problem reported above, then validate again."
 EX_UNREADABLE_EXAMPLE = "The example could not be read: {reason}."

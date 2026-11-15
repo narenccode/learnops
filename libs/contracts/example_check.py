@@ -2,9 +2,19 @@
 
 This is the engine of the repository-wide validator, `validate_examples.py` (a separate pull
 request, so nothing runs this module yet). It loads one JSON Schema and checks a list of example
-files against it. It only reads files and never raises for bad content: every problem is returned
-as a `Problem` with a message and a hint. Finding the schemas and their examples, the report and
-the command line are not here.
+files against it. It only reads files. Content it cannot use is returned as a `Problem` with a
+message and a hint instead of being raised: bad JSON or YAML, a file that is not UTF-8, a schema
+that is not valid (including a non-string `$schema`), content nested too deeply, and a `$ref` that
+cannot be resolved. What it does not promise:
+
+- A `$ref` is resolved only when an example reaches it, so a dangling reference in a branch that no
+  example uses (an optional property, one arm of `oneOf`) is not found.
+- Only the formats that `jsonschema.FormatChecker` asserts with the pinned packages are checked
+  (see the README); others, such as `date-time` and `uri`, are accepted without validation.
+- Time and memory are not bounded: a huge file or a pathological regular expression can exhaust
+  them.
+
+Finding the schemas and their examples, the report and the command line are not here.
 """
 
 from __future__ import annotations
@@ -55,7 +65,11 @@ class SchemaCheck:
 def check_schema_examples(
     schema_path: Path, schema_rel: str, examples: Sequence[tuple[Path, str]]
 ) -> SchemaCheck:
-    """Check each example, given as (file, repository-relative path), against the schema."""
+    """Check each example, given as (file, repository-relative path), against the schema.
+
+    A `$ref` that cannot be resolved makes the whole schema unusable, but only when an example
+    reaches it: a dangling reference in a branch no example uses is not found. When the schema is
+    unusable, every example is reported as not validated."""
     validator, schema_problem = load_validator(schema_path, schema_rel)
     problems = [schema_problem] if schema_problem else []
     outcomes: list[tuple[str, list[Problem]]] = []
@@ -98,22 +112,26 @@ def load_validator(
 ) -> tuple[Validator | None, Problem | None]:
     try:
         schema: Any = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeDecodeError, ValueError) as exc:
+    except (OSError, UnicodeDecodeError, ValueError, RecursionError) as exc:
         return None, Problem(
             "unreadable_schema",
-            messages.EX_UNREADABLE_SCHEMA.format(reason=_one_line(exc)),
+            messages.EX_UNREADABLE_SCHEMA.format(reason=_reason(exc)),
             messages.EX_UNREADABLE_SCHEMA_HINT,
             schema=schema_rel,
         )
     try:
         if not isinstance(schema, dict):
             raise SchemaError("the top level is not a JSON object")
+        # validator_for() looks `$schema` up in a dictionary of URIs: a number, a list or an
+        # object would raise AttributeError or TypeError there instead of SchemaError.
+        if not isinstance(schema.get("$schema", ""), str):
+            raise SchemaError(messages.EX_SCHEMA_KEYWORD_NOT_TEXT)
         cls = validator_for(schema, default=Draft202012Validator)
         cls.check_schema(schema)
-    except SchemaError as exc:
+    except (SchemaError, RecursionError) as exc:
         return None, Problem(
             "invalid_schema",
-            messages.EX_INVALID_SCHEMA.format(reason=_short(exc.message)),
+            messages.EX_INVALID_SCHEMA.format(reason=_reason(exc)),
             messages.EX_INVALID_SCHEMA_HINT,
             schema=schema_rel,
         )
@@ -126,22 +144,25 @@ def check_example(
 ) -> list[Problem]:
     try:
         document = _parse(path)
-    except (OSError, UnicodeDecodeError, ValueError, yaml.YAMLError) as exc:
+    except (
+        OSError,
+        UnicodeDecodeError,
+        ValueError,
+        yaml.YAMLError,
+        RecursionError,
+    ) as exc:
         # ValueError: JSON syntax and PyYAML's impossible dates.
-        return [
-            Problem(
-                "unreadable_example",
-                messages.EX_UNREADABLE_EXAMPLE.format(reason=_one_line(exc)),
-                messages.EX_UNREADABLE_EXAMPLE_HINT,
-                example=example_rel,
-                schema=schema_rel,
-            )
-        ]
+        return [_unreadable_example(example_rel, schema_rel, _reason(exc))]
     try:
         errors = sorted(validator.iter_errors(document), key=error_order)
+    except RecursionError:
+        # A deeply nested document, or a schema whose references loop (`{"$ref": "#"}`).
+        reason = messages.EX_TOO_DEEP_TO_VALIDATE
+        return [_unreadable_example(example_rel, schema_rel, reason)]
     except Unresolvable as exc:
         # Lazy: a reference is only resolved when an example reaches it, so this can appear on
-        # any example of the schema, not only the first.
+        # any example of the schema, not only the first. A dangling reference in a branch that
+        # no example reaches is never found: this check is not exhaustive.
         return [
             Problem(
                 "unresolvable_reference",
@@ -164,6 +185,25 @@ def check_example(
         )
         for error in errors
     ]
+
+
+def _unreadable_example(example_rel: str, schema_rel: str, reason: str) -> Problem:
+    return Problem(
+        "unreadable_example",
+        messages.EX_UNREADABLE_EXAMPLE.format(reason=reason),
+        messages.EX_UNREADABLE_EXAMPLE_HINT,
+        example=example_rel,
+        schema=schema_rel,
+    )
+
+
+def _reason(exc: BaseException) -> str:
+    """Why a file could not be used, in words for the report."""
+    if isinstance(exc, RecursionError):
+        return messages.EX_NESTED_TOO_DEEP
+    if isinstance(exc, SchemaError):
+        return _short(exc.message)
+    return _one_line(exc)
 
 
 def _parse(path: Path) -> Any:

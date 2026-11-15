@@ -7,10 +7,13 @@ end-to-end tests in `test_validate_examples.py`.
 
 from __future__ import annotations
 
+import re
+from importlib.metadata import version
 from pathlib import Path
 from typing import Any
 
 import pytest
+from jsonschema import FormatChecker
 
 from contracts.example_check import SchemaCheck, check_schema_examples
 
@@ -23,6 +26,43 @@ from .example_helpers import (
     make_tree,
     with_ref,
 )
+
+
+REQUIREMENTS = Path(__file__).resolve().parents[3] / "requirements-dev.txt"
+DRAFT = "https://json-schema.org/draft/2020-12/schema"
+# The README lists exactly these formats as checked and as not checked, for the pinned
+# jsonschema and no optional format packages. If an upgrade changes this, update both.
+CHECKED_FORMATS = {
+    "date",
+    "email",
+    "idn-email",
+    "ipv4",
+    "ipv6",
+    "regex",
+    "time",
+    "uuid",
+}
+UNCHECKED_FORMATS = {
+    "date-time",
+    "duration",
+    "hostname",
+    "idn-hostname",
+    "iri",
+    "iri-reference",
+    "json-pointer",
+    "relative-json-pointer",
+    "uri",
+    "uri-reference",
+    "uri-template",
+}
+
+
+def nested_schema(depth: int) -> str:
+    """A valid schema whose `properties` are nested `depth` levels deep."""
+    text = "{}"
+    for _ in range(depth):
+        text = '{"properties": {"a": ' + text + "}}"
+    return text
 
 
 def rel(name: str) -> str:
@@ -175,3 +215,140 @@ def test_check_broken_schema_without_examples_reports_only_the_schema(
     result = check(tmp_path, {}, "{not json")
     assert [p.code for p in result.problems] == ["unreadable_schema"]
     assert (result.passed, result.failed) == ((), ())
+
+
+@pytest.mark.parametrize(
+    "value", [5, [], {}, True, None], ids=["int", "list", "object", "bool", "null"]
+)
+def test_check_non_string_schema_keyword_is_an_invalid_schema(
+    tmp_path: Path, value: Any
+) -> None:
+    # validator_for() would raise AttributeError or TypeError on these instead of SchemaError.
+    result = check(tmp_path, {"a.json": GOOD}, {"$schema": value, "type": "object"})
+    assert [p.code for p in result.problems] == [
+        "invalid_schema",
+        "example_not_validated",
+    ]
+    assert "$schema" in result.problems[0].message
+    assert (result.passed, result.failed) == ((), ())
+
+
+@pytest.mark.parametrize(
+    ("name", "content"),
+    [
+        ("a.json", "[" * 100_000 + "]" * 100_000),
+        ("a.yaml", "[" * 20_000 + "]" * 20_000),
+    ],
+    ids=["deep-json", "deep-yaml"],
+)
+def test_check_deeply_nested_example_is_unreadable_not_a_traceback(
+    tmp_path: Path, name: str, content: str
+) -> None:
+    result = check(tmp_path, {name: content})
+    (problem,) = result.problems
+    assert (problem.code, problem.example) == ("unreadable_example", rel(name))
+    assert "nested too deeply" in problem.message
+    assert (result.passed, result.failed) == ((), (rel(name),))
+
+
+@pytest.mark.parametrize(
+    ("schema", "document", "failed", "passed"),
+    [
+        (
+            {"$schema": DRAFT, "properties": {"next": {"$ref": "#"}}},
+            '{"next": ' * 400 + "{}" + "}" * 400,
+            ("a.json",),
+            ("b.json",),  # b.json does not reach the recursion
+        ),
+        ({"$schema": DRAFT, "$ref": "#"}, "{}", ("a.json", "b.json"), ()),
+    ],
+    ids=["deep-document", "self-referencing-schema"],
+)
+def test_check_recursion_while_validating_is_reported_for_each_affected_example(
+    tmp_path: Path,
+    schema: dict[str, Any],
+    document: str,
+    failed: tuple[str, ...],
+    passed: tuple[str, ...],
+) -> None:
+    result = check(tmp_path, {"a.json": document, "b.json": GOOD}, schema)
+    assert result.failed == tuple(rel(name) for name in failed)
+    assert result.passed == tuple(rel(name) for name in passed)
+    problems = result.problems
+    assert [p.code for p in problems] == ["unreadable_example"] * len(failed)
+    assert all("nested too deeply" in p.message for p in problems)
+    assert [p.example for p in problems] == list(result.failed)
+
+
+@pytest.mark.parametrize(
+    ("schema_text", "schema_code"),
+    [
+        (nested_schema(200), "invalid_schema"),  # check_schema itself runs out of stack
+        (nested_schema(20_000), "unreadable_schema"),  # json.loads runs out of stack
+    ],
+    ids=["too-deep-to-check", "too-deep-to-read"],
+)
+def test_check_deeply_nested_schema_is_reported_and_its_examples_not_validated(
+    tmp_path: Path, schema_text: str, schema_code: str
+) -> None:
+    result = check(tmp_path, {"a.json": GOOD}, schema_text)
+    assert [p.code for p in result.problems] == [schema_code, "example_not_validated"]
+    assert "nested too deeply" in result.problems[0].message
+    assert (result.passed, result.failed) == ((), ())
+
+
+def test_check_reference_reached_by_the_last_example_leaves_none_passed(
+    tmp_path: Path,
+) -> None:
+    # a.json and b.json would pass; c.json reaches the dangling reference last.
+    reaching = '{"name": "c", "link": "x"}'
+    result = check(
+        tmp_path,
+        {"a.json": GOOD, "b.json": '{"name": "b"}', "c.json": reaching},
+        with_ref("#/$defs/missing"),
+    )
+    assert [p.code for p in result.problems] == ["unresolvable_reference"] + [
+        "example_not_validated"
+    ] * 3
+    assert (result.passed, result.failed) == ((), ())
+
+
+def test_check_dangling_reference_in_a_branch_no_example_reaches_is_not_found(
+    tmp_path: Path,
+) -> None:
+    # Documented limit (README, docstring, traceability): a `$ref` is only resolved when an
+    # example reaches it, so this broken schema passes for an example that does not use `link`.
+    assert check(
+        tmp_path, {"a.json": GOOD}, with_ref("#/$defs/missing")
+    ) == SchemaCheck(passed=(rel("a.json"),))
+
+
+def test_check_asserts_date_but_not_date_time(tmp_path: Path) -> None:
+    # Documented limit (README): `date-time` is accepted without validation, so a wrong
+    # `completed_at` in a lesson-manifest example would pass.
+    properties = {
+        "when": {"type": "string", "format": "date-time"},
+        "day": {"type": "string", "format": "date"},
+    }
+    schema = {"$schema": DRAFT, "type": "object", "properties": properties}
+    unchecked = check(tmp_path / "a", {"a.json": '{"when": "not-a-date-time"}'}, schema)
+    assert unchecked == SchemaCheck(passed=(rel("a.json"),))
+    checked = check(tmp_path / "b", {"a.json": '{"day": "2026-02-31"}'}, schema)
+    assert checked.failed == (rel("a.json"),)
+    assert "[format]" in checked.problems[0].message
+
+
+def test_check_documented_format_lists_match_the_installed_checker() -> None:
+    asserted = set(FormatChecker().checkers)
+    assert CHECKED_FORMATS <= asserted
+    assert not UNCHECKED_FORMATS & asserted
+
+
+def test_referencing_is_a_declared_pinned_dependency_with_its_licence() -> None:
+    # The engine imports referencing.exceptions directly (CLAUDE.md §2.10).
+    lines = REQUIREMENTS.read_text(encoding="utf-8").splitlines()
+    pins = [line for line in lines if line.startswith("referencing==")]
+    assert len(pins) == 1, pins
+    match = re.fullmatch(r"referencing==(\S+)\s+# MIT\b.*", pins[0])
+    assert match, pins[0]
+    assert version("referencing") == match[1]
