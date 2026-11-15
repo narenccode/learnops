@@ -18,8 +18,7 @@
   "summary": "summary.en.md",
   "source": {
     "kind": "upload",
-    "uploaded_by": "test-mentor-sub-0001",
-    "original_name": "call-a-model.mkv"
+    "uploaded_by": "test-mentor-sub-0001"
   },
   "processing": {
     "pipeline_version": "1.0.0",

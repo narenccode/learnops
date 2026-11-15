@@ -541,7 +541,7 @@ Slugs: lowercase ASCII, hyphens, immutable. Numbers zero-padded to two digits.
   "slides": "slides.json",
   "cues": "cues.json",
   "summary": "summary.en.md",
-  "source": {"kind": "upload", "uploaded_by": "<lti sub>", "original_name": "lecture2.mov"},
+  "source": {"kind": "upload", "uploaded_by": "<lti sub>"},
   "processing": {"pipeline_version": "1.0.0", "completed_at": "…"}
 }
 ```
@@ -555,7 +555,12 @@ Slugs: lowercase ASCII, hyphens, immutable. Numbers zero-padded to two digits.
   is, nothing in the Unicode 15.0.0 categories Cc and Cf (the complete categories, as listed in
   the schema's `relative_path` description; private-use, surrogate and unassigned code points are
   not rejected as categories). The list is pinned to Unicode 15.0.0; moving to a newer version is
-  a contract change. Shared test cases: `contracts/test-vectors/relative-path.v1.json`.
+  a contract change. No `%` anywhere, so no percent-encoded form (such as `%2e`, `%252e` or
+  `%25%32%65`); the path is never decoded or normalized. Shared test cases:
+  `contracts/test-vectors/relative-path.v1.json`.
+- Not enforced in v1 (considered and left out): Windows reserved names (such as `CON`, `NUL`)
+  and Unicode normalization. No maximum path length is specified in v1: the limits of the lab's
+  media store and proxy have not been established.
 - `captions` contains at least one entry with `lang` exactly `"en"` (the required
   `captions.en.vtt`, B6.2).
 - Required: `schema`, `course_slug`, `lesson_id`, `title`, `duration_s`, `tracks`, `captions`,

@@ -16,7 +16,9 @@ AUTOMATED here (structure only, by contracts/lesson-manifest.v1.schema.json):
     Unicode 15.0.0 categories Cc and Cf, checked for every code point, at the edges and
     inside every range, next to every range, and on all eight path fields; private-use,
     surrogate and unassigned code points stay accepted. The expected sets come from Python's
-    Unicode database, and a test fails if that is not version 15.0.0.
+    Unicode database, and a test fails if that is not version 15.0.0;
+  * no percent sign (%) anywhere in a path (guide decision), so no percent-encoded form
+    (%2e, %252e, %25%32%65 and so on), on all eight path fields; paths are never decoded.
 
 NOT automated here, and therefore NOT claimed as enforced (the schema's $comment lists them):
   * that the files the manifest names, and poster.jpg (which has no manifest field), exist in
@@ -27,6 +29,10 @@ NOT automated here, and therefore NOT claimed as enforced (the schema's $comment
     and cues files (B6.2), which have no schema yet;
   * that the pattern behaves the same in an ECMA-262 (JavaScript) validator: no JavaScript
     validator is part of the stack. The schema description says why it needs the u flag;
+  * Windows reserved names and Unicode normalization: considered and not enforced in v1
+    (guide decision), so there is nothing to test;
+  * a maximum path length: none is specified in v1 (guide decision), because the lab's media
+    store and proxy limits have not been established;
   * that libs/media_paths uses the same Cc/Cf table: that library is not on main yet, and the
     comparison test belongs to it.
 
@@ -51,8 +57,10 @@ from jsonschema import Draft202012Validator, FormatChecker
 ROOT = Path(__file__).resolve().parents[3]
 SCHEMA_PATH = ROOT / "contracts" / "lesson-manifest.v1.schema.json"
 EXAMPLES = ROOT / "contracts" / "examples" / "lesson-manifest.v1"
-SINGLE_TRACK = EXAMPLES / "single-track" / "lesson.json"
-CAMERA_SCREEN = EXAMPLES / "camera-screen" / "lesson.json"
+# One top-level JSON file per example (guide decision); supporting files, if any, go in
+# subfolders.
+SINGLE_TRACK = EXAMPLES / "single-track.json"
+CAMERA_SCREEN = EXAMPLES / "camera-screen.json"
 PATH_VECTORS_PATH = ROOT / "contracts" / "test-vectors" / "relative-path.v1.json"
 
 # The example in PRD B6.3, with its "…" timestamp replaced by a real one.
@@ -75,7 +83,6 @@ PRD_EXAMPLE: dict[str, Any] = {
     "source": {
         "kind": "upload",
         "uploaded_by": "<lti sub>",
-        "original_name": "lecture2.mov",
     },
     "processing": {"pipeline_version": "1.0.0", "completed_at": "2026-01-12T09:30:00Z"},
 }
@@ -365,6 +372,7 @@ PATH_RULES = {
     "dot-dot-segment",
     "control-character",
     "format-character",
+    "percent-sign",
 }
 
 PATH_FIELDS: list[tuple[str, Loc]] = [
@@ -498,6 +506,45 @@ def test_path_vectors_cover_every_rule() -> None:
     assert all(v["rules"] for v in PATH_VECTORS["invalid"])
 
 
+# Guide decision: no '%' anywhere in a path. The 'none' signer (B6.4) appends the path to a
+# base URL and layers may decode it once or more, so any encoded form could become a dot
+# or separator. The path itself is never decoded.
+PERCENT_FORMS = [
+    *("%", "%%", "%2e", "%2E", "%2f", "%2F", "%5c", "%5C"),
+    *("%252e", "%25252e", "%25%32%65", "%20", "%25", "%41", "100%"),
+]
+PERCENT_PLACES = [
+    "{}",
+    "{}.mp4",
+    "a{}b.mp4",
+    "{}/720p.mp4",
+    "a/{}/b.mp4",
+    "a/b/{}",
+    "a/b{}",
+]
+
+
+@pytest.mark.parametrize(
+    "value", [place.format(f) for f in PERCENT_FORMS for place in PERCENT_PLACES]
+)
+def test_percent_sign_is_rejected_in_every_segment(
+    validator: Draft202012Validator, doc: Doc, value: str
+) -> None:
+    for _label, loc in PATH_FIELDS:
+        attempt = copy.deepcopy(doc)
+        set_at(loc, value)(attempt)
+        assert (loc, "pattern") in error_keys(validator, attempt), (loc, value)
+
+
+def test_every_path_vector_with_a_percent_sign_is_invalid() -> None:
+    assert not [p for p in VALID_PATHS if "%" in p]
+    assert all(
+        "percent-sign" in v["rules"]
+        for v in PATH_VECTORS["invalid"]
+        if "%" in v["path"]
+    )
+
+
 def test_path_vectors_have_no_duplicates() -> None:
     every = VALID_PATHS + BAD_PATHS
     assert len(every) == len(set(every))
@@ -563,7 +610,7 @@ def test_schema_rejects_exactly_cc_and_cf_among_all_code_points(
     # more; nothing else may differ.
     pattern = re.compile(schema["$defs"]["relative_path"]["pattern"])
     whitespace = {p for p in range(0x110000) if re.fullmatch(r"\s", chr(p))}
-    rejected = FORBIDDEN | whitespace | {ord(c) for c in ":\\?#"}
+    rejected = FORBIDDEN | whitespace | {ord(c) for c in ":\\?#%"}
     wrong = [
         _name(p)
         for p in range(0x110000)

@@ -1,5 +1,5 @@
 {
-  "$comment": "Shared test vectors for the B6 relative path rule (PRD B6.3, C-08): the $defs/relative_path pattern in contracts/lesson-manifest.v1.schema.json. Every 'valid' path must be accepted and every 'invalid' path rejected by the schema and by any library that validates media paths (libs/media_paths). 'rules' names every rule the path breaks. Rule ids: empty (the path is empty); backslash (forward slashes only); whitespace (no whitespace anywhere); question-mark and hash (no ? or #); url-scheme (no scheme such as https:); drive-letter (no C: and so on); absolute (no leading /); empty-segment (no // and no trailing /); dot-segment (no '.' segment); dot-dot-segment (no '..' segment); control-character (no character in the Unicode 15.0.0 category Cc); format-character (no character in the Unicode 15.0.0 category Cf). Test data only.",
+  "$comment": "Shared test vectors for the B6 relative path rule (PRD B6.3, C-08): the $defs/relative_path pattern in contracts/lesson-manifest.v1.schema.json. Every 'valid' path must be accepted and every 'invalid' path rejected by the schema and by any library that validates media paths (libs/media_paths). 'rules' names every rule the path breaks. Rule ids: empty (the path is empty); backslash (forward slashes only); whitespace (no whitespace anywhere); question-mark and hash (no ? or #); url-scheme (no scheme such as https:); drive-letter (no C: and so on); absolute (no leading /); empty-segment (no // and no trailing /); dot-segment (no '.' segment); dot-dot-segment (no '..' segment); control-character (no character in the Unicode 15.0.0 category Cc); format-character (no character in the Unicode 15.0.0 category Cf); percent-sign (no % anywhere, so no percent-encoded form, however often encoded; paths are never decoded). Test data only.",
   "valid": [
     { "path": "720p.mp4", "why": "file in the lesson folder" },
     { "path": "captions.en.vtt", "why": "dots inside a name" },
@@ -14,6 +14,8 @@
     { "path": "...", "why": "three dots is a name, not a '.' or '..' segment" },
     { "path": "notes/b:c.md", "why": "a colon after the first segment is not a scheme" },
     { "path": "12:30.mp4", "why": "a scheme starts with a letter, so this is not one" },
+    { "path": "a\ue000.mp4", "why": "a private-use (Co) character is allowed: only Cc and Cf are rejected as categories" },
+    { "path": "a\u2065b", "why": "an unassigned (Cn) code point is allowed: only Cc and Cf are rejected as categories" },
     { "path": "vidéo.mp4", "why": "non-ASCII letters are allowed" }
   ],
   "invalid": [
@@ -72,6 +74,37 @@
     { "path": "..", "rules": ["dot-dot-segment"] },
     { "path": "../720p.mp4", "rules": ["dot-dot-segment"] },
     { "path": "slides/../../x.jpg", "rules": ["dot-dot-segment"] },
-    { "path": "slides/..", "rules": ["dot-dot-segment"] }
+    { "path": "slides/..", "rules": ["dot-dot-segment"] },
+
+    { "path": "%2e%2e/720p.mp4", "rules": ["percent-sign"] },
+    { "path": "slides/%2E%2E/001.jpg", "rules": ["percent-sign"] },
+    { "path": "slides/%2e%2E/001.jpg", "rules": ["percent-sign"] },
+    { "path": "slides/.%2e/001.jpg", "rules": ["percent-sign"] },
+    { "path": "%2E/720p.mp4", "rules": ["percent-sign"] },
+    { "path": "slides/001.jpg%2e", "rules": ["percent-sign"] },
+    { "path": "slides%2f001.jpg", "rules": ["percent-sign"] },
+    { "path": "slides%2F001.jpg", "rules": ["percent-sign"] },
+    { "path": "a/b%2fc/720p.mp4", "rules": ["percent-sign"] },
+    { "path": "..%2f720p.mp4", "rules": ["percent-sign"] },
+    { "path": "slides/%2e%2e%2F%2e%2e%2fx.jpg", "rules": ["percent-sign"] },
+    { "path": "slides%5c001.jpg", "rules": ["percent-sign"] },
+    { "path": "slides%5C001.jpg", "rules": ["percent-sign"] },
+    { "path": "a/b/%5C..%5c720p.mp4", "rules": ["percent-sign"] },
+    { "path": "%2e%2e%5cx.mp4", "rules": ["percent-sign"] },
+    { "path": "%252e%252e/720p.mp4", "rules": ["percent-sign"] },
+    { "path": "slides/%252E%252E/001.jpg", "rules": ["percent-sign"] },
+    { "path": "slides/%2e%252E/001.jpg", "rules": ["percent-sign"] },
+    { "path": "slides%252f001.jpg", "rules": ["percent-sign"] },
+    { "path": "slides%252F001.jpg", "rules": ["percent-sign"] },
+    { "path": "slides%255c001.jpg", "rules": ["percent-sign"] },
+    { "path": "slides%255C001.jpg", "rules": ["percent-sign"] },
+    { "path": "a/%25252e%25252e/b.mp4", "rules": ["percent-sign"] },
+    { "path": "%2e", "rules": ["percent-sign"] },
+    { "path": "%2E", "rules": ["percent-sign"] },
+    { "path": "%252e", "rules": ["percent-sign"] },
+    { "path": "%25%32%65", "rules": ["percent-sign"] },
+    { "path": "%", "rules": ["percent-sign"] },
+    { "path": "lecture%20notes.mp4", "rules": ["percent-sign"] },
+    { "path": "slides/100%.jpg", "rules": ["percent-sign"] }
   ]
 }

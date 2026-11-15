@@ -10,8 +10,7 @@
   "chapters": "chapters.json",
   "source": {
     "kind": "upload",
-    "uploaded_by": "test-mentor-sub-0001",
-    "original_name": "install-python.mov"
+    "uploaded_by": "test-mentor-sub-0001"
   },
   "processing": {
     "pipeline_version": "1.0.0",
