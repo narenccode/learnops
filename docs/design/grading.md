@@ -3,7 +3,7 @@
 **Module:** grading
 **Owner:** @Harshithamanjunatha · **Peer reviewer:** @vnaags
 **Release(s):** Release 0 (FR-M-01, FR-M-02; contracts B4 and B5; test sets B8.4 and B8.6 v1), Release 4 (FR-G-01…08, FR-M-03)
-**Status:** Draft
+**Status:** In review
 
 `Status` values: `Draft` → `In review` (peer reviewing) → `Approved`. **Only the guide sets
 `Approved`**, in a pull request the guide merges. Feature code for this module starts only when the
@@ -23,37 +23,21 @@ Nothing labelled (proposed), (lab), (guide) or (provisional) is a fact about Moo
 document has been checked against a live Moodle or Moodle's own documentation. Literature is cited
 only from §12.1, and the owner has verified all six sources against the original PDFs.
 
-**Revision note.** This revision applies a pre-implementation review in three groups: critical
-blockers (§4.1, §5, §9, §10.1), integration (§4, §5, §6.1, §12, §13) and testability and
-implementation (§6.2 to §6.4, §10, §11, §13). Every new statement is (proposed), (lab) or (guide).
-New open decisions are Q22 to Q55 in §12 (Q40 is not used); proposed PRD amendments are in §12.2. Nothing is approved
-and no test has been written or run.
+**Current state.** This is the single revision summary. Earlier revision notes were folded into it, and the
+history is in the pull request description. Nothing in this document is approved, no test has been written or
+run, and no container, image or host has been built or run.
 
-**Revision note (sandbox design, Release 0).** This revision expands the sandbox design (§9.2) into
-subsections: a two-stage lifecycle (clone stage, then a run stage created with no network), container
-and daemon settings, network rules, limits and timeout behaviour, result collection through restricted
-database functions, cleanup and recovery, a threat model, residual risks and operational dependencies.
-Matching changes are in §3, §3.1, §5.3, §6.3, §7, §10.2, §11.1, §11.5, §12, §12.2 and §13. Every new
-statement is (proposed), (lab), (guide) or (provisional). New open decisions are Q57 to Q66; new tests are T43 to
-T56. The conflict between SEC-04 ("no network") and §C3.5 ("no network after the clone step") is
-recorded as Q57 and is not resolved by this document. No container, image or host has been built or
-run.
-
-**Revision note (provisional assumptions).** So that design work does not stall on open guide
-decisions, each of Q57 to Q66 now has a (provisional) working assumption in §12.3. The design follows
-the more conservative option wherever a choice exists. None of these assumptions is a guide decision.
-Each stays open until the guide answers. No security control has been tested on a real host.
-
-**Revision note (Student 3's proposed v1 decisions for Q57, Q58, Q66 and Q68).** This revision
-records design decisions proposed by the owner, Student 3. They are **not guide-approved**, and Q57,
-Q58, Q66 and Q68 stay OPEN until the guide answers. The design follows §C3.5 literally: one container per
-submission clones the repository, loses its network, and only then runs learner code. This supersedes
-the two-stage lifecycle in the sandbox revision note above. The SEC-04 interpretation is pending review
-(Q57), and no compliance is claimed. Two infrastructure dependencies are missing from the PRD: a
-sandbox host (Q23) and a reachable git host (Q69). Nothing here changes the PRD, a contract or any code,
-and no control described here has been built or tested. The sandbox boundary is proposed as a dedicated
-VM, pending Q23; the PRD requires only a host that runs no other LearnOps service. Q66 does not follow the
-"more conservative option" stated in the provisional-assumptions note above (§12.3).
+- **Sandbox:** one container per submission, as PRD §C3.5 says: clone, remove the network, verify, then run
+  learner code (Student 3's proposed decision, not guide-approved; Q57, Q58, Q66 and Q68 stay open). Two
+  containers are an alternative for the guide (§9.2, §12.4). The earlier two-stage lifecycle is **not** the
+  current design.
+- **Working assumptions:** each of Q57 to Q66 has a (provisional) assumption in §12.3. They follow the more
+  conservative option, except Q66. None of them is a guide decision.
+- **SEC-04 and §C3.5:** the conflict between them is recorded (Q57), not resolved, and no SEC-04 compliance is
+  claimed.
+- **Missing dependencies:** a sandbox host (Q23) and a reachable git host (Q69).
+- **Open questions:** Q22 to Q70 are in §12 (Q40 is not used); proposed PRD amendments are in §12.2. Nothing
+  here changes the PRD, a contract or any code.
 
 ## 1. Purpose and scope
 
@@ -203,12 +187,12 @@ Before the Release 0 freeze the proposals below are ordinary changes; after the 
 through `/contract-change` and is additive only (PRD §B.0, EXT-02). This is why they should be settled
 before the freeze.
 
-**Guide's decisions and contract files are different things.** PR #25 (B5) and PR #27 (B4) are open:
-their contract files are not merged and not frozen, and the guide has approved neither. PR #27 has a
-peer approval from Student 2; PR #25 has no reviews yet. "Decided by the guide" in this document means
-the guide's written answer on that pull request, or decision 0001 on PR #25's branch. Where a line here
-describes a contract file or `.env.example` as changed, that change exists on the pull request's
-branch, not on `main`.
+**Guide's decisions and contract files are different things.** The B4 and B5 contract files are drafts until
+they are merged and frozen; the guide has approved neither as a contract. "Decided by the guide" in this document
+means the guide's written answer: for B5, `docs/decisions/0001-b5-model-interface-v1.md`; for B4, the answers
+written on the pull request that carries the contract, which the contract text records when it merges. This
+document does not track which pull request is open or what its review state is; check GitHub. Where a line here
+describes a contract file or `.env.example` as changed, that change is not on `main` until its pull request is merged.
 
 ### 4.1 B4: Moodle web-services usage (summary of `contracts/moodle-ws.v1.md`)
 
@@ -445,8 +429,8 @@ Variables are listed here; adding them to `.env.example` is a separate step by t
 | `MODEL_PROVIDER`, `MODEL_NAME`, `MODEL_LOCAL_URL`, `MODEL_HOSTED_API_KEY` | local in the lab | yes |
 | `SPEECH_PROVIDER`, `SPEECH_LOCAL_URL`, `SPEECH_HOSTED_API_KEY` | local in the lab | yes |
 | `MODEL_TIMEOUT_S`, `MODEL_TRANSPORT_RETRIES`, `MODEL_MAX_INPUT_TOKENS`, `MODEL_BUDGET_USD`, `SPEECH_TIMEOUT_S` | 120, 2, from the endpoint, from the guide, scaled | to add (proposed) |
-| `LEARNOPS_ENV` | `test`, `lab` or `production`; `lab` in `.env.example`; unset counts as "not test" | on PR #25's branch, not on `main` |
-| `MODEL_ALLOW_FAKE` | `false` in `.env.example`; `true` only with `LEARNOPS_ENV=test`, and any other environment refuses to start | on PR #25's branch, not on `main` |
+| `LEARNOPS_ENV` | `test`, `lab` or `production`; `lab` in `.env.example`; unset counts as "not test" | added by the FR-M-01 skeleton (PR #35); not on `main` |
+| `MODEL_ALLOW_FAKE` | `false` in `.env.example`; `true` only with `LEARNOPS_ENV=test`, and any other environment refuses to start | added by the FR-M-01 skeleton (PR #35); not on `main` |
 | `MODEL_PRICE_FILE` | none: proposed for working out `cost_estimate`; path and format not defined | no; not in `.env.example` or code on any branch (proposed) |
 | `GRADING_JOB_LEASE_S`, `GRADING_JOB_MAX_ATTEMPTS`, `GRADING_WORKER_CONCURRENCY` | 120, 5, 2 | to add (proposed) |
 | `GRADING_CHECKS_DIR`, `GRADING_CLONE_ALLOWED_HOSTS` | placeholder | to add (proposed) |
@@ -485,7 +469,7 @@ Every decision here is (proposed). Each will be recorded in `docs/decisions/` wh
 | One container per submission: clone, remove the network, verify, then run learner code (Student 3's proposed decision, not guide-approved, Q57, Q66, §9.2.2) | Two containers, the second created with no network (earlier proposal); no clone, code as a file through Moodle (needs PRD changes); a separate ingestion service | Proposed to follow §C3.5 literally and designed to support `repo_clone`, FR-G-02, FR-G-04 and B8.4 as written, if a git source is provided (Q69); not built or tested. Cost: learner code runs in a container that had a network, so the removal step must work; residual risks are in §9.2.9 | `NNNN-sandbox-lifecycle.md` |
 | Sandbox worker runs on the sandbox host with the local Docker socket | Remote Docker API with mutual TLS | No network-exposed Docker API at all; fewer moving parts (Q22) | `NNNN-sandbox-host.md` |
 | Docker with hardening options (§9.2.3) inside a dedicated VM (proposed, Q23), independent review before use; evaluate gVisor for the container behind a feature flag (§9.2.9) | gVisor, Kata Containers or Firecracker as the only option now | No new tool without the guide's approval (root `CLAUDE.md` §8); Docker alone is not treated as a complete isolation boundary, so the VM is proposed whatever the runtime; the evaluation itself needs approval (Q16, Q61) | `NNNN-sandbox-runtime.md` |
-| Sandbox host reaches the database only through `SECURITY DEFINER` functions with a lease token | Table grants to a restricted role (the earlier proposal) | A compromised sandbox host can then touch only the jobs it holds a lease on, and cannot read or change other tables (Q62) | `NNNN-sandbox-host.md` |
+| Sandbox host reaches the database only through `SECURITY DEFINER` functions with a lease token | Table grants to a restricted role (the earlier proposal) | A compromised sandbox host cannot read or change other tables if the grants and functions are correct, but it can still claim queued check jobs and forge results for the jobs it holds (§9.2.9; Q62) | `NNNN-sandbox-host.md` |
 | Per-job work volume with a fixed size and inode cap (§9.2.5) | tmpfs (counts against the 2 GB memory limit); a container storage quota (needs a specific filesystem) | Hard size and inode limits that do not reduce the memory the learner's code gets (Q59) | `NNNN-sandbox-lifecycle.md` |
 | Clone step limited to approved destinations by destination IP at the host firewall | Checking the URL in the worker only | A URL check can be bypassed by redirects and DNS; a firewall rule by destination IP is proposed to stop that (lab) | `NNNN-sandbox-egress.md` |
 | Overall grade = sum computed in code | Ask the model for a total | FR-G-03 defines the total as the sum; code cannot get arithmetic wrong | in this document |
@@ -696,6 +680,8 @@ jobs, its heartbeat shows the problem on `/health`, the lease expires and the jo
 
 The 10-minute overall deadline stays a proposed limit, pending testing. The stage budgets add up to 690 s, more than the 600 s deadline, so each one is a ceiling and not a guaranteed allocation. The overall deadline takes priority: a stage can get less than its budget when earlier stages used more. `GRADING_CHECK_TIMEOUT_S` stays the limit for one check, inside the code-execution budget. Removing the container is never skipped when the deadline passes; whether that time counts towards the deadline is part of Q58 (§12.4).
 
+**Execution policy when stages run long (proposed; not an approved rule; subject to the guide's approval; Q58 stays open).** Before each stage that comes before code execution, the worker would work out the time left: the overall deadline minus the time already used, minus the time reserved for the later mandatory stages. The reserve is code execution (`GRADING_SANDBOX_EXEC_TIMEOUT_S`, 300 s) and cleanup (`GRADING_SANDBOX_CLEANUP_TIMEOUT_S`, 30 s). The optional stage is cut first: dependency installation, only if §9.2.12 allows it, gets at most what is left after setup, clone and that reserve. With the starting values this is 600 − 60 − 120 − 300 − 30 = 90 s, not 180 s. If less is left than the stage needs, the stage ends with a reason code and no check counts as a pass, the same rule as for the overall timeout above. With the starting values, setup (60 s) and clone (120 s) cannot reduce the execution budget below 300 s, since 60 + 120 + 300 + 30 = 510 s is inside 600 s; only the optional dependency stage could, which is why it is cut first. Whether removing the container counts towards the 600 s is still open (Q58, §12.4); the 30 s cleanup reserve assumes it does, and changes if the guide decides otherwise. All values are starting values that have not been tested on any lab host (lab). This policy would change if the guide decides otherwise on Q58 or on dependency installation (Q27).
+
 **Host sizing** (lab): the sandbox VM needs at least `GRADING_SANDBOX_MAX_CONCURRENT` × (2 CPU, 2 GB, work
 volume size) plus room for the worker and the operating system.
 
@@ -704,6 +690,7 @@ volume size) plus room for the worker and the operating system.
 - The sandbox-host database role has no table grants. It can only call `SECURITY DEFINER` functions in the grading schema: claim a `check` job (returns the payload and a random lease token), extend the lease, and submit results.
 - The submit function checks the lease token and that the job is still `running`; accepts only the check keys listed in that job's payload; limits row count and evidence size; and writes `submission_check`, `similarity_fingerprint` and README `submission_excerpt` rows in one transaction. Any mismatch is refused and recorded in `shared.audit_log` under `system:sandbox`.
 - The functions are created and dropped by the grading migrations (§5.3); their tests are T54.
+- **Limit of this control (proposed).** As written, the claim function hands out any queued `check` job, so the lease token limits what a host can *submit*, not which jobs it can claim. How many jobs one host may claim, and whether payloads can be reduced, are not decided here (§9.2.9, Q62).
 - Evidence is learner-controlled text. It is size-capped, marked `learner_originated`, HTML-escaped wherever shown (§9.5) and never treated as instructions.
 
 #### 9.2.7 Cleanup, reaper and recovery (proposed)
@@ -733,6 +720,7 @@ correctness of check results.
 | Writing outside the work directory, or path and symlink tricks in file checks | Read-only root; only the volume writable; path resolution and confinement in the helper | — |
 | Tampering with check results | Fixed helpers run before learner code; pass or fail from exit codes on the host; results never read from the volume | A command check can affect later command checks of the same submission (own grade only); a clone-step bug could change files first (§9.2.9) |
 | Forged results after an escape | Restricted database functions with lease tokens (§9.2.6); mentor review of every draft (C-09) | Forged results for jobs the compromised host holds |
+| Database route from the VM (proposed) | One restricted credential; no table grants; `SECURITY DEFINER` functions with lease tokens (§9.2.6); the database port is reachable only from the VM (§9.2.11) | The route reaches a database server outside the VM boundary: its login handling, bugs in the function code, and every `check` job the host can claim (payload and delay). See §9.2.9 |
 | Learner data left behind | Volume deleted; logging driver off; core dumps off; swap off | Data in host memory until overwritten |
 | Learner text attacking the review UI or the model | Escaping, CSP, code-side validation (§9.5) | See §9.5 |
 | Secrets exposed | No secrets in containers; only the restricted database credential on the VM | That credential if the VM is compromised (§9.2.9) |
@@ -741,9 +729,15 @@ correctness of check results.
 
 These risks remain after every control above. They are listed so the independent reviewer (Q30, Q64)
 and the guide can accept them or ask for more.
-- **Shared kernel.** All containers on the VM share one kernel. A kernel bug reachable through the syscalls the seccomp profile allows can lead to a container escape. The proposed VM (Q23) is the boundary that would then protect the rest of the lab.
+- **Shared kernel.** All containers on the VM share one kernel. A kernel bug reachable through the syscalls the seccomp profile allows can lead to a container escape. The proposed VM (Q23) is the boundary that would then protect the rest of the lab, except for the database route described below.
 - **Runtime bugs.** Container runtimes (runc, containerd, Docker) have had container-escape vulnerabilities in the past. Specific advisories are to be found and verified by the reviewer before being cited here. Patching (Q63) reduces this risk but does not remove it.
-- **The database credential on the VM.** A full escape gains the restricted function access (§9.2.6). It cannot read or change other tables, but it can forge results for jobs it claims.
+- **The database route and credential (proposed; residual risk; whether it is accepted, or reduced by another design, is for the guide).** The sandbox VM has a network route to the database port on the tools host and holds one restricted credential. An attacker who escapes onto the VM therefore reaches a database server, which is outside the VM boundary. What that route exposes:
+  - the database server's own login handling, which this design does not cover;
+  - the code of the `SECURITY DEFINER` functions (§9.2.6), where a bug such as unsafe SQL or a wrong privilege could give more access than the role's grants;
+  - the check jobs: the claim function hands out any queued `check` job, so a compromised VM could read the payload of every job it claims (repository URLs, commands, image key) and, by claiming without submitting, delay grading until each lease expires;
+  - forged results for the jobs it holds.
+
+  Mentor review of every draft (C-09) limits the effect on grades, not on the queue or the payloads. The role cannot read or change other tables only if the grants and the functions are correct, which is what T54 and the independent review (Q30, Q64) are for. Mitigations (a cap on claims per host, smaller payloads, results through a narrow push channel, §12.4) are not decided.
 - **Firewall drift.** A later rule change can open egress. `grading sandbox --check` probes (§9.2.4) detect this only when they are run.
 - **Same container before and after network removal** (the main cost of the §C3.5 design):
   - A parser bug in the clone helper or Dulwich would run while the network is attached, and could reach approved destinations.
@@ -775,7 +769,7 @@ and the guide can accept them or ask for more.
 | A host that runs no other LearnOps service (required by SEC-04; **not provided by A11**; proposed as a dedicated VM; no host is assumed here) | SEC-04 host rule | Guide, lab administrator (Q23, Q63) |
 | Firewall rules on the sandbox VM and for the clone network | §9.2.4 | Lab administrator; reviewed in Q64 |
 | A git source reachable from the sandbox host, with a fixed address (none in the PRD; no address or availability is assumed here) | Clone allow-list | Guide, lab administrator (Q28, Q69) |
-| Database port on the tools host reachable only from the sandbox VM | §9.2.6 | Lab administrator |
+| Database port on the tools host reachable only from the sandbox VM (the route is a residual risk, §9.2.9) | §9.2.6 | Lab administrator |
 | Image build and digest list, built outside the sandbox VM | §9.2.1 | Owner and guide (Q27, Q63) |
 | Kernel with cgroup v2; Docker with user-namespace remapping or rootless mode | §9.2.1 | Lab (Q60) |
 | Patch schedule for kernel and runtime; monitoring of worker heartbeat | §9.2.9 | Guide, lab administrator (Q63) |
@@ -1134,7 +1128,7 @@ repositories, to run before the gate in the last row of this table is met.
 | Q59 | Per-job storage is a fixed-size filesystem image with an inode cap, created and mounted (`nosuid,nodev`) by a small fixed host helper the worker calls, and deleted after the run. If the sandbox VM cannot provide this, a tmpfs volume (counted against memory) is the fallback | Hard size and inode limits without reducing the learner's 2 GB; deterministic deletion | Another mechanism changes only §9.2.5 and the reaper's volume step |
 | Q60 | User-namespace remapping on a rootful Docker daemon | Keeps the standard cgroup v2 limits, AppArmor and the Docker SDK path while removing host root from container UID 0. Rootless behaviour for cgroup delegation and networking is (lab) | Rootless: change §9.2.1 daemon settings and the worker install steps; container settings unchanged |
 | Q61 | gVisor is optional. v1 is designed for `runc` and is to be reviewed with it; no gVisor evaluation starts without approval. `GRADING_SANDBOX_RUNTIME` keeps the choice to configuration | Root `CLAUDE.md` §8 (no new tool without approval); the VM is the proposed main boundary in either case (Q23) | If the evaluation is approved and adopted: add `runsc` to §8 with version and licence check, run T56; nothing else changes |
-| Q62 | The sandbox host reaches the database only through `SECURITY DEFINER` functions with a lease token; no table grants | Least privilege; limits a compromised host to the jobs it holds (§9.2.6) | Table grants: revert §5.3 roles to the earlier text and drop T54; accept the larger residual risk in §9.2.9 |
+| Q62 | The sandbox host reaches the database only through `SECURITY DEFINER` functions with a lease token; no table grants | Least privilege on tables; the claim and forgery exposure remains (§9.2.9; §9.2.6) | Table grants: revert §5.3 roles to the earlier text and drop T54; accept the larger residual risk in §9.2.9 |
 | Q63 | The lab administrator named by the guide provisions and patches the sandbox host. Check images are built off the sandbox VM (CI or the tools host), and their digests are listed in the file named by `GRADING_SANDBOX_IMAGE_DIGESTS` (§6.3; digests are not secrets). Kernel and runtime patches are applied at least monthly and promptly for critical advisories. Monitoring is the worker heartbeat on `/health` | OPS-03, §9.2.1; no owner is named in the PRD | Change owner or schedule only; no design change |
 | Q64 | A reviewer from outside Module 3, named by the guide, signs a checklist (every §9.2 subsection, the firewall rules, the daemon settings, proof on the pinned Docker version that the container cannot rejoin the network, and T27 to T55 and T57 results on the sandbox VM). Any change to §9.2 controls needs a new review. **Gate:** no learner code and no malicious test repository runs on any machine until this sign-off exists | Q30; App-D; module rule 2 | A different reviewer or checklist only; the gate stays |
 | Q65 | "Reported" means: the affected check is `fail` or `error`; its evidence shows the blocked action (for example a refused or unreachable connection in the captured output); and the run records that the container's network removal was confirmed on the host. A4 passes only if the mentor can see all three | (PRD) §C3.7; the host cannot observe a network attempt in a container with no network | A stricter definition would need host-side detection (for example syscall auditing): a new (proposed) item and possibly a new tool |
@@ -1145,10 +1139,11 @@ repositories, to run before the gate in the last row of this table is met.
 | Recommendation | Conflicts with | Question |
 |---|---|---|
 | Two containers (Q66, §9.2) | §C3.5 "one container per submission"; the one-container design in §7, §9.2.2 and §12.3 | Does the guide accept the departure from §C3.5? Until then one container stays the baseline. If accepted, §9.2.2, §9.2.3, §9.2.9 and §12.3 change |
-| Stage budgets (Q58, §9.2.5) | They total 690 s against the proposed 600 s overall deadline (§C3.5's 10-minute limit) | Are ceilings under an overall deadline acceptable, or should the stages be reduced? Does removing the container count towards the deadline? |
+| Stage budgets (Q58, §9.2.5) | They total 690 s against the proposed 600 s overall deadline (§C3.5's 10-minute limit) | Are ceilings under an overall deadline acceptable, or should the stages be reduced? Does removing the container count towards the deadline? A proposed policy (dependency stage cut first, execution budget reserved) is in §9.2.5; the question stays open. |
 | Dependency installation (Q58, Q66) | §9.2.12 and Q27: pre-baked images, no package installation, no package mirror. Fetching packages also needs network beyond allow-listed git sources (§9.2.4) | Pre-baked dependencies or an approved package mirror (§9.2.12)? If nothing is installed while a submission is processed, the 180 s stage and the dependency part of the preparation step fall away. If a learner's repository can name packages, an installer may run learner-controlled code during preparation |
 | Rubric weights (Q44, §11.2) | PRD B1.3: each marking table sets its criteria and points. PRD FR-G-03: the overall draft grade is the sum of the criterion scores, so a percentage weighting cannot be applied on top | Are the weights acceptable as optional guidance for preparing test examples only? |
 | Clone audit record (Q57, §9.2) | The sandbox-host role has no table grants (§5.3), so it cannot write `shared.audit_log` | Who writes the record, and is a clone a state-changing operation under OPS-06? |
+| Results through a narrow push channel instead of a database login (alternative, Q62, §9.2.9) | The sandbox-host role and `SECURITY DEFINER` functions in §5.3 and §9.2.6; Student 2's migration tool (Q36) | Should the VM hold no database login and instead send results through a queue or an API on the tools host that accepts only result rows? This adds a component. Not decided; Q62 stays open |
 | Run id (Q70, §5.3) | `job` has no run column, and `shared.audit_log` belongs to Module 2 (§5.3) | Where is the id stored? A change to the audit log needs Module 2 |
 
 ### 12.5 Release 4 comparison prompt dependency (review note: unresolved, awaiting the guide's judgement)
@@ -1224,7 +1219,7 @@ One requirement (or one tightly related group) per pull request. "Gate" is somet
 | 1 | B1 submission rule, check-config schema, examples (Student 1) | B1 | Q32, Q33 | Release 0; examples validate (T35) |
 | 2 | Marking-table parser in `libs/contracts` (Student 2) | B1.3, CK-09 | 1 | Release 0; T01 |
 | 3 | Lab verification records for the ten B4 §5 checks and §4.1 item 11, and recorded fixtures (with Student 2) | App-C 1 | lab ready | Release 0; results in `docs/decisions/` |
-| 4 | B4 rules, schema and allow-list example (PR #27, open; peer-approved, awaiting the guide) | B4 | — | Release 0; T35; the guide allows a draft merge before the lab, but B4 cannot be frozen until row 3's checks pass; all four students approve before the freeze |
+| 4 | B4 rules, schema and allow-list example (`contracts/moodle-ws.v1.*`; not frozen) | B4 | — | Release 0; T35; the guide allows a draft merge before the lab, but B4 cannot be frozen until row 3's checks pass; all four students approve before the freeze |
 | 5a | `libs/moodle_ws`: errors and messages | B4 (interim FR-G-01, FR-G-06; Q43) | 4 | Release 0; proposed, see the note below |
 | 5b | `libs/moodle_ws`: token wrapper and redaction | B4 (interim FR-G-01, FR-G-06; Q43) | 5a | Release 0; proposed; T05 |
 | 5c | `libs/moodle_ws`: site settings, one token per site | B4 (interim FR-G-01, FR-G-06; Q43) | 5b | Release 0; proposed |
@@ -1232,8 +1227,8 @@ One requirement (or one tightly related group) per pull request. "Gate" is somet
 | 5e | `libs/moodle_ws`: client, transport protocol and draft rule | B4 (interim FR-G-01, FR-G-06; Q43) | 5d | Release 0; proposed; fake transport only |
 | 5f | `libs/moodle_ws`: client adversarial tests and final documentation | B4 (interim FR-G-01, FR-G-06; Q43) | 5e | Release 0; proposed |
 | 5g | `libs/moodle_ws`: real transport, error mapping, normalized models, file download, tests against recorded fixtures | B4 (interim FR-G-01, FR-G-06; Q43) | 3, 5f | Release 0; needs the lab |
-| 6 | B5 contract, PRD text and examples (PR #25, open, not approved) | FR-M-01, FR-M-02 | Q38 | Release 0; reviewed by Students 1 and 4; T35 |
-| 7, 8 | `libs/model_interface` (registry, errors, retries, budget, `CallLogger`, fake and local providers) and the speech interface (90-minute dry run) | FR-M-01, FR-M-02 | 6 | Release 0; no keys anywhere; T06 to T09; the FR-M-01 skeleton is in PR #35 (Draft), which exceeds the 800-line limit; a split into seven stacked pull requests is proposed, not agreed; speech is not started |
+| 6 | B5 contract, PRD text and examples (`contracts/model-interface.v1.schema.json`, decision 0001; not frozen) | FR-M-01, FR-M-02 | Q38 | Release 0; reviewed by Students 1 and 4; T35 |
+| 7, 8 | `libs/model_interface` (registry, errors, retries, budget, `CallLogger`, fake and local providers) and the speech interface (90-minute dry run) | FR-M-01, FR-M-02 | 6 | Release 0; no keys anywhere; T06 to T09; the FR-M-01 skeleton is in PR #35 (see GitHub for its state), which exceeds the 800-line limit; a split into seven stacked pull requests is proposed, not agreed; speech is not started |
 | 9 | Shared schema, migration tool, `shared.course_link` columns documented (Student 2) | OPS-06, OPS-07 | Q36 | Release 0; T11 |
 | 10, 11 | B8.4 generator, development and test splits, reference grades; B8.6 set and rubric (with Students 1 and 4) | B8.4, B8.6 | 1, 2, Q12, Q13 | Release 0; splits sealed |
 | 12 | Contract freeze gate (Student 2) | PRD §B.0 | 1 to 11 | Release 0; examples, fixtures, round trip, consumer tests pass; lab list recorded; guide approves the PRD amendments |
