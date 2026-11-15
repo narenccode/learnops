@@ -131,11 +131,11 @@ EX_NOT_VALIDATED = "Not validated, because its schema could not be loaded."
 EX_NOT_VALIDATED_HINT = "Fix the schema problem reported above, then validate again."
 EX_MISSING_EXAMPLE = (
     "The schema has no example in the folder {folder} or in a file named "
-    "{stem}.<suffix>.json."
+    "{stem}.<suffix>.json, .yaml or .yml."
 )
 EX_MISSING_EXAMPLE_HINT = (
     "Add at least one valid .json, .yaml or .yml example at the top of that folder, or a file "
-    "named <schema name>.<suffix>.json in contracts/examples (PRD B.0 rule 1)."
+    "named <schema name>.<suffix>.json, .yaml or .yml in contracts/examples (PRD B.0 rule 1)."
 )
 EX_UNREADABLE_EXAMPLE = "The example could not be read: {reason}."
 EX_UNREADABLE_EXAMPLE_HINT = (

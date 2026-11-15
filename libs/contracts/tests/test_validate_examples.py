@@ -49,24 +49,34 @@ def only(report: ExampleReport) -> Problem:
 # test. B1 is on main and must always be found.
 
 B1_EXAMPLE = "contracts/examples/course-package.v1/course.yaml"
+EXTENSIONS = {"json", "yaml", "yml"}
 
 
-def real_schemas() -> dict[str, list[str]]:
-    """Each real schema's path -> its top-level JSON/YAML examples, all repository-relative."""
+def listed_examples(contracts: Path) -> dict[str, list[str]]:
+    """Each schema's path -> its examples in both layouts, relative to the contracts' parent.
+
+    Folder: `examples/<stem>/*`. Flat: `examples/<stem>.<one lower-case word>.<ext>`. The
+    extension is matched in any case. Written by hand: it must not reuse the code under test."""
+    examples = contracts / "examples"
     found: dict[str, list[str]] = {}
-    for schema in sorted(REAL_CONTRACTS.glob("*.schema.json")):
-        folder = REAL_CONTRACTS / "examples" / schema.name.removesuffix(".schema.json")
-        examples = sorted(
-            p.relative_to(ROOT).as_posix()
-            for p in folder.glob("*")
-            if p.is_file() and p.suffix.lower() in {".json", ".yaml", ".yml"}
-        )
-        found[schema.relative_to(ROOT).as_posix()] = examples
+    for schema in sorted(contracts.glob("*.schema.json")):
+        stem = schema.name.removesuffix(".schema.json")
+        in_folder = sorted((examples / stem).glob("*"))
+        flat = [
+            p
+            for p in sorted(examples.glob(f"{stem}.*"))
+            if len(word := p.name.removeprefix(f"{stem}.").split(".")) == 2
+            and word[0] == word[0].lower()
+        ]
+        files = [p for p in in_folder + flat if p.suffix.lower()[1:] in EXTENSIONS]
+        found[schema.relative_to(contracts.parent).as_posix()] = [
+            p.relative_to(contracts.parent).as_posix() for p in files if p.is_file()
+        ]
     return found
 
 
 def test_real_repository_examples_all_pass() -> None:
-    expected = real_schemas()
+    expected = listed_examples(REAL_CONTRACTS)
     report = validate_all(REAL_CONTRACTS)
     assert report.problems == ()
     assert report.ok
@@ -131,8 +141,19 @@ def test_several_schemas_are_each_paired_with_their_own_examples(
         ({"example.json": GOOD}, {}, ["thing.v1/example.json"]),
         (
             {},
-            {"thing.v1.meta-local.json": GOOD, "thing.v1.more.yaml": "name: b\n"},
+            {
+                "thing.v1.meta-local.json": GOOD,
+                "thing.v1.more.yaml": "name: b\n",
+                "thing.v1.json": "{}",  # no word between the stem and the extension
+                "thing.v1.a.b.json": "{}",  # two words
+                "thing.v10.x.json": "{}",  # the stem of another version
+            },
             ["thing.v1.meta-local.json", "thing.v1.more.yaml"],
+        ),
+        (
+            {"A.JSON": GOOD},
+            {"thing.v1.x.Yaml": "name: x\n"},
+            ["thing.v1/A.JSON", "thing.v1.x.Yaml"],
         ),
         (
             {"z.json": GOOD, "a.json": GOOD},
@@ -145,17 +166,37 @@ def test_several_schemas_are_each_paired_with_their_own_examples(
             ],
         ),
     ],
-    ids=["folder-only", "flat-only", "both-in-a-fixed-order"],
+    ids=["folder-only", "flat-only", "any-case-extension", "both-in-a-fixed-order"],
 )
 def test_both_example_layouts_work_alone_and_together(
     tmp_path: Path, folder: Files, flat: Files, expected: list[str]
 ) -> None:
     contracts = make_tree(tmp_path, folder, raw=flat)
     passed = tuple((PREFIX + example, THING) for example in expected)
+    # The by-hand listing used by the real-repository tests agrees (#25 and #27 are flat only).
+    assert listed_examples(contracts) == {
+        THING: [PREFIX + example for example in expected]
+    }
     for _ in range(2):  # the same on every run
         report = validate_all(contracts)
         assert report.problems == ()
         assert report.passed == passed
+
+
+def test_a_link_to_a_file_outside_contracts_is_followed_and_reported_under_the_link(
+    tmp_path: Path,
+) -> None:
+    # Documented (README): links are followed whatever they point at; refusing them is not decided.
+    outside = tmp_path / "outside.json"
+    outside.write_text('{"count": "two"}', encoding="utf-8")
+    contracts = make_tree(tmp_path, {"weeks/x.md": ""})  # creates examples/thing.v1/
+    try:
+        (contracts / "examples" / "thing.v1" / "link.json").symlink_to(outside)
+    except (OSError, NotImplementedError):
+        pytest.skip("symbolic links are not available here")
+    problems = validate_all(contracts).problems
+    assert {p.code for p in problems} == {"schema_violation"}  # the target was read
+    assert {p.example for p in problems} == {f"{PREFIX}thing.v1/link.json"}
 
 
 # --- valid examples -------------------------------------------------------------------------
@@ -264,6 +305,7 @@ def test_one_failure_among_passing_examples_still_fails(
                 "thing.v1.x.txt": "{}",
                 "thing.v1/weeks/01.json": "{}",
                 "sub/thing.v1.x.json": "{}",
+                "thing.v1.X.json": "{}",  # only the extension is case-insensitive
             },
             False,
         ),
@@ -284,6 +326,9 @@ def test_schema_without_an_example_in_either_layout_is_an_error(
     problem = only(validate_all(contracts))
     assert problem.code == "missing_example"
     assert problem.schema == THING
+    assert listed_examples(contracts) == {THING: []}
+    for text in (problem.message, problem.hint):  # every accepted extension is named
+        assert all(extension in text for extension in (".json", ".yaml", ".yml"))
 
 
 def test_no_schemas_at_all_is_an_error(tmp_path: Path) -> None:
@@ -409,7 +454,7 @@ def test_script_runs_as_ci_runs_it(tmp_path: Path, broken: bool) -> None:
         assert f"{PREFIX}thing.v1/a.json" in result.stderr
         return
     # Without --contracts-dir the script checks the repository's own contracts, as CI does.
-    expected = real_schemas()
+    expected = listed_examples(REAL_CONTRACTS)
     count = sum(len(examples) for examples in expected.values())
     for schema, examples in expected.items():
         for example in examples:

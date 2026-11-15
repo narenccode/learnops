@@ -121,18 +121,25 @@ python libs/contracts/validate_examples.py [--check | --dry-run] [--contracts-di
   - *flat:* `contracts/examples/<name>.v<N>.<suffix>.json` (or `.yaml`, `.yml`), with a one-word
     suffix such as `moodle-ws.v1.functions.json`.
 
-  Matching is exact, so `thing.v1` never takes the examples of `thing.v10`. Folder examples are
-  listed first, then flat ones, each sorted by name. Every top-level file in a contract's folder
-  is validated against that folder's schema, with no special cases. Files in subfolders (B1's
+  Matching is exact, so `thing.v1` never takes the examples of `thing.v10`. **Extensions are
+  matched in any case in both layouts** (`A.JSON`); the stem and the suffix word must be lower
+  case. Folder examples are listed first, then flat ones, each sorted by name. Every top-level
+  file in a contract's folder is validated against that folder's schema, with no special cases. Files in subfolders (B1's
   `weeks/*.md`) are supporting files and are ignored (`validate_package` checks them).
 - **Problems found here**, each with a `next:` hint: `no_schemas` (no `*.schema.json` file at all)
   and `missing_example` (a schema with no example in either layout). Everything inside a schema or
   an example is reported by the engine (see above), including `unresolvable_reference`.
+- **Links.** A symbolic link is followed whatever it points at, even a file outside `contracts/`,
+  and the example is reported under the link's own path. Nothing is written, but the target's
+  parse and schema errors (each cut to 300 characters) reach the CI log. `validate_package` (B1)
+  refuses links that leave its package folder; this tool does not.
 - The summary counts every example found, so passed, failed and not validated (the examples of an
   unusable schema) always add up to it.
 - Not checked yet: `*.schema.json` files not named `<name>.v<N>.schema.json` (they are skipped),
-  examples that no schema matches, other file types next to the examples, duplicate keys, and the
-  non-standard JSON constants `NaN`, `Infinity` and `-Infinity`.
+  examples that no schema matches (orphans such as `moodle-ws.v1.json` are skipped and the run can
+  still exit 0), other file types next to the examples, duplicate keys, and `NaN`, `Infinity` and
+  `-Infinity`. On #68 the guide set orphans, unsupported files, duplicate keys and strict JSON as
+  a later pull request: they are not in this stack.
 - Exit codes: `0` when every example passes, `1` when any problem is found, `2` for a usage error
   or a missing contracts folder. The tool only reads files: `--check` (the default) and
   `--dry-run` do the same, and there is nothing to undo.

@@ -44,10 +44,11 @@ SCHEMA_NAME = re.compile(
 SCHEMA_GLOB = "*.schema.json"
 # A flat example sits directly in contracts/examples/: `<name>.v<N>.<suffix>.<json|yaml|yml>`.
 # The suffix is one segment, so the stem is always the first two dot-separated parts and a
-# file of `x.v10` can never be read as an example of `x.v1`.
+# file of `x.v10` can never be read as an example of `x.v1`. The extension is matched in any case
+# (like the folder layout); the stem and the suffix word stay lower case.
 FLAT_EXAMPLE_NAME = re.compile(
     r"^(?P<stem>[a-z0-9]+(?:-[a-z0-9]+)*\.v[1-9][0-9]*)\.[a-z0-9]+(?:-[a-z0-9]+)*"
-    r"\.(?:json|yaml|yml)$"
+    r"\.(?i:json|yaml|yml)$"
 )
 
 
