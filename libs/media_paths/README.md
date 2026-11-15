@@ -1,11 +1,83 @@
 # Media Paths
 
-Shared Python library for validating LearnOps media paths.
+Shared Python library for generating and validating LearnOps media paths.
 
 ## Requirements
 
-- EXT-09: the shared `media_paths` library
+- EXT-09: the shared `media_paths` library, including the B6.1 media path templates
 - C-08: media is stored as relative paths
+
+## Path generation
+
+- `course_lesson_path(course_slug, module_number, module_slug, lesson_number, lesson_slug, template=DEFAULT_COURSE_LESSON_TEMPLATE)`
+- `live_class_path(course_slug, cohort, number, topic_slug, template=DEFAULT_LIVE_CLASS_TEMPLATE)`
+
+Default templates (PRD B6.1):
+
+```text
+courses/{course_slug}/{module_nn}-{module_slug}/{lesson_nn}-{lesson_slug}/
+courses/{course_slug}/live-{cohort}/{nn}-{topic_slug}/
+```
+
+### Placeholders
+
+A custom template may use only the placeholders of its own path type, by plain name:
+
+| Path type | Placeholder | Filled from | Example |
+|---|---|---|---|
+| Course lesson | `{course_slug}` | `course_slug` | `build-ai-assistant` |
+| | `{module_nn}` | `module_number`, zero-padded | `01` |
+| | `{module_slug}` | `module_slug` | `setup` |
+| | `{lesson_nn}` | `lesson_number`, zero-padded | `02` |
+| | `{lesson_slug}` | `lesson_slug` | `install-python` |
+| Live class | `{course_slug}` | `course_slug` | `build-ai-assistant` |
+| | `{cohort}` | `cohort` | `batch-01` |
+| | `{nn}` | `number`, zero-padded | `01` |
+| | `{topic_slug}` | `topic_slug` | `python-introduction` |
+
+Numbers are zero-padded to two digits.
+
+### Loading a custom template
+
+A custom template (for example `MEDIA_PATH_TEMPLATE`) is checked **once, when it is loaded**, not
+on every call. Load it with `check_course_lesson_template(text)` or `check_live_class_template(text)`
+and pass the result as `template=`:
+
+```python
+import os
+
+from media_paths import check_course_lesson_template, course_lesson_path
+
+template = check_course_lesson_template(os.environ["MEDIA_PATH_TEMPLATE"])  # at start-up
+folder = course_lesson_path("python", 1, "basics", 2, "intro", template=template)
+```
+
+The path functions accept only a loaded `CourseLessonTemplate` / `LiveClassTemplate`; a plain
+string raises `TypeError`. A template is rejected with a `ValueError` that names the problem if it:
+
+- leaves out a placeholder that identifies the item: `{course_slug}`, `{module_slug}` and
+  `{lesson_slug}` for lessons; `{course_slug}`, `{cohort}` and `{topic_slug}` for live classes.
+  Without them two items could share one folder and overwrite each other. The number
+  placeholders are optional;
+- puts two of those identifying placeholders in one path segment, such as
+  `{course_slug}{module_slug}/` (guide decision): `ab` + `c` and `a` + `bc` would share a folder.
+  A number placeholder may share the segment (`{module_nn}-{module_slug}`);
+- uses any other placeholder (including `{}`, `{0}`, `{name.attr}`, `{name[0]}`);
+- has a format spec or conversion (`{module_nn:>3}`, `{course_slug!r}`);
+- has unbalanced braces (write a literal brace as `{{` or `}}`);
+- produces a path that is not a safe relative path (see Validation below).
+
+The result is the template's text with the values filled in. The default templates end with `/`;
+a custom template without a trailing `/` is accepted (no rule on this has been decided), so join a
+file name to the folder with an explicit `/` rather than by plain concatenation.
+
+### Input rules
+
+- Slugs and `cohort`: lowercase ASCII letters and digits separated by single hyphens (`2026-01`
+  is a valid cohort).
+- `module_number`, `lesson_number`, `number`: an `int` from 1 to 99 (`bool`, `float` and `str`
+  are rejected).
+- A wrong type raises `TypeError`; a wrong value raises `ValueError`.
 
 ## Validation
 
