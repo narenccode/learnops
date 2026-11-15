@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:learnops:contract:lesson-manifest:v1",
+  "title": "LearnOps lesson manifest (B6, v1)",
+  "description": "The lesson.json manifest in a lesson folder (PRD B6.2, B6.3). It lists the lesson's tracks and derived files. Every file path is relative to the lesson folder, and lesson_id to the course folder (PRD B6.3, C-08). This schema checks structure only; rules that need the lesson folder or the configuration are listed under $comment and are enforced by validator code, not by this file.",
+  "$comment": "Unknown fields are allowed on purpose: after Release 0 contracts change only by adding optional fields and readers ignore unknown fields (PRD B.0, EXT-02). Required (guide decision, PRD B6.3): schema, course_slug, lesson_id, title, duration_s, and the fields that point to files B6.2 marks as required (tracks with exactly one main track, captions, transcript, chapters). Optional: slides, cues, summary, source, processing. Track roles are open lowercase names so new kinds of track need no contract change; main, main-low, camera and screen are the known ones and a v1 reader ignores roles it doesn't play. poster.jpg is required by B6.2 but has no manifest field: readers find it by its fixed file name in the lesson folder. transcript only names the file; its contents follow the B5.4 transcript shape, which this schema does not repeat. NOT expressible in JSON Schema, so NOT enforced here: that the named files exist in the lesson folder; that lesson.json is written last, only when every required file exists (FR-V-08); that lesson_id and course_slug match the folder's place in the B6.1 path template (the template is configurable); the file names B6.2 gives (720p.mp4, captions.en.vtt and so on), since the manifest is what readers follow. processing.completed_at: the pattern guarantees the RFC 3339 shape and field ranges (month 01-12, day 01-31, hour 00-23 and so on) with any validator; calendar validity (for example no 31 February) is checked only by a validator run with a date-time format checker, which jsonschema provides only when the rfc3339-validator package is installed (it is not in requirements-dev.txt).",
+  "type": "object",
+  "required": [
+    "schema",
+    "course_slug",
+    "lesson_id",
+    "title",
+    "duration_s",
+    "tracks",
+    "captions",
+    "transcript",
+    "chapters"
+  ],
+  "properties": {
+    "schema": {
+      "const": "learnops.lesson/v1",
+      "description": "Contract name and version."
+    },
+    "course_slug": {
+      "$ref": "#/$defs/slug",
+      "description": "The course slug used in the lesson's path (PRD B6.1, B1.1)."
+    },
+    "lesson_id": {
+      "$ref": "#/$defs/relative_path",
+      "type": "string",
+      "minLength": 1,
+      "description": "The lesson's place below the course folder, for example 01-setup/02-install-python (PRD B6.3). Readers build a path from it, so it follows the relative path rule (C-08). Its exact form follows the configurable path template (B6.1), so this schema does not fix more than that."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "duration_s": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Length of the lesson in seconds."
+    },
+    "tracks": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/track" },
+      "contains": {
+        "type": "object",
+        "required": ["role"],
+        "properties": { "role": { "const": "main" } }
+      },
+      "minContains": 1,
+      "maxContains": 1,
+      "description": "Every video track of the lesson. Exactly one main track (PRD B6.2: 720p.mp4), so a reader never has to choose between two. Other tracks are optional. camera and screen are reserved for F-1 and are listed, not played, in v1 (PRD B6.2, B6.3); a v1 reader ignores roles it doesn't play."
+    },
+    "captions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/caption" },
+      "contains": {
+        "type": "object",
+        "required": ["lang"],
+        "properties": { "lang": { "const": "en" } }
+      },
+      "description": "WebVTT caption files. At least one entry must have lang en, because B6.2 requires captions.en.vtt (guide decision, PRD B6.2, B6.3). Other languages may be listed as well."
+    },
+    "transcript": {
+      "$ref": "#/$defs/relative_path",
+      "description": "Path to the transcript file: segments with word timings in the B5.4 transcript shape (PRD B6.2). Only the path is checked here; the file's contents belong to the B5 contract."
+    },
+    "chapters": {
+      "$ref": "#/$defs/relative_path",
+      "description": "Chapter list [{start, end, title}] (PRD B6.2)."
+    },
+    "slides": {
+      "$ref": "#/$defs/relative_path",
+      "description": "Slide-change index [{t, thumb, text?}] (PRD B6.2; optional, feature flag)."
+    },
+    "cues": {
+      "$ref": "#/$defs/relative_path",
+      "description": "Moments where an activity should appear [{t, type, ref, label}] (PRD B6.2; optional)."
+    },
+    "summary": {
+      "$ref": "#/$defs/relative_path",
+      "description": "Short summary in Markdown (PRD B6.2; optional, feature flag)."
+    },
+    "source": { "$ref": "#/$defs/source" },
+    "processing": { "$ref": "#/$defs/processing" }
+  },
+  "$defs": {
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*(?![\\s\\S])",
+      "description": "Lowercase ASCII letters and digits separated by single hyphens (PRD B6.1, B1.1). Also the form of track roles. The end anchor is (?![\\s\\S]) instead of $ because Python's $ also matches before a trailing newline."
+    },
+    "relative_path": {
+      "type": "string",
+      "pattern": "^(?![\\s\\S]*[\\u0000-\\u001F\\u007F-\\u009F\\u00AD\\u0600-\\u0605\\u061C\\u06DD\\u070F\\u0890-\\u0891\\u08E2\\u180E\\u200B-\\u200F\\u202A-\\u202E\\u2060-\\u2064\\u2066-\\u206F\\uFEFF\\uFFF9-\\uFFFB\ud804\udcbd\ud804\udccd\ud80d\udc30-\ud80d\udc3f\ud82f\udca0-\ud82f\udca3\ud834\udd73-\ud834\udd7a\udb40\udc01\udb40\udc20-\udb40\udc7f])(?![A-Za-z][A-Za-z0-9+.-]*:)(?!\\.\\.?(?:/|(?![\\s\\S])))[^/\\s?#%\\\\]+(?:/(?!\\.\\.?(?:/|(?![\\s\\S])))[^/\\s?#%\\\\]+)*(?![\\s\\S])",
+      "description": "A relative path (PRD B6.3, C-08). The field that uses it names its base folder. Non-empty; forward slashes only; no whitespace; no ?, #, % or backslash; no URL scheme or drive letter (nothing like https: or C: at the start); not absolute; no empty, '.' or '..' segment; no control or format character (guide decision): the complete Unicode 15.0.0 categories Cc (U+0000-U+001F, U+007F-U+009F) and Cf (U+00AD, U+0600-U+0605, U+061C, U+06DD, U+070F, U+0890-U+0891, U+08E2, U+180E, U+200B-U+200F, U+202A-U+202E, U+2060-U+2064, U+2066-U+206F, U+FEFF, U+FFF9-U+FFFB, U+110BD, U+110CD, U+13430-U+1343F, U+1BCA0-U+1BCA3, U+1D173-U+1D17A, U+E0001, U+E0020-U+E007F), from the Unicode Character Database 15.0.0 DerivedGeneralCategory.txt. Private-use, surrogate and unassigned code points are not rejected as categories. No percent sign (%) anywhere (guide decision): with the lab 'none' signer (B6.4) the relative path is appended to the media base URL, and layers that decode a path, once or more, could turn an encoded form (%2e, %2F, %5c, %252e, %25%32%65 and so on) into a dot or separator; rejecting % rejects every such form. The path is never decoded or normalized. Considered but not enforced in v1 (guide decision): Windows reserved names (such as CON, NUL, COM1) and Unicode normalization, because the store is on Linux or S3 and no consumer compares names, so these rules would protect nothing; if a store later needs them, that is a v2 discussion. No maximum path length is specified in v1 (guide decision): paths are built from bounded slugs and the store enforces its own limits, so any number chosen now would be invented. The list is pinned to Unicode 15.0.0; a newer Unicode version is a contract change, not an automatic one. libs/media_paths must use the same Unicode 15.0.0 Cc and Cf range tables (CC_RANGES and CF_RANGES). The pattern lists code points outside the BMP as the characters themselves (JSON surrogate-pair escapes), because Python's \\U escape and ECMA-262's \\u{...} escape each work in only one of the two; ECMA-262 validators must therefore compile patterns with the u (Unicode) flag, as Draft 2020-12 validators such as Ajv do by default. Shared valid and invalid cases: contracts/test-vectors/relative-path.v1.json."
+    },
+    "track": {
+      "type": "object",
+      "required": ["role", "file"],
+      "properties": {
+        "role": {
+          "$ref": "#/$defs/slug",
+          "description": "Open list of lowercase names in the slug form, so a new kind of track (for example audio) needs no contract change. Known roles: main: the main video (720p). main-low: the low-bandwidth copy (360p, optional). camera, screen: separate tracks reserved for F-1 (PRD B6.2, B6.3)."
+        },
+        "file": { "$ref": "#/$defs/relative_path" },
+        "height": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Frame height in pixels, for example 720 or 360."
+        }
+      }
+    },
+    "caption": {
+      "type": "object",
+      "required": ["lang", "file"],
+      "properties": {
+        "lang": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Caption language, for example en."
+        },
+        "file": { "$ref": "#/$defs/relative_path" }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Where the lesson came from. The PRD names only upload (B6.3); BigBlueButton intake (FR-V-09) is another source whose value the PRD does not name, so this is not an enum."
+        },
+        "uploaded_by": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The uploader's LTI sub (PRD B6.3, B3). No other personal data."
+        },
+        "original_name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "File name of the uploaded original. Optional, and not written in v1 (guide decision): a user-supplied file name may contain personal data that LTI does not provide (SEC-06)."
+        }
+      }
+    },
+    "processing": {
+      "type": "object",
+      "properties": {
+        "pipeline_version": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Version of the pipeline that produced the lesson; a re-process records a new one (FR-V-11)."
+        },
+        "completed_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\\.[0-9]+)?(Z|[+-]([01][0-9]|2[0-3]):[0-5][0-9])(?![\\s\\S])",
+          "description": "When processing finished, as an RFC 3339 timestamp with a time zone."
+        }
+      }
+    }
+  }
+}
