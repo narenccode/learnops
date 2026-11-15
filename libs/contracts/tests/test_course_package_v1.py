@@ -525,9 +525,12 @@ def test_unicode_15_0_has_2_cc_and_21_cf_ranges() -> None:
 def test_pattern_rejects_exactly_cc_and_cf_among_all_code_points(
     schema: dict[str, Any],
 ) -> None:
-    # Every code point, inside a name, through the schema's own pattern (jsonschema checks
-    # "pattern" with re.search, as here). Whitespace and the ASCII rules reject a few more;
-    # nothing else may differ.
+    # Every code point, placed after the first character of a one-segment name (a<c>.mp4),
+    # through the schema's own pattern (jsonschema checks "pattern" with re.search, as here).
+    # Whitespace and the ASCII rules reject a few more; nothing else may differ. The colon is
+    # in the expected set only because in this position it forms a URL scheme or drive-letter
+    # prefix ("a:"): the rule does not reject a colon everywhere (notes/b:c.md and 12:30.mp4
+    # are valid, see the shared vectors).
     pattern = re.compile(schema["$defs"]["relative_path"]["pattern"])
     forbidden = set(_code_points_in(CONTROL_AND_FORMAT))
     whitespace = {p for p in range(0x110000) if re.fullmatch(r"\s", chr(p))}
