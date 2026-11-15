@@ -508,6 +508,10 @@ def test_r3_locked_states_are_refused_before_sending_and_still_verified() -> Non
     assert "on 4.5 the code overwrites the grade" in r3
     assert "lab check 16" in r3
     assert "already `readyforrelease` or `released`" in plain(prd_b4())
+    # Guide, 15 Nov (PR #80): R3 holds on 5.3; on 4.5 it is best effort, named in the release notes.
+    assert "R3 holds on 5.3" in r3
+    assert "On 4.5 it is best effort" in r3
+    assert "the release notes name this limitation" in r3
 
 
 def test_r4_declared_capabilities_are_not_granted() -> None:
@@ -659,9 +663,9 @@ def test_the_custom_role_rule_is_stated() -> None:
 
 def test_every_lab_check_is_still_open() -> None:
     """No live check is claimed: every row of the §5 checklist says open on 4.5 and 5.3,
-    including checks 13 to 16 added for the guide's decisions."""
+    including checks 13 to 16 added for the guide's decisions and check 17 (guide, 15 Nov)."""
     rows = lab_checks()
-    assert list(rows) == [str(n) for n in range(1, 17)]
+    assert list(rows) == [str(n) for n in range(1, 18)]
     assert all(row[2:4] == ["open", "open"] for row in rows.values())
     assert all(row[4] == "—" for row in rows.values()), "no decision record exists yet"
 
@@ -674,6 +678,10 @@ def test_the_decision_lab_checks_name_their_rules() -> None:
     assert "(R4" in rows["14"][1]
     assert "silently ignored" in rows["15"][1] and "(R9)" in rows["15"][1]
     assert "5.3 keeps the old grade" in rows["16"][1] and "(R3)" in rows["16"][1]
+    # Guide, 15 Nov (PR #72): the returned fields are a separate check from item 1's parameters.
+    assert "`core_course_get_contents`" in rows["17"][1]
+    assert "activity and section `idnumber`" in rows["17"][1]
+    assert "may rely on" in rows["17"][1]
     intro = plain(section(rules(), "## 5. Lab verification checklist", "| #"))
     assert "reading the source (§7) never closes one" in intro
 
@@ -897,3 +905,8 @@ def test_one_token_variable_per_site_with_a_placeholder() -> None:
     assert env.get("MOODLE45_WS_TOKEN") == "CHANGE_ME"
     assert env.get("MOODLE53_WS_TOKEN") == "CHANGE_ME"
     assert "MOODLE_WS_TOKEN" not in env
+
+
+def test_the_library_is_not_described_as_unwritten() -> None:
+    """libs/moodle_ws exists (the library pull requests), so §2a must not call it unwritten."""
+    assert "not written yet" not in section(rules(), "## 2a.", "## 3.")
