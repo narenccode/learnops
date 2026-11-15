@@ -18,12 +18,12 @@ same pull request.
 | # | Decision | Reason |
 |---|---|---|
 | 1 | `input_tokens`, `output_tokens` and `cost_estimate` may be `null` when the provider does not report them. Unknown is never written as 0. | A 0 that means "unknown" would make budgets and the cost comparison (FR-M-03) wrong without anyone noticing. |
-| 2 | `cost_estimate` is a number in US dollars. A local model with no billed cost reports `0.0`; unknown cost is `null`. | One currency keeps costs comparable and summable; the zero/null split keeps "free" apart from "unknown". |
+| 2 | `cost_estimate` is a number in US dollars. A local model with no billed cost reports `0.0`; unknown cost is `null`. `latency_ms` and the token counts are non-negative integers, chosen in the schema and not by the PRD: a provider rounds to whole milliseconds. | One currency keeps costs comparable and summable; the zero/null split keeps "free" apart from "unknown". |
 | 3 | `fake`, `local` and `hosted` stay distinct provider values. The service refuses `fake` unless an explicit test-only setting is on, and that setting cannot be on in the lab or production. | Tests need a provider that calls no model, but a fake result must never look like a real draft to a mentor. |
 | 4 | `segments: []`, empty segment `text` and `words: []` are valid. | Silent audio and providers without word timings are normal, not errors. |
 | 5 | All times are seconds from the start of the original audio, also with chunked processing. Every segment's `end` is at least its `start`. | Consumers (Module 4 slide index and summaries) must not need to know how the audio was split. |
 | 6 | No discriminator field; keep the two-shape `oneOf`. | The PRD names no such field; adding a required one would make every producer write a field the PRD does not define. |
-| 7 | Keep flat example names, for example `contracts/examples/model-interface.v1.meta-local.json`. | The layout Student 2 asked for, for the shared example validator (`libs/contracts/validate_examples.py`, not written yet). |
+| 7 | Keep flat example names, for example `contracts/examples/model-interface.v1.meta-local.json`. | The layout Student 2 asked for, for the shared example validator (`libs/contracts/validate_examples.py`, in PR #68, not merged yet). |
 | 8 | `input_hash`, `temperature`, `seed` and `cost_known` are not part of v1. | Not needed for v1; they can be added later as optional fields (B.0 rule 2). |
 | 9 | (15 Nov) Every word's `end` is at least its `start`, the same rule as a segment. The code rule in PR #35 enforces it, with a test. | A word that ends before it starts is as wrong as a segment that does, and consumers use word times for captions. |
 | 10 | (15 Nov) Time order is not guaranteed. The contract says segments and words may arrive out of order and a consumer sorts by `start` (one sentence in PRD B5.4). | Say in the contract when order is not guaranteed, so every consumer sorts instead of assuming. |
