@@ -32,15 +32,12 @@ same pull request.
 ## How it is applied
 
 - Schema descriptions and PRD B5.1, B5.2 and B5.4 state decisions 1 to 5.
-- JSON Schema cannot compare two fields, so `end >= start` is not a schema rule. It will be
-  checked by `libs/model_interface/transcript.py` in PR #35, which is not merged yet: **today
-  nothing enforces it.**
-- Decision 3 will be enforced by `libs/model_interface/config.py` in PR #35, also not merged yet:
-  **today nothing enforces it.** The fake provider will be accepted only with `LEARNOPS_ENV=test`
-  and `MODEL_ALLOW_FAKE=true`; with the flag on and any other `LEARNOPS_ENV` (including unset), the
-  service will refuse to start. Both variables are added to `.env.example` in PR #35, with the code
-  that reads them.
-- Decision 9 (word `end >= start`) will be checked by the same file in PR #35, with a test; **today
-  nothing enforces it.**
+- JSON Schema cannot compare two fields, so `end >= start` (segments, and words by decision 9) is
+  not a schema rule. `libs/model_interface/transcript.py` in PR #35 (not merged) will check it,
+  with a test: **today nothing enforces it.**
+- Decision 3 will be enforced by `libs/model_interface/config.py` in PR #35 (not merged): **today
+  nothing enforces it.** The fake provider will be accepted only with `LEARNOPS_ENV=test` and
+  `MODEL_ALLOW_FAKE=true`; with the flag on and any other `LEARNOPS_ENV` (including unset), the
+  service will refuse to start. Both variables are added to `.env.example` in PR #35.
 - Decisions 10 and 11 are deliberately not enforced: no rule on time order (a consumer sorts by
   `start`) and no rule on times past `duration_s`. The schema accepts both, and tests record that.

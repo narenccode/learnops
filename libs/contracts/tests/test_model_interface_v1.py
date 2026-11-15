@@ -390,8 +390,7 @@ def test_valid_variation_is_accepted(
 def test_segment_ending_before_it_starts_passes_the_schema(
     validator: Draft202012Validator,
 ) -> None:
-    """JSON Schema cannot compare two fields, so B5.4's end >= start is NOT a schema rule. The
-    library check that enforces it is in PR #35 and is not merged yet."""
+    """A schema cannot compare two fields: end >= start is checked in PR #35 (not merged)."""
     transcript = load_example(KINDS["transcript"][1])
     transcript["segments"][0]["start"], transcript["segments"][0]["end"] = 2.4, 0.0
     assert messages(validator, transcript) == []
@@ -400,8 +399,7 @@ def test_segment_ending_before_it_starts_passes_the_schema(
 def test_segments_out_of_time_order_pass_the_schema(
     validator: Draft202012Validator,
 ) -> None:
-    """Decision 10: time order is not guaranteed, so the schema accepts any order and a consumer
-    sorts by start (PRD B5.4)."""
+    """Decision 10: order is not guaranteed; a consumer sorts by start (PRD B5.4)."""
     transcript = load_example(KINDS["transcript"][1])
     transcript["segments"].reverse()
     assert messages(validator, transcript) == []
@@ -410,8 +408,7 @@ def test_segments_out_of_time_order_pass_the_schema(
 def test_a_segment_past_duration_s_passes_the_schema(
     validator: Draft202012Validator,
 ) -> None:
-    """Decision 11: there is no rule on times past duration_s, so the schema accepts them and a
-    reader must not fail on one."""
+    """Decision 11: no rule on times past duration_s; a reader must not fail on one."""
     transcript = load_example(KINDS["transcript"][1])
     transcript["segments"][-1]["end"] = transcript["meta"]["duration_s"] + 100
     assert messages(validator, transcript) == []
@@ -420,8 +417,7 @@ def test_a_segment_past_duration_s_passes_the_schema(
 def test_a_word_ending_before_it_starts_passes_the_schema(
     validator: Draft202012Validator,
 ) -> None:
-    """Decision 9: word end >= start, like a segment. JSON Schema cannot compare two fields, so it
-    is NOT a schema rule; the check is in PR #35 and is not merged yet."""
+    """Decision 9: word end >= start is checked in PR #35 (not merged), not by the schema."""
     transcript = load_example(KINDS["transcript"][1])
     word = next(w for s in transcript["segments"] for w in s["words"])
     word["start"], word["end"] = 2.4, 0.0
