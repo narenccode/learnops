@@ -29,10 +29,15 @@ same pull request.
 ## How it is applied
 
 - Schema descriptions and PRD B5.1, B5.2 and B5.4 state decisions 1 to 5.
-- JSON Schema cannot compare two fields, so `end >= start` is checked by
-  `libs/model_interface/transcript.py`.
-- Decision 3 is enforced by `libs/model_interface/config.py`. The fake provider is accepted only
-  with `LEARNOPS_ENV=test` and `MODEL_ALLOW_FAKE=true`; with the flag on and any other
-  `LEARNOPS_ENV` (including unset), the service refuses to start. Both variables are in
-  `.env.example`.
-- Not decided, so not enforced: word `end >= start`, and segments in time order.
+- JSON Schema cannot compare two fields, so `end >= start` is not a schema rule. It will be
+  checked by `libs/model_interface/transcript.py` in PR #35, which is not merged yet: **today
+  nothing enforces it.**
+- Decision 3 will be enforced by `libs/model_interface/config.py` in PR #35, also not merged yet:
+  **today nothing enforces it.** The fake provider will be accepted only with `LEARNOPS_ENV=test`
+  and `MODEL_ALLOW_FAKE=true`; with the flag on and any other `LEARNOPS_ENV` (including unset), the
+  service will refuse to start. Both variables are added to `.env.example` in PR #35, with the code
+  that reads them.
+- Not decided, so not enforced: word `end >= start`, and segments and words in time order (a
+  consumer must not assume it).
+- **Open question for the guide:** may a segment or word end after `duration_s`? The contract says
+  nothing about it, and v1 neither allows nor forbids it until the guide decides.

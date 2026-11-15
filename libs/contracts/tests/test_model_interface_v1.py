@@ -390,8 +390,28 @@ def test_valid_variation_is_accepted(
 def test_segment_ending_before_it_starts_passes_the_schema(
     validator: Draft202012Validator,
 ) -> None:
-    """JSON Schema cannot compare two fields, so B5.4's end >= start is NOT a schema rule; library
-    code enforces it."""
+    """JSON Schema cannot compare two fields, so B5.4's end >= start is NOT a schema rule. The
+    library check that enforces it is in PR #35 and is not merged yet."""
     transcript = load_example(KINDS["transcript"][1])
     transcript["segments"][0]["start"], transcript["segments"][0]["end"] = 2.4, 0.0
+    assert messages(validator, transcript) == []
+
+
+def test_segments_out_of_time_order_pass_the_schema(
+    validator: Draft202012Validator,
+) -> None:
+    """Time order is not decided by the guide (decision 0001), so it is not enforced and a consumer
+    must not assume it. This test records the current behaviour; it is not a rule."""
+    transcript = load_example(KINDS["transcript"][1])
+    transcript["segments"].reverse()
+    assert messages(validator, transcript) == []
+
+
+def test_a_segment_past_duration_s_passes_the_schema(
+    validator: Draft202012Validator,
+) -> None:
+    """Whether times may pass duration_s is an open question for the guide (decision 0001), so
+    the schema says nothing about it. This test records the current behaviour; it is not a rule."""
+    transcript = load_example(KINDS["transcript"][1])
+    transcript["segments"][-1]["end"] = transcript["meta"]["duration_s"] + 100
     assert messages(validator, transcript) == []

@@ -264,6 +264,7 @@ The label is on the right side of the PR page, under **Labels**. It is your sign
 | `ready-to-merge` | Your peer approved and the bot is satisfied | **Squash and merge** (Step 9) |
 | `rule-violation` | A project rule is broken | **Do not merge.** The guide decides and will reply |
 | `needs-judgement` | A decision only the guide can make | **Do not merge.** The guide will reply |
+| `awaiting-owners` | A contract change: every affected owner, then the guide, must review | Ask each affected owner to review. **Do not merge.** The guide merges last |
 
 Normal order for a good PR: `awaiting-peer` → `ready-to-merge`.
 
