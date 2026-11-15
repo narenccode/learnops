@@ -240,6 +240,47 @@ confirmed by the contract reviewers): `source.kind` is required inside `source` 
 | `course_slug` and `lesson_id` match the folder's place in the path template | B6.1 | `libs/media_paths` (Release 0, separate pull request) |
 | Calendar validity of `processing.completed_at` (for example no 31 February) | — | Only with a `date-time` format checker (`rfc3339-validator`, not installed in CI) |
 | Contents of `transcript.en.json` (B5.4 shape) | B5.4, B6.2 | B5 contract (no schema in `contracts/` yet) |
-| Shapes of `chapters.json`, `slides.json`, `cues.json` | B6.2 | No schema yet |
+| Shapes of `chapters.json`, `slides.json`, `cues.json` | B6.2 | Their own schemas, see the next section |
 | Windows reserved names (such as `CON`, `NUL`, `COM1`) and Unicode normalization in paths: considered, not v1 rules (guide decision) | B6.3 | Not enforced in v1: the store is on Linux or S3 and no consumer compares names; a v2 discussion if a store later needs them |
 | A maximum path length | B6.3 | None specified in v1 (guide decision): paths are built from bounded slugs and the store enforces its own limits |
+
+
+## B6.2 chapters, slides and cues contracts (v1), Release 0 foundation
+
+Files: `contracts/chapters.v1.schema.json`, `contracts/slides.v1.schema.json`,
+`contracts/cues.v1.schema.json`, `contracts/examples/{chapters,slides,cues}.v1/`, the validators in
+`libs/contracts/lesson_files.py` (shared validator reference EXT-09) and their tests in
+`libs/contracts/tests/test_lesson_files_v1.py`. B6.2 has no requirement ID of its own in the PRD (it
+is a contract, PRD B.0). It is the schema that FR-V-05, FR-V-07, FR-V-14 (Release 3 and 5, which
+write the files) and FR-X-06, FR-X-07, FR-X-12 (Release 6, which read them) will be checked against,
+and the data EXT-08 requires "now". None of those requirements is implemented by this change, so none
+gets a row in the table at the top.
+
+### Enforced by a JSON Schema or by the validator, and covered by automated tests
+
+Test names are in `test_lesson_files_v1.py`. "Validator" means `lesson_files.py`.
+
+| Rule | PRD | Test(s) |
+|---|---|---|
+| Each file is a bare JSON array (not an object wrapper); unknown fields accepted | B6.2, B.0, EXT-02 | `test_schema_is_a_valid_draft_2020_12_schema`, `test_a_document_that_is_not_an_array_is_rejected`, `test_unknown_fields_are_accepted` |
+| Each schema has a valid top-level example, and every example validates | B.0 rule 1 | `test_each_schema_has_a_top_level_example`, `test_every_example_is_valid`, `test_examples_show_what_the_guide_decided`, `test_valid_chapter_list_is_accepted`, `test_empty_chapter_list_is_accepted_by_the_schema`, `test_valid_slide_list_is_accepted` |
+| Times are numbers of seconds, fractional allowed, not strings; at least 0 and 0 itself allowed (guide, 2026-11-15) | B6.2 | `test_fractional_chapter_times_are_accepted`, `test_fractional_slide_time_is_accepted`, `test_fractional_cue_time_is_accepted`, `test_chapter_with_wrong_fields_is_rejected`, `test_slide_with_wrong_fields_is_rejected`, `test_cue_time_must_not_be_negative`, `test_times_of_zero_are_accepted`, `test_times_below_zero_are_rejected_by_the_schema` |
+| A time that is NaN or infinite is rejected (Python's JSON reader accepts them; the schema does not stop NaN) | B6.2 | `test_non_finite_chapter_time_is_rejected`, `test_non_finite_slide_time_is_rejected`, `test_non_finite_cue_time_is_rejected` |
+| Chapters: `end` greater than `start`; ascending order; no overlap; gaps and touching chapters allowed (validator, because a schema cannot compare two properties) | B6.2 | `test_chapter_end_not_after_start_is_rejected`, `test_unordered_chapters_are_rejected`, `test_overlapping_chapters_are_rejected`, `test_a_chapter_inside_another_is_an_overlap`, `test_chapters_with_the_same_start_are_an_overlap`, `test_chapter_gaps_are_accepted`, `test_chapters_that_touch_are_not_an_overlap`, `test_one_mistake_is_reported_once`, `test_schema_alone_does_not_enforce_the_order_rules` |
+| Slides: `thumb` follows the manifest relative-path rule, starts with `slides/`, ends in `.jpg`; no fixed digit count; `text` optional and unrestricted | B6.2, B6.3, C-08 | `test_slide_text_is_optional`, `test_slide_text_has_no_restriction_in_v1`, `test_slide_thumbnail_names_have_no_fixed_digit_count`, `test_slide_thumbnail_may_be_in_a_subfolder_of_slides`, `test_slide_thumbnail_outside_slides_or_not_jpg_is_rejected`, `test_slide_thumbnail_breaking_the_relative_path_rule_is_rejected`, `test_slide_thumbnail_needs_a_character_before_the_extension` |
+| The relative-path and type-token patterns are the same text as in the manifest schema, and the shared path vectors pass | B6.3, C-08 | `test_relative_path_pattern_is_the_manifest_pattern`, `test_type_token_pattern_is_the_manifest_slug_pattern`, `test_shared_path_vectors_are_accepted_and_rejected_in_slides_and_cues` |
+| Cues: `t`, `type`, `ref`, `label` required; `label` not empty; `required` optional boolean, absent means false; empty array valid | B6.2, FR-X-12 | `test_missing_required_cue_field_is_rejected`, `test_empty_or_non_string_label_is_rejected`, `test_missing_label_is_rejected`, `test_label_has_no_length_limit_in_v1`, `test_missing_required_means_false`, `test_required_true_and_false_are_accepted`, `test_non_boolean_required_is_rejected`, `test_empty_cues_array_is_accepted` |
+| Cue types `h5p`, `image`, `url`; `ref` is a Moodle idnumber (any non-empty string), a relative path, an absolute `https` address (scheme in any letter case); the url is not subject to the relative-path rule | B6.2, EXT-06, C-08, FR-X-12 | `test_all_three_known_cue_types_are_accepted`, `test_h5p_ref_that_is_an_idnumber_is_accepted`, `test_h5p_ref_that_is_empty_or_not_a_string_is_rejected`, `test_image_ref_that_is_a_relative_path_is_accepted`, `test_image_ref_that_is_not_a_relative_path_is_rejected`, `test_absolute_https_url_is_accepted`, `test_url_that_is_not_an_absolute_https_address_is_rejected`, `test_url_ref_is_not_subject_to_the_relative_path_rule` |
+| `type` is lowercase ASCII letters and digits with single hyphens, the track-role slug form (underscores, dots, spaces rejected); the schema accepts any such token; a v1 reader ignores an unknown type; no separate `scenario` type (guide, 2026-11-15) | B6.2, FR-X-12 | `test_unknown_lowercase_type_is_accepted_and_ignored_by_a_v1_reader`, `test_a_cue_with_a_type_the_contract_dropped_is_not_special`, `test_malformed_or_uppercase_type_is_rejected`, `test_cue_type_in_the_track_role_slug_form_is_accepted`, `test_cue_type_with_underscore_dot_space_or_other_characters_is_rejected`, `test_cue_type_form_agrees_with_the_manifest_track_role_form`, `test_type_that_is_not_a_string_is_rejected`, `test_ref_of_an_unknown_type_is_only_a_string` |
+| Every `start`, `end` and `t` in `chapters.json`, `slides.json` or `cues.json` is at most the manifest's `duration_s`, used unrounded and with no tolerance (guide, 2026-11-15, confirmed for all three files): a consumer-level cross-file rule (`check_within_duration`), not a schema rule | B6.2 | `test_schemas_do_not_check_times_against_the_duration`, `test_time_beyond_duration_is_rejected_by_the_consumer_check`, `test_time_exactly_at_the_duration_is_accepted`, `test_absent_files_are_not_checked`, `test_lesson_with_no_cues_file_has_no_readable_cues`, `test_invalid_duration_is_a_programming_error`, `test_examples_are_within_the_example_lesson_duration`, `test_duration_is_used_as_given_without_rounding`, `test_duration_check_has_no_tolerance`, `test_every_chapter_start_and_end_and_cue_t_is_checked_against_duration` |
+| Every report lists what it did not check | EXT-09 | `test_reports_list_what_was_not_checked`, `test_error_messages_name_the_file_place_and_next_step` |
+
+### Documented but not automatically enforced
+
+| Rule | PRD | Where the PRD places it |
+|---|---|---|
+| The thumbnail and image files exist; thumbnails are 320 px wide | B6.2 | FR-V-07 (R3), FR-V-08 |
+| An `h5p` ref is the `idnumber` of an activity in the course | B6.2, B7, EXT-06 | The checker (M2) and FR-V-14 (R5) |
+| A `url` is on the player's allow-list | B6.2, FR-X-12 | The player (R6) |
+| Slides or cues in ascending order of `t`; chapters, slides or cues have a minimum count; chapter titles are not empty; an idnumber has a particular form | B6.2 | Not decided by the guide, so nothing is required (`test_slides_and_cues_need_no_particular_order`, `test_chapter_title_may_be_empty`, `test_empty_chapter_list_is_accepted_by_the_schema`) |
+| Release 3 writes the three files (`cues.json` may be empty); Release 5 adds `h5p` cues; a lesson with no cues may omit the file | B6.2, EXT-08, FR-V-14 | Documented in PRD B6.2; the pipeline (R3, R5) implements it |

@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:learnops:contract:slides:v1",
+  "title": "LearnOps slide index (B6.2, v1)",
+  "description": "The slides.json file in a lesson folder (PRD B6.2): a bare JSON array of {t, thumb, text?}, one entry per slide change. t is a number of seconds from the beginning of the main track; fractional seconds are allowed. thumb is a path relative to the lesson folder whose first segment is slides/ and whose file name has at least one character before the lowercase extension .jpg.",
+  "$comment": "Unknown fields are allowed on purpose (PRD B.0, EXT-02). NOT expressible in JSON Schema, so NOT enforced by this file: that the thumbnail file exists and is 320 px wide; that every t is at most the manifest's duration_s (another file, so a consumer-level rule); that the entries are in ascending order of t (not decided by the guide, so not required). The file name has no fixed number of digits. text is plain text with no length or format restriction in v1.",
+  "type": "array",
+  "items": {
+    "$ref": "#/$defs/slide"
+  },
+  "$defs": {
+    "relative_path": {
+      "type": "string",
+      "pattern": "^(?![\\s\\S]*[\\u0000-\\u001F\\u007F-\\u009F\\u00AD\\u0600-\\u0605\\u061C\\u06DD\\u070F\\u0890-\\u0891\\u08E2\\u180E\\u200B-\\u200F\\u202A-\\u202E\\u2060-\\u2064\\u2066-\\u206F\\uFEFF\\uFFF9-\\uFFFB\ud804\udcbd\ud804\udccd\ud80d\udc30-\ud80d\udc3f\ud82f\udca0-\ud82f\udca3\ud834\udd73-\ud834\udd7a\udb40\udc01\udb40\udc20-\udb40\udc7f])(?![A-Za-z][A-Za-z0-9+.-]*:)(?!\\.\\.?(?:/|(?![\\s\\S])))[^/\\s?#\\\\]+(?:/(?!\\.\\.?(?:/|(?![\\s\\S])))[^/\\s?#\\\\]+)*(?![\\s\\S])",
+      "description": "The relative-path rule of the lesson manifest (contracts/lesson-manifest.v1.schema.json, $defs/relative_path; PRD B6.3, C-08), copied here with the same pattern text so that this file can be used on its own. A test fails if the two patterns differ. The path is relative to the lesson folder."
+    },
+    "slide": {
+      "type": "object",
+      "required": [
+        "t",
+        "thumb"
+      ],
+      "properties": {
+        "t": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Seconds from the beginning of the main track, at least 0. Fractional seconds are allowed. The moment the slide appears."
+        },
+        "thumb": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/relative_path"
+            },
+            {
+              "pattern": "^slides/(?:[^/]+/)*[^/]+\\.jpg(?![\\s\\S])"
+            }
+          ],
+          "description": "Thumbnail path relative to the lesson folder: the manifest relative-path rule, first segment slides, file name with at least one character before the lowercase extension .jpg."
+        },
+        "text": {
+          "type": "string",
+          "description": "Optional plain text of the slide. No length or format restriction in v1."
+        }
+      }
+    }
+  }
+}

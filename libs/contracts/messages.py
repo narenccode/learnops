@@ -166,3 +166,74 @@ HELD_RULES: tuple[tuple[str, str, str], ...] = (
         "Not checked: that no section uses the protected section number.",
     ),
 )
+
+
+# --- B6.2 lesson files: chapters.json, slides.json, cues.json -------------------------------
+
+
+def lesson_file_where(filename: str, location: Location) -> str:
+    """A readable place in a lesson file, e.g. `chapters.json[2].end`."""
+    text = filename
+    for part in location:
+        text += f"[{part}]" if isinstance(part, int) else f".{part}"
+    return text
+
+
+LESSON_FILE_SCHEMA_ERROR = "{where}: {detail}"
+LESSON_FILE_SCHEMA_HINT = (
+    "Change this value so that {filename} matches contracts/{schema}. "
+    "It must be a JSON array, as PRD B6.2 describes."
+)
+
+TIME_NOT_FINITE = "{where}: {value} is not a finite number of seconds."
+TIME_NOT_FINITE_HINT = "Use a number of seconds such as 95.5 (PRD B6.2)."
+
+CHAPTER_END_NOT_AFTER_START = (
+    "{where}: the chapter ends at {end} s, which is not after its start at {start} s."
+)
+CHAPTER_END_NOT_AFTER_START_HINT = "Make end greater than start."
+CHAPTER_NOT_IN_ORDER = (
+    "{where}: this chapter starts at {start} s, before the previous chapter starts at "
+    "{previous} s."
+)
+CHAPTER_NOT_IN_ORDER_HINT = "List the chapters in ascending order of start."
+CHAPTER_OVERLAP = (
+    "{where}: this chapter starts at {start} s, before the previous chapter ends at "
+    "{previous_end} s."
+)
+CHAPTER_OVERLAP_HINT = (
+    "Start the chapter at or after the end of the previous one. A gap between chapters is "
+    "allowed."
+)
+
+TIME_BEYOND_DURATION = (
+    "{where}: {value} s is after the end of the lesson at {duration} s (duration_s in "
+    "lesson.json)."
+)
+TIME_BEYOND_DURATION_HINT = (
+    "Use a time that is not after duration_s, or correct duration_s in lesson.json."
+)
+
+# What a lesson-file report does not check, so that "no errors" is not read as "fully checked".
+# Each is (code, PRD rule, text).
+LESSON_FILE_HELD_DURATION: tuple[str, str, str] = (
+    "duration_not_checked",
+    "B6.2",
+    "Not checked: that every time is within duration_s. That value is in lesson.json, "
+    "another file. check_within_duration does it.",
+)
+LESSON_FILE_HELD_FILES: tuple[str, str, str] = (
+    "files_not_checked",
+    "B6.2",
+    "Not checked: that the files named here exist in the lesson folder.",
+)
+LESSON_FILE_HELD_H5P: tuple[str, str, str] = (
+    "h5p_activities_not_checked",
+    "B6.2, B7",
+    "Not checked: that an h5p ref is the idnumber of an activity in the course.",
+)
+LESSON_FILE_HELD_URL: tuple[str, str, str] = (
+    "url_allow_list_not_checked",
+    "B6.2, FR-X-12",
+    "Not checked: that a url is allowed by the player's configuration. The player checks it.",
+)

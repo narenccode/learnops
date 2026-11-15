@@ -37,6 +37,23 @@ The schema first (structure, B1.1). When `course.yaml` is valid, also:
 | Extra protected idnumbers from `ValidationConfig`, in both modes | B1.4 |
 | `validate_package` only: every `body` names a file inside the package folder (not missing, not a folder, no `..`, absolute path or link that leaves the folder). Only that the file exists is checked, never its content | B1.1 |
 
+## Lesson files: chapters, slides, cues (PRD B6.2)
+
+```python
+from contracts import validate_chapters, validate_slides, validate_cues, check_within_duration
+
+report = validate_cues(json.loads(Path("cues.json").read_text("utf-8")))  # a parsed JSON array
+```
+
+`validate_chapters`, `validate_slides` and `validate_cues` check a parsed file against its schema
+(`contracts/<name>.v1.schema.json`) and return the same report as above. Chapters also get the rules a
+schema cannot express: `end` after `start`, ascending order, no overlap (gaps are allowed). A cue with
+a type in the track-role slug form that the contract does not list is valid; `readable_cues` returns what a v1 reader acts on
+and `cue_is_required` tells whether a cue can be skipped. `check_within_duration(duration_s, ...)` is
+the consumer-level rule that no time is after `duration_s` of `lesson.json`: the schemas do not do it.
+Not checked (listed in `report.not_checked`): that the files named exist, that an `h5p` ref is a real
+activity, that a `url` is allowed by the player.
+
 ## What is not checked (always listed in `report.not_checked`)
 
 One guide Page and one task Assignment per week, the unlock chain, the points total, completion

@@ -522,6 +522,35 @@ Slugs: lowercase ASCII, hyphens, immutable. Numbers zero-padded to two digits.
 | `camera.mp4`, `screen.mp4` | Separate tracks for F-1 | Optional; accepted and listed, not played in v1 |
 | `lesson.json` | The manifest (B6.3) | Yes |
 
+**Shapes of `chapters.json`, `slides.json` and `cues.json` (v1).** Each file is a bare JSON array,
+described by `contracts/chapters.v1.schema.json`, `contracts/slides.v1.schema.json` and
+`contracts/cues.v1.schema.json`. Unknown fields are accepted (B.0, EXT-02).
+
+- **Times** (`start`, `end`, `t`) are numbers of seconds from the beginning of the main track, never
+  `HH:MM:SS`, and at least 0. Fractional seconds are allowed. `duration_s` is kept unrounded. When a
+  validator has the manifest and one of `chapters.json`, `slides.json` or `cues.json`, every `start`,
+  `end` and `t` in that file must be at most the unrounded manifest `duration_s`, with no tolerance.
+  This is a consumer-level cross-file check; the individual JSON schema cannot enforce it.
+- **`chapters.json`**: `[{start, end, title}]`. `end` is greater than `start`; chapters are in
+  ascending order of `start` and do not overlap; gaps between chapters are allowed. These three
+  rules are checked by the validator, not by the schema (a schema cannot compare two properties).
+- **`slides.json`**: `[{t, thumb, text?}]`. `thumb` follows the manifest's relative-path rule (B6.3),
+  is relative to the lesson folder, starts with `slides/` and ends in lowercase `.jpg` with at least
+  one character before it (`slides/.jpg` is invalid); its number of digits is not fixed. `text` is
+  optional plain text with no restriction in v1.
+- **`cues.json`**: `[{t, type, ref, label, required?}]`. `label` is required, not empty and shown to
+  the learner; it has no length limit in v1. `required: true` means the learner cannot skip the cue;
+  when it is missing the cue is skippable. Types supported in v1 and their `ref`: `h5p`, the Moodle
+  activity `idnumber` (EXT-06); `image`, a path relative to the lesson folder (the B6.3 rule);
+  `url`, an absolute `https` address (C-08 does not apply to it; the player checks it against its
+  configured allow-list). `type` is written like a track role: lowercase ASCII letters and digits
+  separated by single hyphens, so underscores, dots and spaces are rejected. The schema accepts any
+  such token, and a v1 reader ignores a cue whose type it does not know. A branching scenario is a
+  B7 practice item and uses `h5p`.
+- **Release scope.** Release 3 writes all three files; `cues.json` may then be an empty array `[]`.
+  Release 5 adds the `h5p` cue entries (FR-V-14). A lesson with no cues may leave `cues.json` out
+  (the manifest's `cues` path stays optional); an empty array is also valid.
+
 ### B6.3 Lesson manifest
 
 ```json

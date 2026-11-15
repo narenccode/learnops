@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:learnops:contract:cues:v1",
+  "title": "LearnOps cues (B6.2, v1)",
+  "description": "The cues.json file in a lesson folder (PRD B6.2): a bare JSON array of {t, type, ref, label, required?}, the moments where an activity should appear (FR-X-12). An empty array is valid. A lesson with no cues may also leave the file out. The supported v1 types are h5p (ref: Moodle activity idnumber, EXT-06), image (ref: path relative to the lesson folder) and url (ref: absolute https address; C-08 does not apply to it). The type is a token in the form of a track role (the manifest slug): lowercase ASCII letters and digits separated by single hyphens, so underscores, dots and spaces are rejected. The schema accepts any such token so a later release can add a type without changing v1; a v1 reader ignores a cue with a type it does not know. A branching scenario is a B7 practice item and uses h5p.",
+  "$comment": "Unknown fields are allowed on purpose (PRD B.0, EXT-02). NOT expressible in JSON Schema, so NOT enforced by this file: that every t is at most the manifest's duration_s (another file, so a consumer-level rule); that an h5p ref names an activity that exists in the course; that a url is on the player's allow-list (the player checks it, FR-X-12); that an image file exists. The type-specific ref rules below apply only to the three supported types; for any other token the ref is just a non-empty string.",
+  "type": "array",
+  "items": {
+    "$ref": "#/$defs/cue"
+  },
+  "$defs": {
+    "relative_path": {
+      "type": "string",
+      "pattern": "^(?![\\s\\S]*[\\u0000-\\u001F\\u007F-\\u009F\\u00AD\\u0600-\\u0605\\u061C\\u06DD\\u070F\\u0890-\\u0891\\u08E2\\u180E\\u200B-\\u200F\\u202A-\\u202E\\u2060-\\u2064\\u2066-\\u206F\\uFEFF\\uFFF9-\\uFFFB\ud804\udcbd\ud804\udccd\ud80d\udc30-\ud80d\udc3f\ud82f\udca0-\ud82f\udca3\ud834\udd73-\ud834\udd7a\udb40\udc01\udb40\udc20-\udb40\udc7f])(?![A-Za-z][A-Za-z0-9+.-]*:)(?!\\.\\.?(?:/|(?![\\s\\S])))[^/\\s?#\\\\]+(?:/(?!\\.\\.?(?:/|(?![\\s\\S])))[^/\\s?#\\\\]+)*(?![\\s\\S])",
+      "description": "The relative-path rule of the lesson manifest (contracts/lesson-manifest.v1.schema.json, $defs/relative_path; PRD B6.3, C-08), copied here with the same pattern text so that this file can be used on its own. A test fails if the two patterns differ. The path is relative to the lesson folder."
+    },
+    "https_url": {
+      "type": "string",
+      "pattern": "^[hH][tT][tT][pP][sS]://[^\\s/?#\\u0000-\\u001F\\u007F-\\u009F]+(?:[/?#][^\\s\\u0000-\\u001F\\u007F-\\u009F]*)?(?![\\s\\S])",
+      "description": "An absolute https address: the scheme https (any letter case), a host, no whitespace or control character. Whether the host is allowed is for the player's configuration."
+    },
+    "cue": {
+      "type": "object",
+      "required": [
+        "t",
+        "type",
+        "ref",
+        "label"
+      ],
+      "properties": {
+        "t": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Seconds from the beginning of the main track, at least 0. Fractional seconds are allowed. The moment the cue fires."
+        },
+        "type": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*(?![\\s\\S])",
+          "description": "Lowercase ASCII letters and digits separated by single hyphens, the form of a track role (the manifest slug). Underscores, dots and spaces are rejected. Supported in v1: h5p, image, url."
+        },
+        "ref": {
+          "type": "string",
+          "description": "What to show. Its form depends on type: h5p an activity idnumber, image a path relative to the lesson folder, url an absolute https address."
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Learner-visible text for the cue. Required and not empty. No length limit in v1."
+        },
+        "required": {
+          "type": "boolean",
+          "description": "true: the learner cannot skip the cue. Absent means false."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "h5p"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "ref": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The Moodle activity idnumber (EXT-06). Its form is not restricted here."
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "image"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "ref": {
+                "$ref": "#/$defs/relative_path"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "url"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "ref": {
+                "$ref": "#/$defs/https_url"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
