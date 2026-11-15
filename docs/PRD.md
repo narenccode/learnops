@@ -497,7 +497,8 @@ transcript = speech.transcribe(audio_path, language="en")
 ```
 
 - `start`, `end` and `duration_s` are seconds. Segment and word times count from the start of the original audio, also when the audio is processed in chunks.
-- Every segment's `end` is greater than or equal to its `start`.
+- Every segment's `end` is greater than or equal to its `start`, and so is every word's `end` to its `start`.
+- Segments and words may arrive out of time order; a consumer sorts them by `start`.
 - `segments` may be `[]` (for example, silent audio), a segment's `text` may be empty, and `words` may be `[]`.
 - `cost_estimate` follows B5.1 (USD; `0.0` for a local model with no billed cost; `null` when unknown).
 

@@ -25,6 +25,9 @@ same pull request.
 | 6 | No discriminator field; keep the two-shape `oneOf`. | The PRD names no such field; adding a required one would make every producer write a field the PRD does not define. |
 | 7 | Keep flat example names, for example `contracts/examples/model-interface.v1.meta-local.json`. | The layout Student 2 asked for, for the shared example validator (`libs/contracts/validate_examples.py`, not written yet). |
 | 8 | `input_hash`, `temperature`, `seed` and `cost_known` are not part of v1. | Not needed for v1; they can be added later as optional fields (B.0 rule 2). |
+| 9 | (15 Nov) Every word's `end` is at least its `start`, the same rule as a segment. The code rule in PR #35 enforces it, with a test. | A word that ends before it starts is as wrong as a segment that does, and consumers use word times for captions. |
+| 10 | (15 Nov) Time order is not guaranteed. The contract says segments and words may arrive out of order and a consumer sorts by `start` (one sentence in PRD B5.4). | Say in the contract when order is not guaranteed, so every consumer sorts instead of assuming. |
+| 11 | (15 Nov) No rule on times past `duration_s`, in PR #35 or in the contract. A reader must not fail on such a time and may clamp it for display. A tighter rule later is a new decision, not v1. | A speech service can report a final word a little past the audio end. |
 
 ## How it is applied
 
@@ -37,7 +40,7 @@ same pull request.
   and `MODEL_ALLOW_FAKE=true`; with the flag on and any other `LEARNOPS_ENV` (including unset), the
   service will refuse to start. Both variables are added to `.env.example` in PR #35, with the code
   that reads them.
-- Not decided, so not enforced: word `end >= start`, and segments and words in time order (a
-  consumer must not assume it).
-- **Open question for the guide:** may a segment or word end after `duration_s`? The contract says
-  nothing about it, and v1 neither allows nor forbids it until the guide decides.
+- Decision 9 (word `end >= start`) will be checked by the same file in PR #35, with a test; **today
+  nothing enforces it.**
+- Decisions 10 and 11 are deliberately not enforced: no rule on time order (a consumer sorts by
+  `start`) and no rule on times past `duration_s`. The schema accepts both, and tests record that.

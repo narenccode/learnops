@@ -400,8 +400,8 @@ def test_segment_ending_before_it_starts_passes_the_schema(
 def test_segments_out_of_time_order_pass_the_schema(
     validator: Draft202012Validator,
 ) -> None:
-    """Time order is not decided by the guide (decision 0001), so it is not enforced and a consumer
-    must not assume it. This test records the current behaviour; it is not a rule."""
+    """Decision 10: time order is not guaranteed, so the schema accepts any order and a consumer
+    sorts by start (PRD B5.4)."""
     transcript = load_example(KINDS["transcript"][1])
     transcript["segments"].reverse()
     assert messages(validator, transcript) == []
@@ -410,8 +410,19 @@ def test_segments_out_of_time_order_pass_the_schema(
 def test_a_segment_past_duration_s_passes_the_schema(
     validator: Draft202012Validator,
 ) -> None:
-    """Whether times may pass duration_s is an open question for the guide (decision 0001), so
-    the schema says nothing about it. This test records the current behaviour; it is not a rule."""
+    """Decision 11: there is no rule on times past duration_s, so the schema accepts them and a
+    reader must not fail on one."""
     transcript = load_example(KINDS["transcript"][1])
     transcript["segments"][-1]["end"] = transcript["meta"]["duration_s"] + 100
+    assert messages(validator, transcript) == []
+
+
+def test_a_word_ending_before_it_starts_passes_the_schema(
+    validator: Draft202012Validator,
+) -> None:
+    """Decision 9: word end >= start, like a segment. JSON Schema cannot compare two fields, so it
+    is NOT a schema rule; the check is in PR #35 and is not merged yet."""
+    transcript = load_example(KINDS["transcript"][1])
+    word = next(w for s in transcript["segments"] for w in s["words"])
+    word["start"], word["end"] = 2.4, 0.0
     assert messages(validator, transcript) == []
