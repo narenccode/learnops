@@ -1,5 +1,5 @@
 {
-  "$comment": "Shared test vectors for the B1 submission-content rules (PRD B1.3 check formats and B1.5). Each case gives a learner's submission (online text and uploaded files) and the parts a reader must find. Pure data: no code. 'status' is 'derived' when the rules are decided by the guide (PR #61, 2026-11-11 and 2026-11-13) but this concrete example and its expected result were derived by the contract owner and still need review, and 'unverified-until-lab' when the expected result depends on how Moodle delivers editor HTML and must be checked on Moodle 4.5 and 5.3 before it is relied on. Behaviour that B1.5 lists as 'Not defined in v1' is not covered by any case. 'covers' lists the B1.5 rules whose result the case shows; rules 8 (which check reads which part) and 9 (guidance for task text) cannot be shown in these part-level results and are never listed. All URLs use example.org.",
+  "$comment": "Shared test vectors for the B1 submission-content rules (PRD B1.3 check formats and B1.5). Each case gives a learner's submission (online text and uploaded files) and the parts a reader must find. Pure data: no code. 'status' is 'derived' when the rules are decided by the guide (PR #61, 2026-11-11 and 2026-11-13) but this concrete example and its expected result were derived by the contract owner and still need review, and 'unverified-until-lab' when the expected result depends on how Moodle delivers editor HTML and must be checked on Moodle 4.5 and 5.3 before it is relied on. Behaviour that B1.5 lists as 'Not defined in v1' is not covered by any case. 'readme_cases' has fixtures for the B1.3 readme_sections rules: 'files' is what the repository holds (the README is only README.md at the root), 'check' is the Check cell, and a result is 'pass', 'fail' with the names of the missing sections, or 'invalid' with the unknown check name. 'covers' lists the B1.5 rules whose result the case shows; rules 8 (which check reads which part) and 9 (guidance for task text) cannot be shown in these part-level results and are never listed. All URLs use example.org.",
   "version": 1,
   "cases": [
     {
@@ -322,6 +322,154 @@
           "source": "onlinetext",
           "words": 5
         }
+      }
+    },
+    {
+      "id": "demo-after-report",
+      "title": "Report: first, Demo: last: the Demo: line is part of the report, so there is no Demo label",
+      "status": "derived",
+      "covers": [
+        "B1.5-3",
+        "B1.5-7",
+        "B1.3-word_count"
+      ],
+      "input": {
+        "onlinetext": "Report: Notes come first.\nDemo: https://example.org/jon/demo",
+        "onlinetext_format": "plain",
+        "files": []
+      },
+      "expected": {
+        "repository": {
+          "error": "field_missing"
+        },
+        "demo": {
+          "error": "field_missing"
+        },
+        "report": {
+          "value": "Notes come first.\nDemo: https://example.org/jon/demo",
+          "source": "onlinetext",
+          "words": 5
+        }
+      }
+    },
+    {
+      "id": "second-report-line",
+      "title": "A second Report: line is part of the report, not a repeated label",
+      "status": "derived",
+      "covers": [
+        "B1.5-3",
+        "B1.5-7",
+        "B1.3-word_count"
+      ],
+      "input": {
+        "onlinetext": "Repository: https://example.org/kai/demo-assistant\nDemo: https://example.org/kai/demo\nReport: First part.\nReport: Second part.",
+        "onlinetext_format": "plain",
+        "files": []
+      },
+      "expected": {
+        "repository": {
+          "value": "https://example.org/kai/demo-assistant"
+        },
+        "demo": {
+          "value": "https://example.org/kai/demo"
+        },
+        "report": {
+          "value": "First part.\nReport: Second part.",
+          "source": "onlinetext",
+          "words": 5
+        }
+      }
+    }
+  ],
+  "readme_cases": [
+    {
+      "id": "readme-headings-any-case",
+      "title": "ATX headings of any level match the listed names, ignoring case",
+      "status": "derived",
+      "covers": [
+        "B1.3-readme-headings"
+      ],
+      "check": "readme_sections:Setup,Usage",
+      "files": [
+        {
+          "name": "README.md",
+          "text": "# My project\n\n## setup\n\nRun the installer.\n\n### Usage\n\nStart it."
+        }
+      ],
+      "expected": {
+        "result": "pass"
+      }
+    },
+    {
+      "id": "readme-setext-and-fenced-are-not-headings",
+      "title": "A Setext heading and a # line inside a fenced code block are not headings",
+      "status": "derived",
+      "covers": [
+        "B1.3-readme-headings"
+      ],
+      "check": "readme_sections:Overview,Setup,Usage,Install",
+      "files": [
+        {
+          "name": "README.md",
+          "text": "# Overview\n\nSetup\n=====\n\nUsage\n-----\n\n```text\n# Install\n```"
+        }
+      ],
+      "expected": {
+        "result": "fail",
+        "missing": [
+          "Setup",
+          "Usage",
+          "Install"
+        ]
+      }
+    },
+    {
+      "id": "readme-only-root-readme-md",
+      "title": "Only README.md at the repository root is read, not a README in a subfolder or with another name",
+      "status": "derived",
+      "covers": [
+        "B1.3-readme-file"
+      ],
+      "check": "readme_sections:Setup,Usage,Install",
+      "files": [
+        {
+          "name": "README.md",
+          "text": "# Setup"
+        },
+        {
+          "name": "docs/README.md",
+          "text": "# Usage"
+        },
+        {
+          "name": "readme.md",
+          "text": "# Install"
+        }
+      ],
+      "expected": {
+        "result": "fail",
+        "missing": [
+          "Usage",
+          "Install"
+        ]
+      }
+    },
+    {
+      "id": "readme-name-with-semicolon",
+      "title": "A semicolon in a section name splits the check, and the second part is an unknown check",
+      "status": "derived",
+      "covers": [
+        "B1.3-readme-name-chars"
+      ],
+      "check": "readme_sections:Setup;Usage",
+      "files": [
+        {
+          "name": "README.md",
+          "text": "# Setup\n\n# Usage"
+        }
+      ],
+      "expected": {
+        "result": "invalid",
+        "unknown_check": "Usage"
       }
     }
   ]

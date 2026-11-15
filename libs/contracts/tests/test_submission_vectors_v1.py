@@ -2,26 +2,28 @@
 link to the PRD text.
 
 AUTOMATED here (data and text only; no reader of submissions exists yet):
-  * `contracts/test-vectors/submission.v1.json` has the eleven cases, each with the exact shape, the
-    closed vocabularies (status, format, source, error code) and consistent expected values (a
-    word count equals the words of the report, a report file named as the source is in the input,
-    a part has a value or an error, never both). The HTML case is marked unverified until the lab;
+  * `contracts/test-vectors/submission.v1.json` has the submission cases and the README cases,
+    each with the exact shape, the closed vocabularies (status, format, source, error code, result)
+    and consistent expected values (a word count equals the words of the report, a report file
+    named as the source is in the input, a part has a value or an error, never both, a missing
+    README section is named in the check). The HTML case is marked unverified until the lab;
   * `covers` says what a case shows: rules 8 and 9 are never listed (part-level results cannot show
     them), a word-count entry appears exactly when the report has a word count, an expected error
     lists rule 7, an HTML case lists rule 5, a report from a file lists rule 4, and every other
     rule that a vector can show (1 to 7 and the word count) is covered by at least one case;
   * the five PRD examples in B1.5 are the same texts as the five required vectors, with the same
     word counts and error codes, so the PRD and the vectors cannot drift apart;
-  * the PRD has the B1.3 check formats and nine numbered B1.5 rules, and every `covers` entry of a
-    vector names a rule that exists;
+  * the PRD has the B1.3 check formats (including the README file, heading and name rules) and nine
+    numbered B1.5 rules, and every `covers` entry of a vector names a rule that exists;
   * the open points are written down, not decided: the PRD says what v1 does not define, the
     traceability file lists each open decision with who decides it, and no vector covers one
     (no carriage return, no empty label value, no HTML entity or link, no trailing whitespace);
   * the shape and open-point checks catch the mistakes they exist for (negative controls).
 
-NOT automated here, so NOT claimed: that any reader extracts the parts correctly. The marking-table
-parser (Module 2, `libs/contracts`) and the submission extractor (Module 3, Release 4) do not exist;
-the extractor must pass these vectors. The HTML result is unverified until the Moodle lab check.
+NOT automated here, so NOT claimed: that any reader extracts the parts correctly or finds README
+headings correctly. The marking-table parser (Module 2, `libs/contracts`) and the submission
+extractor (Module 3, Release 4) do not exist; they must pass these vectors. There is no test-only
+reader of either, on purpose. The HTML result is unverified until the Moodle lab check.
 """
 
 from __future__ import annotations
@@ -45,7 +47,8 @@ TRACEABILITY_PATH = ROOT / "docs" / "traceability.md"
 # the other approved defaults of PR #61 (numbered as in the 2026-11-13 comment): label case and
 # spacing (defaults 5 and 7), a missing Repository and a missing report (6), the report.txt
 # fallback and both report files (9), and labels that are misspelled or not at the start of a
-# line (the guide's answer A3).
+# line (the guide's answer A3). Two more cases clarify rule 7 (a Demo: after Report: and a second
+# Report: line), decided by the guide on PR #87 (2026-11-15).
 PRD_EXAMPLE_IDS = [
     "all-labels",
     "labels-in-html",
@@ -61,6 +64,14 @@ CASE_IDS = [
     "report-as-txt",
     "report-md-before-txt",
     "misspelled-and-inline-labels",
+    "demo-after-report",
+    "second-report-line",
+]
+README_CASE_IDS = [
+    "readme-headings-any-case",
+    "readme-setext-and-fenced-are-not-headings",
+    "readme-only-root-readme-md",
+    "readme-name-with-semicolon",
 ]
 
 STATUSES = {"derived", "unverified-until-lab"}
@@ -74,6 +85,9 @@ RULES = {f"B1.5-{n}" for n in range(1, 10)} | {"B1.3-word_count"}
 UNSHOWABLE_RULES = {"B1.5-8", "B1.5-9"}
 SHOWABLE_RULES = RULES - UNSHOWABLE_RULES
 CASE_KEYS = {"id", "title", "status", "covers", "input", "expected"}
+README_KEYS = {"id", "title", "status", "covers", "check", "files", "expected"}
+README_COVERS = {"B1.3-readme-file", "B1.3-readme-headings", "B1.3-readme-name-chars"}
+README_RESULTS = {"pass", "fail", "invalid"}
 INPUT_KEYS = {"onlinetext", "onlinetext_format", "files"}
 
 EMPTY_LABEL = re.compile(
@@ -184,6 +198,10 @@ def _part_problems(part: str, entry: Any, files: list[Case]) -> list[str]:
     problems: list[str] = []
     if entry["source"] not in SOURCES:
         problems.append(f"report: source is not one of {sorted(SOURCES)}")
+    # str.split() with no argument splits on any Unicode whitespace, so a non-breaking space
+    # (U+00A0) also separates words here. The PRD only says "between whitespace"; whether a reader
+    # must split on a non-breaking space is part of the open HTML-details decision, and no vector
+    # contains one, so this does not decide it. The word-count definition is unchanged.
     if entry["words"] != len(entry["value"].split()):
         problems.append(
             "report: words is not the number of whitespace-separated pieces of value"
@@ -229,6 +247,46 @@ def duplicate_ids(cases: list[Case]) -> list[str]:
     return sorted({i for i in ids if ids.count(i) > 1})
 
 
+def readme_case_problems(case: Any) -> list[str]:
+    """What is wrong with one README vector: shape, vocabularies and the expected result.
+
+    Data only: there is no reader of READMEs, so a result is not recomputed here.
+    """
+    if not isinstance(case, dict) or set(case) != README_KEYS:
+        return [f"keys are not exactly {sorted(README_KEYS)}"]
+    problems: list[str] = []
+    if case["status"] != "derived":
+        problems.append("status must be 'derived'")
+    covers = case["covers"]
+    if not (isinstance(covers, list) and covers and set(covers) <= README_COVERS):
+        problems.append(f"covers must be a non-empty list from {sorted(README_COVERS)}")
+    check = case["check"]
+    if not (isinstance(check, str) and check.startswith("readme_sections:")):
+        return [*problems, "check must be a readme_sections check"]
+    files = case["files"]
+    if not (
+        isinstance(files, list)
+        and files
+        and all(isinstance(f, dict) and set(f) == {"name", "text"} for f in files)
+    ):
+        return [*problems, "files must be a non-empty list of {name, text}"]
+    expected = case["expected"]
+    result = expected.get("result") if isinstance(expected, dict) else None
+    names = check.removeprefix("readme_sections:").replace(";", ",").split(",")
+    if result == "pass" and set(expected) == {"result"}:
+        return problems
+    if result == "fail" and set(expected) == {"result", "missing"}:
+        missing = expected["missing"]
+        if not (isinstance(missing, list) and missing and set(missing) <= set(names)):
+            problems.append("missing must name sections that the check lists")
+        return problems
+    if result == "invalid" and set(expected) == {"result", "unknown_check"}:
+        if f";{expected['unknown_check']}" not in check:
+            problems.append("unknown_check must follow a ';' in the check")
+        return problems
+    return [*problems, f"expected {expected!r} is not a valid result"]
+
+
 def _prd() -> str:
     return PRD_PATH.read_text(encoding="utf-8")
 
@@ -262,12 +320,14 @@ def _example_blocks_and_items() -> tuple[list[str], list[str]]:
 # --- the vectors file ----------------------------------------------------------------------
 
 
-def test_vectors_file_is_lf_json_with_a_version_and_eleven_cases() -> None:
+def test_vectors_file_is_lf_json_with_a_version_and_unique_case_ids() -> None:
     assert b"\r" not in VECTORS_PATH.read_bytes()
     doc = _vectors()
     assert doc["version"] == 1 and doc["$comment"]
+    assert set(doc) == {"$comment", "version", "cases", "readme_cases"}
     assert [c["id"] for c in doc["cases"]] == CASE_IDS
-    assert duplicate_ids(doc["cases"]) == []
+    assert [c["id"] for c in doc["readme_cases"]] == README_CASE_IDS
+    assert duplicate_ids(doc["cases"]) == [] == duplicate_ids(doc["readme_cases"])
 
 
 @pytest.mark.parametrize("case_id", CASE_IDS)
@@ -288,6 +348,65 @@ def test_only_the_html_case_is_unverified_until_the_lab() -> None:
 @pytest.mark.parametrize("case_id", CASE_IDS)
 def test_case_does_not_decide_an_open_point(case_id: str) -> None:
     assert open_point_problems(_case(case_id)) == []
+
+
+def _readme_case(case_id: str) -> Case:
+    found = [c for c in _vectors()["readme_cases"] if c["id"] == case_id]
+    assert len(found) == 1, case_id
+    case: Case = found[0]
+    return case
+
+
+@pytest.mark.parametrize("case_id", README_CASE_IDS)
+def test_readme_case_has_the_required_shape_and_a_consistent_result(
+    case_id: str,
+) -> None:
+    assert readme_case_problems(_readme_case(case_id)) == []
+
+
+def test_readme_cases_cover_the_file_the_headings_and_the_name_rule() -> None:
+    covered = {r for c in _vectors()["readme_cases"] for r in c["covers"]}
+    assert covered == README_COVERS
+    results = {c["expected"]["result"] for c in _vectors()["readme_cases"]}
+    assert results == README_RESULTS
+
+
+README_EDITS: dict[str, tuple[str, Callable[[Case], None]]] = {
+    "a missing key": ("readme-headings-any-case", lambda c: c.pop("check")),
+    "a status that is not derived": (
+        "readme-headings-any-case",
+        lambda c: c.update(status="unverified-until-lab"),
+    ),
+    "an unknown result": (
+        "readme-headings-any-case",
+        lambda c: c["expected"].update(result="error"),
+    ),
+    "a missing section that the check does not list": (
+        "readme-only-root-readme-md",
+        lambda c: c["expected"].update(missing=["Deploy"]),
+    ),
+    "a fail with no missing sections": (
+        "readme-only-root-readme-md",
+        lambda c: c["expected"].update(missing=[]),
+    ),
+    "an unknown check that does not follow a semicolon": (
+        "readme-name-with-semicolon",
+        lambda c: c["expected"].update(unknown_check="Setup"),
+    ),
+    "a case with no files": (
+        "readme-headings-any-case",
+        lambda c: c.update(files=[]),
+    ),
+}
+
+
+@pytest.mark.parametrize("name", list(README_EDITS))
+def test_the_readme_check_catches_what_it_exists_for(name: str) -> None:
+    case_id, edit = README_EDITS[name]
+    case = copy.deepcopy(_readme_case(case_id))
+    assert readme_case_problems(case) == []
+    edit(case)
+    assert readme_case_problems(case)
 
 
 # Each edit makes one case wrong in the way the check exists to catch.
@@ -407,7 +526,12 @@ def test_prd_b13_has_the_check_formats_and_names_what_it_does_not_define() -> No
         "separated by `;`",
         "`readme_sections:<a,b,c>`",
         "case-insensitively",
-        "cannot contain a comma",
+        "cannot contain a comma or a semicolon",
+        "named exactly `README.md` at the root of the repository",
+        "is an ATX heading",
+        "is not a heading",
+        "fenced code block",
+        "Setext heading",
         "`word_count:<n>`",
         "a whole number of at least 1",
         "`demo_url` is the only field in v1",
@@ -423,6 +547,14 @@ def test_prd_b15_has_nine_numbered_rules_and_both_reason_codes() -> None:
     rules = part[: part.index("**Examples.**")]
     assert re.findall(r"(?m)^(\d)\. \*\*", rules) == [str(n) for n in range(1, 10)]
     assert "`field_missing`" in rules and "`field_repeated`" in rules
+    flat = " ".join(rules.split())
+    for phrase in (
+        "must appear before `Report:`",
+        "A second `Report:` line is part of the report",
+        "is not `field_repeated`",
+        "does not stop the others",
+    ):
+        assert phrase in flat, phrase
     assert "should tell the learner how to label each part" in " ".join(rules.split())
     assert "unverified" in " ".join(rules.split())
 
@@ -487,11 +619,18 @@ def test_the_prd_mentions_the_vectors_file() -> None:
 
 
 def test_traceability_lists_the_open_decisions_and_who_decides_them() -> None:
-    text = " ".join(TRACEABILITY_PATH.read_text(encoding="utf-8").split())
+    raw = TRACEABILITY_PATH.read_text(encoding="utf-8")
+    text = " ".join(raw.split())
     assert "contracts/test-vectors/submission.v1.json" in text
     assert "test_submission_vectors_v1.py" in text
-    start = text.index("Open decisions (B1 submission content)")
-    section = text[start : start + 4000].lower()
+    # The section runs from its heading to the next heading, whatever its length.
+    found = re.search(
+        r"^#+ Open decisions \(B1 submission content\)\n(.*?)(?=^#+ |\Z)",
+        raw,
+        flags=re.DOTALL | re.MULTILINE,
+    )
+    assert found, "the open-decisions section was not found"
+    section = " ".join(found.group(1).split()).lower()
     for phrase in (
         "Harshitha",
         "Shraddha",

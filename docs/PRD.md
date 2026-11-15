@@ -398,9 +398,16 @@ HTML table in the Moodle assignment description; the grading assistant parses it
   §C3.5. When a `Check` cell has several checks, they are separated by `;` (as in the example
   above).
   - `readme_sections:<a,b,c>`: a comma-separated list of section names. Each name is matched
-    case-insensitively, ignoring spaces around it, against the text of the Markdown headings (any
-    level) of the repository's README. Every listed section must exist. A section name cannot
-    contain a comma.
+    case-insensitively, ignoring spaces around it, against the text of the Markdown headings of
+    the repository's README. Every listed section must exist. A section name cannot contain a
+    comma or a semicolon: `,` separates the names and `;` separates the checks, so
+    `readme_sections:Setup;Usage` is the check `readme_sections:Setup` followed by a check named
+    `Usage`, which is unknown and fails validation.
+    - The README is the file named exactly `README.md` at the root of the repository (the package
+      root). A README in a subfolder or with another name is not used.
+    - A heading is an ATX heading: one to six `#` characters at the start of a line, then a space
+      and the heading text. A line inside a fenced code block is not a heading. A Setext heading (a
+      line of text underlined with `=` or `-`) is not a heading.
   - `word_count:<n>`: `n` is a whole number of at least 1, the minimum number of words in the
     report. A word is a piece of the report text between whitespace. Markup is removed before
     counting only when the report comes from online text (§B1.5); a report file is counted as it
@@ -453,11 +460,15 @@ includes `file`, may have uploaded files. The online text carries labelled lines
    after the freeze (EXT-02).*
 6. **Nothing is repaired.** Text that does not match rule 1, such as a misspelled label or a label
    that is not at the start of a line, is not a label.
-7. **Missing and repeated labels.** If `Repository:` or `Demo:` is not found, the check that reads
-   it is recorded as `error` with reason `field_missing`. If it is found more than once before
-   the report starts, the check is recorded as `error` with reason `field_repeated` (the first
-   one does not win). If there is no report (no `Report:` section and no report file), the check
-   that reads the report is recorded as `error` with reason `field_missing`.
+7. **Missing and repeated labels.** The labels `Repository:` and `Demo:` must appear before
+   `Report:`: from the line of `Report:` to the end, every line is part of the report (rule 3).
+   If `Repository:` or `Demo:` is not found before the report starts, the check that reads it is
+   recorded as `error` with reason `field_missing`. If it is found more than once before the
+   report starts, the check is recorded as `error` with reason `field_repeated` (the first one
+   does not win). A second `Report:` line is part of the report; it is not `field_repeated`. If
+   there is no report (no `Report:` section and no report file), the check that reads the report
+   is recorded as `error` with reason `field_missing`. An `error` on one check does not stop the
+   others: every other criterion of the marking table is still graded.
 8. **What each check reads.** `repo_clone` reads `Repository`; `http_ok:demo_url` reads `Demo`;
    `word_count` reads the report.
 9. **Task text.** A task body should tell the learner how to label each part, for example with the
@@ -470,7 +481,8 @@ decisions, listed in `docs/traceability.md`.
 
 **Examples.** Shared test cases, with the expected results, are in
 `contracts/test-vectors/submission.v1.json`. Every module that reads submissions must give these
-results. The five examples:
+results. The file also has cases for the `readme_sections` rules of B1.3 (README file, headings,
+semicolons). The five examples:
 
 1. *All labels.*
 

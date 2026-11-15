@@ -106,17 +106,18 @@ committed.
 
 Files: the PRD text (B1.3 "Check formats" and the new B1.5), `contracts/test-vectors/submission.v1.json`
 and `libs/contracts/tests/test_submission_vectors_v1.py`. The rules were decided by the guide on
-PR #61 (2026-11-11 and 2026-11-13). No schema, example package, validator or library code changes.
+PR #61 (2026-11-11 and 2026-11-13). The clarifications of B1.5 rule 7 and of the README rules in B1.3 were decided by the guide on PR #87 (2026-11-15). No schema, example package, validator or library code changes.
 The tests check the data and the text only: no reader of submissions exists yet.
 
 | What is checked | PRD | Test(s) |
 |---|---|---|
-| The vectors file is LF JSON with a version and eleven cases with unique ids; each case has the exact shape and closed vocabularies; expected values are consistent (a word count equals the words of the report, a report file named as the source is in the input, a part has a value or an error, never both); the status is `derived` or `unverified-until-lab`, and only the HTML case is unverified | B1.5 | `test_vectors_file_is_lf_json_with_a_version_and_eleven_cases`, `test_case_has_the_required_shape_and_consistent_expected_values` (every case), `test_only_the_html_case_is_unverified_until_the_lab` |
+| The vectors file is LF JSON with a version, the submission cases and the README cases, with unique ids; each case has the exact shape and closed vocabularies; expected values are consistent (a word count equals the words of the report, a report file named as the source is in the input, a part has a value or an error, never both); the status is `derived` or `unverified-until-lab`, and only the HTML case is unverified | B1.5 | `test_vectors_file_is_lf_json_with_a_version_and_unique_case_ids`, `test_case_has_the_required_shape_and_consistent_expected_values` (every case), `test_only_the_html_case_is_unverified_until_the_lab` |
 | The shape check and the duplicate-id check catch the mistakes they exist for (a missing key, the retired status `confirmed`, an unknown or repeated reason code, a wrong word count, a value with an error, a file source with no file, an HTML case marked `derived`, an unknown rule id or input key, a rule that a result cannot show, a word count that `covers` does not declare) | B1.5 | `test_the_shape_check_catches_what_it_exists_for` (one negative control for each mistake listed), `test_the_duplicate_id_check_catches_a_repeated_id` |
-| `covers` says what a case shows: rules 8 and 9 are never listed (a result that lists the three parts cannot show them); the word count is listed exactly when the report has a word count; an expected error lists rule 7, an HTML case rule 5, a report from a file rule 4; rules 1 to 7 and the word count are each covered by at least one of the eleven cases | B1.5 | `test_case_has_the_required_shape_and_consistent_expected_values` (every case), `test_every_rule_a_vector_can_show_is_covered_by_a_vector` |
+| `covers` says what a case shows: rules 8 and 9 are never listed (a result that lists the three parts cannot show them); the word count is listed exactly when the report has a word count; an expected error lists rule 7, an HTML case rule 5, a report from a file rule 4; rules 1 to 7 and the word count are each covered by at least one submission case | B1.5 | `test_case_has_the_required_shape_and_consistent_expected_values` (every case), `test_every_rule_a_vector_can_show_is_covered_by_a_vector` |
 | The five PRD examples are the five required vectors: same text, word counts and reason codes; example 4 quotes the same report file | B1.5 | `test_prd_examples_are_the_five_required_vectors` |
-| The PRD has the B1.3 check formats (`;`, `readme_sections`, `word_count`, `http_ok:demo_url` only, unknown names fail) and says what it does not define | B1.3, C3.5 | `test_prd_b13_has_the_check_formats_and_names_what_it_does_not_define` |
-| B1.5 has nine numbered rules, both reason codes, the "should" rule for task text and the unverified HTML note; every `covers` entry of a vector names a rule that exists; the PRD names the vectors file | B1.5 | `test_prd_b15_has_nine_numbered_rules_and_both_reason_codes`, `test_every_covers_entry_names_a_rule_the_prd_has`, `test_the_prd_mentions_the_vectors_file` |
+| The PRD has the B1.3 check formats (`;`, `readme_sections` with no comma or semicolon in a name, the README as `README.md` at the repository root, ATX headings outside fenced code blocks and not Setext headings, `word_count`, `http_ok:demo_url` only, unknown names fail) and says what it does not define | B1.3, C3.5 | `test_prd_b13_has_the_check_formats_and_names_what_it_does_not_define` |
+| The README cases (a file in `files`, a `check`, and a result of `pass`, `fail` with the missing names, or `invalid` with the unknown check) have the exact shape and a result that fits the check; together they cover the README file rule, the heading rules and the name rule, and each result kind. They are data for the future marking-table parser: no test reads a README or finds a heading | B1.3 | `test_readme_case_has_the_required_shape_and_a_consistent_result`, `test_readme_cases_cover_the_file_the_headings_and_the_name_rule`, `test_the_readme_check_catches_what_it_exists_for` (one negative control for each mistake it lists) |
+| B1.5 has nine numbered rules, both reason codes, the rule 7 clarifications (labels before `Report:`, a second `Report:` line is part of the report, one error does not stop the other criteria from being graded), the "should" rule for task text and the unverified HTML note; every `covers` entry of a vector names a rule that exists; the PRD names the vectors file | B1.5 | `test_prd_b15_has_nine_numbered_rules_and_both_reason_codes`, `test_every_covers_entry_names_a_rule_the_prd_has`, `test_the_prd_mentions_the_vectors_file` |
 | The open points are written down, not decided: B1.5 says "Not defined in v1", this section lists each open decision with who decides it, and no vector covers one (no carriage return, empty label value, HTML entity or link, or trailing whitespace; URLs only on `example.org`) | B1.5 | `test_prd_b15_says_what_v1_does_not_define`, `test_traceability_lists_the_open_decisions_and_who_decides_them`, `test_case_does_not_decide_an_open_point` (every case), `test_the_open_point_check_catches_what_it_exists_for` (one negative control for each kind of open point listed) |
 
 **Not enforced (no reader exists).** The marking-table parser (Module 2, `libs/contracts`, used first
@@ -130,7 +131,7 @@ confirmation. The "should" rule for task text (B1.5 rule 9) is guidance and is n
 #### Open decisions (B1 submission content)
 
 Not decided in this change and not turned into rules. B1.5 and B1.3 say "not defined"; no vector
-covers them.
+covers them. The two rows marked "decided no" were answered by the guide on PR #87 (2026-11-15).
 
 | Open decision | Who decides | In v1 for now |
 |---|---|---|
@@ -140,9 +141,9 @@ covers them.
 | An assignment whose `submission` has only `onlinetext` or only `file` | The guide | Only the condition in rule 4 is stated |
 | The argument format of `repo_file:<path>`, how a check's name is split from its argument, and criterion keys (`docs/design/grading.md` §4.3b) | The guide, with Shraddha's input (M2) | Not defined here |
 | Whether the B1.3 bullet is enough for the marking-table parser, and whether parser test vectors are wanted | Shraddha (M2) | The bullet as written; no parser vectors |
-| Whether the vector layout fits the extractor, whether `field_missing` and `field_repeated` match the grading result vocabulary, and which extra cases to add | Harshitha (M3) | The layout as written; eleven cases |
-| A test-only reference extractor so that the vectors run now | The guide, only if wanted | None: tests check data and text only |
-| A decision record (`docs/decisions/`) for Q6 and Q9 | The guide, only if wanted | None: the decisions are on PR #61 and in the PRD text |
+| Whether the vector layout fits the extractor, whether `field_missing` and `field_repeated` match the grading result vocabulary, and which extra cases to add | Harshitha (M3) | The layout as written; the cases in the file |
+| A test-only reference extractor so that the vectors run now | The guide: decided no on PR #87 (2026-11-15); the extractor is Harshitha's in Release 4 and must pass the vectors | None: tests check data and text only |
+| A decision record (`docs/decisions/`) for Q6 and Q9 | The guide: decided no on PR #87 (2026-11-15) | None: the decisions are on PR #61 and PR #87 and in the PRD text |
 
 ### Not mapped
 
