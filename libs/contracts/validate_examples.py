@@ -2,10 +2,12 @@
 
 Run from the repository root:  python libs/contracts/validate_examples.py
 
-`contracts/<name>.v<N>.schema.json` is matched with the folder `contracts/examples/<name>.v<N>/`,
-whose top-level JSON and YAML files are its examples. Exit codes: 0 when every example passes,
-1 when any problem is found, 2 for a usage error or a missing contracts folder. Read-only:
-`--check` and `--dry-run` behave the same. What is and is not checked: libs/contracts/README.md.
+`contracts/<name>.v<N>.schema.json` is matched with the top-level JSON and YAML files of
+`contracts/examples/<name>.v<N>/` and with the flat files
+`contracts/examples/<name>.v<N>.<suffix>.json` (or .yaml, .yml). Exit codes: 0 when every
+example passes, 1 when any problem is found, 2 for a usage error or a missing contracts folder.
+Read-only: `--check` and `--dry-run` behave the same. What is and is not checked:
+libs/contracts/README.md.
 
 This is not the B1 package validator (`validate.py`), which also checks course-level rules.
 """
@@ -32,18 +34,25 @@ from typing import Any  # noqa: E402
 
 import yaml  # noqa: E402
 from jsonschema import Draft202012Validator, FormatChecker  # noqa: E402
-from jsonschema.exceptions import SchemaError  # noqa: E402
+from jsonschema.exceptions import SchemaError, ValidationError  # noqa: E402
 from jsonschema.protocols import Validator  # noqa: E402
 from jsonschema.validators import validator_for  # noqa: E402
+from referencing.exceptions import Unresolvable  # noqa: E402
 
 from contracts import messages  # noqa: E402
-from contracts.schema import _order as error_order  # noqa: E402
 
 DEFAULT_CONTRACTS_DIR = Path(__file__).resolve().parents[2] / "contracts"
 SCHEMA_NAME = re.compile(
     r"^(?P<stem>[a-z0-9]+(?:-[a-z0-9]+)*\.v[1-9][0-9]*)\.schema\.json$"
 )
 SCHEMA_GLOB = "*.schema.json"
+# A flat example sits directly in contracts/examples/: `<name>.v<N>.<suffix>.<json|yaml|yml>`.
+# The suffix is one segment, so the stem is always the first two dot-separated parts and a
+# file of `x.v10` can never be read as an example of `x.v1`.
+FLAT_EXAMPLE_NAME = re.compile(
+    r"^(?P<stem>[a-z0-9]+(?:-[a-z0-9]+)*\.v[1-9][0-9]*)\.[a-z0-9]+(?:-[a-z0-9]+)*"
+    r"\.(?:json|yaml|yml)$"
+)
 EXAMPLE_SUFFIXES = frozenset({".json", ".yaml", ".yml"})
 YAML_SUFFIXES = frozenset({".yaml", ".yml"})
 # A schema error can repeat a whole document; keep the report readable.
@@ -52,10 +61,11 @@ MAX_DETAIL = 300
 
 @dataclass(frozen=True)
 class ContractCase:
-    """One versioned schema and the folder where its examples must be."""
+    """One versioned schema, its example folder and the stem that flat examples start with."""
 
     schema_path: Path
     example_dir: Path
+    stem: str
 
 
 @dataclass(frozen=True)
@@ -91,8 +101,17 @@ def discover(contracts_dir: Path) -> list[ContractCase]:
         match = SCHEMA_NAME.match(path.name)
         if match:
             folder = contracts_dir / "examples" / match["stem"]
-            cases.append(ContractCase(schema_path=path, example_dir=folder))
+            cases.append(ContractCase(path, folder, match["stem"]))
     return cases
+
+
+def misnamed_schemas(contracts_dir: Path) -> list[Path]:
+    """The `*.schema.json` files that do not follow `<name>.v<N>.schema.json`."""
+    return [
+        path
+        for path in sorted(contracts_dir.glob(SCHEMA_GLOB))
+        if not SCHEMA_NAME.match(path.name)
+    ]
 
 
 def validate_all(contracts_dir: Path) -> ExampleReport:
@@ -115,42 +134,70 @@ def validate_all(contracts_dir: Path) -> ExampleReport:
             )
         )
 
+    for path in misnamed_schemas(contracts_dir):
+        problems.append(
+            Problem(
+                "misnamed_schema",
+                messages.EX_MISNAMED_SCHEMA.format(name=path.name),
+                messages.EX_MISNAMED_SCHEMA_HINT,
+                schema=rel(path),
+            )
+        )
+
     cases = discover(contracts_dir)
     for case in cases:
         schema_rel = rel(case.schema_path)
         validator, schema_problem = _load_validator(case.schema_path, schema_rel)
         if schema_problem:
             problems.append(schema_problem)
-        examples = _list_examples(case.example_dir)
+        examples = _list_examples(case)
         example_count += len(examples)
         if not examples:
             problems.append(
                 Problem(
                     "missing_example",
-                    messages.EX_MISSING_EXAMPLE.format(folder=rel(case.example_dir)),
+                    messages.EX_MISSING_EXAMPLE.format(
+                        folder=rel(case.example_dir), stem=case.stem
+                    ),
                     messages.EX_MISSING_EXAMPLE_HINT,
                     schema=schema_rel,
                 )
             )
+        case_problems: list[Problem] = []
+        case_passed: list[tuple[str, str]] = []
+        case_failed: list[str] = []
+        unusable = validator is None
         for path in examples:
             example_rel = rel(path)
             if validator is None:
-                problems.append(
-                    Problem(
-                        "example_not_validated",
-                        messages.EX_NOT_VALIDATED,
-                        messages.EX_NOT_VALIDATED_HINT,
-                        example=example_rel,
-                        schema=schema_rel,
-                    )
-                )
-                continue
+                break
             found = _check_example(path, example_rel, schema_rel, validator)
+            if any(p.code == "unresolvable_reference" for p in found):
+                # The schema cannot be used at all: drop what the earlier examples of this
+                # schema reported, so that none is left as passed or failed.
+                problems.append(found[0])
+                unusable = True
+                break
             if found:
-                problems += found
-                failed.append(example_rel)
+                case_problems += found
+                case_failed.append(example_rel)
             else:
-                passed.append((example_rel, schema_rel))
+                case_passed.append((example_rel, schema_rel))
+        if unusable:
+            problems += [
+                Problem(
+                    "example_not_validated",
+                    messages.EX_NOT_VALIDATED,
+                    messages.EX_NOT_VALIDATED_HINT,
+                    example=rel(path),
+                    schema=schema_rel,
+                )
+                for path in examples
+            ]
+        else:
+            problems += case_problems
+            passed += case_passed
+            failed += case_failed
 
     return ExampleReport(
         problems=tuple(problems),
@@ -189,17 +236,40 @@ def _load_validator(
     return cls(schema, format_checker=FormatChecker()), None
 
 
-def _list_examples(folder: Path) -> list[Path]:
-    """The top-level JSON/YAML entries in `folder`, sorted. Subfolders hold supporting files
-    (B1's body files, checked by `validate_package`) and are ignored by design."""
-    if not folder.is_dir():
-        return []
-    # Not `is_file()`: a broken link named *.json must be reported as unreadable, not skipped.
-    return sorted(
-        p
-        for p in folder.iterdir()
-        if not p.is_dir() and p.suffix.lower() in EXAMPLE_SUFFIXES
-    )
+def _list_examples(case: ContractCase) -> list[Path]:
+    """The examples of one schema: the top-level JSON/YAML entries of its folder, then the flat
+    files `<stem>.<suffix>.<ext>` next to the folder. Each group is sorted. Subfolders hold
+    supporting files (B1's body files, checked by `validate_package`) and are ignored by design."""
+    found: list[Path] = []
+    folder = case.example_dir
+    if folder.is_dir():
+        # Not `is_file()`: a broken link named *.json must be reported as unreadable, not skipped.
+        found += sorted(
+            p
+            for p in folder.iterdir()
+            if not p.is_dir() and p.suffix.lower() in EXAMPLE_SUFFIXES
+        )
+    flat_dir = folder.parent
+    if flat_dir.is_dir():
+        found += sorted(
+            p
+            for p in flat_dir.iterdir()
+            if not p.is_dir()
+            and (m := FLAT_EXAMPLE_NAME.match(p.name))
+            and m["stem"] == case.stem
+        )
+    return found
+
+
+def error_order(error: ValidationError) -> tuple[list[tuple[int, int, str]], str]:
+    """Order errors by place, then message, so the report is the same on every run. List
+    positions compare as numbers (items[2] before items[10]); the leading 0/1 keeps a number and
+    a name from ever being compared with each other."""
+    place = [
+        (0, part, "") if isinstance(part, int) else (1, 0, part)
+        for part in error.absolute_path
+    ]
+    return place, error.message
 
 
 def _check_example(
@@ -218,7 +288,19 @@ def _check_example(
                 schema=schema_rel,
             )
         ]
-    errors = sorted(validator.iter_errors(document), key=error_order)
+    try:
+        errors = sorted(validator.iter_errors(document), key=error_order)
+    except Unresolvable as exc:
+        # Lazy: a reference is only resolved when an example reaches it, so this can appear on
+        # any example of the schema, not only the first.
+        return [
+            Problem(
+                "unresolvable_reference",
+                messages.EX_UNRESOLVABLE_REFERENCE.format(reason=_one_line(exc)),
+                messages.EX_UNRESOLVABLE_REFERENCE_HINT,
+                schema=schema_rel,
+            )
+        ]
     return [
         Problem(
             "schema_violation",

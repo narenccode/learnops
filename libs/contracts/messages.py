@@ -113,12 +113,31 @@ EX_UNREADABLE_SCHEMA = "The schema could not be read: {reason}."
 EX_UNREADABLE_SCHEMA_HINT = "Save the schema as UTF-8 JSON and fix the syntax error."
 EX_INVALID_SCHEMA = "The file is not a valid JSON Schema: {reason}."
 EX_INVALID_SCHEMA_HINT = "Fix the schema so that it passes its meta-schema."
+EX_UNRESOLVABLE_REFERENCE = (
+    "The schema has a reference that cannot be resolved: {reason}."
+)
+EX_UNRESOLVABLE_REFERENCE_HINT = (
+    "Fix the $ref so that it points at a definition inside this schema (for example "
+    "'#/$defs/name'). References to other files are not loaded by this validator."
+)
 EX_NOT_VALIDATED = "Not validated, because its schema could not be loaded."
 EX_NOT_VALIDATED_HINT = "Fix the schema problem reported above, then validate again."
-EX_MISSING_EXAMPLE = "The schema has no example in {folder}."
+EX_MISNAMED_SCHEMA = (
+    "The schema file '{name}' is not named <name>.v<N>.schema.json, so its examples cannot be "
+    "found."
+)
+EX_MISNAMED_SCHEMA_HINT = (
+    "Rename it to <name>.v<N>.schema.json: lowercase letters and digits separated by single "
+    "hyphens, then .v and a version number without a leading zero (for example "
+    "course-package.v1.schema.json)."
+)
+EX_MISSING_EXAMPLE = (
+    "The schema has no example in the folder {folder} or in a file named "
+    "{stem}.<suffix>.json."
+)
 EX_MISSING_EXAMPLE_HINT = (
-    "Add at least one valid .json, .yaml or .yml example at the top of that folder "
-    "(PRD B.0 rule 1)."
+    "Add at least one valid .json, .yaml or .yml example at the top of that folder, or a file "
+    "named <schema name>.<suffix>.json in contracts/examples (PRD B.0 rule 1)."
 )
 EX_UNREADABLE_EXAMPLE = "The example could not be read: {reason}."
 EX_UNREADABLE_EXAMPLE_HINT = (

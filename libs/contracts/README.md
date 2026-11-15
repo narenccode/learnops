@@ -77,16 +77,46 @@ runs it on every pull request:
 python libs/contracts/validate_examples.py [--check | --dry-run] [--contracts-dir PATH]
 ```
 
-- `contracts/<name>.v<N>.schema.json` is matched with `contracts/examples/<name>.v<N>/`. Every
-  top-level `.json`, `.yaml` or `.yml` file in that folder is an example. Files in subfolders
-  (B1's `weeks/*.md`) are supporting files and are ignored by design (`validate_package` checks B1
-  body files); they are not listed in the output yet.
-- Errors: no schema at all, a schema with no example, an unreadable or invalid schema, an
-  unreadable example (bad syntax, not UTF-8, several YAML documents), and every schema error in an
-  example (with its place and keyword).
-- Not checked yet: examples that no schema matches, other file types next to the examples, schema
-  files without a `v<N>` version, duplicate keys, and the non-standard JSON constants `NaN`,
-  `Infinity` and `-Infinity`.
+- **Schema names.** A schema must be named `<name>.v<N>.schema.json`: lowercase letters and digits
+  separated by single hyphens, then `.v` and a version number without a leading zero (for example
+  `course-package.v1.schema.json`). A `*.schema.json` file with any other name is reported as
+  `misnamed_schema`, with its path and the correct form, and the run fails. It is never skipped, so a
+  repository holding only misnamed schemas cannot pass. "No schema file at all" (`no_schemas`) is a
+  different problem.
+- **Example layouts.** Both are supported, alone or together; nothing has to be moved. For the
+  schema `<name>.v<N>.schema.json` the examples are:
+  - *folder:* every top-level `.json`, `.yaml` or `.yml` file in `contracts/examples/<name>.v<N>/`,
+    for example `contracts/examples/course-package.v1/course.yaml`;
+  - *flat:* every `contracts/examples/<name>.v<N>.<suffix>.json` (or `.yaml`, `.yml`), for example
+    `contracts/examples/moodle-ws.v1.functions.json`. The suffix is one word of lowercase letters,
+    digits and hyphens (`meta-local`).
+
+  Matching is exact on `<name>.v<N>`, so `thing.v1` never takes the examples of `thing.v10`. In
+  the output and in the summary, folder examples come first, then flat ones, each group sorted by
+  name. A schema with no example in either layout is a `missing_example` problem.
+- **Folder ownership.** Every top-level example file inside a contract's folder is validated
+  against that folder's schema, whatever the file is called. A file that belongs to another
+  contract must live in that contract's own folder or be a flat file named after it. The validator
+  has no special cases. Files in subfolders (B1's `weeks/*.md`) are supporting files and are ignored
+  by design (`validate_package` checks B1 body files); they are not listed in the output yet.
+- Errors, each with a problem code and a `next:` hint:
+  - `no_schemas`: no `*.schema.json` file at all;
+  - `misnamed_schema`: a `*.schema.json` file not named `<name>.v<N>.schema.json`;
+  - `missing_example`: a schema with no example in either layout;
+  - `unreadable_schema` and `invalid_schema`: the schema is not JSON, or fails its meta-schema;
+  - `unresolvable_reference`: a `$ref` that points at nothing, such as `#/$defs/missing`, or at
+    another file (references to other files are not loaded);
+  - `unreadable_example`: bad syntax, not UTF-8, several YAML documents or an impossible date;
+  - `schema_violation`: one per schema error in an example, with its place and keyword.
+- **Unusable schema.** When a schema cannot be used (`unreadable_schema`, `invalid_schema` or
+  `unresolvable_reference`), each of its examples gets an `example_not_validated` problem and is
+  counted as "not validated": neither passed nor failed, even if it was checked before the
+  reference was reached. Problems found in those examples, such as an unreadable file, are not
+  reported until the schema is fixed. A misnamed schema is different: it is not loaded at all, so
+  its examples are not looked for or counted.
+- Not checked yet: examples that no schema matches (for instance a flat file whose schema does not
+  exist), other file types next to the examples, duplicate keys, and the non-standard JSON
+  constants `NaN`, `Infinity` and `-Infinity`.
 - YAML is validated exactly as PyYAML's safe loader parses it, so an unquoted date stays a date and
   B1 rejects it. Formats such as `date` are checked.
 - The summary line counts every example found, including examples whose schema could not be

@@ -340,6 +340,199 @@ def test_examples_of_a_broken_schema_are_counted_but_not_validated(
     assert "2 examples found, 1 schemas: 0 passed, 0 failed, 2 not validated" in out
 
 
+@pytest.mark.parametrize(
+    "ref", ["#/$defs/missing", "other.schema.json"], ids=["dangling-local", "external"]
+)
+def test_unresolvable_reference_makes_the_schema_unusable(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], ref: str
+) -> None:
+    # The reference is only reached by b.json, after a.json has already passed. a.json must not
+    # stay in `passed`, and nothing is reported as failed.
+    schema = {**SCHEMA, "properties": {**SCHEMA["properties"], "link": {"$ref": ref}}}
+    contracts = make_tree(
+        tmp_path,
+        {"a.json": '{"name": "a"}', "b.json": '{"name": "b", "link": "x"}'},
+        schema=schema,
+    )
+    report = validate_all(contracts)
+    schema_rel = "contracts/thing.v1.schema.json"
+    assert codes(report) == ["unresolvable_reference"] + ["example_not_validated"] * 2
+    first = report.problems[0]
+    assert first.schema == schema_rel
+    assert first.example is None
+    assert [(p.example, p.schema) for p in report.problems[1:]] == [
+        ("contracts/examples/thing.v1/a.json", schema_rel),
+        ("contracts/examples/thing.v1/b.json", schema_rel),
+    ]
+    assert report.example_count == 2
+    assert report.passed == ()
+    assert report.failed == ()
+
+    assert main(["--contracts-dir", str(contracts)]) == 1
+    captured = capsys.readouterr()
+    assert "OK " not in captured.out
+    assert f"FAIL {schema_rel}" in captured.err
+    assert "next:" in captured.err
+    assert "2 examples found, 1 schemas: 0 passed, 0 failed, 2 not validated" in (
+        captured.out
+    )
+
+
+# --- example layouts ------------------------------------------------------------------------
+#
+# Folder: contracts/examples/<stem>/*.json. Flat: contracts/examples/<stem>.<suffix>.json.
+
+PREFIX = "contracts/examples/"
+THING = "contracts/thing.v1.schema.json"
+
+
+def add_flat(contracts: Path, name: str, content: str) -> None:
+    (contracts / "examples" / name).write_text(content, encoding="utf-8")
+
+
+def test_folder_only_layout(tmp_path: Path) -> None:
+    report = validate_all(make_tree(tmp_path, {"example.json": '{"name": "a"}'}))
+    assert report.problems == ()
+    assert report.passed == ((f"{PREFIX}thing.v1/example.json", THING),)
+
+
+def test_flat_only_layout(tmp_path: Path) -> None:
+    contracts = make_tree(tmp_path)
+    add_flat(contracts, "thing.v1.meta-local.json", '{"name": "a"}')
+    add_flat(contracts, "thing.v1.more.yaml", "name: b\n")
+    report = validate_all(contracts)
+    assert report.problems == ()
+    assert report.passed == (
+        (f"{PREFIX}thing.v1.meta-local.json", THING),
+        (f"{PREFIX}thing.v1.more.yaml", THING),
+    )
+
+
+def test_both_layouts_together_in_a_fixed_order(tmp_path: Path) -> None:
+    contracts = make_tree(
+        tmp_path, {"z.json": '{"name": "z"}', "a.json": '{"name": "a"}'}
+    )
+    add_flat(contracts, "thing.v1.b.json", '{"name": "b"}')
+    add_flat(contracts, "thing.v1.a.json", '{"name": "c"}')
+    expected = (
+        (f"{PREFIX}thing.v1/a.json", THING),
+        (f"{PREFIX}thing.v1/z.json", THING),
+        (f"{PREFIX}thing.v1.a.json", THING),
+        (f"{PREFIX}thing.v1.b.json", THING),
+    )
+    assert validate_all(contracts).passed == expected
+    assert validate_all(contracts).passed == expected  # the same on every run
+
+
+def test_invalid_flat_example_names_its_path_and_schema(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    contracts = make_tree(tmp_path)
+    add_flat(contracts, "thing.v1.bad.json", '{"count": "two"}')
+    problems = validate_all(contracts).problems
+    assert {p.code for p in problems} == {"schema_violation"}
+    assert {(p.example, p.schema) for p in problems} == {
+        (f"{PREFIX}thing.v1.bad.json", THING)
+    }
+    assert main(["--contracts-dir", str(contracts)]) == 1
+    assert f"FAIL {PREFIX}thing.v1.bad.json (schema {THING})" in capsys.readouterr().err
+
+
+def test_no_example_in_either_layout_is_a_missing_example(tmp_path: Path) -> None:
+    contracts = make_tree(tmp_path)
+    # Not examples of thing.v1: a different schema's flat file, a name with no suffix, a file of
+    # another extension, a file in a subfolder of its folder, and a flat-named file in a subfolder
+    # of contracts/examples (supporting files are ignored by design).
+    add_flat(contracts, "other.v1.x.json", "{}")
+    add_flat(contracts, "thing.v1.json", "{}")
+    add_flat(contracts, "thing.v1.x.txt", "{}")
+    (contracts / "examples" / "thing.v1" / "weeks").mkdir(parents=True)
+    (contracts / "examples" / "thing.v1" / "weeks" / "01.json").write_text("{}")
+    (contracts / "examples" / "sub").mkdir()
+    (contracts / "examples" / "sub" / "thing.v1.x.json").write_text("{}")
+    problem = only(validate_all(contracts))
+    assert problem.code == "missing_example"
+    assert problem.schema == THING
+
+
+def test_a_version_does_not_consume_the_examples_of_another(tmp_path: Path) -> None:
+    contracts = make_tree(tmp_path, {"a.json": '{"name": "a"}'})
+    (contracts / "thing.v10.schema.json").write_text(
+        json.dumps({**SCHEMA, "required": ["other"]}), encoding="utf-8"
+    )
+    add_flat(contracts, "thing.v10.x.json", '{"other": 1}')
+    add_flat(contracts, "thing.v1.x.json", '{"name": "b"}')
+    other = contracts / "examples" / "thing.v10"
+    other.mkdir()
+    (other / "a.json").write_text('{"other": 1}', encoding="utf-8")
+    report = validate_all(contracts)
+    assert report.problems == ()
+    assert set(report.passed) == {
+        (f"{PREFIX}thing.v1/a.json", THING),
+        (f"{PREFIX}thing.v1.x.json", THING),
+        (f"{PREFIX}thing.v10.x.json", "contracts/thing.v10.schema.json"),
+        (f"{PREFIX}thing.v10/a.json", "contracts/thing.v10.schema.json"),
+    }
+
+
+# --- misnamed schemas -----------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "name", ["thing.schema.json", "thing.v0.schema.json", "Thing.v1.schema.json"]
+)
+def test_misnamed_schema_is_reported_with_its_path(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], name: str
+) -> None:
+    contracts = make_tree(tmp_path, {"a.json": '{"name": "a"}'})
+    (contracts / name).write_text(json.dumps(SCHEMA), encoding="utf-8")
+    problem = only(validate_all(contracts))
+    assert problem.code == "misnamed_schema"
+    assert problem.schema == f"contracts/{name}"
+    assert main(["--contracts-dir", str(contracts)]) == 1
+    err = capsys.readouterr().err
+    assert f"contracts/{name}" in err
+    assert "next: Rename it to <name>.v<N>.schema.json" in err
+
+
+@pytest.mark.parametrize(
+    ("name", "folder"),
+    [
+        ("thing.schema.json", "thing"),
+        ("thing.v1.extra.schema.json", "thing.v1.extra"),
+        ("thing.v1.0.schema.json", "thing.v1.0"),
+    ],
+)
+def test_misnamed_schema_is_not_treated_as_valid_because_a_folder_matches(
+    tmp_path: Path, name: str, folder: str
+) -> None:
+    # The misnamed schema has an examples folder named after its stem, and the example in it
+    # breaks the schema. It must not be validated, or counted, as if the schema were valid.
+    contracts = make_tree(tmp_path, {"a.json": '{"name": "a"}'})
+    (contracts / name).write_text(json.dumps(SCHEMA), encoding="utf-8")
+    (contracts / "examples" / folder).mkdir()
+    (contracts / "examples" / folder / "bad.json").write_text("{}", encoding="utf-8")
+    report = validate_all(contracts)
+    assert codes(report) == ["misnamed_schema"]
+    assert report.problems[0].schema == f"contracts/{name}"
+    assert report.schema_count == 1  # only thing.v1
+    assert report.example_count == 1
+    assert report.passed == ((f"{PREFIX}thing.v1/a.json", THING),)
+    assert report.failed == ()
+
+
+def test_only_misnamed_schemas_never_succeed(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    contracts = make_tree(tmp_path, schema=SCHEMA, schema_file="thing.schema.json")
+    report = validate_all(contracts)
+    # "no schema files" and "misnamed schema files" stay different problems.
+    assert codes(report) == ["misnamed_schema"]
+    assert report.schema_count == 0
+    assert main(["--contracts-dir", str(contracts)]) == 1
+    assert "0 examples found, 0 schemas" in capsys.readouterr().out
+
+
 # --- CLI ------------------------------------------------------------------------------------
 
 
