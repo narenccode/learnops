@@ -910,3 +910,34 @@ def test_one_token_variable_per_site_with_a_placeholder() -> None:
 def test_the_library_is_not_described_as_unwritten() -> None:
     """libs/moodle_ws exists (the library pull requests), so §2a must not call it unwritten."""
     assert "not written yet" not in section(rules(), "## 2a.", "## 3.")
+
+
+# --- review of #72 (Akshita21-09, 14 Nov): edits that must not pass silently ---------------
+
+
+def test_the_contract_is_still_a_draft_and_not_approved() -> None:
+    """Only the guide approves; a Status line changed to Approved must fail here."""
+    status = next(
+        line for line in rules().splitlines() if line.startswith("**Status:**")
+    )
+    assert status.startswith("**Status:** Draft.")
+    assert "Not approved" in status
+
+
+def test_no_function_is_marked_verified() -> None:
+    """Lab results go to docs/decisions/ first; no §2 row may say yes before that."""
+    table = section(rules(), "## 2. Functions", "## 2a.")
+    header = next(line for line in table.splitlines() if line.startswith("| Purpose"))
+    columns = [cell.strip() for cell in header.strip("|").split("|")]
+    verified = [columns.index("Verified on 4.5"), columns.index("Verified on 5.3")]
+    rows = tables(table)["Purpose"]
+    assert rows, "the function table is empty"
+    for row in rows:
+        assert [row[i] for i in verified] == ["no", "no"], row[1]
+
+
+def test_a_grade_write_never_sends_released() -> None:
+    """PRD B4 draft rule and C-09: a rewrite of §3 that allows released must fail here."""
+    draft_rule = plain(section(rules(), "## 3. Draft rule", "### 3a."))
+    assert "never `released`" in draft_rule
+    assert "`released`" not in draft_rule.replace("never `released`", "")
