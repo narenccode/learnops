@@ -46,7 +46,7 @@ PRD B7 names these content types, and this file uses its wording. The guide's la
 2026-11-11 (both lab sites, Moodle 4.5 and 5.3) found the five H5P libraries below installed and
 runnable. The schema (`h5p-practice.v1.schema.json`) allows only these five names, each at most
 once, and pins each one to its library (`machine_name`) and exact `version`. Its example
-(`examples/h5p-practice.v1.content-types.json`) lists all five.
+(`examples/h5p-practice.v1/content-types.json`) lists all five.
 
 | Content type (PRD B7 wording) | H5P library (machine name) | Version | Where it may be used |
 |---|---|---|---|
@@ -89,8 +89,9 @@ defined by B1 (`contracts/course-package.v1.schema.json`), not by this file:
 - `file` is defined for `h5p` activities only. On any other activity type it is an unknown field and
   is not checked.
 - The schema checks the shape of `file` only. It does not look for the file.
-- The example (`examples/h5p-practice.v1/course.yaml`) uses the illustrative name
-  `wk-01-practice.h5p`. B7 does not fix a folder or a naming convention.
+- The example (`examples/course-package.v1/h5p-practice.yaml`, a B1 package whose bodies are in
+  `examples/course-package.v1/h5p-practice/`) uses the illustrative path
+  `h5p-practice/wk-01-practice.h5p`. B7 does not fix a folder or a naming convention.
 - **Placement of ordinary optional practice:** there is no ordering field. The order of the
   `activities` list is the order, and the practice entry comes right after the week's guide Page
   (guide's answer 3). This is not checked by any schema or validator yet (section 8). It does not

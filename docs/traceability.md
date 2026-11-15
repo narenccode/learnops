@@ -119,8 +119,9 @@ Left out because the PRD does not establish the mapping:
 ## B7 H5P practice output contract (v1), Release 0 foundation, DRAFT
 
 Files: `contracts/h5p-practice.v1.md` (normative text), `contracts/h5p-practice.v1.schema.json`,
-`contracts/examples/h5p-practice.v1.content-types.json`, `contracts/examples/h5p-practice.v1/`
-(an example package, with no `.h5p` file), the `file` field in
+`contracts/examples/h5p-practice.v1/content-types.json` (the B7 example), the B1 example package
+`contracts/examples/course-package.v1/h5p-practice.yaml` with its bodies in
+`contracts/examples/course-package.v1/h5p-practice/` (no `.h5p` file), the `file` field in
 `contracts/course-package.v1.schema.json`, the decision record
 `docs/decisions/0005-h5p-content-types.md` (the lab check, PRD App-C item 5), and the tests
 `test_h5p_practice_v1.py` and `test_course_package_v1.py` in `libs/contracts/tests/`. B7 has no
@@ -155,6 +156,7 @@ Rows that say "example only" check the example package, not packages in general.
 | The text no longer marks a content type "to verify in the lab" and no longer lists the two decisions the lab check settled; it keeps the other open decisions marked, says each practice item uses one type, that ordering is done with Drag and Drop, that a later type is an optional entry and that a version change needs a `/contract-change`, and says practice is optional and never graded | B7 | `test_text_pins_the_types_and_keeps_only_the_open_decisions_still_open` |
 | `file` is defined in the `h5p` branch of the B1 schema only | Issue #44 answer 2 | `test_file_is_defined_in_the_h5p_branch_only` |
 | Example only: the package validates against B1; its week has one Page and one Assignment; its ordinary practice item is ungraded, names a lowercase `.h5p` path that does not exist, and comes right after the guide Page | B1, B7 | `test_example_package_validates_against_b1`, `test_example_week_is_standard_with_an_optional_practice_item` |
+| Example layout for the shared example validator (PR #68): the B7 folder `examples/h5p-practice.v1/` holds only valid B7 documents, and the example B1 package is a top-level file in `examples/course-package.v1/` with its bodies in a subfolder, so the B1 example is untouched | B.0 rule 1, EXT-09 | `test_b7_example_folder_holds_only_b7_documents`, `test_example_package_sits_in_the_b1_example_folder` |
 | No `.h5p` file exists anywhere in the repository | Issue #44 answer 7 | `test_no_h5p_file_is_kept_in_the_repository` |
 
 ### Documented but not automatically enforced

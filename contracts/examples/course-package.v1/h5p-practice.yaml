@@ -1,5 +1,11 @@
-# Valid example for contracts/h5p-practice.v1.md (PRD B7) and the B1 `file` field.
+# Valid B1 example for contracts/h5p-practice.v1.md (PRD B7) and the B1 `file` field.
 # Fictional content for contract testing only. It is not the B8.2 sample course.
+#
+# Layout: this file is a second top-level example in the B1 example folder, so the shared
+# example validator checks it against the B1 schema. Its body files are in the subfolder
+# `h5p-practice/` (supporting files, not validated as examples); body and file paths are
+# relative to this folder. The plain B1 example (course.yaml, weeks/) is a different package.
+# To run the package validator on it, copy this file to `course.yaml` beside `h5p-practice/`.
 #
 # The week keeps its one guide Page and one task Assignment. The H5P practice item is an
 # optional extra. This ordinary practice item comes right after the guide Page (list order; there
@@ -26,16 +32,16 @@ sections:
       - type: page
         idnumber: wk-01-guide
         title: "Week 1 guide"
-        body: weeks/01-guide.md
+        body: h5p-practice/weeks/01-guide.md
       - type: h5p
         idnumber: wk-01-practice
         title: "Week 1 practice"
         graded: false
-        file: wk-01-practice.h5p
+        file: h5p-practice/wk-01-practice.h5p
       - type: assignment
         idnumber: wk-01-task
         title: "Week 1 task"
-        body: weeks/01-task.md
+        body: h5p-practice/weeks/01-task.md
         points: 100
         submission: [onlinetext, file]
         completion: submit

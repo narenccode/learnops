@@ -48,7 +48,7 @@ video as lab-only.
 ## Where it is applied
 
 `contracts/h5p-practice.v1.md` (section 3), `contracts/h5p-practice.v1.schema.json`,
-`contracts/examples/h5p-practice.v1.content-types.json` and
+`contracts/examples/h5p-practice.v1/content-types.json` and
 `libs/contracts/tests/test_h5p_practice_v1.py`. The test writes the five pairs out and checks that
 the schema, the example, the contract text and this record all agree with them.
 

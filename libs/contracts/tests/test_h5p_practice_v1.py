@@ -40,8 +40,16 @@ ROOT = Path(__file__).resolve().parents[3]
 CONTRACTS = ROOT / "contracts"
 SCHEMA_PATH = CONTRACTS / "h5p-practice.v1.schema.json"
 TEXT_PATH = CONTRACTS / "h5p-practice.v1.md"
-ALLOW_LIST_PATH = CONTRACTS / "examples" / "h5p-practice.v1.content-types.json"
-PACKAGE_DIR = CONTRACTS / "examples" / "h5p-practice.v1"
+# The shared example validator (PR #68) matches contracts/<name>.v<N>.schema.json with the
+# folder contracts/examples/<name>.v<N>/ and checks every top-level JSON/YAML file there against
+# that schema; subfolders are supporting files. So the B7 example lives in the B7 folder, and the
+# example B1 package lives in the B1 folder: `h5p-practice.yaml` at the top (checked against B1),
+# its bodies in the subfolder `h5p-practice/` (the loader reads body paths from the folder that
+# holds the package file, which is PACKAGE_DIR).
+B7_EXAMPLES = CONTRACTS / "examples" / "h5p-practice.v1"
+ALLOW_LIST_PATH = B7_EXAMPLES / "content-types.json"
+PACKAGE_DIR = CONTRACTS / "examples" / "course-package.v1"
+PACKAGE_PATH = PACKAGE_DIR / "h5p-practice.yaml"
 B1_SCHEMA_PATH = CONTRACTS / "course-package.v1.schema.json"
 PRD_PATH = ROOT / "docs" / "PRD.md"
 DECISIONS_DIR = ROOT / "docs" / "decisions"
@@ -138,7 +146,7 @@ def text() -> str:
 
 @pytest.fixture(scope="module")
 def package() -> Doc:
-    loaded: Doc = yaml.safe_load((PACKAGE_DIR / "course.yaml").read_text("utf-8"))
+    loaded: Doc = yaml.safe_load(PACKAGE_PATH.read_text("utf-8"))
     return loaded
 
 
@@ -314,6 +322,32 @@ def test_file_is_defined_in_the_h5p_branch_only() -> None:
     ]
     assert {"file", "graded"} <= set(branch["required"])
     assert "file" in branch["properties"]
+
+
+def test_b7_example_folder_holds_only_b7_documents(
+    validator: Draft202012Validator,
+) -> None:
+    # PR #68 checks every top-level JSON/YAML file of this folder against the B7 schema, so a
+    # B1 package placed here would fail. Every top-level document must be a valid B7 document.
+    top = [
+        p
+        for p in B7_EXAMPLES.iterdir()
+        if p.suffix.lower() in {".json", ".yaml", ".yml"}
+    ]
+    assert ALLOW_LIST_PATH in top
+    for path in top:
+        document = _json(path)
+        assert document["schema"] == "learnops.h5p-practice/v1", path.name
+        assert [e.message for e in validator.iter_errors(document)] == [], path.name
+    assert [p for p in B7_EXAMPLES.iterdir() if p.is_dir()] == []
+
+
+def test_example_package_sits_in_the_b1_example_folder() -> None:
+    # Top level of the B1 folder: PR #68 validates it against B1. Its bodies are in a subfolder
+    # (supporting files), so the plain B1 example's weeks/ folder is left untouched.
+    assert PACKAGE_PATH.parent == PACKAGE_DIR and PACKAGE_PATH.is_file()
+    assert (PACKAGE_DIR / "course.yaml").is_file()  # B1's own example is still there
+    assert (PACKAGE_DIR / "h5p-practice" / "weeks").is_dir()
 
 
 def test_example_package_validates_against_b1(package: Doc) -> None:

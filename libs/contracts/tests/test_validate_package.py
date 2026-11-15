@@ -7,6 +7,7 @@ without developer mode) and must run on the Linux CI.
 
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
 
 import pytest
@@ -90,10 +91,16 @@ def test_example_package_has_no_errors(package_dir: Path) -> None:
     assert not_checked_codes(report) == PACKAGE_HELD_RULE_CODES
 
 
-def test_h5p_files_are_listed_as_not_checked_and_never_looked_for() -> None:
-    # The B7 example names a .h5p file that is not in the repository (B7 rule R5).
-    source = DirectorySource(ROOT / "contracts" / "examples" / "h5p-practice.v1")
-    report = validate_package(source)
+def test_h5p_files_are_listed_as_not_checked_and_never_looked_for(
+    tmp_path: Path,
+) -> None:
+    # The B7 example names a .h5p file that is not in the repository (B7 rule R5). The example
+    # is `h5p-practice.yaml` in the B1 example folder, with its bodies in `h5p-practice/`
+    # beside it. The loader reads a file named course.yaml, so stage a copy under that name.
+    examples = ROOT / "contracts" / "examples" / "course-package.v1"
+    shutil.copy(examples / "h5p-practice.yaml", tmp_path / "course.yaml")
+    shutil.copytree(examples / "h5p-practice", tmp_path / "h5p-practice")
+    report = validate_package(DirectorySource(tmp_path))
     assert report.ok and report.errors == ()
     notice = {i.code: i for i in report.not_checked}["h5p_files_not_checked"]
     assert notice.rule == "B7" and notice.fix_hint
