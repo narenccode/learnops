@@ -208,7 +208,6 @@ need, in the courses where it is enrolled for grading.
 | Submissions | `mod_assign_get_submissions`, `mod_assign_get_submission_status` | FR-G-01, FR-G-08 | (lab) / (lab) |
 | Submission files | Download through the token-authenticated file URL returned by the API | FR-G-01 (report file only) | (lab) / (lab) |
 | Write draft grade + feedback | `mod_assign_save_grade` with workflow state `readyforrelease` and feedback comments; never `released` | FR-G-06 | (lab), incl. the `workflowstate` parameter (PRD App-C 1) |
-| Workflow state | `mod_assign_set_user_flags`, only if needed to set the state | FR-G-06 | (lab) |
 
 - **Parameters.** The PRD names only the `workflowstate` parameter and "feedback comments". Every other parameter name, field name and response shape is recorded in the contract file only after it has been checked on both lab sites (lab). If a name differs, the replacement is recorded in §B4, as the PRD requires.
 - **Capabilities.** The PRD gives no list. The minimum capabilities are worked out on the lab sites and recorded in the contract file, and SEC-03 then refers to that list (lab).
@@ -838,8 +837,8 @@ A write is made per submission version, never per criterion, and only when every
 
 **Call order:**
 1. Insert a `write_attempt` row with status `intent`, the values to be written, the snapshot, a unique idempotency key (version plus approval event id), and the previous Moodle grade, feedback and state if readable (used for revert).
-2. Call `mod_assign_save_grade` with workflow state `readyforrelease` (the only allowed state; the client allow-list refuses others). If a second call (`mod_assign_set_user_flags`) is required, it is part of the same attempt; the attempt is `written` only after both succeed and the read-back passes.
-3. Read back grade, feedback presence and workflow state through B4 and compare with the intent.
+2. Call `mod_assign_save_grade` with workflow state `readyforrelease` (the only allowed state; the client allow-list refuses others). The workflow state is sent in this one call; there is no second write call, because the guide dropped `mod_assign_set_user_flags` on 11 November. The attempt is `written` only after the read-back passes.
+3. Read back the stored grade and its attempt number with `mod_assign_get_grades`, and the workflow state through B4, and compare with the intent. The grade comes back as text, so compare numbers, not strings. `mod_assign_get_grades` is the guide's decision 1 on the B4 findings pull request (#64); it is added to the B4 contract there and is not merged yet. Whether feedback presence can be read back is (lab).
 4. Mark the attempt `written` only if the read-back matches. If it differs, mark `mismatch` and show the mentor the difference. Never retry silently.
 
 **Unknown outcome** (timeout or lost response): the attempt is `unknown`. The retry first runs the preconditions and a read-back: if Moodle already holds exactly the intended values, mark `written` and make no second write; if it holds other values and the identifying fields changed, mark `conflict` and ask the mentor; if it holds the pre-write values, write again under the same idempotency key.
