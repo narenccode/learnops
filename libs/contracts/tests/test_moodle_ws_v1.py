@@ -170,8 +170,8 @@ def test_example_is_valid(validator: Draft202012Validator, example: Doc) -> None
 
 
 def test_prd_b4_lists_the_expected_number_of_functions() -> None:
-    """Guards the PRD parsing itself: the B4 table names eight functions."""
-    assert len(prd_functions()) == 8
+    """Guards the PRD parsing itself: the B4 table names seven functions."""
+    assert len(prd_functions()) == 7
 
 
 # --- agreement with the PRD and the rules text ---------------------------------------------
@@ -209,7 +209,7 @@ def test_the_prd_names_workflowstate_only_for_save_grade() -> None:
     "functions",
     [
         pytest.param(
-            [{"name": "mod_assign_set_user_flags", "parameters": ["workflowstate"]}],
+            [{"name": "mod_assign_get_submissions", "parameters": ["workflowstate"]}],
             id="a real parameter on the wrong function",
         ),
         pytest.param(
@@ -225,6 +225,12 @@ def test_the_prd_names_workflowstate_only_for_save_grade() -> None:
 def test_a_parameter_not_named_for_its_function_is_found(functions: list[Doc]) -> None:
     prd = PRD_PATH.read_text(encoding="utf-8")
     assert wrongly_placed(functions, prd) != []
+
+
+def test_the_dropped_user_flags_function_is_not_listed(example: Doc) -> None:
+    """Guide, 11 Nov: it can set `released` with only mod/assign:grade, so it is not allowed."""
+    assert "mod_assign_set_user_flags" not in [f["name"] for f in example["functions"]]
+    assert "mod_assign_set_user_flags" not in prd_functions()
 
 
 def test_save_grade_sends_the_workflow_state(example: Doc) -> None:
@@ -298,6 +304,18 @@ def edited(example: Doc, change: Any) -> Doc:
             lambda d: d["functions"][0].update(verified_on_45=True),
             ("functions", 0),
             "not",  # the "not 'verif'" rule inside propertyNames
+        ),
+        (
+            "capitalised verified flag on a function",
+            lambda d: d["functions"][0].update(Verified_45=True),
+            ("functions", 0),
+            "not",
+        ),
+        (
+            "upper-case verified flag at the top",
+            lambda d: d.update(VERIFIED=True),
+            (),
+            "not",
         ),
         (
             "verified flag at the top",

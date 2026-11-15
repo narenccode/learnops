@@ -35,11 +35,6 @@
       "name": "mod_assign_save_grade",
       "purpose": "Write draft grade + feedback",
       "parameters": ["workflowstate"]
-    },
-    {
-      "name": "mod_assign_set_user_flags",
-      "purpose": "Workflow state",
-      "parameters": []
     }
   ]
 }

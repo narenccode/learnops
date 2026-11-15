@@ -137,8 +137,9 @@ Test names are in `test_moodle_ws_v1.py`.
 | The allow-list and the rules text (`moodle-ws.v1.md` §2) name the same functions | B.0 rule 1 | `test_function_names_equal_the_rules_table` |
 | Each entry's purpose is the PRD B4 purpose | B4 | `test_purpose_is_the_prd_purpose` |
 | No parameter is listed unless the PRD names it for that function; `mod_assign_save_grade` sends `workflowstate` | B4, App-C 1 | `test_every_parameter_is_named_in_the_prd_for_its_function`, `test_the_prd_names_workflowstate_only_for_save_grade`, `test_save_grade_sends_the_workflow_state` |
+| `mod_assign_set_user_flags` is not allowed: it can set `released` with only `mod/assign:grade` | Guide, 11 Nov; C-09 | `test_the_dropped_user_flags_function_is_not_listed` |
 | A replacement name for a Moodle version also appears in the PRD B4 text | B4 ("replacements recorded here") | `test_a_replacement_name_is_also_in_the_prd` |
-| No verification state is stored in the schema or example | Guide, Q1 | `test_invalid_document_is_rejected_at_the_expected_place` (three verified-flag cases) |
+| No verification state is stored in the schema or example | Guide, Q1 | `test_invalid_document_is_rejected_at_the_expected_place` (five verified-flag cases, including capital letters) |
 | Schema is valid; example validates; invalid documents fail at the expected place; unknown fields are accepted | B.0 rule 1, rule 2 | `test_schema_is_a_valid_draft_2020_12_schema`, `test_example_is_valid`, `test_invalid_document_is_rejected_at_the_expected_place`, `test_unknown_fields_are_accepted` |
 | One token variable per site with a placeholder; no single `MOODLE_WS_TOKEN` | B4, SEC-03, C-06; guide, Q24 | `test_one_token_variable_per_site_with_a_placeholder` |
 

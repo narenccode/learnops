@@ -40,7 +40,6 @@ version (PRD §B4).
 | Submissions | `mod_assign_get_submission_status` | M3 FR-G-01, FR-G-08 | To verify in the lab | no | no |
 | Submission files | Download through the token-authenticated file URL returned by the API | M3 FR-G-01 | How the download authenticates: to verify in the lab | no | no |
 | Write draft grade and feedback | `mod_assign_save_grade` | M3 FR-G-06 | Workflow state `readyforrelease` (PRD App-C 1 names the parameter `workflowstate`); feedback comments. All other parameters: to verify in the lab | no | no |
-| Workflow state | `mod_assign_set_user_flags`, only if needed to set the state | M3 FR-G-06 | To verify in the lab | no | no |
 
 "Used by" for Module 2 comes from `docs/design/checker.md` §4; for Module 3 from
 `docs/design/grading.md` §4.1. Both design documents are drafts.
@@ -62,6 +61,8 @@ schema plus one example list the allowed functions in machine-readable form.
 | `contracts/examples/moodle-ws.v1.functions.json` | The functions of §2, each with the parameters LearnOps sends and, only where a name differs on a Moodle version, the replacement name |
 
 Rules for the allow-list:
+- `parameters` is **informative**: it records what LearnOps sends. It is not a parameter allow-list,
+  and a client is not required to enforce it. Only the function name is allowed or refused.
 - It holds **no verification state**. Lab results go to `docs/decisions/`, and the "Verified"
   columns in §2 above stay "no" until those records exist. The schema refuses any field whose name
   contains "verif".
