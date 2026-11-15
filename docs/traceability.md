@@ -194,5 +194,5 @@ confirmed by the contract reviewers): `source.kind` is required inside `source` 
 | Calendar validity of `processing.completed_at` (for example no 31 February) | — | Only with a `date-time` format checker (`rfc3339-validator`, not installed in CI) |
 | Contents of `transcript.en.json` (B5.4 shape) | B5.4, B6.2 | B5 contract (no schema in `contracts/` yet) |
 | Shapes of `chapters.json`, `slides.json`, `cues.json` | B6.2 | No schema yet |
-| Windows reserved names (such as `CON`, `NUL`, `COM1`) and Unicode normalization in paths: considered, not v1 rules (guide decision) | B6.3 | Not enforced in v1; a later version may add them if a consumer needs them |
-| A maximum path length | B6.3 | None specified in v1 (guide decision): the lab's media store and proxy limits have not been established |
+| Windows reserved names (such as `CON`, `NUL`, `COM1`) and Unicode normalization in paths: considered, not v1 rules (guide decision) | B6.3 | Not enforced in v1: the store is on Linux or S3 and no consumer compares names; a v2 discussion if a store later needs them |
+| A maximum path length | B6.3 | None specified in v1 (guide decision): paths are built from bounded slugs and the store enforces its own limits |

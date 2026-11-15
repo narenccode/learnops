@@ -31,8 +31,8 @@ NOT automated here, and therefore NOT claimed as enforced (the schema's $comment
     validator is part of the stack. The schema description says why it needs the u flag;
   * Windows reserved names and Unicode normalization: considered and not enforced in v1
     (guide decision), so there is nothing to test;
-  * a maximum path length: none is specified in v1 (guide decision), because the lab's media
-    store and proxy limits have not been established;
+  * a maximum path length: none is specified in v1 (guide decision), because paths are built
+    from bounded slugs and the store enforces its own limits;
   * that libs/media_paths uses the same Cc/Cf table: that library is not on main yet, and the
     comparison test belongs to it.
 

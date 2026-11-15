@@ -559,8 +559,9 @@ Slugs: lowercase ASCII, hyphens, immutable. Numbers zero-padded to two digits.
   `%25%32%65`); the path is never decoded or normalized. Shared test cases:
   `contracts/test-vectors/relative-path.v1.json`.
 - Not enforced in v1 (considered and left out): Windows reserved names (such as `CON`, `NUL`)
-  and Unicode normalization. No maximum path length is specified in v1: the limits of the lab's
-  media store and proxy have not been established.
+  and Unicode normalization, because the store is on Linux or S3 and no consumer compares names.
+  No maximum path length is specified in v1: paths are built from bounded slugs and the store
+  enforces its own limits.
 - `captions` contains at least one entry with `lang` exactly `"en"` (the required
   `captions.en.vtt`, B6.2).
 - Required: `schema`, `course_slug`, `lesson_id`, `title`, `duration_s`, `tracks`, `captions`,
