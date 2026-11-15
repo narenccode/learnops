@@ -51,6 +51,7 @@ ROOT = Path(__file__).resolve().parents[3]
 CONTRACTS = ROOT / "contracts"
 EXAMPLES = CONTRACTS / "examples"
 MANIFEST_SCHEMA = CONTRACTS / "lesson-manifest.v1.schema.json"
+COURSE_PACKAGE_SCHEMA = CONTRACTS / "course-package.v1.schema.json"
 VECTORS = CONTRACTS / "test-vectors" / "relative-path.v1.json"
 DURATION_S = 742  # the duration_s of the manifest examples; the examples stay within it
 
@@ -199,6 +200,17 @@ def test_relative_path_pattern_is_the_manifest_pattern() -> None:
     assert cues == manifest
 
 
+def test_h5p_ref_pattern_is_the_b1_identifier_pattern() -> None:
+    b1 = load(COURSE_PACKAGE_SCHEMA)["$defs"]["identifier"]["pattern"]
+    cues = load(CONTRACTS / "cues.v1.schema.json")["$defs"]["cue"]["allOf"]
+    h5p = next(
+        branch["then"]["properties"]["ref"]["pattern"]
+        for branch in cues
+        if branch["if"]["properties"]["type"]["const"] == "h5p"
+    )
+    assert h5p == b1
+
+
 def test_type_token_pattern_is_the_manifest_slug_pattern() -> None:
     slug = load(MANIFEST_SCHEMA)["$defs"]["slug"]["pattern"]
     cue_type = load(CONTRACTS / "cues.v1.schema.json")["$defs"]["cue"]["properties"][
@@ -268,6 +280,20 @@ def test_a_chapter_inside_another_is_an_overlap() -> None:
     assert codes(validate_chapters([chapter(0, 100), chapter(10, 20)])) == [
         "chapters_overlap"
     ]
+
+
+def test_overlap_with_an_earlier_longer_chapter_is_reported_for_every_chapter() -> None:
+    # [30, 40] is inside [0, 100] although the chapter just before it, [10, 20], ends earlier.
+    report = validate_chapters([chapter(0, 100), chapter(10, 20), chapter(30, 40)])
+    assert codes(report) == ["chapters_overlap", "chapters_overlap"]
+    assert [i.location for i in report.errors] == [(1, "start"), (2, "start")]
+
+
+def test_a_chapter_overlaps_only_if_it_starts_before_the_latest_earlier_end() -> None:
+    assert validate_chapters(
+        [chapter(0, 100), chapter(100, 120), chapter(110.5, 130)]
+    ).errors  # 110.5 is before 120
+    assert validate_chapters([chapter(0, 100), chapter(100, 120), chapter(120, 130)]).ok
 
 
 def test_chapters_with_the_same_start_are_an_overlap() -> None:
@@ -391,6 +417,96 @@ def test_slide_thumbnail_breaking_the_relative_path_rule_is_rejected(
     assert validate_slides([slide(thumb=thumb)]).errors
 
 
+# --- integers too large for a float ---------------------------------------------------------
+
+HUGE = 10**400  # a valid JSON number, an int too large to convert to a float
+
+
+def test_a_huge_integer_time_does_not_crash_the_validators() -> None:
+    # math.isfinite(10**400) raises OverflowError; an int is always finite.
+    assert validate_chapters([chapter(0, HUGE)]).ok
+    assert validate_slides([slide(t=HUGE)]).ok
+    assert validate_cues([cue(t=HUGE)]).ok
+    assert validate_chapters([chapter(HUGE, HUGE + 1)]).ok
+
+
+def test_a_huge_integer_time_is_still_checked_by_the_other_rules() -> None:
+    assert codes(validate_chapters([chapter(HUGE, HUGE)])) == [
+        "chapter_end_not_after_start"
+    ]
+    assert validate_cues([cue(t=-HUGE)]).errors
+
+
+def test_a_float_that_is_not_finite_is_still_rejected() -> None:
+    for value in (math.nan, math.inf):
+        assert "time_not_finite" in codes(validate_cues([cue(t=value)]))
+        assert "time_not_finite" in codes(validate_slides([slide(t=value)]))
+        assert "time_not_finite" in codes(validate_chapters([chapter(0, value)]))
+    # minus infinity is below the minimum, so the schema rejects it first
+    assert validate_cues([cue(t=-math.inf)]).errors
+
+
+def test_a_huge_integer_duration_does_not_crash_the_duration_check() -> None:
+    assert check_within_duration(HUGE, cues=[cue(t=5)]).ok
+    assert check_within_duration(HUGE, chapters=[chapter(0, 5)]).ok
+
+
+def test_a_huge_integer_time_is_beyond_a_normal_duration() -> None:
+    report = check_within_duration(100, cues=[cue(t=HUGE)])
+    assert codes(report) == ["time_beyond_duration"]
+
+
+def test_a_boolean_or_non_finite_duration_is_still_a_programming_error() -> None:
+    for bad in (True, math.nan, math.inf, -1, "10", None):
+        with pytest.raises(ValueError):
+            check_within_duration(bad)  # type: ignore[arg-type]
+
+
+# --- messages for a value that fails a pattern ---------------------------------------------
+
+
+def test_invalid_path_message_is_short_and_says_what_to_do() -> None:
+    for thumb, ref in (
+        ("slides/a b.jpg", "images/a b.png"),
+        ("slides/%2e.jpg", "../x.png"),
+    ):
+        issue = validate_slides([slide(thumb=thumb)]).errors[0]
+        other = validate_cues([cue(type="image", ref=ref)]).errors[0]
+        for found in (issue, other):
+            assert found.code == "schema_pattern"
+            assert found.message.startswith(
+                ("slides.json[0].thumb", "cues.json[0].ref")
+            )
+            assert (
+                "relative to the lesson folder" in found.message
+                or "slides/" in found.message
+            )
+            assert "u0000" not in found.message and "(?!" not in found.message
+            assert len(found.message) < 250
+            assert found.fix_hint
+
+
+def test_thumbnail_outside_slides_has_its_own_message() -> None:
+    issue = validate_slides([slide(thumb="images/001.jpg")]).errors[0]
+    assert "start with slides/" in issue.message
+    assert issue.location == (0, "thumb")
+
+
+def test_other_pattern_messages_say_what_to_write() -> None:
+    url = validate_cues([cue(type="url", ref="https://u:p@example.org/")]).errors[0]
+    assert "https address" in url.message and "no user name" in url.fix_hint
+    h5p = validate_cues([cue(type="h5p", ref="H5P Quiz")]).errors[0]
+    assert "idnumber" in h5p.message and "wk-01-quiz" in h5p.fix_hint
+    blank = validate_cues([cue(label="  ")]).errors[0]
+    assert "blank" in blank.message and blank.location == (0, "label")
+
+
+def test_a_pattern_error_keeps_its_code_and_place() -> None:
+    issue = validate_cues([cue(type="image", ref="a%2eb.png")]).errors[0]
+    assert (issue.code, issue.location) == ("schema_pattern", (0, "ref"))
+    assert "cues.v1.schema.json" in issue.fix_hint
+
+
 # --- no percent sign in a path (guide decision, B6.3 relative_path) ------------------------
 
 
@@ -491,6 +607,22 @@ def test_empty_or_non_string_label_is_rejected(label: Any) -> None:
     assert validate_cues([cue(label=label)]).errors
 
 
+@pytest.mark.parametrize(
+    "label", [" ", "   ", "\t", "\n", " \t\n ", "\u00a0", "\u2003"]
+)
+def test_blank_label_is_rejected(label: str) -> None:
+    report = validate_cues([cue(label=label)])
+    assert report.errors
+    assert any("blank" in issue.message for issue in report.errors)
+
+
+@pytest.mark.parametrize(
+    "label", ["Try it", "  padded  ", "Two words", "a", "Où ?", "1"]
+)
+def test_label_with_a_visible_character_is_accepted(label: str) -> None:
+    assert validate_cues([cue(label=label)]).ok
+
+
 def test_missing_label_is_rejected() -> None:
     bad = cue()
     del bad["label"]
@@ -527,11 +659,39 @@ def test_non_boolean_required_is_rejected(bad: Any) -> None:
 
 
 @pytest.mark.parametrize(
-    "ref", ["wk-01-practice", "a", "Practice 1", "wk_01", "WK-01", "q1/2"]
+    "ref", ["wk-01-practice", "wk-01-q1", "quiz-01", "a", "q1", "h5p-2-3", "0"]
 )
 def test_h5p_ref_that_is_an_idnumber_is_accepted(ref: str) -> None:
-    # EXT-06 says "Moodle idnumber" and the guide named no form, so no form is imposed.
+    # The form of an idnumber in PRD B1.2 rule 6: lowercase ASCII letters and digits, single hyphens.
     assert validate_cues([cue(type="h5p", ref=ref)]).ok
+
+
+@pytest.mark.parametrize(
+    "ref",
+    [
+        "H5P Quiz",
+        "WK_01",
+        "wk_01",
+        "WK-01",
+        "Practice 1",
+        "q1/2",
+        "wk--01",
+        "-wk",
+        "wk-",
+        "wk-01 ",
+        "wk-01\n",
+        " wk-01",
+        "wk.01",
+        "wk-é",
+        " ",
+        "   ",
+        "\t",
+    ],
+)
+def test_h5p_ref_that_is_not_an_idnumber_form_is_rejected(ref: str) -> None:
+    report = validate_cues([cue(type="h5p", ref=ref)])
+    assert report.errors
+    assert report.errors[0].location == (0, "ref")
 
 
 @pytest.mark.parametrize("ref", ["", 5, None, ["wk-01"]])
@@ -601,6 +761,54 @@ def test_url_that_is_not_an_absolute_https_address_is_rejected(ref: str) -> None
     assert validate_cues([cue(type="url", ref=ref)]).errors
 
 
+@pytest.mark.parametrize(
+    "ref",
+    [
+        "https://@",
+        "https://:",
+        "https://:80/x",
+        "https://@/",
+        "https://x@y",
+        "https://user:pw@example.org/x",
+        "https://user@example.org",
+        "https://example.org:80@evil.example/",
+        "https://allowed.example\\@evil.example/",
+        "https://example.org\\@evil.example/x",
+        "https://example.org\\x",
+        "https://example.org/a\\b",
+        "https://example.org:/x",
+        "https://example.org:80a/x",
+        "https://[::1]/x",
+    ],
+)
+def test_url_with_no_host_credentials_or_backslash_is_rejected(ref: str) -> None:
+    report = validate_cues([cue(type="url", ref=ref)])
+    assert report.errors
+    assert report.errors[0].location == (0, "ref")
+
+
+@pytest.mark.parametrize(
+    "ref",
+    [
+        "https://example.org/a",
+        "https://example.org/a%20b",
+        "https://example.org/a%2Fb?q=100%25#top",
+        "https://example.org?x=1",
+        "https://example.org#top",
+        "https://example.org:8443/a",
+        "https://sub.example.org/@user",
+        "https://example.org/a?email=a@b.example",
+        "HTTPS://Example.ORG/Path",
+    ],
+)
+def test_url_with_a_host_and_percent_encoding_or_at_after_the_path_start_is_accepted(
+    ref: str,
+) -> None:
+    # The contract checks only basic syntax; the player parses the address and enforces its
+    # host allow-list (FR-X-12).
+    assert validate_cues([cue(type="url", ref=ref)]).ok
+
+
 def test_url_ref_is_not_subject_to_the_relative_path_rule() -> None:
     # C-08 does not apply to the url field: this value breaks the relative-path rule
     # (scheme, slashes, ?, #) and is still a valid url cue.
@@ -641,8 +849,14 @@ def test_url_ref_with_a_percent_sign_is_accepted(ref: str) -> None:
 
 def test_ref_of_an_unknown_type_is_only_a_string() -> None:
     assert validate_cues([cue(type="future-kind", ref="anything: at all/../x")]).ok
-    assert validate_cues([cue(type="future-kind", ref="")]).ok
     assert validate_cues([cue(type="future-kind", ref=5)]).errors
+
+
+def test_ref_of_an_unknown_type_must_not_be_empty() -> None:
+    # Every cue has a non-empty ref; an unknown type keeps no other form rule.
+    assert validate_cues([cue(type="future-kind", ref="")]).errors
+    assert validate_cues([cue(type="future-kind", ref=None)]).errors
+    assert validate_cues([cue(type="future-kind", ref="Any Form_at/1")]).ok
 
 
 def test_non_finite_cue_time_is_rejected() -> None:
@@ -727,8 +941,18 @@ def test_slides_and_cues_need_no_particular_order() -> None:
     assert check_within_duration(100, slides=[slide(t=50), slide(t=5)]).ok
 
 
-def test_chapter_title_may_be_empty() -> None:
-    assert validate_chapters([chapter(0, 10, title="")]).ok
+@pytest.mark.parametrize("title", ["", " ", "   ", "\t", "\n", " \t\n ", "\u00a0"])
+def test_empty_or_blank_chapter_title_is_rejected(title: str) -> None:
+    report = validate_chapters([chapter(0, 10, title=title)])
+    assert report.errors
+    assert report.errors[0].location == (0, "title")
+
+
+@pytest.mark.parametrize(
+    "title", ["Intro", "  Intro  ", "Setting up Python", "1", "Où ?"]
+)
+def test_chapter_title_with_a_visible_character_is_accepted(title: str) -> None:
+    assert validate_chapters([chapter(0, 10, title=title)]).ok
 
 
 def test_lesson_with_no_cues_file_has_no_readable_cues() -> None:

@@ -25,6 +25,8 @@ from jsonschema.exceptions import ValidationError
 
 from . import messages
 from .report import Issue, Location, ValidationReport
+
+# `_order` is private in B1's schema.py (shared code of another module): see the PR description.
 from .schema import _order as _error_order
 
 RULE = "B6.2"
@@ -41,9 +43,34 @@ SUPPORTED_CUE_TYPES = frozenset({"h5p", "image", "url"})
 
 
 @functools.cache
+def _schema(schema_file: str) -> dict[str, Any]:
+    return cast(
+        "dict[str, Any]",
+        json.loads((CONTRACTS_DIR / schema_file).read_text(encoding="utf-8")),
+    )
+
+
+@functools.cache
 def _validator(schema_file: str) -> Draft202012Validator:
-    schema = json.loads((CONTRACTS_DIR / schema_file).read_text(encoding="utf-8"))
-    return Draft202012Validator(schema, format_checker=FormatChecker())
+    return Draft202012Validator(_schema(schema_file), format_checker=FormatChecker())
+
+
+@functools.cache
+def _pattern_texts() -> dict[str, tuple[str, str]]:
+    """The message and hint for a `pattern` that fails, keyed by the pattern text, so that the
+    report does not show a regular expression of hundreds of characters (UI-05). The patterns
+    are read from the schemas, so this stays right when a schema changes. Every other error
+    keeps the message of the JSON Schema library, as in the B1 validator."""
+    slides, cues = _schema("slides.v1.schema.json"), _schema("cues.v1.schema.json")
+    thumb = slides["$defs"]["slide"]["properties"]["thumb"]["allOf"]
+    h5p = cues["$defs"]["cue"]["allOf"][0]["then"]["properties"]["ref"]["pattern"]
+    return {
+        slides["$defs"]["relative_path"]["pattern"]: messages.PATH_NOT_RELATIVE,
+        thumb[1]["pattern"]: messages.THUMB_NOT_IN_SLIDES,
+        cues["$defs"]["https_url"]["pattern"]: messages.URL_NOT_HTTPS,
+        h5p: messages.H5P_REF_NOT_IDNUMBER,
+        r"\S": messages.TEXT_IS_BLANK,
+    }
 
 
 def _schema_issues(document: object, filename: str, schema_file: str) -> list[Issue]:
@@ -53,11 +80,27 @@ def _schema_issues(document: object, filename: str, schema_file: str) -> list[Is
 
 def _schema_issue(error: ValidationError, filename: str, schema_file: str) -> Issue:
     location: Location = tuple(error.absolute_path)
+    where = messages.lesson_file_where(filename, location)
+    pattern = error.validator_value
+    texts = (
+        _pattern_texts().get(pattern)
+        if error.validator == "pattern" and isinstance(pattern, str)
+        else None
+    )
+    if texts is not None:
+        message, hint = texts
+        return Issue(
+            code="schema_pattern",
+            rule=RULE,
+            message=message.format(where=where, value=error.instance),
+            fix_hint=f"{hint} {messages.LESSON_FILE_SEE_SCHEMA.format(schema=schema_file)}",
+            location=location,
+        )
     return Issue(
         code=f"schema_{error.validator}",
         rule=RULE,
         message=messages.LESSON_FILE_SCHEMA_ERROR.format(
-            where=messages.lesson_file_where(filename, location), detail=error.message
+            where=where, detail=error.message
         ),
         fix_hint=messages.LESSON_FILE_SCHEMA_HINT.format(
             filename=filename, schema=schema_file
@@ -77,12 +120,14 @@ def _non_finite_times(
     document: Sequence[Mapping[str, Any]], filename: str, fields: tuple[str, ...]
 ) -> list[Issue]:
     """Times that are NaN or infinite. Python's JSON reader accepts them, JSON does not, and the
-    schema's `minimum` does not stop NaN, so the validator does."""
+    schema's `minimum` does not stop NaN, so the validator does. Only a float can be NaN or
+    infinite: an int is always finite, and `math.isfinite` raises OverflowError for an int too
+    large for a float (for example 10**400)."""
     issues = []
     for index, entry in enumerate(document):
         for field in fields:
             value = entry[field]
-            if not math.isfinite(value):
+            if isinstance(value, float) and not math.isfinite(value):
                 location: Location = (index, field)
                 issues.append(
                     Issue(
@@ -109,6 +154,7 @@ def _chapter_order_issues(chapters: Sequence[Mapping[str, Any]]) -> list[Issue]:
             )
         )
 
+    latest_end = 0.0  # the largest `end` among the chapters before this one
     for index, chapter in enumerate(chapters):
         start, end = chapter["start"], chapter["end"]
         where = messages.lesson_file_where(CHAPTERS_FILE, (index,))
@@ -122,8 +168,10 @@ def _chapter_order_issues(chapters: Sequence[Mapping[str, Any]]) -> list[Issue]:
                 (index, "end"),
             )
         if index == 0:
+            latest_end = end
             continue
         previous = chapters[index - 1]
+        earlier_end, latest_end = latest_end, max(latest_end, end)
         if start < previous["start"]:
             add(
                 "chapters_not_in_order",
@@ -133,13 +181,15 @@ def _chapter_order_issues(chapters: Sequence[Mapping[str, Any]]) -> list[Issue]:
                 messages.CHAPTER_NOT_IN_ORDER_HINT,
                 (index, "start"),
             )
-        elif start < previous["end"]:
-            # Only for chapters that are in order, so one mistake is reported once. A chapter
-            # that starts exactly where the previous one ends is not an overlap.
+        elif start < earlier_end:
+            # Compared with the latest end of ALL earlier chapters, not only the previous one,
+            # so a chapter inside an earlier, longer one is reported too. Only for chapters that
+            # are in order, so one mistake is reported once. A chapter that starts exactly where
+            # an earlier one ends is not an overlap.
             add(
                 "chapters_overlap",
                 messages.CHAPTER_OVERLAP.format(
-                    where=where, start=start, previous_end=previous["end"]
+                    where=where, start=start, previous_end=earlier_end
                 ),
                 messages.CHAPTER_OVERLAP_HINT,
                 (index, "start"),
@@ -227,7 +277,7 @@ def check_within_duration(
     if (
         isinstance(duration_s, bool)
         or not isinstance(duration_s, (int, float))
-        or not math.isfinite(duration_s)
+        or (isinstance(duration_s, float) and not math.isfinite(duration_s))
         or duration_s < 0
     ):
         raise ValueError("duration_s must be a finite number of seconds, at least 0")

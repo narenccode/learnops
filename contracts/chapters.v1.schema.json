@@ -29,7 +29,8 @@
         },
         "title": {
           "type": "string",
-          "description": "The chapter title. The mentor can edit it (FR-V-05)."
+          "pattern": "\\S",
+          "description": "The chapter title. Not empty and not only whitespace (at least one character other than whitespace). The mentor can edit it (FR-V-05)."
         }
       }
     }
