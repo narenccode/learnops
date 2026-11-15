@@ -68,6 +68,30 @@ The checker's rules (CK-01…CK-13) work on the course model (B2) and stay in Mo
 - **Repository checkout.** The schema is found two folders above this library, so it works from a
   checkout of the repository, not from a copy of `libs/` alone.
 
+## Contract examples: the engine, `example_check.py` (PRD B.0 rule 1, E1)
+
+`check_schema_examples(schema_path, schema_rel, examples)` loads one JSON Schema and checks a list
+of example files (`.json`, `.yaml`, `.yml`) against it. It only reads files and never raises for
+bad content: it returns a `SchemaCheck` with the `Problem`s (code, message, `next:` hint, example
+and schema) and the examples that passed and failed.
+
+- **Problems:** `unreadable_schema`, `invalid_schema`, `unresolvable_reference` (a `$ref` that
+  points at nothing, or at another file, which is not loaded), `unreadable_example` (bad syntax,
+  not UTF-8, several YAML documents, impossible date) and `schema_violation` (one per error, with
+  place and keyword, in a fixed order: list positions compare as numbers, so `items[2]` comes
+  before `items[10]`).
+- **Unusable schema.** When the schema is unreadable, invalid or has an unresolvable `$ref`, every
+  example of that schema is reported as `example_not_validated`: neither passed nor failed, even if
+  it was checked before the reference was reached. Problems inside those examples appear once the
+  schema is fixed.
+- YAML is parsed exactly as PyYAML's safe loader does, so an unquoted date stays a date and B1
+  rejects it. Formats such as `date` are checked.
+- **Not a tool yet.** The engine is the first of three pull requests that split PR #68 so that each
+  stays within the 800-line limit. `validate_examples.py` (finding schemas and examples, folder and
+  flat layouts, the report and the command line) follows, then misnamed-schema reporting. This
+  differs from the guidance that the first pull request is a complete tool: the engine is tested
+  on its own, and nothing runs it until the next pull request.
+
 ## Configuration
 
 `ValidationConfig` is the only input besides the package. The library reads no environment
