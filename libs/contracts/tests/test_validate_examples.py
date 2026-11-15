@@ -428,6 +428,64 @@ def test_examples_of_an_unusable_schema_are_counted_but_not_validated(
     )
 
 
+# --- misnamed schemas -----------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "name", ["thing.schema.json", "thing.v0.schema.json", "Thing.v1.schema.json"]
+)
+def test_misnamed_schema_is_reported_with_its_path(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], name: str
+) -> None:
+    contracts = make_tree(tmp_path, {"a.json": '{"name": "a"}'})
+    (contracts / name).write_text(json.dumps(SCHEMA), encoding="utf-8")
+    problem = only(validate_all(contracts))
+    assert problem.code == "misnamed_schema"
+    assert problem.schema == f"contracts/{name}"
+    assert main(["--contracts-dir", str(contracts)]) == 1
+    err = capsys.readouterr().err
+    assert f"contracts/{name}" in err
+    assert "next: Rename it to <name>.v<N>.schema.json" in err
+
+
+@pytest.mark.parametrize(
+    ("name", "folder"),
+    [
+        ("thing.schema.json", "thing"),
+        ("thing.v1.extra.schema.json", "thing.v1.extra"),
+        ("thing.v1.0.schema.json", "thing.v1.0"),
+    ],
+)
+def test_misnamed_schema_is_not_treated_as_valid_because_a_folder_matches(
+    tmp_path: Path, name: str, folder: str
+) -> None:
+    # The misnamed schema has an examples folder named after its stem, and the example in it
+    # breaks the schema. It must not be validated, or counted, as if the schema were valid.
+    contracts = make_tree(tmp_path, {"a.json": '{"name": "a"}'})
+    (contracts / name).write_text(json.dumps(SCHEMA), encoding="utf-8")
+    (contracts / "examples" / folder).mkdir()
+    (contracts / "examples" / folder / "bad.json").write_text("{}", encoding="utf-8")
+    report = validate_all(contracts)
+    assert codes(report) == ["misnamed_schema"]
+    assert report.problems[0].schema == f"contracts/{name}"
+    assert report.schema_count == 1  # only thing.v1
+    assert report.example_count == 1
+    assert report.passed == ((f"{PREFIX}thing.v1/a.json", THING),)
+    assert report.failed == ()
+
+
+def test_only_misnamed_schemas_never_succeed(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    contracts = make_tree(tmp_path, schema=SCHEMA, schema_file="thing.schema.json")
+    report = validate_all(contracts)
+    # "no schema files" and "misnamed schema files" stay different problems.
+    assert codes(report) == ["misnamed_schema"]
+    assert report.schema_count == 0
+    assert main(["--contracts-dir", str(contracts)]) == 1
+    assert "0 examples found, 0 schemas" in capsys.readouterr().out
+
+
 # --- CLI ------------------------------------------------------------------------------------
 
 

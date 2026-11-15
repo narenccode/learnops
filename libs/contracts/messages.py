@@ -129,6 +129,15 @@ EX_TOO_DEEP_TO_VALIDATE = (
 )
 EX_NOT_VALIDATED = "Not validated, because its schema could not be loaded."
 EX_NOT_VALIDATED_HINT = "Fix the schema problem reported above, then validate again."
+EX_MISNAMED_SCHEMA = (
+    "The schema file '{name}' is not named <name>.v<N>.schema.json, so its examples cannot be "
+    "found."
+)
+EX_MISNAMED_SCHEMA_HINT = (
+    "Rename it to <name>.v<N>.schema.json: lowercase letters and digits separated by single "
+    "hyphens, then .v and a version number without a leading zero (for example "
+    "course-package.v1.schema.json)."
+)
 EX_MISSING_EXAMPLE = (
     "The schema has no example in the folder {folder} or in a file named "
     "{stem}.<suffix>.json, .yaml or .yml."

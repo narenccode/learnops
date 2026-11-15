@@ -115,6 +115,13 @@ runs it on every pull request:
 python libs/contracts/validate_examples.py [--check | --dry-run] [--contracts-dir PATH]
 ```
 
+- **Schema names.** A schema must be named `<name>.v<N>.schema.json`: lowercase letters and digits
+  separated by single hyphens, then `.v` and a version number without a leading zero (for example
+  `course-package.v1.schema.json`). Any other `*.schema.json` file is reported as
+  `misnamed_schema`, with its path and the correct form, and the run fails. It is never skipped, so
+  a repository holding only misnamed schemas cannot pass. A misnamed schema is not loaded, so its
+  examples are not looked for or counted. "No schema file at all" (`no_schemas`) is a different
+  problem.
 - **Pairing.** `contracts/<name>.v<N>.schema.json` has two kinds of example, alone or together:
   - *folder:* the top-level `.json`, `.yaml` and `.yml` files of `contracts/examples/<name>.v<N>/`
     (for example `course-package.v1/course.yaml`);
@@ -126,8 +133,8 @@ python libs/contracts/validate_examples.py [--check | --dry-run] [--contracts-di
   case. Folder examples are listed first, then flat ones, each sorted by name. Every top-level
   file in a contract's folder is validated against that folder's schema, with no special cases. Files in subfolders (B1's
   `weeks/*.md`) are supporting files and are ignored (`validate_package` checks them).
-- **Problems found here**, each with a `next:` hint: `no_schemas` (no `*.schema.json` file at all)
-  and `missing_example` (a schema with no example in either layout). Everything inside a schema or
+- **Problems found here**, each with a `next:` hint: `no_schemas` (no `*.schema.json` file at all),
+  `misnamed_schema` and `missing_example` (a schema with no example in either layout). Everything inside a schema or
   an example is reported by the engine (see above), including `unresolvable_reference`.
 - **Links.** A symbolic link is followed whatever it points at, even a file outside `contracts/`,
   and the example is reported under the link's own path. Nothing is written, but the target's
@@ -135,11 +142,10 @@ python libs/contracts/validate_examples.py [--check | --dry-run] [--contracts-di
   refuses links that leave its package folder; this tool does not.
 - The summary counts every example found, so passed, failed and not validated (the examples of an
   unusable schema) always add up to it.
-- Not checked yet: `*.schema.json` files not named `<name>.v<N>.schema.json` (they are skipped),
-  examples that no schema matches (orphans such as `moodle-ws.v1.json` are skipped and the run can
-  still exit 0), other file types next to the examples, duplicate keys, and `NaN`, `Infinity` and
-  `-Infinity`. On #68 the guide set orphans, unsupported files, duplicate keys and strict JSON as
-  a later pull request: they are not in this stack.
+- Not checked yet: examples that no schema matches (orphans such as `moodle-ws.v1.json` are skipped
+  and the run can still exit 0), other file types next to the examples, duplicate keys, and `NaN`,
+  `Infinity` and `-Infinity`. On #68 the guide set orphans, unsupported files, duplicate keys and
+  strict JSON as a later pull request: they are not in this stack.
 - Exit codes: `0` when every example passes, `1` when any problem is found, `2` for a usage error
   or a missing contracts folder. The tool only reads files: `--check` (the default) and
   `--dry-run` do the same, and there is nothing to undo.
