@@ -17,8 +17,7 @@ Report: <your note>
 `Report:` is followed by your report text, to the end of the submission. If there is no `Report:`
 section, a file you upload named `report.md` or `report.txt` is your report.
 
-The checks in the marking table read these parts: `http_ok:demo_url` reads `Demo`, `repo_clone`
-reads `Repository`, and `word_count` reads your report.
+Of its checks, `http_ok:demo_url` reads `Demo` and `repo_clone` reads `Repository`.
 
 <!-- marking-table v1 -->
 | Criterion | Points | Full marks when | Check |

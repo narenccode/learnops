@@ -254,7 +254,8 @@ def test_task_has_a_valid_marking_table(doc: Doc, week: int) -> None:
 @pytest.mark.parametrize("week", WEEKS)
 def test_task_explains_the_confirmed_submission_format(week: int) -> None:
     # Confirmed by the guide on PR #61 (grading design Q6, grading.md §4.3a): labelled lines in the
-    # online text, report.md or report.txt instead of a Report: section, and the check mapping.
+    # online text, report.md or report.txt instead of a Report: section, and the check mapping,
+    # said exactly for the checks that week's own table has (review of PR #61, weeks 2 to 4).
     body = (PACKAGE_DIR / "weeks" / f"0{week}-task.md").read_text("utf-8")
     lines = [line.strip() for line in body.splitlines()]
     assert "Repository: <URL>" in lines
@@ -263,9 +264,13 @@ def test_task_explains_the_confirmed_submission_format(week: int) -> None:
     prose = " ".join(body.split())  # line wrapping in the Markdown must not matter
     for text in ("not case-sensitive", "`report.md`", "`report.txt`"):
         assert text in prose, text
-    for check, part in (("http_ok:demo_url", "Demo"), ("repo_clone", "Repository")):
-        assert f"`{check}` reads `{part}`" in prose
-    assert "`word_count` reads your report" in prose
+    checks = " ".join(_cells(r)[3] for r in _TABLE.findall(body)[0].splitlines()[2:])
+    for check, part in (
+        ("http_ok:demo_url", "`Demo`"),
+        ("repo_clone", "`Repository`"),
+        ("word_count", "your report"),
+    ):
+        assert (check in checks) == (f"`{check}` reads {part}" in prose), check
 
 
 @pytest.mark.parametrize("week", WEEKS)

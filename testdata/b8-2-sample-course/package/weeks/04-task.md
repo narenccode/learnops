@@ -17,8 +17,7 @@ Report: <your final reflection>
 section, a file you upload named `report.md` or `report.txt` is your report.
 The report needs at least 250 words to earn full marks on the Reflection criterion.
 
-The checks in the marking table read these parts: `http_ok:demo_url` reads `Demo`, `repo_clone`
-reads `Repository`, and `word_count` reads your report.
+Of its checks, `http_ok:demo_url` reads `Demo` and `word_count` reads your report.
 
 <!-- marking-table v1 -->
 | Criterion | Points | Full marks when | Check |
