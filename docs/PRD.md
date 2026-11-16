@@ -416,9 +416,11 @@ HTML table in the Moodle assignment description; the grading assistant parses it
       is trimmed. A section name is matched against the whole heading text, so the heading
       `Setup instructions` does not satisfy the name `Setup`.
     - A line inside a fenced code block is not a heading. A fence line starts, after up to three
-      spaces, with backticks or with tildes; four or more spaces do not make a fence. A closing
-      fence uses the same character as the opening fence and is at least as long. A fence that
-      is not closed runs to the end of the file.
+      spaces, with at least three backticks (` ``` `) or at least three tildes (`~~~`); four or
+      more spaces do not make a fence, and a line that starts with fewer than three of the same
+      character, such as `` `npm install` ``, is not a fence. A closing fence uses the same
+      character as the opening fence and is at least as long. A fence that is not closed runs to
+      the end of the file.
     - A Setext heading (a line of text underlined with `=` or `-`) is not a heading.
   - `word_count:<n>`: `n` is one or more ASCII digits (`0` to `9`) with no sign, space or
     underscore, and a value of at least 1. It is the minimum number of words in the report. A

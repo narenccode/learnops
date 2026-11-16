@@ -618,6 +618,24 @@
           "StillHidden"
         ]
       }
+    },
+    {
+      "id": "readme-fence-needs-three-characters",
+      "title": "A line that starts with one backtick is not a fence, so it hides no heading: a fence needs at least three backticks or at least three tildes",
+      "status": "derived",
+      "covers": [
+        "B1.3-readme-headings"
+      ],
+      "check": "readme_sections:Setup",
+      "files": [
+        {
+          "name": "README.md",
+          "text": "`npm install` first\n\n# Setup"
+        }
+      ],
+      "expected": {
+        "result": "pass"
+      }
     }
   ]
 }

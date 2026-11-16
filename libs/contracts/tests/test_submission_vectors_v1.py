@@ -81,6 +81,7 @@ README_CASE_IDS = [
     "readme-heading-indentation-up-to-three-spaces",
     "readme-fence-indentation-up-to-three-spaces",
     "readme-closing-fence-same-character-and-length",
+    "readme-fence-needs-three-characters",
 ]
 # The machine checks of PRD C3.5. A check that is named in a vector as the unknown one must not be
 # one of these: a known name is not unknown. A test keeps this set equal to the PRD list.
@@ -595,8 +596,11 @@ def test_prd_b13_has_the_check_formats_and_names_what_it_does_not_define() -> No
         "`Setup instructions` does not satisfy the name `Setup`",
         "is not a heading",
         "fenced code block",
-        "A fence line starts, after up to three spaces, with backticks or with tildes",
+        "A fence line starts, after up to three spaces, with at least three backticks",
+        "or at least three tildes",
         "four or more spaces do not make a fence",
+        "fewer than three of the same character",
+        "is not a fence",
         "A closing fence uses the same character as the opening fence and is at least as long",
         "A fence that is not closed runs to the end of the file",
         "Setext heading",
