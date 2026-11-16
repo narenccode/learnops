@@ -37,6 +37,9 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
 
+      - name: Install LearnOps checker
+        run: pip install -e .
+
       - name: Type check shared libraries
         run: |
           if [ -d libs ] && ls libs/*/ >/dev/null 2>&1; then pip install mypy && mypy libs; fi
