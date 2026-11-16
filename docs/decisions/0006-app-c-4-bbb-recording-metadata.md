@@ -15,9 +15,12 @@ location is recorded as observed. Nothing in this record is a PASS.
 
 Reason: this verification needs a recording made from a Moodle BigBlueButton activity on the lab
 (`moodle45` or `moodle53`, and `bbb`; PRD A11). The dependency task **T17** (lab BigBlueButton
-verification) has no evidence in this repository: no T17 record, branch commit or pull request
-exists, and `lab/` setup notes do not exist (checked 2026-11-16 on `origin/main` at `ca989f9`).
-The lab itself was not reachable from the session that wrote this record. When T17 delivers
+verification) is itself PENDING: `docs/decisions/0005-app-c-4-bbb-recording-metadata.md` and its
+evidence folder (`docs/decisions/evidence/0005-app-c-4-bbb/`) exist in this branch, but they hold
+only a read-only check script and one run that contacted nothing (lab values not configured, exit
+code 2). They contain no server, version, recording, metadata or video-format observation. No
+`lab/` setup notes exist on `origin/main` at `ca989f9` (checked 2026-11-16). The lab was not
+reachable from the sessions that wrote these records. When T17 delivers
 evidence, fill in the PENDING cells below; do not edit anything else without new evidence.
 
 ## Environment and version
@@ -42,17 +45,18 @@ Done in this record (read-only, repository only):
 3. Read `docs/design/video.md` (FR-V-09 row marked TO DECIDE; section 4 `source.kind` for intake;
    section 13 order 4) and `contracts/lesson-manifest.v1.schema.json`.
 4. Searched the repository, its remote branches and the open and closed pull requests for T17
-   evidence, BigBlueButton recording samples and metadata notes. Found none.
+   evidence, BigBlueButton recording samples and metadata notes. Found only the T17 record `0005`
+   described above, with no lab observations. I did not run its script.
 5. Checked that `.env.example` only holds placeholders (`BBB_URL`, `BBB_SECRET`); no secret was
    read or written.
 
 Not done (needs the lab; PENDING):
 
-6. Create a recording in a lab course through a Moodle BigBlueButton activity, with the **video**
-   format enabled.
+6. Use an existing lab recording made from a Moodle BigBlueButton activity in a test course, with
+   the **video** format enabled. Do not record a real learner session (CLAUDE.md rule 4).
 7. Call the BigBlueButton `getRecordings` API (shared secret from the environment, never written
-   here) for that recording and save the metadata and format entries, with the secret and any
-   personal data removed.
+   here), for example with T17's `verify_bbb.py`, and save the metadata and format entries, with the
+   secret and any personal data removed.
 8. Record where the **video** format output is published and how it is fetched through the public
    API (a playback URL from `getRecordings`, not a file path on the server).
 
@@ -115,11 +119,11 @@ results.
 - Moodle BigBlueButton activity and BigBlueButton `getRecordings` public documentation: to be
   opened and cited with their version when the evidence is filled in (CLAUDE.md section 6a rule 5:
   verify every reference; none is cited here because none was opened for this record).
-- T17 lab verification: PENDING (no record found).
+- T17 lab verification: `docs/decisions/0005-app-c-4-bbb-recording-metadata.md` and `docs/decisions/evidence/0005-app-c-4-bbb/` (PENDING, no lab observations).
 
 ## Remaining blockers
 
-1. **T17 not delivered.** No lab BigBlueButton evidence exists. Owner: T17 assignee.
+1. **T17 has no lab evidence.** Its record `0005` is PENDING and its script has not reached the lab. Owner: T17 assignee. When T17 fills in `0005`, copy its observed values into this record.
 2. **Lab access** for a Moodle BigBlueButton activity recording with the **video** format enabled,
    and the shared secret supplied through the environment only.
 3. **Decisions for the guide once evidence exists:** the course-slug mapping, the cohort source
