@@ -459,8 +459,9 @@ def write_rules() -> dict[str, str]:
     return {row[0]: plain(row[1]) for row in rows}
 
 
-def test_the_write_rules_are_exactly_r1_to_r11() -> None:
-    assert list(write_rules()) == [f"R{n}" for n in range(1, 12)]
+def test_the_write_rules_are_exactly_r1_to_r14() -> None:
+    """R1 to R11: the guide on PR #64; R12 to R14: the guide on PR #72 (2026-11-15)."""
+    assert list(write_rules()) == [f"R{n}" for n in range(1, 15)]
 
 
 def test_r1_get_grades_is_the_stored_grade_read_back(example: Doc) -> None:
@@ -600,34 +601,51 @@ def test_the_grading_design_conflict_with_r11_is_an_open_follow_up() -> None:
     open_questions = plain(section(rules(), "## 6. Open questions", "### 6a."))
     assert "`docs/design/grading.md` §10.1" in open_questions
     assert "conflicts with R11" in open_questions
-    assert "Pre-write state unreadable" in open_questions
+    assert "R11 wins" in open_questions
 
 
-def test_the_fail_closed_proposals_are_open_questions_for_the_guide() -> None:
-    """The three cases the decisions do not settle are recorded, each with its fail-closed
-    proposal and the guide as decider, and none is written as a decided rule in §3a."""
-    rows = {
-        row[0].split("**")[1]: plain(row[0])
-        for row in tables(section(rules(), "## 6. Open questions", "### 6a."))[
-            "Question"
-        ]
-        if row[0].startswith("**") and row[1] == "Guide"
-    }
-    assert "does not write in that case" in rows["Pre-write state unreadable."]
-    off = rows["Marking workflow off."]
-    assert "refuses `graded` and `notgraded`" in off and "Lab check 4" in off
-    assert (
-        "not counted as done until the mentor confirms it"
-        in rows["Lost answer, matching read-back."]
-    )
-    for name in (
-        "Pre-write state unreadable.",
-        "Marking workflow off.",
-        "Lost answer, matching read-back.",
+def test_r12_an_unreadable_or_unknown_state_is_refused_before_sending() -> None:
+    r12 = write_rules()["R12"]
+    assert "refused before anything is sent" in r12
+    assert "`lastattempt` is missing" in r12
+    for state in (
+        "notmarked",
+        "inmarking",
+        "readyforreview",
+        "inreview",
+        "readyforrelease",
+        "released",
     ):
-        assert "Proposed, fail closed" in rows[name]
+        assert f"`{state}`" in r12
+    assert "`REFUSED_STATE_UNKNOWN`" in r12
+
+
+def test_r13_marking_workflow_off_is_refused_before_sending() -> None:
+    r13 = write_rules()["R13"]
+    assert "`graded` or `notgraded`" in r13
+    assert "refused before anything is sent" in r13
+    assert "`notmarked`, `inmarking`, `readyforreview` or `inreview`" in r13
+    assert "`REFUSED_WORKFLOW_OFF`" in r13
+    assert "Lab check 4 stays open" in r13
+
+
+def test_r14_a_matching_read_back_after_a_lost_answer_needs_the_mentor() -> None:
+    r14 = write_rules()["R14"]
+    assert "not counted as done until the mentor confirms it" in r14
+    assert "`NEEDS_MENTOR_CONFIRMATION`" in r14
+
+
+def test_the_three_proposals_are_rules_now_and_no_longer_open() -> None:
+    """The guide decided the three fail-closed proposals on PR #72 (2026-11-15): they are rules,
+    each refusal is its own outcome, and §6 keeps the lab-access and grading-design rows."""
     decided = plain(section(rules(), "### 3a. Write rules", "### 3b."))
-    assert "`graded`" not in decided and "NEEDS_MENTOR_CONFIRMATION" not in decided
+    assert "separate from `NOT_VERIFIED`" in decided
+    assert "never reported as success" in decided
+    open_questions = plain(section(rules(), "## 6. Open questions", "### 6a."))
+    assert "Proposed, fail closed" not in open_questions
+    for gone in ("Pre-write state unreadable.", "Marking workflow off.", "Lost answer"):
+        assert gone not in open_questions
+    assert "Lab access." in open_questions
 
 
 def test_course_lookup_does_not_rely_on_idnumber(example: Doc) -> None:

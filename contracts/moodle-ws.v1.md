@@ -144,6 +144,12 @@ uses; the library's class and code names are not contract text (guide on Q37, PR
 | R9 | **Exact numeric match and range.** Both the grade sent and the grade read back are parsed as numbers and must be **exactly equal**; there is no tolerance and no rounding. Moodle stores five decimals, so `84.5` is stored as `84.5`. **Before writing**, the grade must be a number from 0 to the assignment's maximum grade; otherwise the write is refused and nothing is sent. Moodle silently ignores a grade above the maximum or below zero, with no error (lab check 15), so the read-back is the only proof |
 | R10 | **Separate outcomes.** A learner with no submission, a submission with no grade, and a submission LearnOps cannot access are **separate** outcomes (`NO_SUBMISSION`, `NO_GRADE`, `ACCESS_DENIED`), next to `SKIPPED_SUSPENDED` (R5) and `NOT_VERIFIED` (R8). None is ever reported as success. Processing continues for the other learners |
 | R11 | **Uncertain write.** If LearnOps cannot tell whether Moodle processed a write (for example a timeout), it does **not** retry the write automatically. It reads back first, reports the result, and **the mentor decides** what happens next |
+| R12 | **State unreadable or unknown before the write** (guide, PR #72, 2026-11-15). If the learner's state cannot be read before the write (for example `lastattempt` is missing, R6), or is none of the six marking-workflow values in Moodle's source (`notmarked`, `inmarking`, `readyforreview`, `inreview`, `readyforrelease`, `released`; the same constants on 4.5 and 5.3 in `mod/assign/locallib.php`) and not a value of R13, the write is **refused before anything is sent**. Outcome `REFUSED_STATE_UNKNOWN` (name proposed in PR #72). This is R3 applied to a state that cannot be read, so a locked submission cannot be missed |
+| R13 | **Marking workflow off** (guide, PR #72, 2026-11-15). With marking workflow off the state is `graded` or `notgraded` (§7), and a saved grade can reach the learner at once, which breaks the draft rule (PRD C-09). The write is **refused before anything is sent**: LearnOps writes only over `notmarked`, `inmarking`, `readyforreview` or `inreview`. Outcome `REFUSED_WORKFLOW_OFF` (name proposed in PR #72). Course Studio builds assignments with marking workflow on (PRD §B1.2 rule 4), so this refusal only meets an assignment created by hand. Lab check 4 stays open |
+| R14 | **Lost answer, matching read-back** (guide, PR #72, 2026-11-15). After an uncertain write (R11), a read-back that matches exactly is **not counted as done until the mentor confirms it**. Outcome `NEEDS_MENTOR_CONFIRMATION` (name proposed in PR #72). This follows R11, "the mentor decides" |
+
+The refusals of R12 and R13 are each their own outcome, separate from `NOT_VERIFIED` (R8, which is
+after a write) and never reported as success (R10).
 
 Lesson recorded by the guide: when the platform can ignore a write without an error, the only proof
 is a read-back that is compared with what was sent.
@@ -246,11 +252,8 @@ Not decided. This file does not settle it.
 
 | Question | Who decides |
 |---|---|
-| **Pre-write state unreadable.** R3 refuses a write when the state is already `readyforrelease` or `released`. The decisions do not say what happens when the state cannot be read before the write (for example `lastattempt` missing, R6), or is a value Moodle's source does not list. **Proposed, fail closed:** LearnOps does not write in that case, because it cannot show the submission is not locked | Guide |
-| **Marking workflow off.** With marking workflow off, `lastattempt.gradingstatus` is `graded` or `notgraded` (§7), and a saved grade can reach the gradebook, and the learner, at once. That breaks the PRD B4 draft rule, but no rule here refuses the write beforehand; the read-back only reports it afterwards (§3). **Proposed, fail closed:** before writing, LearnOps writes only over `notmarked`, `inmarking`, `readyforreview` or `inreview` (the marking-workflow states in the source, §7), and refuses `graded` and `notgraded`. Lab check 4 confirms the behaviour | Guide |
-| **Lost answer, matching read-back.** R11 says the mentor decides after an uncertain write. If the read-back then matches exactly, may the write count as done, or must the mentor still confirm it? **Proposed, fail closed:** it is not counted as done until the mentor confirms it | Guide |
-| **Grading design §10.1.** `docs/design/grading.md` §10.1 (Release 4, draft) still says an unknown outcome may "write again under the same idempotency key", which conflicts with R11. Follow-up for the grading design; not changed here | Student 3, guide |
-| **Lab access.** When the Moodle 4.5 and 5.3 lab sites are available. All checks in §5 wait for them. B4 can be merged as a draft before that, but it cannot be frozen at the end of Release 0 until the checks pass (guide, PR #27) | Guide |
+| **Grading design §10.1.** `docs/design/grading.md` §10.1 (Release 4, draft) still says an unknown outcome may "write again under the same idempotency key", which conflicts with R11. R11 wins; the fix belongs to the grading design pull request (#62), not here (guide, PR #72, 2026-11-15) | Student 3, guide |
+| **Lab access.** When the Moodle 4.5 and 5.3 lab sites are available. All checks in §5 wait for them. B4 can be merged as a draft before that, but it cannot be frozen at the end of Release 0 until the checks pass (guide, PR #27). Guide, PR #72, 2026-11-15: the 5.3 lab site is available, and a first live run of the web-service calls was made there on 14 November, but it is not matched to the items in §5, so all sixteen stay open until a decision record names the item. 4.5 has no live run and no date. The §5 rule "4.5 and 5.3" stays until the guide decides how the two versions are tested, at the start of Release 1 | Guide |
 
 **Decided by the guide (PR #27, 2026-10-29):**
 - **Q1:** Markdown for the rules plus a small JSON Schema and one example listing the allowed
@@ -262,6 +265,10 @@ Not decided. This file does not settle it.
 
 **Decided by the guide (PR #64, 2026-11-12):** the eleven questions on the B4 findings, recorded
 as rules R1 to R11 in §3a, with the grade-value matching rule in §3b.
+
+**Decided by the guide (PR #72, 2026-11-15):** the three fail-closed proposals that were open here
+(state unreadable or unknown, marking workflow off, lost answer with a matching read-back),
+recorded as rules R12 to R14 in §3a.
 
 ### 6a. `mod_assign_get_grades`: source facts (decided, R1)
 
