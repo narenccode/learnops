@@ -9,7 +9,7 @@
 | Owner | Project guide |
 | Contributors | Student 1–4 (module owners) |
 | Status | Draft. Becomes binding when the guide approves it. |
-| Change rule | Changes only by pull request. Sections marked **Contract** also need approval from every affected module owner and the guide (§B.0). |
+| Change rule | Changes only by pull request. Sections marked **Contract** follow §B.0 rule 3. |
 
 > **How to read this document.** Part A describes the whole system and its fixed rules. Part B is
 > the set of **shared contracts**: the exact formats and interfaces between modules. Part C has one
@@ -282,8 +282,8 @@ Moodle sites have: completion tracking on; web services enabled with a dedicated
 ## A15. Assumptions
 
 1. The lab VMs and AI services are available from Release 0.
-2. Moodle's standard web-services functions listed in §B4 exist on 4.5 and 5.3 (verified in Release 0; see §App-C).
-3. Moodle's Restore can merge sections from a backup into an existing course (verified in Release 0).
+2. Moodle's standard web-services functions listed in §B4 exist on 4.5 and 5.3 (verified in the first release that relies on them; see §App-C).
+3. Moodle's Restore can merge sections from a backup into an existing course (verified in the first release that relies on it).
 4. Lecture videos with reference transcripts can be obtained with permission (§B8.5).
 5. A hosted-API key with a spending cap is provided by the guide for the comparison study.
 6. Course reuse for a new cohort is done with Moodle's own **Copy course**. Course Studio is the
@@ -311,7 +311,7 @@ Moodle sites have: completion tracking on; web services enabled with a dedicated
 
 1. Each contract has an owner, a version (`v1`, `v2`, …) and a JSON Schema in `/contracts`, with at least one valid example file.
 2. **Frozen at the end of Release 0.** After that: additive, optional fields only (EXT-02).
-3. A change is a pull request that updates the schema, the examples, this PRD section, and the tests of every module that uses the contract, approved by all affected owners and the guide.
+3. A change is a pull request that updates the schema, the examples, this PRD section, and the tests of every module that uses the contract. **Until Release 0 is frozen**, it needs the approval of one owner of an affected module; the guide approves the PRD text and reviews the whole contract set once at the Release 0 gate. **After the freeze**, the guide's approval is also required for the contract itself (enforced through CODEOWNERS).
 4. Every module validates contract data it reads and writes against the schema; invalid data is rejected with a clear error.
 
 | Contract | Owner | Used by |
@@ -581,7 +581,7 @@ information is lost.
 
 - One dedicated **service account** per Moodle site, with a token restricted to an external service containing only the functions below.
 - The account has only the capabilities those functions need, in the courses where it is enrolled for grading.
-- Function list (each verified on 4.5 and 5.3 in Release 0; replacements recorded here if names differ):
+- Function list (each verified on 4.5 and 5.3 in the first release that relies on them; replacements recorded here if names differ):
 
 | Purpose | Function |
 |---|---|
@@ -760,7 +760,7 @@ url = media_signing.sign(relative_path, ttl_seconds=3600)
 
 ## B7. H5P practice output (v1, stretch)
 
-- Content types pinned in Release 0 (exact library versions recorded): question set (checkpoints), drag-the-words or drag-and-drop / ordering, branching scenario. Interactive video only in lab demonstrations (with openly licensed videos).
+- Content types pinned in the first release that uses them (exact library versions recorded): question set (checkpoints), drag-the-words or drag-and-drop / ordering, branching scenario. Interactive video only in lab demonstrations (with openly licensed videos).
 - Each practice item is a standard `.h5p` file plus an entry in `course.yaml` (`type: h5p`, `idnumber`, `graded: false`).
 - Placed after the week's guide Page; **never graded** (no grade item; the checker enforces this).
 - Video checkpoints are produced in two modes: a separate activity after the video (default), and `cues.json` entries for the future player (F-1).
@@ -1201,7 +1201,7 @@ Each release is **frozen, tagged and adoptable on its own**. Releases are number
 
 | Release | Name | Contents | Depends on |
 |---|---|---|---|
-| **Release 0** | Foundation | Lab VMs ready (A11); repository, CI, coding standards; contracts B1–B8 v1 **frozen**; shared libraries `lti`, `moodle_ws`, `model_interface` (FR-M-01, FR-M-02), `contracts`, `media_paths`; test data B8 v1; verification of assumptions (App-C); design document per module approved | — |
+| **Release 0** | Foundation | Lab VMs ready (A11); repository, CI, coding standards; contracts B1–B8 v1 **frozen**; shared libraries `contracts` and `media_paths`; test data B8 v1; App-C items 6 and 9; design document per module approved. The libraries `lti`, `moodle_ws` and `model_interface` (FR-M-01, FR-M-02) and the other App-C items belong to the first release that uses them; the Release 0 notes list where each one goes. | — |
 | **Release 1** | Course quality | Module 2: checker (FR-C-01…05, 09), role tests (FR-C-06, 07), harness v1 (FR-C-08) | R0 |
 | **Release 2** | Course creation | Module 1: Course Studio (FR-S-01…11); harness extended to build → check → restore | R0, R1 |
 | **Release 3** | Video | Module 4: video pipeline (FR-V-01…13, FR-V-15) incl. BigBlueButton intake, summaries, slide index, manifest, retention; harness smoke test | R0 |
@@ -1216,7 +1216,7 @@ without any extension release. Extension releases follow the same exit criteria 
 built by this team after the baseline or by a later team.
 
 Work on later releases may start in parallel (e.g. Modules 3 and 4 build on Release 0 while
-Module 2 finishes Release 1); **freezing** follows the order above.
+Module 2 finishes Release 1); a release is **frozen** once every release in its "Depends on" column is frozen.
 
 ## D2. Release exit criteria (all must hold)
 
@@ -1305,7 +1305,7 @@ requests; report chapter; final-demo segment.
 | Integration | L3 Apply |
 | Testing and evaluation | L5 Evaluate |
 
-## App-C. To verify in Release 0 (record results in `docs/decisions/`)
+## App-C. To verify (items 6 and 9 in Release 0; each other item in the first release that relies on it; record results in `docs/decisions/`)
 
 1. Every web-services function in B4 exists on 4.5 and 5.3 with the parameters used (incl. `workflowstate` on `mod_assign_save_grade`).
 2. Moodle Restore merges a sections-only backup into a template course without touching protected items.
