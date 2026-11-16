@@ -1122,6 +1122,7 @@ requests; report chapter; final-demo segment.
 8. Licence or consent for every B8.5 video.
 9. Which AI features Moodle 5.3 itself provides, so LearnOps doesn't duplicate them (record any overlap and adjust scope).
 10. Which Moodle roles hold the backup and restore capabilities by default (FR-C-09 relies on mentors making a backup; restores remain administrator-only).
+11. For CK-03 on `.mbz` models, verify how the independently declared target is supplied separately to the model builder and written to `course.total_points`; confirm the builder never derives it from the computed gradebook total, and that an absent independent target leaves CK-03 as `cannot judge`.
 
 ## App-D. Risks (project level)
 

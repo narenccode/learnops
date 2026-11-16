@@ -63,7 +63,7 @@ flowchart TD
 
 ### 3.2 Component responsibilities
 
-- **Course-model builder:** Reads a Course Studio package or parses a Moodle backup and produces the B2 normalised course model. For package models, it copies the package's declared `total_points` into `course.total_points`. For an `.mbz` model, including a merged course, it may receive an independently declared target as a separate input and writes that value to `course.total_points`; it never derives the target from the gradebook items. A merged course remains `source.kind = mbz`.
+- **Course-model builder:** Reads a Course Studio package or parses a Moodle backup and produces the B2 normalised course model. For package models, it copies the package's declared `total_points` into `course.total_points`. For an `.mbz` model, including a merged course, it receives the independently declared target as a separate input and writes that value to `course.total_points`; it never derives the target from the gradebook items. A merged course remains `source.kind = mbz`.
 - **Rule engine:** Applies the defined validation rules to the course model. Each finding includes a rule ID, severity, message and fix hint.
 - **Availability evaluator:** Evaluates Moodle availability and completion rules and simulates whether a learner can reach each section and activity.
 - **Course-model diff:** Compares two course models for structural, rule and point differences.
