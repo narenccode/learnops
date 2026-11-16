@@ -164,7 +164,8 @@ FR-G-06. Neither requirement is implemented by this skeleton.
 | Every grade write goes through `write_draft_grade`: a direct call never writes over a locked learner or with marking workflow off | B4 §3, §3a | `test_grade_write.py`: `test_a_direct_call_*` |
 | R1: the merged contract lists `mod_assign_get_grades`; the read-back asks for the one assignment written; the state alone is never enough | B4 §3a, §3b | `test_grade_write.py`: `test_r1_*` |
 | R2: `write_draft_grade` refuses `-1` before reading anything | B4 §3a | `test_grade_write.py`: `test_r2_*` |
-| R3: `readyforrelease` / `released` refused before sending; a lock after the check is caught on 5.3; on 4.5 only the pre-write check protects (source fake) | B4 §3a | `test_grade_write.py`: `test_r3_*` |
+| R3: `readyforrelease` / `released` refused before sending; a lock after the check is caught on 5.3; a state that ends `released` after the write is `NOT_VERIFIED` on both; on 4.5 a normal write is verified and the race to `readyforrelease` is not detected (accepted limitation, guide on PR #80) (source fake) | B4 §3a | `test_grade_write.py`: `test_r3_*` |
+| The final read-back is `NOT_VERIFIED` when the `mod_assign_get_grades` answer has a warning, no `warnings` field, or `warnings: null` (source fake, both versions) | B4 §3b | `test_grade_write.py`: `test_a_final_read_back_with_a_warning_or_no_warnings_list_is_not_verified` |
 | Marking workflow off and unknown states send nothing; each unlocked state is written (proposed, fail closed, B4 §6) | PRD B4 draft rule; B4 §6 | `test_grade_write.py`: `test_marking_workflow_off_*`, `test_an_unknown_state_*`, `test_each_unlocked_*` |
 | R6: no readable state before the write sends nothing; a state hidden after it is not verified | B4 §3a | `test_grade_write.py`: `test_r6_*` |
 | R8: a failed read-back is `NOT_VERIFIED` and the write is sent once | B4 §3a | `test_grade_write.py`: `test_r8_*` |

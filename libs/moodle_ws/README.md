@@ -122,8 +122,14 @@ Release 4).
 
 **On 4.5 and 5.3:** the tests use `tests/source_fake.py`, which behaves as the Moodle **source**
 says: 5.3 keeps a locked grade while the call looks successful, 4.5 overwrites it, and both ignore an
-out-of-range grade. None of this is lab-verified (lab checks 4 and 12 to 16). On 4.5 only the pre-write
-check in step 2 protects a locked grade.
+out-of-range grade. None of this is lab-verified (lab checks 4 and 12 to 16).
+
+**R3 on 4.5 (the guide's decision, PR #80, 15 Nov):** only the pre-write check in step 2 protects a
+grade that is locked before the write. A state that ends `released` after the write is `NOT_VERIFIED`
+on both versions. A normal write stays `VERIFIED` on 4.5. **Known limitation, accepted by the guide:**
+if another grader sets `readyforrelease` between the check and the write, 4.5 overwrites their grade
+and the read-back cannot tell this from a normal write, so it is reported as `VERIFIED`. No allowed
+function makes the check and the write one step, and no second pre-write read is made.
 
 ## Configuration
 
