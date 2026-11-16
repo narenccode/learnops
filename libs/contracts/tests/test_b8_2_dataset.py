@@ -28,17 +28,17 @@ PACKAGE_DIR = DATASET_DIR / "package"
 WEEKS = (1, 2, 3, 4)
 POINTS_PER_TASK = 25
 TOTAL_POINTS = 100  # B8.2 alone declares its own total (guide, PR #61, 2026-11-16, A6)
-# The restored merged course declares an independent total: B8.1's 100-point final project plus
-# B8.2's 100. It is supplied to the builder and never derived from the activities (A6).
-FINAL_PROJECT_POINTS = 100
-MERGED_TARGET_TOTAL = 200
 
-# The protected section is the B8.1 template's section 3 (Final project), also its last section,
-# so the four weeks are sections 4 to 7 (guide, PR #61, 2026-11-16, A2; Owner, Issue #55,
-# 2026-11-12). This is the one place the dataset names it. PRD B1.4 makes protected_section
-# configurable with no default: the contract and the validator never hard-code it.
+# Two facts about the B8.1 template, kept apart because they can change independently: whether
+# the built template has a section after 3 is still open (A4, PENDING MOODLE LAB).
+# - The protected section is the template's section 3 (Final project). This is the one place the
+#   dataset names it. PRD B1.4 makes protected_section configurable with no default: the contract
+#   and the validator never hard-code it (guide, PR #61, 2026-11-16, A2).
+# - The template's last section is also 3 today, so the four weeks are sections 4 to 7 (Owner,
+#   Issue #55, 2026-11-12). If A4 finds a later section, change only this constant.
 PROTECTED_SECTION = 3
-SECTION_NUMBERS = tuple(PROTECTED_SECTION + week for week in WEEKS)
+TEMPLATE_LAST_SECTION = 3
+SECTION_NUMBERS = tuple(TEMPLATE_LAST_SECTION + week for week in WEEKS)
 
 # The two default protected idnumbers (PRD B1.4).
 DEFAULT_PROTECTED = frozenset({"final-project", "course-feedback"})
@@ -180,12 +180,6 @@ def test_course_is_full_mode_with_a_total_of_100(doc: Doc) -> None:
     assert doc["schema"] == "learnops.course/v1"
     assert doc["course"]["mode"] == "full"
     assert doc["course"]["total_points"] == TOTAL_POINTS
-
-
-def test_the_merged_target_is_declared_not_derived(doc: Doc) -> None:
-    # A6: this package declares 100; the merged course declares 200, a supplied target.
-    assert FINAL_PROJECT_POINTS + doc["course"]["total_points"] == MERGED_TARGET_TOTAL
-    assert doc["course"]["total_points"] != MERGED_TARGET_TOTAL
 
 
 def test_there_are_four_week_sections_numbered_4_to_7(doc: Doc) -> None:
@@ -371,7 +365,7 @@ def test_week_sections_are_numbered_after_the_templates_last_section(doc: Doc) -
     # Owner, Issue #55, 2026-11-12: a merge restore keeps the name and summary of a section that
     # already exists at that number, so generated sections must come after the template's last.
     numbers = [s["number"] for s in doc["sections"]]
-    assert min(numbers) > PROTECTED_SECTION
+    assert min(numbers) > TEMPLATE_LAST_SECTION
 
 
 def test_the_numbering_checks_would_catch_the_old_numbering_1_to_4() -> None:
@@ -379,4 +373,4 @@ def test_the_numbering_checks_would_catch_the_old_numbering_1_to_4() -> None:
     # sections 1 to 3, including the protected section, and the two checks above must reject it.
     old_numbers = list(WEEKS)
     assert collides(old_numbers, PROTECTED_SECTION)
-    assert not min(old_numbers) > PROTECTED_SECTION
+    assert not min(old_numbers) > TEMPLATE_LAST_SECTION
