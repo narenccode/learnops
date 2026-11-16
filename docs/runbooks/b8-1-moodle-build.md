@@ -8,8 +8,8 @@
 > for a person with lab access. If this document and the README disagree, the README, the PRD and the
 > guide's answers on Issues #55 and #65 (and, for the licence, Issue #61) win. **The owner's answers are decisions, not test results.** Release 0
 > builds and tests on **Moodle 5.3 only** (Owner, the 11-14 reply). Moodle 4.5 is not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only); it is
-> never recorded as passed. A statement such as "a 5.3 backup does not restore on 4.5" is Moodle's documented
-> behaviour as the owner reports it; it is not tested here. Scope: B8.1 only. This does not cover B8.2 or the harness: C-03 still applies to the B8.2 generated backups and to FR-C-08, and the B8.2 extension belongs with B8.2 on PR #61, not here.
+> never recorded as passed. The statement that a 5.3 backup is expected not to restore on 4.5 is the owner's report of
+> what Moodle documents (Issue #55, 2026-11-14); it is not verified here, and the PRD does not state it. Scope: B8.1 only. This does not cover B8.2 or the harness: C-03 still applies to the B8.2 generated backups and to FR-C-08, and the B8.2 extension belongs with B8.2 on PR #61, not here.
 
 ## How to read this document
 
@@ -23,7 +23,7 @@
 
 Rules that apply to every step (CLAUDE.md §2):
 - Only Moodle's own Backup and Restore, and the browser. Never change Moodle code, plugins, themes or its database (rule 1).
-- The project must work on Moodle 4.5 **and** 5.3 (rule 2; PRD C-03), but for Release 0 the template is built and every restore and merge is tested on **5.3 only** (Owner, the 11-14 reply; PRD §E2, C1.7). Moodle 4.5 is not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only), and is not recorded as passed. A 5.3 backup does not restore on 4.5, so do not try it.
+- The project must work on Moodle 4.5 **and** 5.3 (rule 2; PRD C-03), but for Release 0 the template is built and every restore and merge is tested on **5.3 only** (Owner, the 11-14 reply; PRD §E2, C1.7). Moodle 4.5 is not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only), and is not recorded as passed. No 4.5 restore is attempted in Release 0; the owner expects a 5.3 backup not to restore on 4.5 (owner's report, P29; not verified).
 - No secrets in evidence. Hide tokens, passwords and cookies in screenshots and logs (rule 3).
 - Test data only. No real learner data or real course content (rule 4).
 
@@ -40,7 +40,7 @@ Items the owner marked "proposal" stay proposals. **Do not treat a Proposal as a
 | # | Decision | Status | Steps |
 |---|---|---|---|
 | P1 | Build the template on **Moodle 5.3** (the 11-14 reply replaces the 2026-11-12 decision to build on 4.5). Course full name `Template course`; short name `template`; format Topics (Custom sections). The exact 5.3 point release is read from the site (LAB) | Owner for 5.3 (the 11-14 reply); **Proposal** for the names and format | 0.3, 1.3, 1.5 |
-| P2 | Build the template once, on 5.3, and run every restore and the sections-only merge test on 5.3 only. Moodle 4.5 is **not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only)**. Moodle documents that a backup restores into the same or a newer version only, so a template built on 5.3 will **not** restore on 4.5. Label the `.mbz` "built on Moodle 5.3" in the README and in the release. If the project later needs the template on 4.5 (PRD C-03), it is rebuilt once on 4.5: the known cost of this decision (see P29) | Owner (the 11-14 reply, which replaces 2026-11-12 and the 14:43 reply on this point). The 4.5 waiver is not a pass | 1.5, 1.6, Stage 9 |
+| P2 | Build the template once, on 5.3, and run every restore and the sections-only merge test on 5.3 only. Moodle 4.5 is **not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only)**. The owner expects a 5.3 template not to restore on 4.5 (owner's report, P29; not verified). Label the `.mbz` "built on Moodle 5.3" in the README and in the release. If the project later needs the template on 4.5 (PRD C-03), it is rebuilt once on 4.5: the known cost of this decision (see P29) | Owner (the 11-14 reply, which replaces 2026-11-12 and the 14:43 reply on this point). The 4.5 waiver is not a pass | 1.5, 1.6, Stage 9 |
 | P3 | Section 1 `Orientation`: Page `Welcome` (`tpl-welcome`). Section 2 `Sample week`: Page `Sample guide` (`tpl-sample-guide`) and Assignment `Sample task` (`tpl-sample-task`). Section 3 `Final project`: the two protected items. The `tpl-` prefix keeps these apart from generated `wk-` ids | Owner (2026-11-12) for the titles, activities and idnumbers. The README and `testdata/README.md` record them as Owner (PR #57, merged 2026-11-13). The number 3 for the protected section is a Proposal (P4b) | Stage 2 |
 | P4 | Sections carry **no** `idnumber`; Moodle matches sections by number. The protected section is found by its number (PRD §B1.4). Issue #65 is decided and does not affect B8.1 | Owner (Issue #55 and #65, 2026-11-12) | 2.7 |
 | P4b | The protected section number `protected_section` = 3, kept configurable (PRD §B1.4 gives no default) | **Proposal** (Owner, 2026-11-07). The title `Final project` is Owner (P3) | 2.6, 3.1, 4.1, 8.2, 8.3, 9.7 |
@@ -65,7 +65,7 @@ Items the owner marked "proposal" stay proposals. **Do not treat a Proposal as a
 | P22 | Test sites: until the harness approach to fresh sites is decided, use the existing 5.3 lab site. Restore into a new course each time, record the result, and delete the course by the rule in P25a. The site and the account are ready (P19) | Owner (the 14:43 reply; deletion: the 09:36 reply, P25a; site: the 11-14 reply) | 0.4, Stage 9 |
 | P25a | Cleanup rule. Every course created for a test is deleted after its result is recorded and checked. The merge-test course follows the merge-test sequence in Stage 9. | Owner (the 09:36 reply). Whether the sections-only copy and failed builds count as courses created for a test: PENDING (P25) | 9.8, 9.10, 12.1 |
 | P25b | After deleting a test course, look at whether it stays in Moodle's recycle bin on the lab site, and record what you see. Moodle's documentation says deleted items are kept for a set period (seven days by default) and are then removed automatically; the owner has not checked this on the lab sites. **Do not change the recycle-bin settings**: site settings belong to the owner | Owner (the 09:36 reply). What the lab sites actually do: LAB | 9.11, 12.1 |
-| P29 | Version scope: build the template on 5.3 and run every restore and the sections-only merge on **5.3 only**. Moodle 4.5 is **not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only)**: record this waiver, with its date and its cost, in the decision record and in README §8, and never as a pass. A 5.3 backup does not restore on 4.5 (Moodle documents that a backup restores into the same or a newer version only). If PRD C-03 later needs the template on 4.5, rebuild it once on 4.5 and test with the same steps. For each restore, record the Moodle version, the date and the outcome | Owner (the 11-14 reply, which replaces the 14:43 reply on this point) | 1.5, 1.6, Stage 9 |
+| P29 | Version scope: build the template on 5.3 and run every restore and the sections-only merge on **5.3 only**. Moodle 4.5 is **not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only)**: record this waiver, with its date and its cost, in the decision record and in README §8, and never as a pass. **Owner's report, not verified here:** the owner states (Issue #55, 2026-11-14) that Moodle documents that a backup restores into the same or a newer version only, so a 5.3 backup is expected not to restore on 4.5. It has not been checked in the lab or against the Moodle documentation for this project, and the PRD does not state it. If PRD C-03 later needs the template on 4.5, rebuild it once on 4.5 and test with the same steps. For each restore, record the Moodle version, the date and the outcome | Owner (the 11-14 reply, which replaces the 14:43 reply on this point) | 1.5, 1.6, Stage 9 |
 
 ### Still PENDING
 
@@ -144,7 +144,7 @@ is not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed 
 | 1.3 | Create the template course on the **5.3** site | Full name `Template course`, short name `template`, format Topics (Custom sections): **Proposal** (Owner, 2026-11-12). Record the format as Moodle shows it (LAB) | Course name, short name, format and id as created |
 | 1.4 | Check completion tracking for this course | Settings: **LAB** (README §5) | Screenshot |
 | 1.5 | Build the template once, on 5.3 | Owner (the 11-14 reply, P29): build on 5.3 and run every restore and merge on 5.3. Do not build on 4.5 for Release 0 | The 5.3 site and release used |
-| 1.6 | Record the 4.5 waiver | Owner (the 11-14 reply, P29): Moodle 4.5 is not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only). A template built on 5.3 does not restore on 4.5, so the known cost is a rebuild on 4.5 if PRD C-03 later needs it. This is a decision, not a result | The waiver, its date and its link, for the decision record and README §8 |
+| 1.6 | Record the 4.5 waiver | Owner (the 11-14 reply, P29): Moodle 4.5 is not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only). The cost the owner states (P29; the owner expects a 5.3 template not to restore on 4.5, not verified) is a rebuild on 4.5 if PRD C-03 later needs it. This is a decision, not a result | The waiver, its date and its link, for the decision record and README §8 |
 
 ## Stage 2. Sections and activities
 
@@ -232,8 +232,8 @@ Restore the **5.3 backup** on Moodle 5.3 only (Owner, the 11-14 reply, P29). PRD
 on 4.5 and 5.3; for Release 0 the 4.5 test is **not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only)**, and is never recorded as a pass. Do every
 step with the same file. Until the harness approach to fresh sites is decided, use the existing 5.3 lab
 site: restore into a new course each time, record the result, and delete the course by the rule in P25a
-(Owner, the 14:43, 09:36 and 11-14 replies, P22 and P25a). A template built on 5.3 does not restore on 4.5,
-so **do not try a 4.5 restore**. For every restore, record the Moodle version, the date and the outcome
+(Owner, the 14:43, 09:36 and 11-14 replies, P22 and P25a). No 4.5 restore is attempted in Release 0: 4.5 is not tested, and
+the owner expects a 5.3 backup not to restore on 4.5 (owner's report, P29; not verified). For every restore, record the Moodle version, the date and the outcome
 (Owner).
 
 **Two separations to keep clear:**
@@ -389,9 +389,9 @@ are documentation work already done in PR #57, merged 2026-11-13; they are not M
 - [ ] Creation log for temporary lab courses, local copies and evidence files, and the cleanup record (Stage 12)
 
 ## What this document does not do
-- It records no result and claims no Moodle verification. The owner's statements (for example that a 5.3
-  backup does not restore on 4.5, or that 4.5 is waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only)) are decisions or Moodle facts reported
-  by the owner, not checks done here.
+- It records no result and claims no Moodle verification. The owner's statements (for example the expectation that a 5.3
+  backup will not restore on 4.5, or that 4.5 is waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only)) are decisions or Moodle facts reported
+  by the owner, not verified and not checks done here.
 - It keeps every Proposal a proposal and every PENDING item open until the guide answers.
 - It does not design the download script or assume any command or option for it.
 - It does not change the README, a contract, the traceability file, a decision record or any other file.
