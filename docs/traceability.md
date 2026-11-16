@@ -166,7 +166,8 @@ and no test exist for B8.1 yet.
 | The template course backup holds the four protected items: the final project assignment (`final-project`), the course feedback activity (`course-feedback`), the course completion criteria and the course badge. The idnumbers are the PRD defaults and are configurable. The protected section number (3) is a proposal | B8.1, B1.4 | None yet: the `.mbz` does not exist |
 | A plain list of the expected protected items (idnumber, type, section, count) for the checker, which builds its model from the `.mbz` | B8.1, B1.4 | None yet |
 | A sections-only backup is merged into the template and the protected items stay unchanged. The intended comparison writes down the same table for each protected item before and after the merge, with the fields type, name, idnumber, section number, points, completion setting and visibility, and the two tables must be equal (Owner, Issue #55, 2026-11-12); no check or test implements this yet. The Release 0 backup procedure is written as an untested draft | B1.4, C1.7, App-C item 2 | None yet: needs a Moodle site |
-| Moodle 4.5 is the owner-confirmed build version. The owner stated that a 4.5 backup restores into the same or a newer Moodle version, including 5.3. That 4.5-to-5.3 restore is the owner's statement, not a result. The owner decided to build once on 4.5, test the restore on 4.5 and on 5.3, and not test 5.3 to 4.5, recording the Moodle version, the date and the outcome of each restore (Issue #55, 2026-11-12) | C-03 | None yet: not verified; needs Moodle lab testing on 4.5 and 5.3 |
+| Moodle 5.3 is the owner-confirmed build and test version for Release 0 (Issue #55, 2026-11-14 reply, which replaces the 2026-11-12 decision to build on 4.5). Every restore and the sections-only merge are tested on 5.3 only, recording the Moodle version, the date and the outcome of each restore; the `.mbz` is labelled "built on Moodle 5.3". The owner reports that Moodle documents that a backup restores into the same or a newer version only, so the 5.3 template is expected not to restore on 4.5 (the owner's report: not verified here, and the PRD does not state it). Moodle 4.5 is **not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only)**, not recorded as passed; if PRD C-03 later needs the template on 4.5, it is rebuilt once on 4.5 | C-03 | None yet: not verified; needs Moodle lab testing on 5.3. Moodle 4.5: not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only) |
+| Deviation - C-03: the B8.1 template is built and tested on Moodle 5.3 only; 4.5 not tested, waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only). The B8.2 restore and merge tests have their own decision, made by the guide on 2026-11-16 (A5 on PR #61, recorded there with B8.2, not here); C-03 still applies to the harness (FR-C-08) | C-03 | None (a recorded deviation, not a test) |
 
 ### Not covered here
 
@@ -174,13 +175,15 @@ These are pending and are not claimed by this change:
 
 - **The `.mbz` backup, its SHA-256, the release asset (tag `testdata-b8-1-v1`) and the download
   script.** None of them exists yet.
-- **Moodle 4.5 and 5.3 verification:** the restore, the protected items, the completion criteria,
-  the badge and the sections-only merge (PRD C1.7, App-C item 2). The owner's statement that a 4.5
-  backup restores on 5.3 has not been verified.
-- **The decision record for App-C item 2** (`docs/decisions/NNNN-b8-1-template-course.md`). It is
-  not written; the next free number is taken when you merge, after rebasing (Owner, Issue #55). The
-  owner also asks for a short, text-only results table in it that names the local evidence files;
-  screenshots and logs stay local and are not committed.
+- **Moodle 5.3 verification:** the restore, the protected items, the completion criteria, the badge
+  and the sections-only merge (PRD C1.7, App-C item 2). The B8.1 owner's lab access is ready (in person, the
+  owner's 2026-11-14 reply), but access is not a result and no lab verification result is recorded. **Moodle 4.5 is not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only)**
+  and is not claimed as passed.
+- **The App-C item 2 results.** The decision record `docs/decisions/0009-b8-1-template-course.md`
+  exists and holds the Moodle 4.5 waiver (PR #95); its number is taken again at merge, after
+  rebasing (Owner, Issue #55). The results are not written. The owner asks for a short, text-only
+  results table in the same file that names the local evidence files; screenshots and logs stay
+  local and are not committed.
 - **The open decisions** in the B8.1 README (§9) are pending guide confirmation. This entry does
   not settle them.
 
