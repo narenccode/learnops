@@ -22,7 +22,7 @@ from moodle_ws import (
 )
 from moodle_ws.allowlist import EXAMPLE_PATH, SCHEMA_PATH
 
-from .conftest import VALID_WRITE, send_checked
+from .conftest import VALID_WRITE, refused_as_direct_write
 from .fake_transport import FakeTransport
 
 
@@ -46,17 +46,18 @@ def test_the_list_equals_the_contract_example() -> None:
 
 
 @pytest.mark.parametrize("function", contract_names())
-def test_every_listed_function_reaches_the_transport(
+def test_every_listed_function_except_the_grade_write_reaches_the_transport(
     function: str, settings: SiteSettings
 ) -> None:
     transport = FakeTransport()
     client = MoodleClient(settings, transport)
     if function.endswith("save_grade"):
-        # A grade write is never sent by call(); it reaches the transport only with a receipt.
-        assert send_checked(client, VALID_WRITE) == "scripted answer"
+        # Listed, so it passes the allow-list, but the client never sends a grade write itself.
+        refused_as_direct_write(client, VALID_WRITE)
+        assert transport.calls == []
     else:
         assert client.call(function, {}) == "scripted answer"
-    assert [name for name, _ in transport.calls] == [function]
+        assert [name for name, _ in transport.calls] == [function]
 
 
 @pytest.mark.parametrize(

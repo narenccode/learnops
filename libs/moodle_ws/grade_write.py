@@ -6,7 +6,8 @@ here. Outcomes the caller decides itself (no submission, no grade, suspended) ha
 so they are never mixed up with success (R5, R10); `result_for()` builds them.
 
 Every grade write goes through write_draft_grade: MoodleClient.call() refuses
-mod_assign_save_grade, and only a WriteReceipt issued here after all checks can send one.
+mod_assign_save_grade, and the only sender is the one MoodleClient.write_draft_grade creates for a
+single call of _checked_write, after which it cannot send again (client.py).
 
 Fail-closed choices on questions the guide has not decided yet (B4 §6; proposed decisions,
 documented in README.md and the contract's open questions):
@@ -23,7 +24,7 @@ The response fields read here (`lastattempt.gradingstatus`; `assignments[].grade
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any, Final
@@ -36,7 +37,6 @@ from .client import (
     RELEASED,
     MoodleClient,
     _copy_params,
-    _issue_receipt,
     is_explicit_attempt,
 )
 from .errors import (
@@ -225,6 +225,19 @@ def write_draft_grade(
 ) -> WriteResult:
     """Write one mentor-approved draft grade, at most once, and read it back.
 
+    The same as client.write_draft_grade(params, max_grade); see _checked_write."""
+    return client.write_draft_grade(params, max_grade)
+
+
+def _checked_write(
+    client: MoodleClient,
+    params: Mapping[str, Any],
+    max_grade: object,
+    send: Callable[[Mapping[str, Any]], Any],
+) -> WriteResult:
+    """Every check, the one send and the read-back. `send` is the single-use sender that
+    MoodleClient.write_draft_grade creates; nothing else can supply one that reaches Moodle.
+
     `params` are the mod_assign_save_grade parameters (PRD B4 table). They are copied once, and
     every check below and the write itself use that copy. `max_grade` is the assignment's maximum
     grade, which the caller reads from the assignment (lab check 2). The write is never repeated
@@ -260,9 +273,8 @@ def write_draft_grade(
     if refusal is not None:
         return _result(refusal)
 
-    receipt = _issue_receipt(client, values)
     try:
-        client._send_checked_write(receipt)
+        send(values)
     except (PermissionDenied, TokenInvalid):
         # Moodle answered and refused; the write is not repeated.
         return _result(Outcome.ACCESS_DENIED, write_sent=True)

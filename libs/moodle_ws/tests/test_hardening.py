@@ -29,7 +29,7 @@ from moodle_ws import (
 )
 from moodle_ws.messages import INVALID_PARAMETERS, LOG_NOT_CLEANED
 
-from .conftest import FAKE_TOKEN, FAKE_URL, VALID_WRITE, send_checked
+from .conftest import FAKE_TOKEN, FAKE_URL, VALID_WRITE, refused_as_direct_write
 from .fake_transport import FakeTransport
 
 READ = "core_course_get_contents"
@@ -260,9 +260,13 @@ def test_a_mapping_that_fails_when_read_is_refused_safely(
 def test_a_mapping_is_read_once_so_it_cannot_change_after_the_check(
     settings: SiteSettings,
 ) -> None:
+    """The draft rule checks the one copy ("safe"), so the refusal is the direct-write one; a
+    second read would have shown `released`. The guarded write's version is in test_grade_write."""
     transport = FakeTransport()
-    send_checked(MoodleClient(settings, transport), ChangesBetweenReads())
-    assert transport.calls == [(SAVE_GRADE, {**VALID_WRITE, "a": "safe"})]
+    params = ChangesBetweenReads()
+    refused_as_direct_write(MoodleClient(settings, transport), params)
+    assert params.reads == 1
+    assert transport.calls == []
 
 
 def test_no_params_means_an_empty_mapping(settings: SiteSettings) -> None:
