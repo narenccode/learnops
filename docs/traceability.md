@@ -177,10 +177,11 @@ These are pending and are not claimed by this change:
   and the sections-only merge (PRD C1.7, App-C item 2). The B8.1 owner's lab access is ready (in person, the
   owner's 2026-11-14 reply), but access is not a result and no lab verification result is recorded. **Moodle 4.5 is not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only)**
   and is not claimed as passed.
-- **The decision record for App-C item 2** (`docs/decisions/NNNN-b8-1-template-course.md`). It is
-  not written; the next free number is taken when you merge, after rebasing (Owner, Issue #55). The
-  owner also asks for a short, text-only results table in it that names the local evidence files;
-  screenshots and logs stay local and are not committed.
+- **The App-C item 2 results.** The decision record `docs/decisions/0009-b8-1-template-course.md`
+  exists and holds the Moodle 4.5 waiver (PR #95); its number is taken again at merge, after
+  rebasing (Owner, Issue #55). The results are not written. The owner asks for a short, text-only
+  results table in the same file that names the local evidence files; screenshots and logs stay
+  local and are not committed.
 - **The open decisions** in the B8.1 README (§9) are pending guide confirmation. This entry does
   not settle them.
 
