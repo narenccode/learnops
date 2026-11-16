@@ -9,7 +9,7 @@
 > guide's answers on Issues #55 and #65 (and, for the licence, Issue #61) win. **The owner's answers are decisions, not test results.** Release 0
 > builds and tests on **Moodle 5.3 only** (Owner, the 11-14 reply). Moodle 4.5 is not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only); it is
 > never recorded as passed. The statement that a 5.3 backup is expected not to restore on 4.5 is the owner's report of
-> what Moodle documents (Issue #55, 2026-11-14); it is not verified here, and the PRD does not state it. Scope: B8.1 only. For B8.2 the guide made a separate decision on 2026-11-16 (A5 on PR #61, recorded there with B8.2): the B8.2 restore and merge tests also run on 5.3 only in Release 0. That decision is not part of this document's scope. C-03 still applies to the harness (FR-C-08).
+> what Moodle documents (Issue #55, 2026-11-14); it is not verified here, and the PRD does not state it. Scope: B8.1 only. B8.2 has its own decision (A5 on PR #61), recorded with B8.2 and not restated here. C-03 still applies to the harness (FR-C-08).
 
 ## How to read this document
 
@@ -389,9 +389,11 @@ are documentation work already done in PR #57, merged 2026-11-13; they are not M
 - [ ] Creation log for temporary lab courses, local copies and evidence files, and the cleanup record (Stage 12)
 
 ## What this document does not do
-- It records no result and claims no Moodle verification. The owner's statements (for example the expectation that a 5.3
-  backup will not restore on 4.5, or that 4.5 is waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only)) are decisions or Moodle facts reported
-  by the owner, not verified and not checks done here.
+- It records no result and claims no Moodle verification.
+- The 4.5 waiver is a decision of the guide (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only).
+  It is a decision, not a check, and nothing here says it was verified.
+- The expectation that a 5.3 backup will not restore on 4.5 is the owner's report of what Moodle documents. It is not
+  verified and not a check done here.
 - It keeps every Proposal a proposal and every PENDING item open until the guide answers.
 - It does not design the download script or assume any command or option for it.
 - It does not change the README, a contract, the traceability file, a decision record or any other file.
