@@ -541,13 +541,35 @@ Slugs: lowercase ASCII, hyphens, immutable. Numbers zero-padded to two digits.
   "slides": "slides.json",
   "cues": "cues.json",
   "summary": "summary.en.md",
-  "source": {"kind": "upload", "uploaded_by": "<lti sub>", "original_name": "lecture2.mov"},
+  "source": {"kind": "upload", "uploaded_by": "<lti sub>"},
   "processing": {"pipeline_version": "1.0.0", "completed_at": "…"}
 }
 ```
 
-- All paths are **relative to the lesson folder** (C-08).
-- Track roles reserved for F-1: `camera`, `screen`. A v1 reader ignores roles it doesn't play.
+- The seven file paths (`tracks[].file`, `captions[].file`, `transcript`, `chapters`, `slides`,
+  `cues`, `summary`) are **relative to the lesson folder**; `lesson_id` identifies the lesson below
+  the course folder (for example `01-setup/02-install-python`) (C-08).
+- All eight path fields, `lesson_id` included, follow exactly the same relative-path rule: not
+  empty; not absolute; no URL scheme or drive letter; forward slashes only, no backslashes; no
+  whitespace; no `?` or `#`; no empty, `.` or `..` segment; no control or format character, that
+  is, nothing in the Unicode 15.0.0 categories Cc and Cf (the complete categories, as listed in
+  the schema's `relative_path` description; private-use, surrogate and unassigned code points are
+  not rejected as categories). The list is pinned to Unicode 15.0.0; moving to a newer version is
+  a contract change. No `%` anywhere, so no percent-encoded form (such as `%2e`, `%252e` or
+  `%25%32%65`); the path is never decoded or normalized. Shared test cases:
+  `contracts/test-vectors/relative-path.v1.json`.
+- Not enforced in v1 (considered and left out): Windows reserved names (such as `CON`, `NUL`)
+  and Unicode normalization, because the store is on Linux or S3 and no consumer compares names.
+  No maximum path length is specified in v1: paths are built from bounded slugs and the store
+  enforces its own limits.
+- `captions` contains at least one entry with `lang` exactly `"en"` (the required
+  `captions.en.vtt`, B6.2).
+- Required: `schema`, `course_slug`, `lesson_id`, `title`, `duration_s`, `tracks`, `captions`,
+  `transcript`, `chapters`. Optional: `slides`, `cues`, `summary`, `source`, `processing`.
+  `poster.jpg` (B6.2) has no manifest field; it is found by its fixed name.
+- `tracks` contains **exactly one** `main` track. Roles are open lowercase names (letters, digits,
+  single hyphens); known roles are `main`, `main-low`, and `camera`, `screen` (reserved for F-1).
+  A v1 reader ignores roles it doesn't play.
 
 ### B6.4 Media signing interface (v1, used by the extension track)
 

@@ -169,6 +169,72 @@ CONFIG_PROTECTED_NOT_TEXT = (
     "'capstone-gate'."
 )
 
+# --- contract examples (example_check.py, validate_examples.py; PRD B.0 rule 1, E1) --------
+
+EX_PLACE_DOCUMENT = "(document)"
+EX_SCHEMA_VIOLATION = "{where}: {detail} [{keyword}]"
+EX_SCHEMA_VIOLATION_HINT = (
+    "Change the example so that it matches the schema. If the schema is wrong instead, change "
+    "it only through /contract-change (PRD B.0)."
+)
+EX_NO_SCHEMAS = "No *.schema.json file was found in {folder}."
+EX_NO_SCHEMAS_HINT = (
+    "Check that --contracts-dir points at the repository's contracts folder."
+)
+EX_CONTRACTS_DIR_MISSING = "The contracts folder {folder} does not exist."
+EX_CONTRACTS_DIR_MISSING_HINT = "Run the script from a repository checkout, or pass --contracts-dir with an existing folder."
+EX_UNREADABLE_SCHEMA = "The schema could not be read: {reason}."
+EX_UNREADABLE_SCHEMA_HINT = "Save the schema as UTF-8 JSON and fix the syntax error."
+EX_INVALID_SCHEMA = "The file is not a valid JSON Schema: {reason}."
+EX_INVALID_SCHEMA_HINT = "Fix the schema so that it passes its meta-schema."
+EX_UNRESOLVABLE_REFERENCE = (
+    "The schema has a reference that cannot be resolved: {reason}."
+)
+EX_UNRESOLVABLE_REFERENCE_HINT = (
+    "Fix the $ref so that it points at a definition inside this schema (for example "
+    "'#/$defs/name'). References to other files are not loaded by this validator."
+)
+EX_SCHEMA_KEYWORD_NOT_TEXT = (
+    "the `$schema` keyword must be a string (a meta-schema URI)"
+)
+EX_NESTED_TOO_DEEP = "it is nested too deeply"
+EX_TOO_DEEP_TO_VALIDATE = (
+    "it is nested too deeply for the schema to check, or the schema's references loop"
+)
+EX_NOT_VALIDATED = "Not validated, because its schema could not be loaded."
+EX_NOT_VALIDATED_HINT = "Fix the schema problem reported above, then validate again."
+EX_MISNAMED_SCHEMA = (
+    "The schema file '{name}' is not named <name>.v<N>.schema.json, so its examples cannot be "
+    "found."
+)
+EX_MISNAMED_SCHEMA_HINT = (
+    "Rename it to <name>.v<N>.schema.json: lowercase letters and digits separated by single "
+    "hyphens, then .v and a version number without a leading zero (for example "
+    "course-package.v1.schema.json)."
+)
+EX_MISSING_EXAMPLE = (
+    "The schema has no example in the folder {folder} or in a file named "
+    "{stem}.<suffix>.json, .yaml or .yml."
+)
+EX_MISSING_EXAMPLE_HINT = (
+    "Add at least one valid .json, .yaml or .yml example at the top of that folder, or a file "
+    "named <schema name>.<suffix>.json, .yaml or .yml in contracts/examples (PRD B.0 rule 1)."
+)
+EX_UNREADABLE_EXAMPLE = "The example could not be read: {reason}."
+EX_UNREADABLE_EXAMPLE_HINT = (
+    "Fix the problem described above: save the example as UTF-8 and use JSON or YAML syntax "
+    "(the reason gives a line and column when the parser reports one)."
+)
+EX_LINE_WITH_SCHEMA = "FAIL {target} (schema {schema}): {message}"
+EX_LINE = "FAIL {target}: {message}"
+EX_LINE_HINT = "     next: {hint}"
+EX_LINE_OK = "OK {example} (schema {schema})"
+# "found", not "checked": it includes examples whose schema could not be loaded (not validated).
+EX_SUMMARY = (
+    "{examples} examples found, {schemas} schemas: {passed} passed, {failed} failed, "
+    "{not_validated} not validated; {problems} problems found."
+)
+
 # --- rules that did not run -----------------------------------------------------------------
 
 NOT_CHECKED_HINT = "Check this by hand until the validator supports it."

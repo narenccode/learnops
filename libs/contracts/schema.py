@@ -54,13 +54,13 @@ def identifier_pattern() -> re.Pattern[str]:
 
 def schema_issues(document: object) -> list[Issue]:
     """Every schema error, ordered by place so the result is the same on every run."""
-    errors = sorted(_validator().iter_errors(document), key=_order)
+    errors = sorted(_validator().iter_errors(document), key=error_order)
     return [_to_issue(error) for error in errors]
 
 
 def model_schema_issues(document: object) -> list[Issue]:
     """Every B2 course model schema error, in the same order as `schema_issues`."""
-    errors = sorted(_model_validator().iter_errors(document), key=_order)
+    errors = sorted(_model_validator().iter_errors(document), key=error_order)
     return [_to_model_issue(error) for error in errors]
 
 
@@ -76,7 +76,8 @@ def _to_model_issue(error: ValidationError) -> Issue:
     )
 
 
-def _order(error: ValidationError) -> tuple[list[tuple[int, int, str]], str]:
+def error_order(error: ValidationError) -> tuple[list[tuple[int, int, str]], str]:
+    """Sort key for schema errors: by place, then message. The example engine uses it too."""
     # List positions compare as numbers (sections[2] before sections[10]). A number and a name
     # never meet in the same step, because the first item of each pair tells them apart.
     place = [
