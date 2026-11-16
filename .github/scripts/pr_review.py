@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
-"""Full pull-request review on the guide's behalf.
+"""Advice on a pull request: rule checks and an AI read, posted as one comment.
 
-Flow (one run per pull_request / pull_request_review event):
-  1. Rule checks (pr_rules.py). Any problem here ends the run: no AI tokens are spent.
-  2. If the rules pass, wait for ONE approval from a path owner other than the author
-     (label `awaiting-peer`, commit status `guide-bot` = pending).
-  3. After that approval, an AI review of the diff runs (DeepSeek, OpenAI-compatible API).
-  4. Verdict -> one comment, one label and the commit status `guide-bot`:
-     success = ready to merge (the author squash-merges); failure/pending = not yet.
+Flow (one run per pull_request event or manual run):
+  1. Rule checks (pr_rules.py).
+  2. An AI read of the diff (DeepSeek, OpenAI-compatible API), at most MAX_AI_RUNS times per pull request.
+     If the AI is unavailable, the comment says so; nothing waits for it.
+  3. One comment, updated in place, with the findings and the next step.
 
-The bot never approves, merges or closes anything. The model has no tools and PR code is never run.
-The model only reports findings; this script decides the verdict.
+The bot sets no label and no commit status, pings nobody and never blocks a merge. CI (`checks`) and one
+approval are the gate. The bot never approves, merges or closes anything. The model has no tools and PR
+code is never run.
 
-Local use (no posting, no network unless --approvers is given and DEEPSEEK_* are set):
+Local use (prints only, posts nothing; the AI step runs only if DEEPSEEK_* are set):
     python .github/scripts/pr_review.py --event event.json --base origin/main --head HEAD --dry-run
 """
 
@@ -398,7 +397,7 @@ def main() -> int:
             body += f"\n<!-- ai-runs:{runs + (1 if attempted else 0)} -->"
     except (
         Exception
-    ) as error:  # a checker bug must not block merging forever: the guide can bypass
+    ) as error:  # a bot bug must never leave the students without an answer
         print(f"::warning::pr_review failed: {error}")
         if not args.dry_run:
             try:  # say so on the PR: a silent failure would leave the students stuck and confused

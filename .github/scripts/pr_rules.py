@@ -311,7 +311,7 @@ def evaluate(ctx: Context) -> list[Finding]:
                 "advice",
                 "Changes files owned by someone else; list and explain them in the description: "
                 + ", ".join(others[:6]),
-                "CLAUDE.md §7.8",
+                "CLAUDE.md §8",
             )
         )
 
