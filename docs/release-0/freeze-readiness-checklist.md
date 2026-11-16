@@ -2,17 +2,28 @@
 
 **Verdict: NOT READY. Release 0 is NOT frozen, and this document does not freeze it.** The guide
 performs the adoption test and the tag (PRD §D2 items 7 and 8; `.claude/commands/release-check.md`).
-**Audit date:** 2026-11-16. **Base:** `origin/main` at `3abbc02`. GitHub state was queried with `gh`
-the same day and changes quickly; re-check before relying on it.
+**Audit date:** 2026-11-16. First pass at `origin/main` `3abbc02`; second pass (corrections) merged
+with `ecb4389`. GitHub state was queried with `gh` the same day and changes quickly; re-check
+before relying on it.
+
+**Sibling documents (other sessions, not duplicated):** PR #105 adds the Release 0 report, demo
+script and traceability needs under the same folder (`docs/release-0/`, different file names); PR #103
+adds the G-6 evaluation preparation (T9); PR #106 the literature entries (T13). None had merged
+when this was written.
 
 Release 0 contents (PRD §D1): lab VMs ready (A11); repository, CI, coding standards; contracts
 B1 to B8 v1 **frozen**; shared libraries `lti`, `moodle_ws`, `model_interface`, `contracts`,
 `media_paths`; test data B8 v1; verification of assumptions (App-C); a design document per module
 approved. Exit criteria are PRD §D2 items 1 to 8.
 
-Status key: **Completed** · **Implemented, not verified** · **Awaiting guide** · **Blocked** (external service or
-evidence) · **Not started** · **Ready** (ready for final acceptance). Rows owned by another active
-session are marked *Other session*: their status here is only what GitHub shows, not assessed.
+Status key (the six classes requested for T20): **COMPLETED** (genuine evidence exists) ·
+**IMPLEMENTED, NOT VERIFIED** (implementation exists, acceptance evidence missing) · **AWAITING
+GUIDE APPROVAL** · **BLOCKED** (unavailable service, external evidence or dependency) · **NOT
+STARTED** · **READY FOR FINAL ACCEPTANCE**. Where a row says only "Completed", "Blocked" and so
+on, it uses these classes. **NOT READY** and **UNKNOWN** mean the evidence needed to classify the
+row was not found. Rows owned by another active session are marked *Other session*: their status
+here is only what GitHub shows, not assessed. A merged PR is not treated as proof of its
+acceptance criteria.
 
 > Label note: T-numbers are not defined in the repository (see the B8.5 evidence document). Rows
 > use PRD/PR identifiers; tracker labels are added only where the request stated them.
@@ -21,9 +32,9 @@ session are marked *Other session*: their status here is only what GitHub shows,
 
 | Item | Status | Note |
 |---|---|---|
-| Video design | Completed (as stated by the owner) | **Discrepancy to resolve:** `docs/design/video.md` on `main` still reads `**Status:** Draft`. Not listed as pending, but the guide's approval is not visible in the file |
-| PR #100 (S2 Svarah literature audit) | Completed | Merged |
-| PR #90 | Completed | Merged; verification not reopened |
+| Video design | Completed (as stated by the owner); **not confirmed by the repository** | Second-pass check: `git log origin/main -- docs/design/video.md` shows only #17, #24, #34 and #47; no commit sets `Approved`, and the file on `main` reads `**Status:** Draft`. Not listed as pending, and not changed here. The guide or owner should point to the approval record, or the guide should set `Approved` in a PR |
+| PR #100 (S2 Svarah literature audit) | Completed | Merged 2026-11-16 06:36 UTC; the T13 survey as a whole is not complete (PR #106: 1 of 6 sources verified) |
+| PR #90 | Completed | Merged (`a500409`); verification not reopened |
 | PR #85, PR #93 | Excluded | Not examined beyond state; not modified |
 | Official B8.5 evidence | Separate from temporary test data | See B8.5 evidence document |
 | T8, T10, T14, T17, BBB Recording Verification, T18 | *Other session* | Not duplicated |
@@ -64,7 +75,7 @@ session are marked *Other session*: their status here is only what GitHub shows,
 | 1 | B4 functions on 4.5 and 5.3 | **Blocked** | Needs lab; design lists eleven lab items |
 | 2 | Restore merges sections-only backup | **Blocked** | Needs lab; no decision record |
 | 3 | CLI restore route | **Blocked** | Needs lab |
-| 4 | BBB recording metadata | **Blocked** | *Other session*; PRs #96/#97 record NOT VERIFIED; see App-C 4 map |
+| 4 | BBB recording metadata | **Blocked** | *Other session* (T10 in PR #96, T17 in PR #97); both record NOT VERIFIED, neither merged, both with failing `checks`; script self-test passes on synthetic data only; see App-C 4 map |
 | 5 | H5P content-type versions | **Blocked** | Needs lab |
 | 6 | LTI 1.3 library and licence | **Awaiting guide** | `docs/decisions/0001` not on `main` (PR #83 open) |
 | 7 | Caption WER target from baseline run | **Blocked** | Needs B8.5 complete and a speech provider (T8/ADR 0002 is PR #98, Draft) |
@@ -72,9 +83,12 @@ session are marked *Other session*: their status here is only what GitHub shows,
 | 9 | Moodle 5.3 AI features | **Not started** | No decision record found |
 | 10 | Backup/restore roles | **Blocked** | Needs lab |
 
-## 5. Pull requests (queried 2026-11-16; 28 open)
+## 5. Pull requests (queried 2026-11-16, second pass; 31 open including #104)
 
-Merged and relevant: #82, #84, #86, #89, #90, #99, #100, #102.
+Merged and relevant: #82, #84, #86, #89, #90, #92 (merged since the first pass), #99, #100, #102.
+New since the first pass, all open: #103 (T9, G-6 evaluation prep), #105 (T19, report and demo,
+Draft criteria not found), #106 (T13, pending literature entries). PR #104 (this audit) is a Draft
+and has not been reviewed.
 
 | PR | State | Review | Note |
 |---|---|---|---|
@@ -83,7 +97,6 @@ Merged and relevant: #82, #84, #86, #89, #90, #99, #100, #102.
 | #98 T8 STT ADR 0002 | Draft | Review required | *Other session*; PROPOSED, pending guide |
 | #101, #83, #87 | Open | Review required / awaiting owners | Contract PRs |
 | #94, #93 | Open | Approved, `awaiting-owners` | #93 excluded |
-| #92 | Open | Approved but conflicting, `needs-rework` | |
 | #85 | Open | Approved, `needs-judgement` | Excluded |
 | #61 B8.2 sample course | Open | Changes requested, conflicting | |
 
@@ -126,6 +139,14 @@ Not edited, to avoid colliding with other sessions:
 
 | Command | Result |
 |---|---|
-| `python -m pytest -q libs/contracts/tests/test_b8_5_dataset.py` | `71 passed in 18.55s` |
-| `gh pr list --state all --limit 40` and `gh pr view <n> --json …` | Used for §5 |
-| Full `/preflight` (`pre-commit`, `ruff`, `mypy`, full `pytest`) | **Not run** by this audit; docs-only change |
+| `python -m pytest -q libs/contracts/tests/test_b8_5_dataset.py` (first pass) | `71 passed in 18.55s` |
+| Same, second pass, after merging `origin/main` `ecb4389` | `71 passed in 5.19s`, exit 0 |
+| `python -m pytest -q` (whole repo), system Python with older `jsonschema 4.23.0` / `referencing 0.36.2` than the pins | `4 failed, 2041 passed, 4 skipped`: three failures are the version mismatch against `requirements-dev.txt`, one is the case-insensitivity test below |
+| Same, in a clean venv with `requirements-dev.txt` | `1 failed, 2044 passed, 4 skipped` (91 s). The failure, `test_validate_examples.py::test_misnamed_schema_is_reported_with_its_path[Thing.v1.schema.json]`, is in code merged by PR #92 and is probably a Windows case-insensitive-filesystem effect; **not confirmed on Linux CI** |
+| `pre-commit run --files docs/release-0/*.md` (first pass) | All applicable hooks passed (end-of-file, whitespace, large files, private key, hardcoded secrets); ruff and file-type hooks skipped (no matching files) |
+| `gh pr list` and `gh pr view <n> --json …` | Used for §5 |
+| Full `/preflight` (`ruff check .`, `mypy libs`, contract validation, requirement-ID check) | **Not run as a whole.** `ruff` 0.6.9 and `mypy` 2.4.1 are installed but were not executed on the repository; the docs-only change touches no Python |
+
+**Not found in the PRD, so not audited:** a Release 0 "backup" requirement. PRD App-D lists VM image
+backups only as a risk mitigation, and §D2 has no backup criterion. Marked UNKNOWN pending the
+guide's list of Release 0 tasks; no changelog and no release tag exist (`git tag -l` is empty).
