@@ -15,5 +15,6 @@ Files here are **shared contracts** between modules (PRD Part B). They are froze
 | B4 Web-services usage | `moodle-ws.v1.md` (functions and capabilities) | Student 3 |
 | B5 Model and speech interface | `model-interface.v1.schema.json` | Student 3 |
 | B6 Lesson manifest and paths | `lesson-manifest.v1.schema.json` | Student 4 |
+| B6.2 Chapters, slides, cues (lesson files) | `chapters.v1.schema.json`, `slides.v1.schema.json`, `cues.v1.schema.json` | Student 4 |
 | B7 H5P practice output | `h5p-practice.v1.md` | Student 1 |
 | B8 Test data sets | `testdata/README.md` | Students 1, 3, 4 |
