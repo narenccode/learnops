@@ -72,7 +72,7 @@
     },
     "section": {
       "type": "object",
-      "required": ["number", "title", "idnumber", "activities"],
+      "required": ["number", "title", "activities"],
       "properties": {
         "number": {
           "type": "integer",
@@ -82,7 +82,10 @@
           "type": "string",
           "minLength": 1
         },
-        "idnumber": { "$ref": "#/$defs/idnumber" },
+        "idnumber": {
+          "$ref": "#/$defs/idnumber",
+          "description": "Optional authoring label (PRD B1.1, B1.2 rule 6). Moodle stores no idnumber for a section, so a section is matched by its number. Absent is valid; a present value must be a valid idnumber (null and an empty string are errors) and is unique within the package."
+        },
         "unlock": { "$ref": "#/$defs/unlock" },
         "activities": {
           "type": "array",

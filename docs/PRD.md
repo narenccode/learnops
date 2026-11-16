@@ -344,7 +344,7 @@ course:
 sections:
   - number: 1
     title: "Week 1 — Set up your tools"
-    idnumber: wk-01
+    idnumber: wk-01                 # optional authoring label (B1.2 rule 6)
     unlock:
       after: null                 # first week: open
       start_date: null            # optional ISO date
@@ -375,7 +375,16 @@ sections:
 3. Graded points across the course sum to `total_points` (default 100).
 4. Assignments use marking workflow (so grades stay hidden until released, §B4).
 5. Completion tracking is on for every activity used in an unlock rule.
-6. All `idnumber`s are unique within the course, lowercase ASCII with hyphens, and never reused for a different activity.
+6. All `idnumber`s that are present are unique within the course (a section's `idnumber` is optional, see below), lowercase ASCII with hyphens, and never reused for a different activity.
+
+**The section `idnumber` is optional.** It is an authoring label for Studio: Moodle stores no
+`idnumber` for a section, so a section is identified by its `number`. A restore, a reverse import
+(FR-S-08) and the round trip (C1.7) match a section by its number, and a reverse import leaves the
+field out. A section may omit `idnumber`. When it is present it must be a valid idnumber (absent is
+the only way to have none: `null` and an empty string are errors) and it is unique within the
+package (rule 6). Every activity has an `idnumber`. A protected item is defined by its `idnumber`
+(B1.4), so a section without one is never a protected item. Decision record
+`docs/decisions/0007-b1-optional-section-idnumber.md`.
 
 ### B1.3 Marking table format
 

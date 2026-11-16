@@ -2,7 +2,9 @@
 
 AUTOMATED here (structure only, by contracts/course-package.v1.schema.json):
   * the schema is a valid Draft 2020-12 schema;
-  * the example package's course.yaml validates, also with mode "sections-only";
+  * the example package's course.yaml validates, also with mode "sections-only", and so does the
+    second example without section idnumbers (a section idnumber is optional: absent is valid,
+    null and an empty string are not);
   * required fields, types, enums, identifier and path patterns, ISO dates, the two default
     protected idnumbers (B1.4), the per-type required fields (B1.1, B7), and that unknown
     fields are accepted (PRD B.0, EXT-02).
@@ -43,6 +45,13 @@ from jsonschema import Draft202012Validator, FormatChecker
 ROOT = Path(__file__).resolve().parents[3]
 SCHEMA_PATH = ROOT / "contracts" / "course-package.v1.schema.json"
 EXAMPLE_YAML = ROOT / "contracts" / "examples" / "course-package.v1" / "course.yaml"
+EXAMPLE_NO_SECTION_IDS = (
+    ROOT
+    / "contracts"
+    / "examples"
+    / "course-package.v1"
+    / "course-without-section-idnumber.yaml"
+)
 
 Doc = dict[str, Any]
 Loc = tuple[str | int, ...]
@@ -178,6 +187,49 @@ def test_example_in_sections_only_mode_is_valid(
     assert messages(validator, doc) == []
 
 
+# --- the section idnumber is optional (issue #65, decided by the guide) ---------------------
+
+
+def test_example_without_section_idnumbers_is_valid(
+    validator: Draft202012Validator,
+) -> None:
+    no_ids: Doc = yaml.safe_load(EXAMPLE_NO_SECTION_IDS.read_text(encoding="utf-8"))
+    assert all("idnumber" not in section for section in no_ids["sections"])
+    assert messages(validator, no_ids) == []
+
+
+def test_example_without_section_idnumbers_differs_from_the_main_example_only_there(
+    example: Doc,
+) -> None:
+    # The two examples must not drift apart: the second is the first minus the section idnumbers.
+    no_ids: Doc = yaml.safe_load(EXAMPLE_NO_SECTION_IDS.read_text(encoding="utf-8"))
+    expected = copy.deepcopy(example)
+    for section in expected["sections"]:
+        del section["idnumber"]
+    assert no_ids == expected
+
+
+@pytest.mark.parametrize("mode", ["full", "sections-only"])
+@pytest.mark.parametrize("which", ["first", "all"])
+def test_section_without_idnumber_is_valid(
+    validator: Draft202012Validator, doc: Doc, mode: str, which: str
+) -> None:
+    doc["course"]["mode"] = mode
+    sections = doc["sections"][:1] if which == "first" else doc["sections"]
+    for section in sections:
+        del section["idnumber"]
+    assert messages(validator, doc) == []
+
+
+def test_a_present_section_idnumber_is_still_validated(
+    validator: Draft202012Validator, doc: Doc
+) -> None:
+    # Optional means absent is allowed, not that anything goes: the other cases in this file
+    # (pattern, protected values, type, empty string, null) still apply to a present value.
+    doc["sections"][0]["idnumber"] = "Wk-01"
+    assert (WEEK1 + ("idnumber",), "pattern") in error_keys(validator, doc)
+
+
 # --- invalid: required fields --------------------------------------------------------------
 
 MISSING = [
@@ -190,7 +242,8 @@ MISSING = [
     missing("course without mode", COURSE + ("mode",)),
     missing("section without number", WEEK1 + ("number",)),
     missing("section without title", WEEK1 + ("title",)),
-    missing("section without idnumber", WEEK1 + ("idnumber",)),
+    # A section idnumber is optional since the guide's decision on issue #65: see
+    # test_section_without_idnumber_is_valid.
     missing("section without activities", WEEK1 + ("activities",)),
     missing("activity without type", PAGE + ("type",)),
     missing("activity without idnumber", PAGE + ("idnumber",)),
@@ -331,6 +384,8 @@ TYPE_CASES = [
     bad("section number is negative", WEEK1 + ("number",), -1, "minimum"),
     bad("section title is empty", WEEK1 + ("title",), "", "minLength"),
     bad("section idnumber is a number", WEEK1 + ("idnumber",), 1, "type"),
+    # Only an absent idnumber is valid (issue #65, D3): null is not "no idnumber".
+    bad("section idnumber is null", WEEK1 + ("idnumber",), None, "type"),
     bad("activities is a string", WEEK1 + ("activities",), "x", "type"),
     bad("activities is empty", WEEK1 + ("activities",), [], "minItems"),
     bad("unlock is a list", WEEK1 + ("unlock",), [], "type"),

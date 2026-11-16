@@ -153,6 +153,31 @@ def test_the_other_course_rules_and_the_settings_also_apply_to_a_package(
     assert error_codes(report) == ["duplicate_idnumber", "protected_idnumber"]
 
 
+@pytest.mark.parametrize("mode", ["full", "sections-only"])
+def test_a_package_without_section_idnumbers_is_valid(
+    package_dir: Path, example_doc: Doc, mode: str
+) -> None:
+    # A section idnumber is optional (issue #65). Without it the package must not fail with a
+    # KeyError or a duplicate: the course-level rules skip a section that has none.
+    example_doc["course"]["mode"] = mode
+    for section in example_doc["sections"]:
+        del section["idnumber"]
+    write_course(package_dir, example_doc)
+    report = validate_package(DirectorySource(package_dir))
+    assert report.errors == ()
+    assert not_checked_codes(report) == PACKAGE_HELD_RULE_CODES
+
+
+def test_the_second_example_is_a_valid_package(package_dir: Path) -> None:
+    # The example without section idnumbers, put in place of course.yaml: same body files.
+    second = package_dir / "course-without-section-idnumber.yaml"
+    (package_dir / "course.yaml").write_text(
+        second.read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    report = validate_package(DirectorySource(package_dir))
+    assert report.errors == ()
+
+
 # --- body files exist (B1.1) ----------------------------------------------------------------
 
 
