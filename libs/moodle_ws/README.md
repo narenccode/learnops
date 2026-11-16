@@ -42,6 +42,8 @@ their own. `call()` returns the transport's answer unchanged.
   write reaches Moodle is `write_draft_grade()` (below): it runs the checks `call()` cannot run alone
   (maximum grade, locked state, marking workflow), sends once and reads the result back, and the
   sender it uses is created inside that call, so there is nothing to import that skips the checks.
+  That sender works once, on its own copy of the checked parameters, and runs the guards above again
+  before it sends.
   (The earlier `WriteReceipt` path is removed: the guide on PR #76, 15 Nov, asked for the bypass to
   be closed in code.) A test fails if the transport is called anywhere else in the library, or if a
   module outside it uses the client's internals. Code that calls a transport directly is outside

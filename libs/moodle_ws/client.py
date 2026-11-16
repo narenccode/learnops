@@ -200,9 +200,8 @@ class MoodleClient:
 
         The checks and the read-back are grade_write's; the send is created here, inside this one
         call, and works once, so it cannot be imported or reused to skip them."""
-        from . import (
-            grade_write,
-        )  # here, not at the top: grade_write imports this module
+        # Imported here, not at the top: grade_write imports this module.
+        from . import grade_write
 
         settings = self._settings
         used = False

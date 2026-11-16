@@ -27,6 +27,7 @@ from moodle_ws import (
     Site,
     SiteSettings,
     UnexpectedResponse,
+    WorkflowStateNotAllowed,
     load_allowlist,
     write_draft_grade,
 )
@@ -253,6 +254,27 @@ def no_warnings_field(answer: Any) -> Any:
 
 def warnings_none(answer: Any) -> Any:
     return {**answer, "warnings": None}
+
+
+@pytest.mark.parametrize("version", VERSIONS)
+@pytest.mark.parametrize(
+    "change",
+    [
+        pytest.param({"workflowstate": "released"}, id="released"),
+        pytest.param({"workflowstate": "RELEASED"}, id="upper case"),
+        pytest.param({"note": {"deep": ["released"]}}, id="nested"),
+    ],
+)
+def test_the_guarded_write_still_applies_the_draft_rule(
+    version: str, change: dict[str, Any], settings: SiteSettings
+) -> None:
+    """The guarded sender runs the client's draft rule again (PRD B4: never `released`): the
+    refusal comes before the transport, after the state read."""
+    moodle = SourceFakeMoodle(version)
+    with pytest.raises(WorkflowStateNotAllowed):
+        write(moodle, settings, **change)
+    assert moodle.count(SAVE) == 0
+    assert moodle.grade is None
 
 
 @pytest.mark.parametrize("version", VERSIONS)

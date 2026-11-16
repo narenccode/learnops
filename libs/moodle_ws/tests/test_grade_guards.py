@@ -25,6 +25,7 @@ import moodle_ws.grade_write
 from moodle_ws import (
     GradeWriteNotAllowed,
     MoodleClient,
+    MoodleUnreachable,
     Site,
     SiteSettings,
     WorkflowStateNotAllowed,
@@ -282,6 +283,32 @@ def test_the_guarded_sender_works_once(
     MoodleClient(settings, transport).write_draft_grade(VALID_WRITE, 100)
     assert outcomes == [WRITE_NEEDS_HELPER]
     assert [name for name, _ in transport.calls] == [SAVE]
+
+
+def test_the_guarded_sender_is_used_up_even_if_the_send_fails(
+    settings: SiteSettings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """R11: a write whose answer is lost is never sent again, not even by the same sender."""
+    transport = FakeTransport(failure=TimeoutError("lost"))
+    outcomes: list[str] = []
+
+    def retry_after_a_failure(
+        client: Any, params: Mapping[str, Any], max_grade: object, send: Any
+    ) -> Any:
+        # A raw TimeoutError from the transport becomes the library's own MoodleUnreachable.
+        with pytest.raises(MoodleUnreachable):
+            send(params)
+        transport.failure = None
+        try:
+            send(params)
+        except GradeWriteNotAllowed as error:
+            outcomes.append(str(error))
+        return None
+
+    monkeypatch.setattr(moodle_ws.grade_write, "_checked_write", retry_after_a_failure)
+    MoodleClient(settings, transport).write_draft_grade(VALID_WRITE, 100)
+    assert outcomes == [WRITE_NEEDS_HELPER]
+    assert len(transport.calls) == 1
 
 
 # --- nobody else uses the client's internals ---------------------------------------------------
