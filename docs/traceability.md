@@ -244,3 +244,14 @@ confirmed by the contract reviewers): `source.kind` is required inside `source` 
 | Shapes of `chapters.json`, `slides.json`, `cues.json` | B6.2 | No schema yet |
 | Windows reserved names (such as `CON`, `NUL`, `COM1`) and Unicode normalization in paths: considered, not v1 rules (guide decision) | B6.3 | Not enforced in v1: the store is on Linux or S3 and no consumer compares names; a v2 discussion if a store later needs them |
 | A maximum path length | B6.3 | None specified in v1 (guide decision): paths are built from bounded slugs and the store enforces its own limits |
+
+## App-C item 4: BigBlueButton recording metadata and video-format output (T17)
+
+Files: `docs/decisions/0005-app-c-4-bbb-recording-metadata.md` and
+`docs/decisions/evidence/0005-app-c-4-bbb/`. Supports FR-V-09 (Release 3).
+
+**Status: PENDING.** The lab BigBlueButton was not reachable from this session (only placeholder
+configuration exists), so no server, version, recording, metadata or video-format result is
+verified. The record holds a read-only check script (self-tested on synthetic data only) and a
+checklist for the manual run. It does **not** show that App-C 4 or FR-V-09 is met.
+
