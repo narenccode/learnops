@@ -495,7 +495,7 @@
     },
     {
       "id": "readme-closing-hashes-tab-and-trailing-spaces",
-      "title": "A closing # sequence and trailing spaces are removed, and a tab may follow the opening #",
+      "title": "A closing # sequence after a space is removed, trailing spaces and tabs are removed, and a tab may follow the opening #",
       "status": "derived",
       "covers": [
         "B1.3-readme-headings"
@@ -504,7 +504,7 @@
       "files": [
         {
           "name": "README.md",
-          "text": "## Setup ##\n\n#\tUsage\n\n### Install   "
+          "text": "## Setup ##\n\n#\tUsage\t\n\n### Install \t  "
         }
       ],
       "expected": {
@@ -530,6 +530,92 @@
         "missing": [
           "Install",
           "Deploy"
+        ]
+      }
+    },
+    {
+      "id": "readme-closing-hashes-must-follow-a-space",
+      "title": "A closing # sequence is removed only after a space or tab: ## Setup ## is Setup, but ## C# is C#, not C",
+      "status": "derived",
+      "covers": [
+        "B1.3-readme-headings"
+      ],
+      "check": "readme_sections:C#,Setup,C",
+      "files": [
+        {
+          "name": "README.md",
+          "text": "## C#\n\n## Setup ##"
+        }
+      ],
+      "expected": {
+        "result": "fail",
+        "missing": [
+          "C"
+        ]
+      }
+    },
+    {
+      "id": "readme-heading-indentation-up-to-three-spaces",
+      "title": "A heading may have up to three leading spaces; four or more spaces are not a heading",
+      "status": "derived",
+      "covers": [
+        "B1.3-readme-headings"
+      ],
+      "check": "readme_sections:Setup,Usage",
+      "files": [
+        {
+          "name": "README.md",
+          "text": "   # Setup\n\n    # Usage"
+        }
+      ],
+      "expected": {
+        "result": "fail",
+        "missing": [
+          "Usage"
+        ]
+      }
+    },
+    {
+      "id": "readme-fence-indentation-up-to-three-spaces",
+      "title": "A fence line may have up to three leading spaces and hides the # lines inside it; four or more spaces are not a fence",
+      "status": "derived",
+      "covers": [
+        "B1.3-readme-headings"
+      ],
+      "check": "readme_sections:Hidden,Shown",
+      "files": [
+        {
+          "name": "README.md",
+          "text": "   ~~~\n# Hidden\n~~~\n    ```\n# Shown"
+        }
+      ],
+      "expected": {
+        "result": "fail",
+        "missing": [
+          "Hidden"
+        ]
+      }
+    },
+    {
+      "id": "readme-closing-fence-same-character-and-length",
+      "title": "A closing fence needs the same character as the opening fence and at least its length: a shorter fence or another character does not close it",
+      "status": "derived",
+      "covers": [
+        "B1.3-readme-headings"
+      ],
+      "check": "readme_sections:Shown,Hidden,AlsoHidden,StillHidden",
+      "files": [
+        {
+          "name": "README.md",
+          "text": "~~~~\n# Hidden\n```\n# AlsoHidden\n~~~\n# StillHidden\n~~~~\n# Shown"
+        }
+      ],
+      "expected": {
+        "result": "fail",
+        "missing": [
+          "Hidden",
+          "AlsoHidden",
+          "StillHidden"
         ]
       }
     }

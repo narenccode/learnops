@@ -398,7 +398,8 @@ HTML table in the Moodle assignment description; the grading assistant parses it
 - **Check formats (v1).** An assignment body has one marking table and uses only the checks of
   §C3.5. When a `Check` cell has several checks, they are separated by `;` (as in the example
   above). Spaces around each check and around its argument are ignored. The check name is the
-  text before the first `:`; the rest is its argument.
+  text before the first `:`; the rest is its argument. Check names are lowercase and
+  case-sensitive: `word_count:5` is the check, and `Word_Count:5` is an unknown name.
   - `readme_sections:<a,b,c>`: a comma-separated list of section names. Each name is matched
     case-insensitively, ignoring spaces around it, against the text of the Markdown headings of
     the repository's README. Every listed section must exist. A section name cannot contain a
@@ -407,13 +408,17 @@ HTML table in the Moodle assignment description; the grading assistant parses it
     `Usage`, which is unknown and fails validation.
     - The README is the file named exactly `README.md` at the root of the repository (the package
       root). A README in a subfolder or with another name is not used.
-    - A heading is an ATX heading: one to six `#` characters at the start of a line, then a space
-      or a tab and the heading text. An optional closing sequence of `#` characters and any
-      trailing spaces are removed, and the heading text is trimmed. A section name is matched
-      against the whole heading text, so the heading `Setup instructions` does not satisfy the
-      name `Setup`.
-    - A line inside a fenced code block is not a heading. A fence of backticks and a fence of
-      tildes both count. A fence that is not closed runs to the end of the file.
+    - A heading is an ATX heading: up to three spaces, then one to six `#` characters, then a
+      space or a tab and the heading text. A line with four or more spaces before the `#` is not
+      a heading. An optional closing sequence of `#` characters is removed only when a space or
+      a tab comes before it and only spaces or tabs follow it, so `## Setup ##` is the heading
+      text `Setup` and `## C#` is `C#`. Trailing spaces and tabs are removed and the heading text
+      is trimmed. A section name is matched against the whole heading text, so the heading
+      `Setup instructions` does not satisfy the name `Setup`.
+    - A line inside a fenced code block is not a heading. A fence line starts, after up to three
+      spaces, with backticks or with tildes; four or more spaces do not make a fence. A closing
+      fence uses the same character as the opening fence and is at least as long. A fence that
+      is not closed runs to the end of the file.
     - A Setext heading (a line of text underlined with `=` or `-`) is not a heading.
   - `word_count:<n>`: `n` is one or more ASCII digits (`0` to `9`) with no sign, space or
     underscore, and a value of at least 1. It is the minimum number of words in the report. A
@@ -421,12 +426,11 @@ HTML table in the Moodle assignment description; the grading assistant parses it
     when the report comes from online text (§B1.5); a report file is counted as it is.
   - `http_ok:<field>`: `demo_url` is the only field in v1.
   - An unknown check name fails validation (§C3.5). So does a known check whose argument breaks
-    a format defined here, for example `word_count:0` or `word_count:+5` (CK-09). The
-    `command:<name>` check and its configuration, the argument format of `repo_file:<path>`,
-    the criterion keys, and the other parsing details of a marking table are not defined here.
-    So are the finer details of Markdown headings and fences that this section does not state,
-    such as whether a closing `#` sequence must follow a space, the length and character of a
-    closing fence, and indentation before a `#` or a fence.
+    a format defined here, for example `word_count:0` or `word_count:+5` (CK-09). An empty
+    section list (`readme_sections:`), an empty section name (`readme_sections:a,,b`), an empty
+    field (`http_ok:`) and a trailing `;` fail the same way (CK-09). The `command:<name>` check
+    and its configuration, the argument format of `repo_file:<path>`, the criterion keys, and the
+    other parsing details of a marking table are not defined here.
 - The HTML rendering keeps the `data-marking-table="v1"` attribute so the table can be parsed back.
 
 ### B1.4 Protected activities and output modes

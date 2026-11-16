@@ -77,7 +77,21 @@ README_CASE_IDS = [
     "readme-heading-must-match-whole-text",
     "readme-closing-hashes-tab-and-trailing-spaces",
     "readme-tilde-and-unclosed-fences",
+    "readme-closing-hashes-must-follow-a-space",
+    "readme-heading-indentation-up-to-three-spaces",
+    "readme-fence-indentation-up-to-three-spaces",
+    "readme-closing-fence-same-character-and-length",
 ]
+# The machine checks of PRD C3.5. A check that is named in a vector as the unknown one must not be
+# one of these: a known name is not unknown. A test keeps this set equal to the PRD list.
+C35_CHECK_NAMES = {
+    "repo_clone",
+    "repo_file",
+    "readme_sections",
+    "command",
+    "http_ok",
+    "word_count",
+}
 
 STATUSES = {"derived", "unverified-until-lab"}
 FORMATS = {"plain", "html"}
@@ -301,6 +315,9 @@ def readme_case_problems(case: Any) -> list[str]:
             problems.append(
                 "unknown_check must be a whole check name that follows a ';'"
             )
+        # An unknown check cannot be a known one: `word_count` after a `;` is a valid check.
+        if expected["unknown_check"] in C35_CHECK_NAMES:
+            problems.append("unknown_check must not be a C3.5 check name")
         return problems
     return [*problems, f"expected {expected!r} is not a valid result"]
 
@@ -389,6 +406,12 @@ def test_readme_cases_cover_the_file_the_headings_and_the_name_rule() -> None:
     assert results == README_RESULTS
 
 
+def _known_check_named_as_unknown(case: Case) -> None:
+    # `word_count` really is the later check here, so only the C3.5 rule can reject this vector.
+    case["check"] = "readme_sections:Setup;word_count:5"
+    case["expected"]["unknown_check"] = "word_count"
+
+
 README_EDITS: dict[str, tuple[str, Callable[[Case], None]]] = {
     "a missing key": ("readme-headings-any-case", lambda c: c.pop("check")),
     "a status that is not derived": (
@@ -415,6 +438,12 @@ README_EDITS: dict[str, tuple[str, Callable[[Case], None]]] = {
     "an unknown check that is only part of a longer check name": (
         "readme-name-with-semicolon",
         lambda c: c.update(check="readme_sections:Setup;Usage2"),
+    ),
+    # The check is `readme_sections:Setup;word_count:5` and the unknown one `word_count`: it is
+    # the later check, but it is a known C3.5 check, so the vector must be rejected.
+    "an unknown check that is a known C3.5 check name": (
+        "readme-name-with-semicolon",
+        _known_check_named_as_unknown,
     ),
     "a case with no files": (
         "readme-headings-any-case",
@@ -549,20 +578,26 @@ def test_prd_b13_has_the_check_formats_and_names_what_it_does_not_define() -> No
         "separated by `;`",
         "Spaces around each check and around its argument are ignored",
         "The check name is the text before the first `:`",
+        "Check names are lowercase and case-sensitive",
+        "`Word_Count:5` is an unknown name",
         "A cell that contains only `—` means no machine check",
         "`readme_sections:<a,b,c>`",
         "case-insensitively",
         "cannot contain a comma or a semicolon",
         "named exactly `README.md` at the root of the repository",
-        "is an ATX heading",
+        "is an ATX heading: up to three spaces, then one to six `#` characters",
         "then a space or a tab and the heading text",
-        "An optional closing sequence of `#` characters and any trailing spaces are removed",
-        "the heading text is trimmed",
+        "four or more spaces before the `#` is not a heading",
+        "is removed only when a space or a tab comes before it and only spaces or tabs follow it",
+        "`## Setup ##` is the heading text `Setup` and `## C#` is `C#`",
+        "Trailing spaces and tabs are removed and the heading text is trimmed",
         "matched against the whole heading text",
         "`Setup instructions` does not satisfy the name `Setup`",
         "is not a heading",
         "fenced code block",
-        "A fence of backticks and a fence of tildes both count",
+        "A fence line starts, after up to three spaces, with backticks or with tildes",
+        "four or more spaces do not make a fence",
+        "A closing fence uses the same character as the opening fence and is at least as long",
         "A fence that is not closed runs to the end of the file",
         "Setext heading",
         "`word_count:<n>`",
@@ -571,12 +606,32 @@ def test_prd_b13_has_the_check_formats_and_names_what_it_does_not_define() -> No
         "`demo_url` is the only field in v1",
         "An unknown check name fails validation",
         "So does a known check whose argument breaks a format defined here",
+        "An empty section list (`readme_sections:`)",
+        "an empty section name (`readme_sections:a,,b`)",
+        "an empty field (`http_ok:`) and a trailing `;` fail the same way (CK-09)",
         "are not defined here",
         "the argument format of `repo_file:<path>`",
         "the criterion keys",
-        "whether a closing `#` sequence must follow a space",
     ):
         assert phrase in text, phrase
+    # The finer Markdown details are decided (the guide, 2026-11-16), so they are no longer listed
+    # as undefined, and each rule is written once.
+    assert "finer details" not in text
+    assert "whether a closing `#` sequence must follow a space" not in text
+    assert text.count("a trailing `;`") == 1
+    assert text.count("case-sensitive") == 1
+
+
+def test_the_c35_names_in_the_tests_are_the_names_in_the_prd() -> None:
+    # `unknown_check` in a vector is checked against this list, so it must not drift from C3.5.
+    match = re.search(
+        r"\*\*Machine checks.*?(?=^\*\*Sandbox:\*\*)",
+        _prd(),
+        flags=re.DOTALL | re.MULTILINE,
+    )
+    assert match, "the C3.5 machine-check list was not found"
+    names = set(re.findall(r"`([a-z_]+)(?::<[^>]*>)?`", match.group(0)))
+    assert names == C35_CHECK_NAMES
 
 
 def test_prd_c35_says_word_count_reads_the_report() -> None:
@@ -693,3 +748,8 @@ def test_traceability_lists_the_open_decisions_and_who_decides_them() -> None:
         "decision record",
     ):
         assert phrase.lower() in section, phrase
+    # The Markdown details were decided on 2026-11-16: they are recorded as decided, no longer
+    # listed as open, and the parser vectors are said to come in a separate pull request.
+    assert "finer markdown details" not in section
+    assert "Decided by the guide on PR #87 (2026-11-16)" in text
+    assert "separate follow-up pull request" in section
