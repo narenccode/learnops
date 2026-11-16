@@ -36,7 +36,7 @@ release you are on, unless the guide says otherwise.
 
 - Anything in `contracts/` or PRD Part B is a **contract** between modules.
 - Contracts are **frozen after Release 0**. After that, only additive, optional fields.
-- Never change a contract as a side effect of other work. Use the `/contract-change` command, which follows PRD §B.0 (schema, examples, PRD text and every affected module's tests in one pull request, approved by all affected owners and the guide).
+- Never change a contract as a side effect of other work. Use the `/contract-change` command, which follows PRD §B.0 (schema, examples, PRD text and every affected module's tests in one pull request; until Release 0 is frozen one owner of an affected module approves it and the guide approves the PRD text, after the freeze the guide also approves the contract).
 - Validate every contract document you read or write against its schema.
 
 ## 4. Architecture rules (PRD §A9)

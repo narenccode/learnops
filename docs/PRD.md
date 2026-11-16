@@ -282,8 +282,8 @@ Moodle sites have: completion tracking on; web services enabled with a dedicated
 ## A15. Assumptions
 
 1. The lab VMs and AI services are available from Release 0.
-2. Moodle's standard web-services functions listed in §B4 exist on 4.5 and 5.3 (verified in Release 0; see §App-C).
-3. Moodle's Restore can merge sections from a backup into an existing course (verified in Release 0).
+2. Moodle's standard web-services functions listed in §B4 exist on 4.5 and 5.3 (verified in the first release that relies on them; see §App-C).
+3. Moodle's Restore can merge sections from a backup into an existing course (verified in the first release that relies on it).
 4. Lecture videos with reference transcripts can be obtained with permission (§B8.5).
 5. A hosted-API key with a spending cap is provided by the guide for the comparison study.
 6. Course reuse for a new cohort is done with Moodle's own **Copy course**. Course Studio is the
@@ -443,7 +443,7 @@ information is lost.
 
 - One dedicated **service account** per Moodle site, with a token restricted to an external service containing only the functions below.
 - The account has only the capabilities those functions need, in the courses where it is enrolled for grading.
-- Function list (each verified on 4.5 and 5.3 in Release 0; replacements recorded here if names differ):
+- Function list (each verified on 4.5 and 5.3 in the first release that relies on them; replacements recorded here if names differ):
 
 | Purpose | Function |
 |---|---|
@@ -587,7 +587,7 @@ url = media_signing.sign(relative_path, ttl_seconds=3600)
 
 ## B7. H5P practice output (v1, stretch)
 
-- Content types pinned in Release 0 (exact library versions recorded): question set (checkpoints), drag-the-words or drag-and-drop / ordering, branching scenario. Interactive video only in lab demonstrations (with openly licensed videos).
+- Content types pinned in the first release that uses them (exact library versions recorded): question set (checkpoints), drag-the-words or drag-and-drop / ordering, branching scenario. Interactive video only in lab demonstrations (with openly licensed videos).
 - Each practice item is a standard `.h5p` file plus an entry in `course.yaml` (`type: h5p`, `idnumber`, `graded: false`).
 - Placed after the week's guide Page; **never graded** (no grade item; the checker enforces this).
 - Video checkpoints are produced in two modes: a separate activity after the video (default), and `cues.json` entries for the future player (F-1).
