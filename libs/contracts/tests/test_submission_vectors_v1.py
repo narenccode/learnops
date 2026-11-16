@@ -13,8 +13,10 @@ AUTOMATED here (data and text only; no reader of submissions exists yet):
     rule that a vector can show (1 to 7 and the word count) is covered by at least one case;
   * the five PRD examples in B1.5 are the same texts as the five required vectors, with the same
     word counts and error codes, so the PRD and the vectors cannot drift apart;
-  * the PRD has the B1.3 check formats (including the README file, heading and name rules) and nine
-    numbered B1.5 rules, and every `covers` entry of a vector names a rule that exists;
+  * the PRD has the B1.3 check formats (including how a Check cell is split, the `word_count`
+    argument, and the README file, heading, fence and name rules), C3.5 says `word_count` reads the
+    report, and the PRD has nine numbered B1.5 rules; every `covers` entry of a vector names a
+    rule that exists;
   * the open points are written down, not decided: the PRD says what v1 does not define, the
     traceability file lists each open decision with who decides it, and no vector covers one
     (no carriage return, no empty label value, no HTML entity or link, no trailing whitespace);
@@ -72,6 +74,9 @@ README_CASE_IDS = [
     "readme-setext-and-fenced-are-not-headings",
     "readme-only-root-readme-md",
     "readme-name-with-semicolon",
+    "readme-heading-must-match-whole-text",
+    "readme-closing-hashes-tab-and-trailing-spaces",
+    "readme-tilde-and-unclosed-fences",
 ]
 
 STATUSES = {"derived", "unverified-until-lab"}
@@ -247,6 +252,16 @@ def duplicate_ids(cases: list[Case]) -> list[str]:
     return sorted({i for i in ids if ids.count(i) > 1})
 
 
+def _later_check_names(check: str) -> list[str]:
+    """The names of the checks after the first one in a Check cell (PRD B1.3).
+
+    Checks are separated by `;`, spaces around each check are ignored, and a name is the text
+    before the first `:`. Only what this file's vectors need: it does not validate arguments.
+    """
+    parts = [part.strip() for part in check.split(";")]
+    return [part.split(":", 1)[0].strip() for part in parts[1:]]
+
+
 def readme_case_problems(case: Any) -> list[str]:
     """What is wrong with one README vector: shape, vocabularies and the expected result.
 
@@ -281,8 +296,11 @@ def readme_case_problems(case: Any) -> list[str]:
             problems.append("missing must name sections that the check lists")
         return problems
     if result == "invalid" and set(expected) == {"result", "unknown_check"}:
-        if f";{expected['unknown_check']}" not in check:
-            problems.append("unknown_check must follow a ';' in the check")
+        # Whole check names, not substrings: `Usage` is not a match for the check `Usage2`.
+        if expected["unknown_check"] not in _later_check_names(check):
+            problems.append(
+                "unknown_check must be a whole check name that follows a ';'"
+            )
         return problems
     return [*problems, f"expected {expected!r} is not a valid result"]
 
@@ -392,6 +410,11 @@ README_EDITS: dict[str, tuple[str, Callable[[Case], None]]] = {
     "an unknown check that does not follow a semicolon": (
         "readme-name-with-semicolon",
         lambda c: c["expected"].update(unknown_check="Setup"),
+    ),
+    # `Usage` is only a substring of the check `Usage2`, so it is not that check's name.
+    "an unknown check that is only part of a longer check name": (
+        "readme-name-with-semicolon",
+        lambda c: c.update(check="readme_sections:Setup;Usage2"),
     ),
     "a case with no files": (
         "readme-headings-any-case",
@@ -524,22 +547,48 @@ def test_prd_b13_has_the_check_formats_and_names_what_it_does_not_define() -> No
     text = " ".join(_b13().split())
     for phrase in (
         "separated by `;`",
+        "Spaces around each check and around its argument are ignored",
+        "The check name is the text before the first `:`",
+        "A cell that contains only `—` means no machine check",
         "`readme_sections:<a,b,c>`",
         "case-insensitively",
         "cannot contain a comma or a semicolon",
         "named exactly `README.md` at the root of the repository",
         "is an ATX heading",
+        "then a space or a tab and the heading text",
+        "An optional closing sequence of `#` characters and any trailing spaces are removed",
+        "the heading text is trimmed",
+        "matched against the whole heading text",
+        "`Setup instructions` does not satisfy the name `Setup`",
         "is not a heading",
         "fenced code block",
+        "A fence of backticks and a fence of tildes both count",
+        "A fence that is not closed runs to the end of the file",
         "Setext heading",
         "`word_count:<n>`",
-        "a whole number of at least 1",
+        "one or more ASCII digits (`0` to `9`) with no sign, space or underscore",
+        "a value of at least 1",
         "`demo_url` is the only field in v1",
         "An unknown check name fails validation",
+        "So does a known check whose argument breaks a format defined here",
         "are not defined here",
         "the argument format of `repo_file:<path>`",
+        "the criterion keys",
+        "whether a closing `#` sequence must follow a space",
     ):
         assert phrase in text, phrase
+
+
+def test_prd_c35_says_word_count_reads_the_report() -> None:
+    match = re.search(
+        r"^### C3\.5 Technical requirements\n.*?(?=^\*\*Sandbox:\*\*)",
+        _prd(),
+        flags=re.DOTALL | re.MULTILINE,
+    )
+    assert match, "the C3.5 machine-check list was not found"
+    text = " ".join(match.group(0).split())
+    assert "`word_count:<min>` (report)" in text
+    assert "report or text" not in text
 
 
 def test_prd_b15_has_nine_numbered_rules_and_both_reason_codes() -> None:

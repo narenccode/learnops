@@ -393,10 +393,12 @@ HTML table in the Moodle assignment description; the grading assistant parses it
 ```
 
 - `Points` sum to the assignment's `points`.
-- `Check` is optional; allowed values are defined in §C3.5 (machine checks). `—` means mentor judgement only.
+- `Check` is optional; allowed values are defined in §C3.5 (machine checks). A cell that contains
+  only `—` means no machine check: mentor judgement only.
 - **Check formats (v1).** An assignment body has one marking table and uses only the checks of
   §C3.5. When a `Check` cell has several checks, they are separated by `;` (as in the example
-  above).
+  above). Spaces around each check and around its argument are ignored. The check name is the
+  text before the first `:`; the rest is its argument.
   - `readme_sections:<a,b,c>`: a comma-separated list of section names. Each name is matched
     case-insensitively, ignoring spaces around it, against the text of the Markdown headings of
     the repository's README. Every listed section must exist. A section name cannot contain a
@@ -406,16 +408,25 @@ HTML table in the Moodle assignment description; the grading assistant parses it
     - The README is the file named exactly `README.md` at the root of the repository (the package
       root). A README in a subfolder or with another name is not used.
     - A heading is an ATX heading: one to six `#` characters at the start of a line, then a space
-      and the heading text. A line inside a fenced code block is not a heading. A Setext heading (a
-      line of text underlined with `=` or `-`) is not a heading.
-  - `word_count:<n>`: `n` is a whole number of at least 1, the minimum number of words in the
-    report. A word is a piece of the report text between whitespace. Markup is removed before
-    counting only when the report comes from online text (§B1.5); a report file is counted as it
-    is.
+      or a tab and the heading text. An optional closing sequence of `#` characters and any
+      trailing spaces are removed, and the heading text is trimmed. A section name is matched
+      against the whole heading text, so the heading `Setup instructions` does not satisfy the
+      name `Setup`.
+    - A line inside a fenced code block is not a heading. A fence of backticks and a fence of
+      tildes both count. A fence that is not closed runs to the end of the file.
+    - A Setext heading (a line of text underlined with `=` or `-`) is not a heading.
+  - `word_count:<n>`: `n` is one or more ASCII digits (`0` to `9`) with no sign, space or
+    underscore, and a value of at least 1. It is the minimum number of words in the report. A
+    word is a piece of the report text between whitespace. Markup is removed before counting only
+    when the report comes from online text (§B1.5); a report file is counted as it is.
   - `http_ok:<field>`: `demo_url` is the only field in v1.
-  - An unknown check name fails validation (§C3.5). The `command:<name>` check and its
-    configuration, the argument format of `repo_file:<path>`, and the other parsing details of a
-    marking table are not defined here.
+  - An unknown check name fails validation (§C3.5). So does a known check whose argument breaks
+    a format defined here, for example `word_count:0` or `word_count:+5` (CK-09). The
+    `command:<name>` check and its configuration, the argument format of `repo_file:<path>`,
+    the criterion keys, and the other parsing details of a marking table are not defined here.
+    So are the finer details of Markdown headings and fences that this section does not state,
+    such as whether a closing `#` sequence must follow a space, the length and character of a
+    closing fence, and indentation before a `#` or a fence.
 - The HTML rendering keeps the `data-marking-table="v1"` attribute so the table can be parsed back.
 
 ### B1.4 Protected activities and output modes
@@ -888,7 +899,7 @@ evidence, editable feedback; approve/reject buttons; similarity flags. Works on 
 `repo_clone` (repository URL in the submission clones), `repo_file:<path>` (file exists),
 `readme_sections:<list>`, `command:<name>` (named command from the course's check config runs and
 exits 0), `http_ok:<field>` (URL from the submission returns HTTP 2xx within 10 s; run outside the
-sandbox), `word_count:<min>` (report or text). Unknown check names fail validation (CK-09 in M2).
+sandbox), `word_count:<min>` (report). Unknown check names fail validation (CK-09 in M2).
 
 **Sandbox:** one container per submission; no network after the clone step; non-root; 2 CPU, 2 GB
 RAM, 10-minute limit; read-only base image; destroyed after the run; on a host with no other

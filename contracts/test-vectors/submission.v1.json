@@ -441,7 +441,7 @@
           "text": "# Usage"
         },
         {
-          "name": "readme.md",
+          "name": "README.rst",
           "text": "# Install"
         }
       ],
@@ -470,6 +470,67 @@
       "expected": {
         "result": "invalid",
         "unknown_check": "Usage"
+      }
+    },
+    {
+      "id": "readme-heading-must-match-whole-text",
+      "title": "A section name is matched against the whole heading text: Setup instructions does not satisfy Setup",
+      "status": "derived",
+      "covers": [
+        "B1.3-readme-headings"
+      ],
+      "check": "readme_sections:Setup,Usage",
+      "files": [
+        {
+          "name": "README.md",
+          "text": "## Setup instructions\n\n## Usage"
+        }
+      ],
+      "expected": {
+        "result": "fail",
+        "missing": [
+          "Setup"
+        ]
+      }
+    },
+    {
+      "id": "readme-closing-hashes-tab-and-trailing-spaces",
+      "title": "A closing # sequence and trailing spaces are removed, and a tab may follow the opening #",
+      "status": "derived",
+      "covers": [
+        "B1.3-readme-headings"
+      ],
+      "check": "readme_sections:Setup,Usage,Install",
+      "files": [
+        {
+          "name": "README.md",
+          "text": "## Setup ##\n\n#\tUsage\n\n### Install   "
+        }
+      ],
+      "expected": {
+        "result": "pass"
+      }
+    },
+    {
+      "id": "readme-tilde-and-unclosed-fences",
+      "title": "A tilde fence and a fence that is never closed both hide the # lines inside them",
+      "status": "derived",
+      "covers": [
+        "B1.3-readme-headings"
+      ],
+      "check": "readme_sections:Overview,Install,Deploy",
+      "files": [
+        {
+          "name": "README.md",
+          "text": "# Overview\n\n~~~\n# Install\n~~~\n\n```\n# Deploy"
+        }
+      ],
+      "expected": {
+        "result": "fail",
+        "missing": [
+          "Install",
+          "Deploy"
+        ]
       }
     }
   ]
