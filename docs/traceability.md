@@ -2,6 +2,21 @@
 
 | Requirement | Test(s) | Demo step | Bloom level |
 |---|---|---|---|
+| EXT-09, C-08 – `media_paths` library: slug, relative-path and number validation; `validate_relative_path` is the B6.3 `$defs/relative_path` rule (B6 has no requirement ID of its own, PRD B.0) | `libs/media_paths/tests/test_validation.py`: slugs `test_valid_slugs_are_accepted`, `test_invalid_slugs_are_rejected`, `test_traversal_and_non_ascii_slugs_are_rejected`, `test_validate_slug_returns_false_for_non_strings`; relative paths `test_valid_relative_paths_are_accepted`, `test_invalid_relative_paths_are_rejected`, `test_prd_b6_2_and_other_legitimate_paths_are_accepted`, `test_colon_that_is_not_a_scheme_or_drive_is_accepted`, `test_scheme_or_drive_at_the_start_is_rejected`, `test_unsafe_relative_paths_are_rejected`, `test_validate_relative_path_returns_false_for_non_strings`; Unicode Cc and complete Cf, explicit Unicode 15.0.0 tables (guide decision) `test_control_and_format_characters_are_rejected`, `test_range_tables_are_sorted_non_overlapping_and_not_adjacent`, `test_range_tables_hold_the_unicode_15_0_counts`, `test_every_range_is_rejected_at_its_edges_and_inside`, `test_code_point_next_to_a_range_is_accepted`, `test_private_use_surrogate_and_unassigned_are_not_rejected_by_category`, `test_tables_match_the_unicode_database_of_the_running_python`, `test_mismatch_check_reports_a_new_unicode_version`, `test_mismatch_check_reports_a_character_whose_category_changed`; no `%` anywhere (guide decision) `test_percent_sign_is_rejected_anywhere`, `test_encoded_characters_without_a_percent_sign_are_accepted`; same rule as the contract `test_every_valid_shared_vector_is_accepted`, `test_every_invalid_shared_vector_is_rejected`, `test_library_and_schema_pattern_agree_on_every_code_point`; helpers `test_require_slug_returns_valid_value`, `test_require_slug_error_names_the_field`, `test_require_positive_int_returns_valid_value`, `test_require_positive_int_rejects_non_integers`, `test_require_positive_int_rejects_values_below_one`, `test_require_int_in_range_returns_valid_value`, `test_require_int_in_range_rejects_values_outside_the_range`, `test_require_int_in_range_rejects_non_integers`. Not enforced in v1 (guide decision): Windows reserved names, Unicode normalization, a maximum length | Show that `validate_relative_path` accepts `slides/001.jpg` and rejects `../720p.mp4`, `%2e%2e/720p.mp4`, `lecture%20notes.mp4`, `https://example.org/x.mp4` and paths containing U+061C or U+202E, and accepts one containing U+E000; show that `require_slug("../x", "cohort")` raises a clear error | — |
+| EXT-09, C-08 – `media_paths` library: B6.4 media signing interface (`none` baseline); `sign()` accepts only paths that pass `validate_relative_path`, so no `%` (B6 has no requirement ID of its own, PRD B.0) | `libs/media_paths/tests/test_signing.py`: `test_none_signer_builds_media_url`, `test_none_signer_accepts_custom_ttl`, `test_none_signer_removes_trailing_slash_from_base_url`, `test_none_signer_implements_media_signer_interface`, `test_default_ttl_matches_prd_b6_4`, `test_none_signer_output_has_no_signature_or_expiry`, `test_valid_base_urls_are_joined_with_a_single_slash`, `test_invalid_base_urls_are_rejected`, `test_base_url_error_does_not_echo_credentials`, `test_non_string_base_url_is_rejected`, `test_sign_percent_encodes_path_characters`, `test_sign_rejects_unsafe_relative_paths`, `test_decoding_a_none_signed_url_never_yields_a_traversal`, `test_sign_uses_validate_relative_path`, `test_sign_rejects_non_integer_ttl`, `test_sign_rejects_ttl_below_one`, `test_media_signing_none_returns_none_signer`, `test_create_media_signer_reads_os_environ_by_default`, `test_planned_signing_modes_raise_not_implemented_config_error`, `test_unknown_signing_modes_raise_config_error`, `test_missing_media_signing_raises_config_error`, `test_missing_media_base_url_raises_config_error`, `test_invalid_media_base_url_raises_config_error`, `test_config_error_is_a_value_error` | Select the signer with `MEDIA_SIGNING=none` and build a plain media URL; show that `%2e%2e/720p.mp4` is refused and that `hmac`/`s3` and unknown modes give a configuration error. Only `none` is implemented (enough for the baseline per B6.4) | — |
+
+## Contract example checking engine (PRD B.0 rule 1, E1), Release 0 foundation
+
+Files: `libs/contracts/example_check.py`, tests in `libs/contracts/tests/test_example_check.py`.
+Reference EXT-09 (the `contracts` library); the E1 "Contract" test level. This is the engine of
+the repository-wide validator `validate_examples.py`, added by the next pull request, so nothing
+runs it in CI yet. What is not checked yet is listed in `libs/contracts/README.md`.
+
+| Rule | PRD | Test(s) |
+|---|---|---|
+| Every example (JSON or YAML) is validated against its schema, with every error reported in a fixed order | E1 | `test_check_valid_example_passes`, `test_check_invalid_example_is_one_violation_with_its_place_and_keyword`, `test_check_reports_every_error_in_a_fixed_order`, `test_check_one_failure_among_passing_examples` |
+| Unreadable examples, unusable schemas (unreadable, invalid, a `$schema` that is not a string) and content nested too deeply are reported with a hint instead of a traceback. A `$ref` that cannot be resolved is reported the same way, **but only when an example reaches it** | E1, B.0 rule 4 | `test_check_unreadable_example_is_an_error`, `test_check_non_string_schema_keyword_is_an_invalid_schema`, `test_check_deeply_nested_example_is_unreadable_not_a_traceback`, `test_check_recursion_while_validating_is_reported_for_each_affected_example`, `test_check_deeply_nested_schema_is_reported_and_its_examples_not_validated`, `test_check_examples_of_an_unusable_schema_are_not_validated`, `test_check_reference_reached_by_the_last_example_leaves_none_passed`, `test_check_broken_schema_without_examples_reports_only_the_schema` |
+| Known limits are stated and pinned by tests, so the documents cannot promise more than the code does: a dangling `$ref` no example reaches is not found; `date` is checked but `date-time` is not; `referencing`, imported directly, is a pinned and licensed dependency | CLAUDE.md §2.10 | `test_check_dangling_reference_in_a_branch_no_example_reaches_is_not_found`, `test_check_asserts_date_but_not_date_time`, `test_check_documented_format_lists_match_the_installed_checker`, `test_referencing_is_a_declared_pinned_dependency_with_its_licence` |
 
 ## B1 course package contract (v1), Release 0 foundation
 
@@ -210,3 +225,99 @@ These are pending and are not claimed by this change:
   screenshots and logs stay local and are not committed.
 - **The open decisions** in the B8.1 README (§9) are pending guide confirmation. This entry does
   not settle them.
+
+## B8.5 lecture video test data set, Release 0 foundation
+
+Files: `testdata/b8-5-lecture-videos/` (README, folder `.gitignore`, placeholder outlines and
+transcripts), the B8.5 inventory in `testdata/README.md`, the guide's decision
+`docs/decisions/0004-b8-5-lecture-videos.md`, and the validation test
+`libs/contracts/tests/test_b8_5_dataset.py`. B8.5 is a test data set (PRD B8), not a functional
+requirement, so it has no FR ID and no row in the table at the top. It is the data for PRD G-6
+(caption word error rate, Release 3), App-C 7 (the error-rate target from a first baseline run)
+and App-C 8 (licence or consent for every B8.5 video).
+
+**Status: PENDING.** No lecture is recorded, no consent line is written and no transcript is
+typed. The tests show that the committed placeholders are well formed and that the PENDING status
+is true. They do **not** show that B8.5 or App-C 8 is met.
+
+### Enforced by the test and covered by automated tests
+
+The checker in `test_b8_5_dataset.py` runs on the real set (two tests, first two rows) and on
+synthetic sets built in a temporary folder. Each negative case checks for its exact error
+message, so an unrelated error cannot keep it passing.
+
+| Rule | Source | Test(s) |
+|---|---|---|
+| The committed set has no errors: the ten fixed columns and well-formed rows, at least 5 lectures with unique `lecture-NN` ids, each cell in its documented form, outlines and transcripts that exist, a decision record with the exact consent sentence and a well-formed `## Consent lines` section, and the files Git tracks in the set folder are exactly the permitted paths | B8.5, decision 0004, set README | `test_the_real_set_has_no_errors` |
+| The Status is true: both READMEs agree; COMPLETE needs no gap and a real Total line; PENDING needs something still missing and keeps the Total line PENDING; the total is checked against 1800 s once durations are filled in | B8.5 (at least 30 minutes, PRD §B8 as updated in #47), decision 0004 | `test_the_real_status_is_true` |
+| A complete set passes and its table parses back unchanged; a PENDING set (also a partly filled one) has no errors | B8.5, decision 0004 | `test_a_complete_set_passes_and_parses_back`, `test_a_pending_set_has_no_errors_but_is_not_complete`, `test_a_partly_filled_pending_set_has_no_errors` |
+| At least 5 lectures with unique `lecture-NN` ids; total at least 1800 s; a numeric Total line equals the sum | B8.5 (≥ 5 lectures), decision 0004 (≥ 1800 s) | `test_a_broken_complete_set_fails[four-lectures, below-1800-s, wrong-total-line, duplicate-ids]` |
+| The ten fixed columns; every row has exactly as many cells as the header (a `\|` in a value, an extra or a missing cell is an error, never shifted or cut) | set README | `[wrong-columns, pipe-in-a-value, extra-trailing-cell, missing-cell]` |
+| Each cell in its documented form: Duration as ASCII whole seconds above 0 (Unicode digits such as `³`, `٣٦٠`, `３６０` are rejected, never a traceback), a bare recording file name (no path or URL), 64 lowercase hex SHA-256, the lecture's own outline path, review `pending` or `checked`; a PENDING value is a gap | set README | `[pending-cell, duration-*, recording-path, recording-url, sha-short, sha-uppercase, wrong-outline-path, review-pending, review-unknown]` |
+| Outline and transcript exist; one that is empty or has a line starting with `PENDING` anywhere is a placeholder; a placeholder transcript cannot be `checked`; finished text with no PENDING line passes | set README ("no `PENDING` line") | `[placeholder-*, outline-pending-on-a-later-line, transcript-pending-on-a-later-line, transcript-blank-lines-only, missing-outline]`, `test_completed_text_without_a_pending_line_is_not_a_placeholder` |
+| Consent: the decision record exists, states the exact sentence and has a `## Consent lines` section; lines are well formed (name, valid date, exact sentence) and unique; a lecture's Consent cell points to an existing line with the Speaker's name (compared in full, commas included); one line per speaker; every line is used | B8.5 (written consent), App-C 8, decision 0004 | `[no-decision-record, no-consent-section, no-exact-statement, consent-*, one-speaker-two-lines, unused-consent-line]`, `test_a_speaker_name_with_a_comma_is_accepted`, `test_consent_lines_outside_the_section_are_not_counted` |
+| The files Git tracks in the set folder are exactly the permitted paths (no recording, audio, draft, nested or unlisted file). Ignored or untracked local files (Thumbs.db, desktop.ini, editor swap and backup files) do not count; a failing or missing `git` is an error, never a clean result | decision 0004 (recordings never in Git), set README | `[audio-wav, audio-mp3, video-mp4, draft-transcript, nested-outline, unlisted-lecture, top-level-note]`, `test_only_the_exact_permitted_paths_are_allowed`, `test_only_files_tracked_by_git_are_inspected`, `test_a_failing_git_command_is_an_error_not_a_clean_set`, `test_missing_git_is_an_error_not_a_clean_set` |
+| The Status is true: both READMEs agree; COMPLETE needs no gap and a real Total line; PENDING needs something still missing and keeps the Total line PENDING (a finished set whose Status and Total lines both still say PENDING fails) | set README | `test_a_false_status_fails` (7 cases), `test_a_finished_set_cannot_hide_behind_a_pending_total` |
+
+Names in brackets are cases of `test_a_broken_complete_set_fails`; `*` stands for every case with
+that prefix.
+
+### Not verified (by this test or anything else in the repository)
+
+- That a recording exists, that its duration and SHA-256 are right, that the speech is Indian
+  English, or that the speaker spoke from the outline (checked by people).
+- That a transcript is accurate (Harshitha's check) and which model, if any, drafted it.
+- That recordings are stored as agreed, and that speakers were told about the interim storage.
+- That a speaker personally wrote their consent line (shown by Git history and review).
+- Any use of the set by the video pipeline or the caption error-rate measurement (G-6, App-C 7);
+  no Moodle restore, checker, BigBlueButton or Moodle 4.5/5.3 integration is involved or tested.
+
+## B6 lesson manifest contract (v1), Release 0 foundation
+
+Files: `contracts/lesson-manifest.v1.schema.json`, `contracts/examples/lesson-manifest.v1/`
+(`single-track.json`, `camera-screen.json`: one top-level file per example),
+`libs/contracts/tests/test_lesson_manifest_v1.py`. B6 has no requirement ID of its own in the PRD
+(it is a contract, PRD B.0), so no row in the table above maps to it.
+
+FR-V-08 ("Write `lesson.json` (B6.3) last, only when all required files exist", Release 3) is
+deliberately not in the table above. The tests below cover only the schema that FR-V-08 and the
+C4.7 criterion "`lesson.json` validates against B6.3" will be checked against. FR-V-08 gets its row
+in the pull request that implements it.
+
+### Enforced by the JSON Schema and covered by automated tests
+
+Structure only. Test names are in `test_lesson_manifest_v1.py`.
+
+| Rule | PRD | Test(s) |
+|---|---|---|
+| `schema` equals `learnops.lesson/v1` | B6.3 | `test_missing_required_field_is_rejected`, `test_wrong_type_or_value_is_rejected` |
+| Nine root fields required: `schema`, `course_slug`, `lesson_id`, `title`, `duration_s`, `tracks`, `captions`, `transcript`, `chapters`; `slides`, `cues`, `summary`, `source`, `processing` optional | B6.2, B6.3 | `test_schema_requires_exactly_the_nine_root_fields`, `test_missing_required_field_is_rejected`, `test_valid_variation_is_accepted` |
+| Exactly one `main` track | B6.2, B6.3 | `test_invalid_track_is_rejected`, `test_example_manifest_is_valid` |
+| At least one caption with `lang` exactly `en` (`hi`, `EN` or `en-US` alone is rejected), because B6.2 requires `captions.en.vtt` (guide decision) | B6.2, B6.3 | `test_captions_without_english_are_rejected`, `test_captions_with_english_are_accepted`, `test_valid_variation_is_accepted` |
+| Track roles are open lowercase names (slug form); known roles `main`, `main-low`, `camera`, `screen`; others such as `audio` accepted | B6.3 | `test_invalid_track_is_rejected`, `test_added_track_with_known_or_new_lowercase_role_is_accepted`, `test_examples_use_every_known_track_role` |
+| A single-track lesson stays valid when `camera` and `screen` tracks are added | C4.7, EXT-03 | `test_single_track_lesson_stays_valid_with_camera_and_screen_added` |
+| Every path is relative (`$defs/relative_path`): non-empty; forward slashes only; no whitespace; no `?`, `#` or backslash; no URL scheme or drive letter; not absolute; no empty, `.` or `..` segment; no Unicode control or format character (the complete Unicode 15.0.0 categories Cc and Cf, pinned; private-use, surrogate and unassigned code points accepted; guide decision); no `%` anywhere, so no percent-encoded form however often encoded (`%2e`, `%252e`, `%25%32%65` and so on; guide decision, because the B6.4 `none` signer appends the path to the media base URL and layers may decode it; paths are never decoded). Applied to all eight path fields: the seven file paths (`tracks[].file`, `captions[].file`, `transcript`, `chapters`, `slides`, `cues`, `summary`) are relative to the lesson folder, and `lesson_id` is relative to the course folder (readers build the lesson folder's path from it). Valid and invalid cases come from the shared vectors `contracts/test-vectors/relative-path.v1.json`. The schema defines the rule; `libs/media_paths` (B6.1 folder paths, the B6.4 `relative_path` argument) is to follow the same vectors, tested in its own pull request | B6.1, B6.3, B6.4, C-08, EXT-09 | `test_path_that_is_not_relative_is_rejected`, `test_valid_relative_path_is_accepted`, `test_every_path_field_in_the_schema_is_tested`, `test_path_vectors_cover_every_rule`, `test_path_vectors_have_no_duplicates`, `test_lesson_id_that_is_not_a_relative_path_is_rejected`, `test_lesson_id_that_is_a_lesson_slug_path_is_accepted`; Cc and Cf `test_python_unicode_database_is_the_pinned_version`, `test_unicode_15_0_has_2_cc_and_21_cf_ranges`, `test_schema_rejects_exactly_cc_and_cf_among_all_code_points`, `test_every_cc_and_cf_range_is_rejected_at_its_edges_and_inside`, `test_code_point_next_to_a_cc_or_cf_range_is_accepted`, `test_private_use_surrogate_and_unassigned_are_not_rejected_by_category`, `test_every_path_field_rejects_control_and_format_characters`; percent sign `test_percent_sign_is_rejected_in_every_segment`, `test_every_path_vector_with_a_percent_sign_is_invalid` |
+| `course_slug` is lowercase ASCII with hyphens | B6.1 | `test_invalid_course_slug_is_rejected` |
+| Unknown fields are accepted | B.0 rule 2, EXT-02 | `test_valid_variation_is_accepted` |
+| The manifest is a JSON object (an array, a string, a number or `null` is rejected) | B6.3 | `test_document_that_is_not_an_object_is_rejected` |
+| The schema is valid; both examples and the PRD B6.3 example validate | B.0 rule 1 | `test_schema_is_a_valid_draft_2020_12_schema`, `test_example_manifest_is_valid`, `test_prd_example_is_valid` |
+
+Enforced and tested, but chosen in the schema rather than stated as a rule in the PRD (to be
+confirmed by the contract reviewers): `source.kind` is required inside `source` but is any non-empty string (the PRD names only
+`upload`); `captions` not empty; `height` a positive integer; `duration_s` a non-negative number;
+`processing.completed_at` an RFC 3339 timestamp with a time zone; non-empty strings. Tests:
+`test_invalid_completed_at_is_rejected` (`completed_at`), `test_missing_required_field_is_rejected`,
+`test_invalid_track_is_rejected`, `test_wrong_type_or_value_is_rejected`, `test_valid_variation_is_accepted`.
+
+### Documented but not automatically enforced
+
+| Rule | PRD | Where the PRD places it |
+|---|---|---|
+| The files the manifest names, and `poster.jpg`, exist in the lesson folder | B6.2 | FR-V-08 (R3) |
+| `lesson.json` written last, only when all required files exist | B6.2 | FR-V-08 (R3) |
+| `course_slug` and `lesson_id` match the folder's place in the path template | B6.1 | `libs/media_paths` (Release 0, separate pull request) |
+| Calendar validity of `processing.completed_at` (for example no 31 February) | — | Only with a `date-time` format checker (`rfc3339-validator`, not installed in CI) |
+| Contents of `transcript.en.json` (B5.4 shape) | B5.4, B6.2 | B5 contract (no schema in `contracts/` yet) |
+| Shapes of `chapters.json`, `slides.json`, `cues.json` | B6.2 | No schema yet |
+| Windows reserved names (such as `CON`, `NUL`, `COM1`) and Unicode normalization in paths: considered, not v1 rules (guide decision) | B6.3 | Not enforced in v1: the store is on Linux or S3 and no consumer compares names; a v2 discussion if a store later needs them |
+| A maximum path length | B6.3 | None specified in v1 (guide decision): paths are built from bounded slugs and the store enforces its own limits |
