@@ -232,7 +232,8 @@ and no test exist for B8.1 yet.
 | The template course backup holds the four protected items: the final project assignment (`final-project`), the course feedback activity (`course-feedback`), the course completion criteria and the course badge. The idnumbers are the PRD defaults and are configurable. The protected section number (3) is a proposal | B8.1, B1.4 | None yet: the `.mbz` does not exist |
 | A plain list of the expected protected items (idnumber, type, section, count) for the checker, which builds its model from the `.mbz` | B8.1, B1.4 | None yet |
 | A sections-only backup is merged into the template and the protected items stay unchanged. The intended comparison writes down the same table for each protected item before and after the merge, with the fields type, name, idnumber, section number, points, completion setting and visibility, and the two tables must be equal (Owner, Issue #55, 2026-11-12); no check or test implements this yet. The Release 0 backup procedure is written as an untested draft | B1.4, C1.7, App-C item 2 | None yet: needs a Moodle site |
-| Moodle 4.5 is the owner-confirmed build version. The owner stated that a 4.5 backup restores into the same or a newer Moodle version, including 5.3. That 4.5-to-5.3 restore is the owner's statement, not a result. The owner decided to build once on 4.5, test the restore on 4.5 and on 5.3, and not test 5.3 to 4.5, recording the Moodle version, the date and the outcome of each restore (Issue #55, 2026-11-12) | C-03 | None yet: not verified; needs Moodle lab testing on 4.5 and 5.3 |
+| Moodle 5.3 is the owner-confirmed build and test version for Release 0 (Issue #55, 2026-11-14 reply, which replaces the 2026-11-12 decision to build on 4.5). Every restore and the sections-only merge are tested on 5.3 only, recording the Moodle version, the date and the outcome of each restore; the `.mbz` is labelled "built on Moodle 5.3". The owner reports that Moodle documents that a backup restores into the same or a newer version only, so the 5.3 template is expected not to restore on 4.5 (the owner's report: not verified here, and the PRD does not state it). Moodle 4.5 is **not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only)**, not recorded as passed; if PRD C-03 later needs the template on 4.5, it is rebuilt once on 4.5 | C-03 | None yet: not verified; needs Moodle lab testing on 5.3. Moodle 4.5: not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only) |
+| Deviation - C-03: the B8.1 template is built and tested on Moodle 5.3 only; 4.5 not tested, waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only). The B8.2 restore and merge tests have their own decision, made by the guide on 2026-11-16 (A5 on PR #61, recorded there with B8.2, not here); C-03 still applies to the harness (FR-C-08) | C-03 | None (a recorded deviation, not a test) |
 
 ### Not covered here
 
@@ -240,15 +241,60 @@ These are pending and are not claimed by this change:
 
 - **The `.mbz` backup, its SHA-256, the release asset (tag `testdata-b8-1-v1`) and the download
   script.** None of them exists yet.
-- **Moodle 4.5 and 5.3 verification:** the restore, the protected items, the completion criteria,
-  the badge and the sections-only merge (PRD C1.7, App-C item 2). The owner's statement that a 4.5
-  backup restores on 5.3 has not been verified.
-- **The decision record for App-C item 2** (`docs/decisions/NNNN-b8-1-template-course.md`). It is
-  not written; the next free number is taken when you merge, after rebasing (Owner, Issue #55). The
-  owner also asks for a short, text-only results table in it that names the local evidence files;
-  screenshots and logs stay local and are not committed.
+- **Moodle 5.3 verification:** the restore, the protected items, the completion criteria, the badge
+  and the sections-only merge (PRD C1.7, App-C item 2). The B8.1 owner's lab access is ready (in person, the
+  owner's 2026-11-14 reply), but access is not a result and no lab verification result is recorded. **Moodle 4.5 is not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only)**
+  and is not claimed as passed.
+- **The App-C item 2 results.** The decision record `docs/decisions/0009-b8-1-template-course.md`
+  exists and holds the Moodle 4.5 waiver (PR #95); its number is taken again at merge, after
+  rebasing (Owner, Issue #55). The results are not written. The owner asks for a short, text-only
+  results table in the same file that names the local evidence files; screenshots and logs stay
+  local and are not committed.
 - **The open decisions** in the B8.1 README (§9) are pending guide confirmation. This entry does
   not settle them.
+
+## B8.2 sample course (test data), Release 0 foundation
+
+Files: `testdata/b8-2-sample-course/` (`package/course.yaml` in `full` mode, eight Markdown bodies
+under `package/weeks/`, and a `README.md` with the expected structure and open decisions); its
+test `libs/contracts/tests/test_b8_2_dataset.py`; the entry in `testdata/README.md`; the decision record
+`docs/decisions/0010-b8-2-sample-course.md`. B8.2 is a test data set (PRD §B8) with no requirement ID of its
+own, so no row in the table at the top maps to it.
+
+The dataset test checks this one package only. The rules the shared validator lists as "not checked" are
+checked here for B8.2 alone, with test-local helpers: that does not enforce them for any other package, and
+it is not CK-03, CK-09 or any other checker rule.
+
+| What is checked | PRD | Test(s) |
+|---|---|---|
+| The package passes the shared validator (schema, idnumbers unique and not protected, body files exist) | B1.1, B1.2 rule 6 (first half), B1.4 | `test_the_shared_validator_accepts_the_package` |
+| `full` mode, `total_points: 100`; four week sections numbered 4 to 7 (after the B8.1 template's sections 1 to 3; Owner, Issue #55, 2026-11-12) with idnumbers `wk-01` … `wk-04` (kept until the B1 section-idnumber change of Issue #65 is implemented) | B8, B1.1 | `test_course_is_full_mode_with_a_total_of_100` (100 for this package; the merged course's 200 is declared in the README, A6, and no test here uses it), `test_there_are_four_week_sections_numbered_4_to_7` |
+| Twelve unique idnumbers following the week pattern; no default protected idnumber, no protected item and no `.mbz` in the dataset | B1.2 rule 6, B1.4 | `test_idnumbers_are_the_week_pattern_and_never_protected`, `test_no_protected_item_and_no_backup_file_is_in_the_dataset` |
+| The bodies hold no links (a dataset choice so that no third-party material is pulled in; not a PRD rule) | n/a (supports C-07) | `test_bodies_hold_no_links` |
+| One guide Page then one task Assignment per week | B1.2 rule 1 | `test_week_has_one_guide_page_then_one_task_assignment` (4 cases) |
+| Week N unlocks after the week N-1 task, which has `completion: submit`; week 1 is open | B1.2 rule 2 | `test_week_unlocks_when_the_previous_task_is_submitted` (4 cases) |
+| Each task is 25 points and the tasks add up to `total_points` | B1.2 rule 3 | `test_each_task_is_worth_25_and_the_tasks_add_up_to_the_total` |
+| Each task has one valid marking table: markers, header, a valid Markdown separator row, non-empty Criterion and Full marks cells, row points add up to the assignment's points, `Check` names from C3.5; no `command:` checks are used | B1.3, C3.5 | `test_task_has_a_valid_marking_table` (4 cases), `test_the_sample_does_not_use_command_checks`, `test_the_table_check_catches_the_mistakes_it_exists_for`, `test_the_table_check_rejects_empty_cells_and_a_bad_separator` (8 negative cases), `test_the_table_check_accepts_valid_markdown_separators` (2 positive controls) |
+| A task whose table has a `word_count:N` check tells the learner the report needs at least N words (weeks 1 and 4: 150 and 250) | B1.3, C3.5 (`word_count:<min>`) | `test_task_states_the_minimum_word_count` (4 cases), `test_the_word_minimum_check_catches_a_missing_or_wrong_number` (negative control) |
+| Each task body explains the submission format confirmed by the guide on PR #61: `Repository:`, `Demo:` and `Report:` labels, `report.md` or `report.txt` as the report, and which part a check reads, said exactly for the checks that week's own marking table has (weeks 2 to 4 claimed checks their tables lack) | Grading design Q6 (`grading.md` §4.3a); not yet in B1 | `test_task_explains_the_confirmed_submission_format` (4 cases) |
+| The week sections are numbered after the template's last section (3), and do not collide with the protected section (3; confirmed by the guide on PR #61, 2026-11-16, A2; not a contract value) | B1.4 | `test_week_sections_are_numbered_after_the_templates_last_section`, `test_week_numbers_do_not_collide_with_the_protected_section`, `test_the_numbering_checks_would_catch_the_old_numbering_1_to_4` (negative control) |
+| Deviation - C-03: the B8.2 restore and merge tests run on Moodle 5.3 only in Release 0; 4.5 not tested, waived by the guide for Release 0 (extended to the B8.2 restore and merge tests, decided 2026-11-16 as A5 on PR #61; scope B8.2 restore and merge tests only). Reason: the only template for Release 0 is the 5.3-built one. C-03 returns in Release 1, when the template is rebuilt on 4.5. Scope: B8.2 restore and merge tests only; the B8.1 row is in PR #95 | C-03 | None (a recorded deviation, not a test) |
+
+### Not covered here
+
+These need Studio, the checker or a Moodle site and are not claimed by this change:
+
+- **PRD C1.7** "B8.2 sample course: package → `.mbz` (full) → restored on fresh 4.5 and 5.3 → M2
+  checker reports 0 errors", the sections-only merge into B8.1, and the ≤ 15 min loading time.
+  The `.mbz` comes from FR-S-06 and FR-S-07 (Release 2).
+- **PRD C2.7** "no false errors on B8.2": needs the checker (Release 1).
+- **B1.2 rules 4 and 5** (marking workflow, completion tracking): not package fields.
+- Decided by the guide on PR #61 (2026-11-16): A2 (section 3 protected; weeks are sections 4 to 7), A6 (totals 100 and 200), A7 (CK-07 and CK-08 not applied on the package
+  alone, applied on the merged course), A8 (theme, titles, shortname, 25-point split) and A5 (the deviation row above). Still open: A4 (pending the Moodle lab) and how the
+  sections-only variant is made in Release 0. The licence (Apache-2.0) and the submission and check formats (A12, A13) were confirmed by the guide on PR #61; the formats
+  are not yet part of the B1 contract.
+- The section idnumbers `wk-01` … `wk-04` are kept for now. They need updating when the B1
+  section-idnumber contract change (Issue #65) is implemented.
 
 ## B8.5 lecture video test data set, Release 0 foundation
 
