@@ -1,0 +1,6 @@
+[
+  { "start": 0, "end": 95.5, "title": "Why Python" },
+  { "start": 95.5, "end": 301.25, "title": "Download the installer" },
+  { "start": 301.25, "end": 410, "title": "Run the installer" },
+  { "start": 430.75, "end": 742, "title": "Check the installation" }
+]
