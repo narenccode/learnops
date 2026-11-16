@@ -244,3 +244,12 @@ confirmed by the contract reviewers): `source.kind` is required inside `source` 
 | Shapes of `chapters.json`, `slides.json`, `cues.json` | B6.2 | No schema yet |
 | Windows reserved names (such as `CON`, `NUL`, `COM1`) and Unicode normalization in paths: considered, not v1 rules (guide decision) | B6.3 | Not enforced in v1: the store is on Linux or S3 and no consumer compares names; a v2 discussion if a store later needs them |
 | A maximum path length | B6.3 | None specified in v1 (guide decision): paths are built from bounded slugs and the store enforces its own limits |
+
+## App-C item 4: BigBlueButton recording metadata (Release 0 verification record)
+
+`docs/decisions/0006-app-c-4-bbb-recording-metadata.md`. Documentation only: no code, contract or
+test changed. App-C item 4 has no requirement ID of its own; it is a precondition of FR-V-09.
+
+| What is recorded | PRD | Test(s) |
+|---|---|---|
+| The verification record for App-C item 4 exists with its steps, the evidence tables and the comparison with B6.1 and the B6.3 `source` field. Its status is **NOT VERIFIED**: every lab observation (metadata keys and values, the video-format output location, versions) is PENDING until T17 supplies it | App-C 4, FR-V-09, B6.1, B6.3 | None: needs the lab BigBlueButton and a Moodle site (task T17) |
