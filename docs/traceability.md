@@ -253,3 +253,13 @@ test changed. App-C item 4 has no requirement ID of its own; it is a preconditio
 | What is recorded | PRD | Test(s) |
 |---|---|---|
 | The verification record for App-C item 4 exists with its steps, the evidence tables and the comparison with B6.1 and the B6.3 `source` field. Its status is **NOT VERIFIED**: every lab observation (metadata keys and values, the video-format output location, versions) is PENDING until T17 supplies it | App-C 4, FR-V-09, B6.1, B6.3 | None: needs the lab BigBlueButton and a Moodle site (task T17) |
+
+## App-C item 4: BigBlueButton recording metadata and video-format output (T17)
+
+Files: `docs/decisions/0005-app-c-4-bbb-recording-metadata.md` and
+`docs/decisions/evidence/0005-app-c-4-bbb/`. Supports FR-V-09 (Release 3).
+
+**Status: PENDING.** The lab BigBlueButton was not reachable from this session (only placeholder
+configuration exists), so no server, version, recording, metadata or video-format result is
+verified. The record holds a read-only check script (self-tested on synthetic data only) and a
+checklist for the manual run. It does **not** show that App-C 4 or FR-V-09 is met.
