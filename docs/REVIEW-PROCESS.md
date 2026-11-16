@@ -155,6 +155,8 @@ Part 5 shows a real comment with each part explained.
 
 ### Step 7. Ask your peer reviewer to approve (github.com)
 
+**Before you ask, fetch `main` and merge your pull request's base branch** (`git fetch origin`, then `git merge origin/main`; for a stacked pull request, merge its parent branch) and push. A branch that is behind its base runs an old copy of the review workflow, which can send the wrong status email or label. If the merge has conflicts, resolve them and run the tests before pushing. The bot checks the merged result again after the push.
+
 1. On your PR page, look at the right side under **Reviewers**. Several names may be listed (GitHub adds everyone who owns the files you changed). Your peer reviewer is one of them.
 2. Tell your peer in your team chat: "My PR is ready: [link to your PR]". (The bot also reminds them by name if nothing happens for two days.)
 3. They review it (Part 6 shows how) and approve. **One approval from one person is enough.** For design documents and other shared files in `docs/`, **any teammate who is free** can do it; it does not have to be your usual peer. For code inside a module, the approval must come from your peer reviewer (or the guide). The bot's **Next step** line tells you who can approve your PR.

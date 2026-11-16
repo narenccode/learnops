@@ -36,6 +36,12 @@ The dataset is considered complete when:
 - Reference transcripts have been prepared and reviewed.
 - Required speaker consent lines are documented.
 
+## Temporary exception: minimum total duration
+
+The guide has approved, for now, that the current B8.5 dataset work does not need to reach the 1800 second total. This is a temporary exception, not a permanent removal of the requirement, and no other minimum is set in its place. The exception covers only the minimum total duration. Every recording's duration is still measured with `ffprobe` and recorded correctly, the other completion criteria still apply, and the dataset is not complete until they are met.
+
+Approval reference (date and where the guide gave it): PENDING. It was reported by the developer; the guide should add the reference to this section.
+
 ## Consent lines
 
 One line per speaker, written by that speaker. A speaker who gives more than one lecture writes one line. The speaker takes the next free speaker number and writes their own name, the date (YYYY-MM-DD) and the exact statement above, in this form:

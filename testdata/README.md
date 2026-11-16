@@ -78,13 +78,15 @@ complete but the status still says `PENDING`.
 
 | ID | Title | Speaker | Duration (s) | Recording file (lab only) | SHA-256 | Outline | Transcript | Consent | Transcript review |
 |---|---|---|---|---|---|---|---|---|---|
-| lecture-01 | PENDING | PENDING | PENDING | PENDING | PENDING | `b8-5-lecture-videos/lectures/lecture-01/outline.md` | `b8-5-lecture-videos/lectures/lecture-01/transcript.en.txt` | PENDING | pending |
-| lecture-02 | PENDING | PENDING | PENDING | PENDING | PENDING | `b8-5-lecture-videos/lectures/lecture-02/outline.md` | `b8-5-lecture-videos/lectures/lecture-02/transcript.en.txt` | PENDING | pending |
-| lecture-03 | PENDING | PENDING | PENDING | PENDING | PENDING | `b8-5-lecture-videos/lectures/lecture-03/outline.md` | `b8-5-lecture-videos/lectures/lecture-03/transcript.en.txt` | PENDING | pending |
-| lecture-04 | PENDING | PENDING | PENDING | PENDING | PENDING | `b8-5-lecture-videos/lectures/lecture-04/outline.md` | `b8-5-lecture-videos/lectures/lecture-04/transcript.en.txt` | PENDING | pending |
-| lecture-05 | PENDING | PENDING | PENDING | PENDING | PENDING | `b8-5-lecture-videos/lectures/lecture-05/outline.md` | `b8-5-lecture-videos/lectures/lecture-05/transcript.en.txt` | PENDING | pending |
+| lecture-01 | PENDING | PENDING | PENDING | PENDING | e42cca9d2f40fb8993a16d883decdec1441503d06ddaff7c16903f08d7567610 | `b8-5-lecture-videos/lectures/lecture-01/outline.md` | `b8-5-lecture-videos/lectures/lecture-01/transcript.en.txt` | PENDING | pending |
+| lecture-02 | PENDING | PENDING | PENDING | PENDING | d732504886135d93b402facbaecc9195711b5394f4fc53bed3ca0b1fdec77afe | `b8-5-lecture-videos/lectures/lecture-02/outline.md` | `b8-5-lecture-videos/lectures/lecture-02/transcript.en.txt` | PENDING | pending |
+| lecture-03 | PENDING | PENDING | PENDING | PENDING | 2b8cbfd578f8091fc803566a5a0b89875f4e1aed64e53f401cd02ec209689432 | `b8-5-lecture-videos/lectures/lecture-03/outline.md` | `b8-5-lecture-videos/lectures/lecture-03/transcript.en.txt` | PENDING | pending |
+| lecture-04 | PENDING | PENDING | PENDING | PENDING | 285ed527b3aec2172720c807afd42ea625dd3385e933b8585fe3ad5fab757845 | `b8-5-lecture-videos/lectures/lecture-04/outline.md` | `b8-5-lecture-videos/lectures/lecture-04/transcript.en.txt` | PENDING | pending |
+| lecture-05 | PENDING | PENDING | PENDING | PENDING | 8e8a4d57b8a20f85a11187baac1af3cc39304de24c7f2fb5ea19e0c7565789f8 | `b8-5-lecture-videos/lectures/lecture-05/outline.md` | `b8-5-lecture-videos/lectures/lecture-05/transcript.en.txt` | PENDING | pending |
 
 **Total recorded duration:** PENDING
+
+The total is written only when the Status leaves `PENDING`: every Duration (s) must first be measured with `ffprobe` (see below) and the acceptance rule in decision 0004 met. SHA-256 values above were computed on the five stored files; durations, file names, speakers and consent are still `PENDING`.
 
 How the total is calculated: the sum of the `Duration (s)` column, where each duration is the
 recording's length measured with `ffprobe` and rounded **down** to whole seconds (so the total is
