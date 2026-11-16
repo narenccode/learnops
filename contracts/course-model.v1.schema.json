@@ -126,7 +126,7 @@
         "total_points": {
           "type": ["number", "null"],
           "minimum": 0,
-          "description": "Optional course points target. When absent or null, the checker uses the B1 default of 100."
+          "description": "Optional independent course points target. For package sources, when absent or null, CK-03 uses the B1 default of 100. For .mbz sources, this value is populated only when an independent target is supplied to the model builder (for example, the declared total for a merged course); it must never be derived from the computed gradebook total. If no independent target is available, leave it absent or null and CK-03 returns cannot judge. The schema describes this value but does not enforce CK-03."
         }
       }
     },

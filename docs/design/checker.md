@@ -63,7 +63,7 @@ flowchart TD
 
 ### 3.2 Component responsibilities
 
-- **Course-model builder:** Reads a Course Studio package or parses a Moodle backup and produces the B2 normalised course model.
+- **Course-model builder:** Reads a Course Studio package or parses a Moodle backup and produces the B2 normalised course model. For package models, it copies the package's declared `total_points` into `course.total_points`. For an `.mbz` model, including a merged course, it may receive an independently declared target as a separate input and writes that value to `course.total_points`; it never derives the target from the gradebook items. A merged course remains `source.kind = mbz`.
 - **Rule engine:** Applies the defined validation rules to the course model. Each finding includes a rule ID, severity, message and fix hint.
 - **Availability evaluator:** Evaluates Moodle availability and completion rules and simulates whether a learner can reach each section and activity.
 - **Course-model diff:** Compares two course models for structural, rule and point differences.
@@ -71,6 +71,18 @@ flowchart TD
 - **Mentor web interface:** Accepts supported course inputs and displays findings grouped by severity, with links to the affected item and suggested fixes.
 - **Role-test runner:** Uses Playwright, fixed test accounts and YAML expectations to test permitted and prohibited access.
 - **Integration harness:** Coordinates sample-course generation, checking, restoration, role tests and available module smoke tests.
+
+#### CK-03: independent grading target
+
+CK-03 compares the sum of graded activity points with an independent course target. It must not use the computed gradebook total as its own target.
+
+- **Package model (`source.kind = package`):** use the package's declared `total_points`. If it is absent or null, use the B1 default of 100.
+- **Moodle backup model (`source.kind = mbz`):** use `course.total_points` only when the model builder was supplied an independent target. This includes merged courses; the merged target is supplied separately to the builder and written into `course.total_points`. The merged course remains `source.kind = mbz`.
+- **No independent target:** if an `.mbz` model has no independently supplied target, `course.total_points` remains absent or null and CK-03 returns `cannot judge`. Do not apply the package default of 100 and do not infer a target from gradebook items.
+- **Calculation:** sum `grade_item.max_grade` across graded activities and exclude ungraded activities. Compare that sum with the independent target. A matching sum is `pass`; a mismatch is `finding`.
+- **Report:** include the target, calculated sum, difference and the grade items counted.
+
+For a merged course, the final project is part of the course and counts in the graded sum. The intended merged total must be declared independently before the test when the merged package adds graded points. The builder's exact API/input mechanism remains an implementation detail to be specified when FR-C-01 is designed; this document does not invent a CLI flag or another source for the target.
 
 ### 3.3 Execution boundaries
 
