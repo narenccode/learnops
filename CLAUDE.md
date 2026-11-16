@@ -87,10 +87,11 @@ introduce another language, framework or database. Ask the guide first if you th
 2. Tests added or updated; `/preflight` passes (lint, types, tests, contract validation, secret scan).
 3. `docs/traceability.md` updated for any added or changed requirement (PRD §E4).
 4. README / `.env.example` updated if behaviour or configuration changed.
-5. Reviewed and approved by a member of **another** module; the reviewer runs the tests.
+5. Reviewed and approved by one teammate (code inside a module: the peer from another module); the reviewer runs the tests.
 6. No contract changed, or changed through `/contract-change`.
 7. The module's design document is `Approved`, or the work is Release 0 foundation work the guide has allowed.
-8. A pull request changes at most **800 lines**. Exception: a **contract PR** (it touches `contracts/`) cannot be split (PRD B.0 rule 3), so it may exceed 800 lines when its description has a **file map** (each file, its length in lines, and what a reviewer checks) and states the reason. Draft PRs are not checked.
+8. Aim for at most **800 changed lines**; the bot advises when a PR is larger. A **contract PR** (it touches `contracts/`) may be larger when its description has a **file map** (each file, its length in lines, and what a reviewer checks). Draft PRs are not checked.
+9. A PR is built on `main`, never on another unmerged PR. At most two of your PRs are ready for review at once.
 
 ## 8. How Claude Code should work in this repo
 
