@@ -3,7 +3,7 @@
 Files here are **shared contracts** between modules (PRD Part B). They are frozen after Release 0.
 
 - Never edit a schema or example as part of other work.
-- Every change goes through `/contract-change` (PRD §B.0): additive and optional only after Release 0; schema + examples + PRD text + every affected module's tests in **one** pull request; approved by every affected owner and the guide.
+- Every change goes through `/contract-change` (PRD §B.0): additive and optional only after Release 0; schema + examples + PRD text + every affected module's tests in **one** pull request; until Release 0 is frozen one owner of an affected module approves it and the guide approves the PRD text, after the freeze the guide also approves the contract.
 - A breaking change needs a new version file (`*.v2.schema.json`), never an edit to `v1`.
 - Every schema has at least one valid example in `examples/`, and CI validates all examples.
 

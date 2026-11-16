@@ -174,7 +174,7 @@ Read in this order. Make a list of anything unclear and send it to your guide (Â
 - **The review bot.** Open a **draft** PR while you work, click **Ready for review** when done, read the bot's advice, ask one teammate to review, and turn on auto-merge. Details: `docs/REVIEW-PROCESS.md`.
 
 ### Contracts (PRD Part B)
-- Until Release 0 is frozen, each owner creates their contract files in `contracts/` through a normal pull request that **all four of you approve**. Claude Code will ask permission before it touches `contracts/`; approve it when that is really your intention.
+- Until Release 0 is frozen, each owner creates their contract files in `contracts/` through a normal pull request that one owner of an affected module approves (the guide approves the PRD text). Claude Code will ask permission before it touches `contracts/`; approve it when that is really your intention.
 - After the freeze, contracts change only through `/contract-change` (additive and optional only).
 - Never change a contract as a side effect of other work.
 
