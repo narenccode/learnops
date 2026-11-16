@@ -104,47 +104,11 @@ raised" is not "everything is checked": read the limits below.
     still exhaust them.
 - YAML is parsed exactly as PyYAML's safe loader does, so an unquoted date stays a date and B1
   rejects it.
-- Used by `validate_examples.py`, which finds the schemas and their examples (next section).
-
-## Contract examples: `validate_examples.py` (PRD B.0 rule 1, E1)
-
-A separate, repository-wide check that every contract example validates against its schema. CI
-runs it on every pull request:
-
-```
-python libs/contracts/validate_examples.py [--check | --dry-run] [--contracts-dir PATH]
-```
-
-- **Pairing.** `contracts/<name>.v<N>.schema.json` has two kinds of example, alone or together:
-  - *folder:* the top-level `.json`, `.yaml` and `.yml` files of `contracts/examples/<name>.v<N>/`
-    (for example `course-package.v1/course.yaml`);
-  - *flat:* `contracts/examples/<name>.v<N>.<suffix>.json` (or `.yaml`, `.yml`), with a one-word
-    suffix such as `moodle-ws.v1.functions.json`.
-
-  Matching is exact, so `thing.v1` never takes the examples of `thing.v10`. **Extensions are
-  matched in any case in both layouts** (`A.JSON`); the stem and the suffix word must be lower
-  case. Folder examples are listed first, then flat ones, each sorted by name. Every top-level
-  file in a contract's folder is validated against that folder's schema, with no special cases. Files in subfolders (B1's
-  `weeks/*.md`) are supporting files and are ignored (`validate_package` checks them).
-- **Problems found here**, each with a `next:` hint: `no_schemas` (no `*.schema.json` file at all)
-  and `missing_example` (a schema with no example in either layout). Everything inside a schema or
-  an example is reported by the engine (see above), including `unresolvable_reference`.
-- **Links.** A symbolic link is followed whatever it points at, even a file outside `contracts/`,
-  and the example is reported under the link's own path. Nothing is written, but the target's
-  parse and schema errors (each cut to 300 characters) reach the CI log. `validate_package` (B1)
-  refuses links that leave its package folder; this tool does not.
-- The summary counts every example found, so passed, failed and not validated (the examples of an
-  unusable schema) always add up to it.
-- Not checked yet: `*.schema.json` files not named `<name>.v<N>.schema.json` (they are skipped),
-  examples that no schema matches (orphans such as `moodle-ws.v1.json` are skipped and the run can
-  still exit 0), other file types next to the examples, duplicate keys, and `NaN`, `Infinity` and
-  `-Infinity`. On #68 the guide set orphans, unsupported files, duplicate keys and strict JSON as
-  a later pull request: they are not in this stack.
-- Exit codes: `0` when every example passes, `1` when any problem is found, `2` for a usage error
-  or a missing contracts folder. The tool only reads files: `--check` (the default) and
-  `--dry-run` do the same, and there is nothing to undo.
-- It validates structure only. Course-level rules (B1.2) belong to `validate_package`, and CK
-  rules belong to the checker.
+- **Not a tool yet.** The engine is the first of three pull requests that split PR #68 so that each
+  stays within the 800-line limit. `validate_examples.py` (finding schemas and examples, folder and
+  flat layouts, the report and the command line) follows, then misnamed-schema reporting. This
+  differs from the guidance that the first pull request is a complete tool: the engine is tested
+  on its own, and nothing runs it until the next pull request.
 
 ## Configuration
 
