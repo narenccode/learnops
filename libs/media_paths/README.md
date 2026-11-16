@@ -63,10 +63,10 @@ string raises `TypeError`. A template is rejected with a `ValueError` that names
   is not a safe relative path (see Validation below).
 
 **Custom templates can collide.** Nothing checks the two templates against each other, so the
-library does **not** prevent a lesson and a live class from getting the same folder (no rule on
-this has been decided). The defaults cannot collide (a lesson's module segment starts with two
-digits, a live-class segment with `live-`), but custom templates can, in either direction. Keep
-the two types apart yourself.
+library does **not** prevent a lesson and a live class from getting the same folder (decided for v1:
+documented limit, no cross-check; revisit after Release 0). The defaults cannot collide (a lesson's
+module segment starts with two digits, a live-class segment with `live-`), but custom templates can,
+in either direction. Keep the two types apart yourself.
 
 - Custom lesson template `courses/{course_slug}/{module_slug}/{lesson_slug}/`, `module_slug` =
   `live-batch-01`, `lesson_slug` = `01-recap`: `courses/python/live-batch-01/01-recap/`, the
