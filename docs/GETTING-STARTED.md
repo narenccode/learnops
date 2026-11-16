@@ -137,8 +137,8 @@ git push -u origin <module>/design-doc-skeleton
 
 Git prints a link. Open it, click the small arrow next to **Create pull request**, choose **Create draft pull request**, and fill in the checklist. Keep it a draft while you fill in the document (the review bot skips drafts). When it is ready:
 1. click **Ready for review** and wait for the **checks** to turn green;
-2. do what the bot's **Next step** line says (usually: ask your **peer reviewer** to review);
-3. when the label is `ready-to-merge`, click **Squash and merge**.
+2. read the bot's advice, then pick one reviewer (usually your **peer reviewer**);
+3. click **Enable auto-merge**: the PR merges by itself once it is approved and the checks pass.
 
 You cannot push to `main` directly: it is protected, on purpose.
 
@@ -171,7 +171,7 @@ Read in this order. Make a list of anything unclear and send it to your guide (Â
 - Commit messages start with the requirement ID when there is one, e.g. `FR-S-03: validate marking table`.
 - Every pull request: requirement IDs listed, `/preflight` passing, tests added, `docs/traceability.md` updated, your peer reviewer approved. The reviewer **runs the tests**, not just reads the code.
 - Merge with **Squash and merge** only.
-- **The review bot.** Open a **draft** PR while you work, click **Ready for review** when done, do what the bot's **Next step** line says, get one peer's approval, and merge when the label is `ready-to-merge`. Read [docs/REVIEW-PROCESS.md](REVIEW-PROCESS.md) once: it has the steps, the labels, and prompts for your Claude Code. Keep GitHub email notifications on for this repository.
+- **The review bot.** Open a **draft** PR while you work, click **Ready for review** when done, read the bot's advice, ask one teammate to review, and turn on auto-merge. Details: `docs/REVIEW-PROCESS.md`.
 
 ### Contracts (PRD Part B)
 - Until Release 0 is frozen, each owner creates their contract files in `contracts/` through a normal pull request that **all four of you approve**. Claude Code will ask permission before it touches `contracts/`; approve it when that is really your intention.
