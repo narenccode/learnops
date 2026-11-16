@@ -277,3 +277,25 @@ confirmed by the contract reviewers): `source.kind` is required inside `source` 
 | Shapes of `chapters.json`, `slides.json`, `cues.json` | B6.2 | No schema yet |
 | Windows reserved names (such as `CON`, `NUL`, `COM1`) and Unicode normalization in paths: considered, not v1 rules (guide decision) | B6.3 | Not enforced in v1: the store is on Linux or S3 and no consumer compares names; a v2 discussion if a store later needs them |
 | A maximum path length | B6.3 | None specified in v1 (guide decision): paths are built from bounded slugs and the store enforces its own limits |
+
+## G-6 caption WER evaluation preparation, Release 0 foundation
+
+Files: `libs/speech_eval/` (WER arithmetic, input validation, report, CLI),
+`libs/speech_eval/tests/test_speech_eval.py`, `docs/evaluation/g6-wer-procedure.md`,
+`docs/evaluation/g6-wer-report-template.md`. Requirements: PRD G-6, §C4.7 (third box), App-C 7.
+
+**Status: PENDING.** The official G-6 evaluation has **not** been run. The B8.5 set is PENDING,
+the normalisation rules and the WER target are not decided, and ADR 0002 (T8) is not approved.
+
+| Rule | Source | Test(s) |
+|---|---|---|
+| WER by word edit distance (S, D, I counts); pooled WER is total errors over total reference words | ADR 0002 section 7.3 (proposed) | `test_substitutions_deletions_insertions`, `test_pooled_wer_is_not_the_mean_of_lecture_wers` |
+| Inputs refused: URLs, absolute, `..` or backslash paths, media files, placeholders, empty or non-UTF-8 files, bad ids | B8.5 README, C-08, decision 0004 | `test_bad_paths_are_refused`, `test_placeholder_and_empty_files_are_refused` |
+| An `official` run is refused unless the B8.5 status is COMPLETE, a normaliser is approved and every run detail and approval is filled | B8.5 README, App-C 7 | `test_official_mode_is_refused_today`, `test_official_mode_needs_run_details_and_approvals` |
+| Reports say synthetic or official, and keep target and acceptance PENDING | G-6, App-C 7 | `test_a_valid_synthetic_run_loads_and_reports` |
+
+### Not verified
+
+- Any speech model's accuracy; the synthetic tests use made-up text only.
+- That an approval cited in an official run exists (a reviewer checks it).
+- Text normalisation, confidence intervals, timing accuracy and speed: not decided, not built.
