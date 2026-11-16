@@ -95,6 +95,40 @@ CONFIG_PROTECTED_NOT_TEXT = (
     "'capstone-gate'."
 )
 
+# --- contract examples (example_check.py, PRD B.0 rule 1, E1) ------------------------------
+
+EX_PLACE_DOCUMENT = "(document)"
+EX_SCHEMA_VIOLATION = "{where}: {detail} [{keyword}]"
+EX_SCHEMA_VIOLATION_HINT = (
+    "Change the example so that it matches the schema. If the schema is wrong instead, change "
+    "it only through /contract-change (PRD B.0)."
+)
+EX_UNREADABLE_SCHEMA = "The schema could not be read: {reason}."
+EX_UNREADABLE_SCHEMA_HINT = "Save the schema as UTF-8 JSON and fix the syntax error."
+EX_INVALID_SCHEMA = "The file is not a valid JSON Schema: {reason}."
+EX_INVALID_SCHEMA_HINT = "Fix the schema so that it passes its meta-schema."
+EX_UNRESOLVABLE_REFERENCE = (
+    "The schema has a reference that cannot be resolved: {reason}."
+)
+EX_UNRESOLVABLE_REFERENCE_HINT = (
+    "Fix the $ref so that it points at a definition inside this schema (for example "
+    "'#/$defs/name'). References to other files are not loaded by this validator."
+)
+EX_SCHEMA_KEYWORD_NOT_TEXT = (
+    "the `$schema` keyword must be a string (a meta-schema URI)"
+)
+EX_NESTED_TOO_DEEP = "it is nested too deeply"
+EX_TOO_DEEP_TO_VALIDATE = (
+    "it is nested too deeply for the schema to check, or the schema's references loop"
+)
+EX_NOT_VALIDATED = "Not validated, because its schema could not be loaded."
+EX_NOT_VALIDATED_HINT = "Fix the schema problem reported above, then validate again."
+EX_UNREADABLE_EXAMPLE = "The example could not be read: {reason}."
+EX_UNREADABLE_EXAMPLE_HINT = (
+    "Fix the problem described above: save the example as UTF-8 and use JSON or YAML syntax "
+    "(the reason gives a line and column when the parser reports one)."
+)
+
 # --- rules that did not run -----------------------------------------------------------------
 
 NOT_CHECKED_HINT = "Check this by hand until the validator supports it."
