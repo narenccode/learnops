@@ -19,7 +19,6 @@
 /libs/model_interface/  @Harshithamanjunatha @vnaags @narenccode
 /libs/media_paths/      @vnaags @Harshithamanjunatha @narenccode
 /libs/contracts/        @Akshita21-09 @shraddha0103 @Harshithamanjunatha @vnaags @narenccode
-/contracts/             @Akshita21-09 @shraddha0103 @Harshithamanjunatha @vnaags @narenccode
 /tests/                 @shraddha0103 @Akshita21-09 @Harshithamanjunatha @vnaags @narenccode
 /testdata/              @Akshita21-09 @shraddha0103 @Harshithamanjunatha @vnaags @narenccode
 /docs/                  @Akshita21-09 @shraddha0103 @Harshithamanjunatha @vnaags @narenccode
@@ -35,3 +34,6 @@
 /CLAUDE.md              @narenccode
 /.claude/               @narenccode
 /.github/               @narenccode
+# After the Release 0 freeze a contract changes only additively, with the guide's approval (PRD B.0 rules 2-3).
+/contracts/             @narenccode
+/contracts/CLAUDE.md    @Akshita21-09 @shraddha0103 @Harshithamanjunatha @vnaags @narenccode
