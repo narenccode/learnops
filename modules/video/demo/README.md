@@ -8,8 +8,7 @@ checkout) and not B8.5 evidence.
 ## Prerequisites
 
 - Python 3.12 and `jsonschema` (`pip install -r requirements-dev.txt`).
-- A checkout that contains `libs/media_paths/paths.py` (path templates, PR #85). Until #85 is
-  merged this is the `video/b6-path-templates` branch or a branch built on it.
+- Requires `libs/media_paths/paths.py`, on `main` since PR #85.
 
 ## Run (one command, from the repository root)
 
@@ -61,5 +60,5 @@ All expected outcomes observed.
   intake (schema: "this is not an enum"), and App-C 4 (FR-V-09) is NOT VERIFIED: no lab run
   (see PR #96). The demo invents neither a value nor recording metadata.
 - Nothing here reads or writes `lesson.json`; no pipeline writes one yet (FR-V-08, Release 3).
-- Part B needs PR #85 (open). The demo changes no library code and no contract.
+- Part B uses the path templates merged in PR #85. The demo changes no library code and no contract.
 - The base URL is the placeholder host from `.env.example`; full URLs are not printed.
