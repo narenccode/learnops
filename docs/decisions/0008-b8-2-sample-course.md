@@ -1,0 +1,6 @@
+# B8.2 sample course: the guide's decisions of 2026-11-16 (PR #61)
+
+**Status:** decided by the guide on PR #61 (2026-11-16, answers A2 to A8). **Number:** 0008 was free on 2026-11-16 (0001 to 0007 are claimed); take the next free number at merge.
+
+- **A5, the deviation (C-03).** The B8.2 restore and merge tests run on Moodle 5.3 only in Release 0. Moodle 4.5: not tested; waived by the guide for Release 0 (extended to the B8.2 restore and merge tests, decided 2026-11-16 as A5 on PR #61; scope B8.2 restore and merge tests only). Reason: the only template for Release 0 is the 5.3-built one. C-03 returns in Release 1, when the template is rebuilt on 4.5. This extends the B8.1 deviation recorded in PR #95, which stays B8.1 only.
+- **Also decided.** A2: section 3 is the protected section and B8.2 uses sections 4 to 7. A6: B8.2 alone declares 100; the restored merged course declares 200, supplied to the builder and never derived from the activities. A7: CK-07 and CK-08 are not applied on the package alone (not a pass) and apply on the restored merged course. A8: theme, titles, shortname `SAMPLE-DOC-101`, the 25-point split, no start dates, H5P or external URLs and no package or subfolder change are confirmed. Release 0 test data needs no design document: its README (`testdata/b8-2-sample-course/README.md`, section 4) and this record are the record.
