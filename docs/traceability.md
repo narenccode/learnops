@@ -37,6 +37,7 @@ generates contract files yet. What is not checked yet is listed in `libs/contrac
 | The tests on the real repository list the examples of both layouts by hand, so a contract with flat examples only (#25, #27) does not break them | B.0 rule 1 | `test_both_example_layouts_work_alone_and_together`, `test_real_repository_examples_all_pass`, `test_script_runs_as_ci_runs_it` |
 | One extension rule in both layouts (any case; the stem and the suffix word stay lower case), and a missing-example message that names `.json`, `.yaml` and `.yml` | B.0 rule 1, UI-05 | `test_both_example_layouts_work_alone_and_together` (case `any-case-extension`), `test_schema_without_an_example_in_either_layout_is_an_error` |
 | A link to a file outside `contracts/` is followed and reported under the link's own path (documented, not refused) | EXT-09 | `test_a_link_to_a_file_outside_contracts_is_followed_and_reported_under_the_link` |
+| A schema file not named `<name>.v<N>.schema.json` is reported, never skipped, so a repository with only misnamed schemas cannot pass | B.0 rule 1 | `test_misnamed_schema_is_reported_with_its_path`, `test_misnamed_schema_is_not_treated_as_valid_because_a_folder_matches`, `test_only_misnamed_schemas_never_succeed` |
 
 ## B1 course package contract (v1), Release 0 foundation
 
