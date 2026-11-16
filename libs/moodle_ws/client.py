@@ -1,10 +1,12 @@
 """The one way LearnOps calls Moodle web services (PRD B4, C-02).
 
 call() enforces the allow-list and the draft rule before the transport is touched, so a refused
-call never reaches Moodle. This is a second guard behind the restricted external service. A grade
-write is never sent by call(): the supported path is grade_write.write_draft_grade, and a sealed,
-single-use WriteReceipt stops a send that skips its checks by mistake. Python has no private names,
-so the receipt cannot stop code that deliberately imports them (see WriteReceipt).
+call never reaches Moodle. This is a second guard behind the restricted external service.
+
+No function or method in this module sends mod_assign_save_grade: _send refuses it on every path.
+There is nothing to import that skips the write checks (the guide on PR #76, 15 Nov: close the
+receipt bypass in code). The guarded write that runs every check and the read-back is added in a
+later pull request.
 """
 
 from __future__ import annotations
@@ -133,8 +135,8 @@ def is_explicit_attempt(value: object) -> bool:
 
 def _check_grade_write(function: str, params: dict[str, Any]) -> None:
     """B4 R2 and R9, the part the client can check alone: an explicit attempt and a plain,
-    non-negative number as the grade. It runs on every path, including a receipt's. The maximum
-    needs the assignment, so grade_write checks it before issuing the receipt."""
+    non-negative number as the grade. The maximum needs the assignment, so it is checked by the
+    guarded write, not here."""
     if function != SAVE_GRADE:
         return
     if not is_explicit_attempt(params.get(ATTEMPT_PARAMETER)):
@@ -142,35 +144,6 @@ def _check_grade_write(function: str, params: dict[str, Any]) -> None:
     grade = parse_grade(params.get(GRADE_PARAMETER))
     if grade is None or grade < 0:
         raise GradeWriteNotAllowed(messages.GRADE_NOT_A_NUMBER)
-
-
-_RECEIPT_SEAL: Final = object()
-
-
-class WriteReceipt:
-    """Proof that grade_write.write_draft_grade ran every pre-write check (R2, R3, R9 and the
-    marking-workflow and state checks) for exactly these parameters, on this client.
-
-    It holds its own copy of the checked parameters, so what was checked is what is sent, and it
-    works once. It cannot be built without the module's seal. This stops a grade write that skips
-    the checks by mistake; it is not a boundary against code that deliberately imports private
-    names (a test checks no module outside this library does)."""
-
-    __slots__ = ("_client", "_params", "_used")
-
-    def __init__(
-        self, seal: object, client: MoodleClient, params: dict[str, Any]
-    ) -> None:
-        if seal is not _RECEIPT_SEAL:
-            raise GradeWriteNotAllowed(messages.WRITE_NEEDS_HELPER)
-        self._client = client
-        self._params = params
-        self._used = False
-
-
-def _issue_receipt(client: MoodleClient, checked: Mapping[str, Any]) -> WriteReceipt:
-    """For grade_write only, after all its checks have passed."""
-    return WriteReceipt(_RECEIPT_SEAL, client, _copy_params(checked))
 
 
 def _public_error(error: MoodleError, settings: SiteSettings) -> MoodleError:
@@ -205,29 +178,18 @@ class MoodleClient:
         mod_assign_save_grade is checked like any call and then refused: a grade write is sent
         only through grade_write.write_draft_grade, which runs the checks call() cannot run alone
         (maximum grade, locked state, marking workflow) and reads the result back."""
-        return self._send(function, _copy_params(params), None)
+        return self._send(function, _copy_params(params))
 
-    def _send_checked_write(self, receipt: WriteReceipt) -> Any:
-        """Send the grade write a receipt allows. For grade_write only."""
-        if (
-            type(receipt) is not WriteReceipt
-            or receipt._client is not self
-            or receipt._used
-        ):
-            raise GradeWriteNotAllowed(messages.WRITE_NEEDS_HELPER)
-        receipt._used = True  # before sending: a write is never sent twice (R8, R11)
-        return self._send(SAVE_GRADE, receipt._params, receipt)
-
-    def _send(
-        self, function: str, values: dict[str, Any], receipt: WriteReceipt | None
-    ) -> Any:
+    def _send(self, function: str, values: dict[str, Any]) -> Any:
         settings = self._settings
         if function in _ALWAYS_REFUSED:
             raise FunctionNotAllowed(messages.FUNCTION_NOT_ALLOWED)
         name = self._allowlist.resolve(function, settings.moodle_version)
         _check_draft_rule(function, values)
         _check_grade_write(function, values)
-        if function == SAVE_GRADE and receipt is None:
+        # The guards above still run first, so a direct call reports its specific reason. Then a
+        # grade write is refused on every path: no caller can get past this line with one.
+        if function == SAVE_GRADE:
             raise GradeWriteNotAllowed(messages.WRITE_NEEDS_HELPER)
         try:
             return self._transport.call(settings, name, values)
