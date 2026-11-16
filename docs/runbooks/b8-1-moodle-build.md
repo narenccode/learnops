@@ -7,9 +7,9 @@
 > answer on Issue #61, 2026-11-11) into steps
 > for a person with lab access. If this document and the README disagree, the README, the PRD and the
 > guide's answers on Issues #55 and #65 (and, for the licence, Issue #61) win. **The owner's answers are decisions, not test results.** Release 0
-> builds and tests on **Moodle 5.3 only** (Owner, the 11-14 reply). Moodle 4.5 is not tested; waived by the guide for Release 0 (2026-11-14); it is
+> builds and tests on **Moodle 5.3 only** (Owner, the 11-14 reply). Moodle 4.5 is not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only); it is
 > never recorded as passed. A statement such as "a 5.3 backup does not restore on 4.5" is Moodle's documented
-> behaviour as the owner reports it; it is not tested here.
+> behaviour as the owner reports it; it is not tested here. Scope: B8.1 only. This does not cover B8.2 or the harness: C-03 still applies to the B8.2 generated backups and to FR-C-08, and the B8.2 extension belongs with B8.2 on PR #61, not here.
 
 ## How to read this document
 
@@ -23,7 +23,7 @@
 
 Rules that apply to every step (CLAUDE.md §2):
 - Only Moodle's own Backup and Restore, and the browser. Never change Moodle code, plugins, themes or its database (rule 1).
-- The project must work on Moodle 4.5 **and** 5.3 (rule 2; PRD C-03), but for Release 0 the template is built and every restore and merge is tested on **5.3 only** (Owner, the 11-14 reply; PRD §E2, C1.7). Moodle 4.5 is not tested; waived by the guide for Release 0 (2026-11-14), and is not recorded as passed. A 5.3 backup does not restore on 4.5, so do not try it.
+- The project must work on Moodle 4.5 **and** 5.3 (rule 2; PRD C-03), but for Release 0 the template is built and every restore and merge is tested on **5.3 only** (Owner, the 11-14 reply; PRD §E2, C1.7). Moodle 4.5 is not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only), and is not recorded as passed. A 5.3 backup does not restore on 4.5, so do not try it.
 - No secrets in evidence. Hide tokens, passwords and cookies in screenshots and logs (rule 3).
 - Test data only. No real learner data or real course content (rule 4).
 
@@ -40,7 +40,7 @@ Items the owner marked "proposal" stay proposals. **Do not treat a Proposal as a
 | # | Decision | Status | Steps |
 |---|---|---|---|
 | P1 | Build the template on **Moodle 5.3** (the 11-14 reply replaces the 2026-11-12 decision to build on 4.5). Course full name `Template course`; short name `template`; format Topics (Custom sections). The exact 5.3 point release is read from the site (LAB) | Owner for 5.3 (the 11-14 reply); **Proposal** for the names and format | 0.3, 1.3, 1.5 |
-| P2 | Build the template once, on 5.3, and run every restore and the sections-only merge test on 5.3 only. Moodle 4.5 is **not tested; waived by the guide for Release 0 (2026-11-14)**. Moodle documents that a backup restores into the same or a newer version only, so a template built on 5.3 will **not** restore on 4.5. Label the `.mbz` "built on Moodle 5.3" in the README and in the release. If the project later needs the template on 4.5 (PRD C-03), it is rebuilt once on 4.5: the known cost of this decision (see P29) | Owner (the 11-14 reply, which replaces 2026-11-12 and the 14:43 reply on this point). The 4.5 waiver is not a pass | 1.5, 1.6, Stage 9 |
+| P2 | Build the template once, on 5.3, and run every restore and the sections-only merge test on 5.3 only. Moodle 4.5 is **not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only)**. Moodle documents that a backup restores into the same or a newer version only, so a template built on 5.3 will **not** restore on 4.5. Label the `.mbz` "built on Moodle 5.3" in the README and in the release. If the project later needs the template on 4.5 (PRD C-03), it is rebuilt once on 4.5: the known cost of this decision (see P29) | Owner (the 11-14 reply, which replaces 2026-11-12 and the 14:43 reply on this point). The 4.5 waiver is not a pass | 1.5, 1.6, Stage 9 |
 | P3 | Section 1 `Orientation`: Page `Welcome` (`tpl-welcome`). Section 2 `Sample week`: Page `Sample guide` (`tpl-sample-guide`) and Assignment `Sample task` (`tpl-sample-task`). Section 3 `Final project`: the two protected items. The `tpl-` prefix keeps these apart from generated `wk-` ids | Owner (2026-11-12) for the titles, activities and idnumbers. The README and `testdata/README.md` record them as Owner (PR #57, merged 2026-11-13). The number 3 for the protected section is a Proposal (P4b) | Stage 2 |
 | P4 | Sections carry **no** `idnumber`; Moodle matches sections by number. The protected section is found by its number (PRD §B1.4). Issue #65 is decided and does not affect B8.1 | Owner (Issue #55 and #65, 2026-11-12) | 2.7 |
 | P4b | The protected section number `protected_section` = 3, kept configurable (PRD §B1.4 gives no default) | **Proposal** (Owner, 2026-11-07). The title `Final project` is Owner (P3) | 2.6, 3.1, 4.1, 8.2, 8.3, 9.7 |
@@ -65,7 +65,7 @@ Items the owner marked "proposal" stay proposals. **Do not treat a Proposal as a
 | P22 | Test sites: until the harness approach to fresh sites is decided, use the existing 5.3 lab site. Restore into a new course each time, record the result, and delete the course by the rule in P25a. The site and the account are ready (P19) | Owner (the 14:43 reply; deletion: the 09:36 reply, P25a; site: the 11-14 reply) | 0.4, Stage 9 |
 | P25a | Cleanup rule. Every course created for a test is deleted after its result is recorded and checked. The merge-test course follows the merge-test sequence in Stage 9. | Owner (the 09:36 reply). Whether the sections-only copy and failed builds count as courses created for a test: PENDING (P25) | 9.8, 9.10, 12.1 |
 | P25b | After deleting a test course, look at whether it stays in Moodle's recycle bin on the lab site, and record what you see. Moodle's documentation says deleted items are kept for a set period (seven days by default) and are then removed automatically; the owner has not checked this on the lab sites. **Do not change the recycle-bin settings**: site settings belong to the owner | Owner (the 09:36 reply). What the lab sites actually do: LAB | 9.11, 12.1 |
-| P29 | Version scope: build the template on 5.3 and run every restore and the sections-only merge on **5.3 only**. Moodle 4.5 is **not tested; waived by the guide for Release 0 (2026-11-14)**: record this waiver, with its date and its cost, in the decision record and in README §8, and never as a pass. A 5.3 backup does not restore on 4.5 (Moodle documents that a backup restores into the same or a newer version only). If PRD C-03 later needs the template on 4.5, rebuild it once on 4.5 and test with the same steps. For each restore, record the Moodle version, the date and the outcome | Owner (the 11-14 reply, which replaces the 14:43 reply on this point) | 1.5, 1.6, Stage 9 |
+| P29 | Version scope: build the template on 5.3 and run every restore and the sections-only merge on **5.3 only**. Moodle 4.5 is **not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only)**: record this waiver, with its date and its cost, in the decision record and in README §8, and never as a pass. A 5.3 backup does not restore on 4.5 (Moodle documents that a backup restores into the same or a newer version only). If PRD C-03 later needs the template on 4.5, rebuild it once on 4.5 and test with the same steps. For each restore, record the Moodle version, the date and the outcome | Owner (the 11-14 reply, which replaces the 14:43 reply on this point) | 1.5, 1.6, Stage 9 |
 
 ### Still PENDING
 
@@ -111,7 +111,7 @@ outcomes come from what you saw, never from an estimate.
 
 The owner decided (the 11-14 reply, which replaces the earlier "build on 4.5" decision): build the template
 on **Moodle 5.3** and run every restore and the sections-only merge test on **5.3 only** (P29). Moodle 4.5
-is not tested; waived by the guide for Release 0 (2026-11-14). "Runbook procedure" below means this document's own plan, not an owner decision.
+is not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only). "Runbook procedure" below means this document's own plan, not an owner decision.
 
 | Stage | Where it runs | Status |
 |---|---|---|
@@ -120,7 +120,7 @@ is not tested; waived by the guide for Release 0 (2026-11-14). "Runbook procedur
 | 2 to 6. Sections, activities, completion, badge | On the 5.3 site | Titles and idnumbers: Owner. Settings: Proposal, **PENDING** or LAB, as marked per step |
 | 7. Backup | Once, on 5.3, giving one build record, labelled "built on Moodle 5.3" | Owner (build once on 5.3, P29) |
 | 8. Inspection | On the 5.3 backup, and on the sections-only file once it exists | Runbook procedure |
-| 9. Restore and merge | On 5.3 only, always from the same 5.3 backup, on the existing 5.3 lab site: a new course each time, deleted by the rule in P25a. Moodle 4.5: not tested; waived by the guide for Release 0 (2026-11-14) (README §8 shows the waiver in the 4.5 column) | Owner for the site and the 5.3-only scope (P22, P29); the steps are a runbook procedure; the sections-only contents are **PENDING (P30)** |
+| 9. Restore and merge | On 5.3 only, always from the same 5.3 backup, on the existing 5.3 lab site: a new course each time, deleted by the rule in P25a. Moodle 4.5: not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only) (README §8 shows the waiver in the 4.5 column) | Owner for the site and the 5.3-only scope (P22, P29); the steps are a runbook procedure; the sections-only contents are **PENDING (P30)** |
 | 10. Metadata, release and hash | Once, for the released file; results recorded for 5.3 | Runbook procedure; names are Proposals |
 | 11. Failure recovery, 12. Cleanup | As needed | Courses created for a test are deleted by the rule in P25a (Owner, the 09:36 reply); the rest of the cleanup scope is **PENDING (P25)** |
 
@@ -132,7 +132,7 @@ is not tested; waived by the guide for Release 0 (2026-11-14). "Runbook procedur
 |---|---|---|---|
 | 0.1 | Use the lab access the guide has prepared: a lab PC and the browser, your own Manager account on the 5.3 site (P19, P13b). The guide shows the address and gives the password in person | Owner, Issue #55 (the 11-14 reply): the B8.1 owner's access is ready, in person. Access only, not a lab verification result. Student accounts are not mentioned there (P19b). Never record the address or the password | Link to the guide's 11-14 comment |
 | 0.2 | Check which pending items (P9b, P15c, P24 to P28 and P30 to P34; P25 only beyond what P25a settles) are answered. P6, P14, P16, P21 and P22 were answered in the 14:43 reply, and P13b, P19 and P29 in the 11-14 reply; all are recorded above. Do not build an item whose decision is PENDING | Each answered item is recorded in the README first | List of answered and open items, with dates |
-| 0.3 | Record the exact Moodle release shown on the 5.3 site | PRD §A11: 4.5 (latest point release) and 5.3. The template is built on 5.3 (Owner, the 11-14 reply). Moodle 4.5: not tested; waived by the guide for Release 0 (2026-11-14), so no 4.5 release is recorded | Release string, site name, date, your name |
+| 0.3 | Record the exact Moodle release shown on the 5.3 site | PRD §A11: 4.5 (latest point release) and 5.3. The template is built on 5.3 (Owner, the 11-14 reply). Moodle 4.5: not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only), so no 4.5 release is recorded | Release string, site name, date, your name |
 | 0.4 | Record the state of the 5.3 lab site before you test: site, Moodle release and date. Use the existing lab site and restore into a new course each time (Owner, the 14:43 and 11-14 replies, P22) | The guide prepared the site and the account (P19). PRD §E2 asks for fresh sites for each release; the owner's rule applies until the harness approach to fresh sites is decided | Site, release, date, your name, and the guide's message about the site, with a link. Do not invent how the site was prepared |
 
 ## Stage 1. Moodle site and course preparation
@@ -144,7 +144,7 @@ is not tested; waived by the guide for Release 0 (2026-11-14). "Runbook procedur
 | 1.3 | Create the template course on the **5.3** site | Full name `Template course`, short name `template`, format Topics (Custom sections): **Proposal** (Owner, 2026-11-12). Record the format as Moodle shows it (LAB) | Course name, short name, format and id as created |
 | 1.4 | Check completion tracking for this course | Settings: **LAB** (README §5) | Screenshot |
 | 1.5 | Build the template once, on 5.3 | Owner (the 11-14 reply, P29): build on 5.3 and run every restore and merge on 5.3. Do not build on 4.5 for Release 0 | The 5.3 site and release used |
-| 1.6 | Record the 4.5 waiver | Owner (the 11-14 reply, P29): Moodle 4.5 is not tested; waived by the guide for Release 0 (2026-11-14). A template built on 5.3 does not restore on 4.5, so the known cost is a rebuild on 4.5 if PRD C-03 later needs it. This is a decision, not a result | The waiver, its date and its link, for the decision record and README §8 |
+| 1.6 | Record the 4.5 waiver | Owner (the 11-14 reply, P29): Moodle 4.5 is not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only). A template built on 5.3 does not restore on 4.5, so the known cost is a rebuild on 4.5 if PRD C-03 later needs it. This is a decision, not a result | The waiver, its date and its link, for the decision record and README §8 |
 
 ## Stage 2. Sections and activities
 
@@ -226,10 +226,10 @@ All of this is on the 5.3 site. Titles and idnumbers come from the owner's answe
 | 8.6 | Compare with the README §4 list | Same idnumbers, same count, badge and completion criteria (PRD §C1.7) | Expected vs found table |
 | 8.7 | Comparison field list for Shraddha (checker owner) | Owner (the 14:43 reply, P16): the field list (type, name, idnumber, section number, points, completion setting, visibility), so that the checker later compares the same fields. **Sent to Shraddha** (reported by the B8.1 owner; A1). **Her response and the alignment with the checker are pending**; no confirmation from her is recorded. How the fields apply to the completion criteria and the badge: **PENDING (P32)** | The message or link, with its date, and her reply when it comes |
 
-## Stage 9. Restore verification on Moodle 5.3 (Moodle 4.5 waived)
+## Stage 9. Restore verification on Moodle 5.3 (Moodle 4.5 not tested)
 
 Restore the **5.3 backup** on Moodle 5.3 only (Owner, the 11-14 reply, P29). PRD §E2 asks for restore tests
-on 4.5 and 5.3; for Release 0 the 4.5 test is **not tested; waived by the guide for Release 0 (2026-11-14)**, and is never recorded as a pass. Do every
+on 4.5 and 5.3; for Release 0 the 4.5 test is **not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only)**, and is never recorded as a pass. Do every
 step with the same file. Until the harness approach to fresh sites is decided, use the existing 5.3 lab
 site: restore into a new course each time, record the result, and delete the course by the rule in P25a
 (Owner, the 14:43, 09:36 and 11-14 replies, P22 and P25a). A template built on 5.3 does not restore on 4.5,
@@ -287,7 +287,7 @@ backup for step 3 is made first (steps 9.6 and 9.7); steps 3 and 4 are step 9.8;
 | 10.3 | Upload the file as a GitHub release asset named `b8-1-template-course.v1.mbz` (Proposal) | Tag `testdata-b8-1-v1` (Owner). **If this tag or asset already exists, do not overwrite, delete or replace it, and do not move the tag.** Ask the owner first (**PENDING, P24**) | Release link; the name of the uploaded asset |
 | 10.4 | Download the released asset and compute its SHA-256. Compare it with the build record (7.7) and with the hash recorded for each restore (9.3, 9.5) | All equal. If any differs, the restore tests do not apply to the released file: go to Stage 11 | Table: source of each file, its name, and its SHA-256 |
 | 10.5 | Run the download script once it exists, and check it gives the same SHA-256. The path is `testdata/b8-1-template-course/download.sh` (Proposal, Owner). **The script does not exist; this runbook does not design it or assume any command or option.** Check whether it supports `--dry-run`, `--check` and a documented undo (CLAUDE.md §2 rule 9, PRD C-05), and record what it actually does. **If it does not support one, mark it PENDING (P26). Do not claim support that was not seen** | Same hash (README §8). Behaviour of each option: **PENDING (P26)** until the script exists and has been run | Hash printed by the script; for each option, what you ran and what happened (or "not supported") |
-| 10.6 | Fill in the README §8 table | For 5.3: release, restore, protected items, merge. Leave the 4.5 column as "Not tested; waived by the guide for Release 0 (2026-11-14)", never a pass | Data set, method, date, evidence, who measured (PRD §E3). Where the evidence is kept: local, not committed (Owner, the 14:43 reply, P21). The owner also asked for a short, text-only results table in the decision record, naming the local files. Whether this README §8 table is filled in as well: **PENDING (P33)** |
+| 10.6 | Fill in the README §8 table | For 5.3: release, restore, protected items, merge. Leave the 4.5 column as "Not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only)", never a pass | Data set, method, date, evidence, who measured (PRD §E3). Where the evidence is kept: local, not committed (Owner, the 14:43 reply, P21). The owner also asked for a short, text-only results table in the decision record, naming the local files. Whether this README §8 table is filled in as well: **PENDING (P33)** |
 | 10.7 | Check the licence and source records | Already recorded in the README and `testdata/README.md` (PR #57, merged 2026-11-13): Apache-2.0, the same as the repository; content is fictional and written for LearnOps; badge image generated by the project under Apache-2.0, no third-party image (Owner, Issue #55, 2026-11-12, referring to the answer on Issue #61, 2026-11-11). At release time, check that both files still say this. Still open: how and where the badge image is generated and its source kept (**PENDING, P9b**) | The two README lines as they stand at release time; the record of the badge image |
 | 10.8 | Give the checker owner the `.mbz`, its SHA-256 and the README §4 list | README §8 checklist; Owner, item 7 | Message or PR link |
 | 10.9 | Record App-C item 2 in `docs/decisions/` | `docs/decisions/NNNN-b8-1-template-course.md`. The next free number is taken when you merge, after rebasing (Owner, Issue #55, 2026-11-12; same as P17). No number is assigned here. Include the short, text-only results table, naming the local evidence files (Owner, the 14:43 reply, P21). Only results that were really recorded; never estimated. The merge-test results must be in the record before that course is deleted (step 9.10, Owner, the 09:36 reply), so the results table is started in Stage 9 and finished here (runbook mapping, not the owner's words). How the record is held before its number is taken: **PENDING (P34)**; no numbering or naming convention is assumed | The decision file |
@@ -357,7 +357,7 @@ are documentation work already done in PR #57, merged 2026-11-13; they are not M
 
 **Stage 9**
 - [ ] File name, size and SHA-256 of the exact file restored, for each restore, matched to the build record (steps 9.3, 9.5)
-- [ ] Restore result on 5.3 (log or screenshot, messages), with the Moodle version, the date and the outcome of each restore. Moodle 4.5: not tested; waived by the guide for Release 0 (2026-11-14) (record the waiver; no 4.5 restore is attempted)
+- [ ] Restore result on 5.3 (log or screenshot, messages), with the Moodle version, the date and the outcome of each restore. Moodle 4.5: not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only) (record the waiver; no 4.5 restore is attempted)
 - [ ] Protected-item check after restore, 5.3 site
 - [ ] Baseline table of the merge target before the merge, 5.3 site, with the P16 fields (step 9.5)
 - [ ] Each course created for a test deleted by the rule in P25a, logged (steps 9.10, 12.1); the merge-test course last, after the decision-record entry
@@ -390,7 +390,7 @@ are documentation work already done in PR #57, merged 2026-11-13; they are not M
 
 ## What this document does not do
 - It records no result and claims no Moodle verification. The owner's statements (for example that a 5.3
-  backup does not restore on 4.5, or that 4.5 is waived for Release 0) are decisions or Moodle facts reported
+  backup does not restore on 4.5, or that 4.5 is waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only)) are decisions or Moodle facts reported
   by the owner, not checks done here.
 - It keeps every Proposal a proposal and every PENDING item open until the guide answers.
 - It does not design the download script or assume any command or option for it.
