@@ -29,7 +29,6 @@ WEEK2_TASK = WEEK2 + ("activities", 1)
 HELD_RULE_CODES = frozenset(
     {
         "week_structure_not_checked",
-        "unlock_chain_not_checked",
         "points_total_not_checked",
         "unlock_completion_not_checked",
         "idnumber_reuse_not_checked",
@@ -42,6 +41,14 @@ HELD_RULE_CODES = frozenset(
 
 # A package report lists the same rules except the body files, which it has checked.
 PACKAGE_HELD_RULE_CODES = HELD_RULE_CODES - {"body_files_not_checked"}
+
+
+def to_sections_only(doc: Doc) -> None:
+    """Switch the example to sections-only mode and keep it valid. In that mode every listed
+    section needs `unlock.after`, so week 1 is made to wait for a template activity that is not
+    in the package."""
+    doc["course"]["mode"] = "sections-only"
+    doc["sections"][0]["unlock"] = {"after": "tpl-sample-task", "start_date": None}
 
 
 def write_course(package_dir: Path, doc: Doc) -> None:

@@ -1,8 +1,8 @@
 """B2 course model contract (PRD B2): the JSON Schema and its two examples.
 
 The schema is a DRAFT. Confirmed decisions and open items are in
-docs/decisions/0003-b2-course-model.md. The OPEN DECISION markers in the schema cover only some of
-them, so an unmarked field is not settled. Nothing here means the contract is approved or frozen.
+docs/decisions/0003-b2-course-model.md; the schema has no OPEN DECISION markers, so a field is
+settled only when that record says so. Nothing here means the contract is approved or frozen.
 
 These are structural schema-validation tests. They do not implement CK-01 to CK-13 and do not
 show that any rule detects anything. Not automated here: any CK rule (no parser, evaluator or
@@ -178,7 +178,11 @@ def test_package_example_matches_b1_example(package_doc: Doc) -> None:
 def test_package_example_unlock_rule_matches_b1_example(package_doc: Doc) -> None:
     b1 = yaml.safe_load(B1_EXAMPLE.read_text(encoding="utf-8"))
     unlock = b1["sections"][1]["unlock"]
-    completion, date = package_doc["sections"][1]["availability"]["c"]
+    # Conditions are found by type: their order in the list carries no meaning.
+    conditions = package_doc["sections"][1]["availability"]["c"]
+    (completion,) = [c for c in conditions if c["type"] == "completion"]
+    (date,) = [c for c in conditions if c["type"] == "date"]
+    assert len(conditions) == 2
 
     by_cmid = {a["cmid"]: a["idnumber"] for a in _activities(package_doc)}
     assert by_cmid[completion["cm"]] == unlock["after"]
@@ -208,12 +212,56 @@ CK_FIELDS = {
 }
 
 
+# Where each field lives in the model: the path to the object that holds it. "*" stands for every
+# item of a list. This is the same proposed, unapproved mapping, and still a presence check only.
+FIELD_HOLDER: dict[str, tuple[str, ...]] = {
+    "source": (),
+    "course_completion": (),
+    "badges": (),
+    "mode": ("source",),
+    "total_points": ("course",),
+    "criteria": ("course_completion",),
+    "visible": ("sections", "*"),
+    "availability": ("sections", "*"),
+    "type": ("sections", "*", "activities", "*"),
+    "idnumber": ("sections", "*", "activities", "*"),
+    "cmid": ("sections", "*", "activities", "*"),
+    "completion": ("sections", "*", "activities", "*"),
+    "grade_item": ("sections", "*", "activities", "*"),
+    "marking_workflow": ("sections", "*", "activities", "*"),
+    "marking_table": ("sections", "*", "activities", "*"),
+    "media_refs": ("sections", "*", "activities", "*"),
+    "points_total": ("sections", "*", "activities", "*", "marking_table"),
+}
+
+
+def _objects_at(node: Any, path: tuple[str, ...]) -> Iterator[Doc]:
+    """The JSON objects found by following path; a null or missing step finds nothing."""
+    if not path:
+        if isinstance(node, dict):
+            yield node
+        return
+    step, rest = path[0], path[1:]
+    if step == "*":
+        for item in node if isinstance(node, list) else []:
+            yield from _objects_at(item, rest)
+    elif isinstance(node, dict) and step in node:
+        yield from _objects_at(node[step], rest)
+
+
 @pytest.mark.parametrize("rule", sorted(CK_FIELDS))
 def test_examples_carry_the_fields_a_rule_needs(rule: str) -> None:
-    text = FROM_PACKAGE.read_text(encoding="utf-8") + FROM_MBZ.read_text(
-        encoding="utf-8"
-    )
-    assert [f for f in CK_FIELDS[rule] if f'"{f}":' not in text] == []
+    examples = [load_json(FROM_PACKAGE), load_json(FROM_MBZ)]
+    missing = [
+        field
+        for field in CK_FIELDS[rule]
+        if not any(
+            field in holder
+            for example in examples
+            for holder in _objects_at(example, FIELD_HOLDER[field])
+        )
+    ]
+    assert missing == []
 
 
 # --- broken courses must still validate ----------------------------------------------------
@@ -323,7 +371,7 @@ def test_valid_variation_is_accepted(doc: Doc, name: str) -> None:
 # Each object in the model, with its required fields.
 REQUIRED: dict[Loc, str] = {
     (): "schema source course sections course_completion badges",
-    SOURCE: "kind timezone",
+    SOURCE: "kind mode timezone",
     COURSE: "shortname completion_enabled",
     WEEK1: "number idnumber visible availability activities",
     PAGE: "type idnumber cmid visible availability completion grade_item",
@@ -351,6 +399,34 @@ def test_package_source_without_mode_is_rejected(package_doc: Doc) -> None:
     assert (SOURCE, "required") in error_keys(package_doc)
 
 
+@pytest.mark.parametrize("mode", ["full", "sections-only"])
+def test_package_source_accepts_both_modes(package_doc: Doc, mode: str) -> None:
+    package_doc["source"]["mode"] = mode
+    assert messages(package_doc) == []
+
+
+def test_mbz_example_states_the_full_mode(doc: Doc) -> None:
+    assert doc["source"] == {"kind": "mbz", "mode": "full", "timezone": None}
+    assert messages(doc) == []
+
+
+def test_mbz_source_without_mode_is_rejected(doc: Doc) -> None:
+    del doc["source"]["mode"]
+    assert error_keys(doc) == {(SOURCE, "required")}
+
+
+def test_mbz_source_with_null_mode_is_rejected(doc: Doc) -> None:
+    doc["source"]["mode"] = None
+    assert (SOURCE + ("mode",), "enum") in error_keys(doc)
+    assert (SOURCE + ("mode",), "const") in error_keys(doc)
+
+
+@pytest.mark.parametrize("mode", ["sections-only", "partial", ""])
+def test_mbz_source_must_use_the_full_mode(doc: Doc, mode: str) -> None:
+    doc["source"]["mode"] = mode
+    assert (SOURCE + ("mode",), "const") in error_keys(doc)
+
+
 def test_package_source_without_timezone_is_rejected(package_doc: Doc) -> None:
     del package_doc["source"]["timezone"]
     assert (SOURCE, "required") in error_keys(package_doc)
@@ -364,6 +440,32 @@ def test_package_source_with_null_timezone_is_rejected(package_doc: Doc) -> None
 def test_package_source_with_empty_timezone_is_rejected(package_doc: Doc) -> None:
     package_doc["source"]["timezone"] = ""
     assert (SOURCE + ("timezone",), "minLength") in error_keys(package_doc)
+
+
+@pytest.mark.parametrize("alias", ["assign", "h5pactivity"])
+def test_raw_moodle_alias_type_is_rejected(doc: Doc, alias: str) -> None:
+    set_at(PAGE + ("type",), alias)(doc)
+    assert (PAGE + ("type",), "not") in error_keys(doc)
+
+
+def test_unknown_activity_type_is_structurally_valid(doc: Doc) -> None:
+    # PRD C2.8: an unsupported type keeps Moodle's module name and is reported as "not checked".
+    set_at(PAGE + ("type",), "quiz")(doc)
+    assert messages(doc) == []
+
+
+def test_h5p_type_is_valid(doc: Doc) -> None:
+    assert doc["sections"][1]["activities"][1]["type"] == "h5p"
+    assert messages(doc) == []
+
+
+def test_assignment_type_is_valid_and_still_needs_marking_fields(doc: Doc) -> None:
+    assert doc["sections"][1]["activities"][2]["type"] == "assignment"
+    assert messages(doc) == []
+    for name in ("marking_workflow", "marking_table"):
+        broken = load_json(FROM_MBZ)
+        drop_at(TASK + (name,))(broken)
+        assert (TASK, "required") in error_keys(broken)
 
 
 def test_non_assignment_needs_no_marking_fields(doc: Doc) -> None:

@@ -1,6 +1,7 @@
-"""Whole-course validation of a B1 course package (PRD B.0 rule 4, B1.1, B1.2 rule 6, B1.4).
+"""Whole-course validation of a B1 course package (PRD B.0 rule 4, B1.1, B1.2 rule 6, B1.4), and
+of a B2 course model (`validate_course_model`, which is separate: see its docstring).
 
-Two entry points share one run. `validate_course_document` takes a parsed course.yaml and reads
+For B1, two entry points share one run. `validate_course_document` takes a parsed course.yaml and reads
 no files. `validate_package` reads course.yaml from a package source and also checks that the
 files named by `body` exist.
 
@@ -13,7 +14,7 @@ package it is given; that an idnumber is never reused across package versions is
 
 Errors come in a fixed order: schema errors by place (see `schema.schema_issues`); otherwise
 duplicate idnumbers in document order, then configured protected idnumbers in document order,
-then missing body files in document order.
+then unlock rules (B1.2 rule 2) in document order, then missing body files in document order.
 """
 
 from __future__ import annotations
@@ -25,10 +26,15 @@ import yaml
 from . import messages
 from .body_files import check_body_files
 from .config import ConfigError, ValidationConfig
-from .course_rules import check_extra_protected_idnumbers, check_unique_idnumbers
+from .course_rules import (
+    check_extra_protected_idnumbers,
+    check_unique_idnumbers,
+    check_unlock_rules,
+)
 from .report import Issue, ValidationReport
-from .schema import schema_issues
+from .schema import model_schema_issues, schema_issues
 from .source import PackageSource
+from .timezones import timezone_issues
 
 COURSE_YAML = "course.yaml"
 
@@ -75,6 +81,32 @@ def validate_package(
     return _finish([issue], rules_ran=False, with_folder=True)
 
 
+def validate_course_model(doc: object) -> ValidationReport:
+    """Validate a parsed B2 course model (PRD B2, B.0 rule 4). Reads no files and no
+    environment variables.
+
+    Runs the B2 schema, then the run-time check of `source.timezone` (decision 0003 #20), which
+    a schema cannot do. Both kinds of error come back in one report: schema errors by place,
+    then the timezone error. The timezone check runs only when `source.timezone` is a non-empty
+    string, and also when the schema found other errors. A missing, null, empty or non-text
+    timezone is judged by the schema alone. An unknown name on a `.mbz` model gets both the
+    schema's type error and the timezone error. The checker's rules are not run here, so
+    `not_checked` is empty and says nothing about them.
+    """
+    errors = model_schema_issues(doc)
+    if _has_timezone_text(doc):
+        # Any other value (null, a number, an empty string) is the schema's to report; checking
+        # it here too would report the same fault twice.
+        errors += timezone_issues(doc)
+    return ValidationReport(errors=tuple(errors))
+
+
+def _has_timezone_text(doc: object) -> bool:
+    source = doc.get("source") if isinstance(doc, dict) else None
+    value = source.get("timezone") if isinstance(source, dict) else None
+    return isinstance(value, str) and value != ""
+
+
 def _checked_config(config: object) -> ValidationConfig:
     if config is None:
         return ValidationConfig()
@@ -96,6 +128,7 @@ def _run(
         return _finish(errors, rules_ran=False, with_folder=source is not None)
     errors = check_unique_idnumbers(doc)
     errors += check_extra_protected_idnumbers(doc, config.protected_idnumbers)
+    errors += check_unlock_rules(doc)
     if source is not None:
         errors += check_body_files(doc, source)
     return _finish(errors, rules_ran=True, with_folder=source is not None)

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:learnops:contract:course-model:v1",
   "title": "LearnOps course model (B2, v1)",
-  "description": "DRAFT, not approved and not frozen. Confirmed decisions and open items are recorded in docs/decisions/0003-b2-course-model.md. The OPEN DECISION markers in this schema identify only some unresolved fields and are not the complete list, so a field without a marker is not settled. A normalised JSON description of a course, read by the checker and built from a Moodle backup (.mbz) or a course package (PRD B2). It describes what a course IS, including a broken course, so that the checker can report the problem. This schema checks structure only and must never reject a course-design error.",
+  "description": "DRAFT, not approved and not frozen. Confirmed decisions and open items are recorded in docs/decisions/0003-b2-course-model.md. Items that are still unresolved are listed only in section 3 of that record, so a field is settled only when the record says so. A normalised JSON description of a course, read by the checker and built from a Moodle backup (.mbz) or a course package (PRD B2). It describes what a course IS, including a broken course, so that the checker can report the problem. This schema checks structure only and must never reject a course-design error.",
   "$comment": "Unknown fields are allowed on purpose: after Release 0 contracts change only by adding optional fields and readers ignore unknown fields (PRD B.0, A9, EXT-02). A null means the source does not carry the value, for example a package has no Moodle visibility setting, or that the item does not exist, as stated on each field. For visible and completion_enabled, null never means false, and the checker treats it as cannot judge, not as a fault. Deliberately NOT enforced here, because a course that breaks them must still validate so that a rule can report it: unique or well-formed idnumbers (CK-06), protected items (CK-07), points summing to the target (CK-03), references inside availability, criteria or badges pointing at real activities (CK-04, CK-08), circular unlock rules (CK-05), completion rules that can be met (CK-02), a valid marking table with matching points (CK-09), marking workflow being on (CK-10), H5P having no grade item (CK-11), relative media paths (CK-12), and completion tracking on activities used in unlock rules (CK-13). The inner form of availability belongs to Moodle and is not described here. Unique cmid values are not enforced either; the model builder guarantees them. CK-07 compares protected items field by field against a supplied reference model of the template course, using the same comparison as FR-C-05; there are no fingerprints. The model holds no body text or attached files, so a change to those cannot be seen.",
   "type": "object",
   "required": ["schema", "source", "course", "sections", "course_completion", "badges"],
@@ -39,7 +39,7 @@
     },
     "availability": {
       "type": ["object", "null"],
-      "description": "Moodle's own availability JSON, kept whole so that no information is lost (PRD B2). null means no restriction. A package unlock rule is written in this same form, with its date as a Unix timestamp for 00:00 in the configured site timezone (see source.timezone). In completion conditions, cm = -1 means OPTION_PREVIOUS: the nearest earlier activity in course order with manual or automatic completion tracking. Activities without tracking are skipped. If no eligible activity exists, the condition cannot be met. An unresolved -1 is reported as CK-04. This rule is documented but still requires Moodle lab verification."
+      "description": "Moodle's own availability JSON, kept whole so that no information is lost (PRD B2). null means no restriction. A package unlock rule is stored as an availability object too, with its date as a Unix timestamp for 00:00 in the configured site timezone (see source.timezone). The contract does not fix the inner structure of an availability object (its operator, condition list, show flags, condition values and their order belong to Moodle), and the examples are illustrations only, so a reader finds conditions by their type, never by position. In completion conditions, cm = -1 means OPTION_PREVIOUS: the nearest earlier activity in course order with manual or automatic completion tracking; for a section's availability, earlier means strictly before that section. Activities without tracking are skipped. If no eligible activity exists, the condition cannot be met. An unresolved -1 is reported as CK-04. This rule is documented but still requires Moodle lab verification."
     },
     "cmid": {
       "type": "integer",
@@ -48,7 +48,7 @@
     },
     "source": {
       "type": "object",
-      "description": "Where the model came from. Kind is mbz or package. OPEN DECISION: the values and requirement for mode are not yet confirmed.",
+      "description": "Where the model came from. Kind is mbz or package. Mode and timezone are described on their own fields.",
       "required": ["kind"],
       "properties": {
         "kind": {
@@ -56,12 +56,12 @@
         },
         "mode": {
           "enum": ["full", "sections-only"],
-          "description": "The package's output mode (PRD B1.4). CK-07 needs it because a sections-only package leaves out protected items on purpose."
+          "description": "The output mode, full or sections-only. The values come from PRD B1.4 and are confirmed (decision 0003 #22). It is required for every source, as the conditional rules on source.kind below require: a package source may use full or sections-only, and a .mbz source must use full, because a backup represents a whole course and its output mode is therefore full. CK-07 needs the mode because a sections-only package leaves out protected items on purpose."
         },
         "timezone": {
           "type": ["string", "null"],
           "minLength": 1,
-          "description": "The configured site timezone used to convert package dates to 00:00, for example Asia/Kolkata for the lab. Required for all sources: non-empty for package sources and null for mbz sources."
+          "description": "The configured site timezone used to convert package dates to 00:00, for example Asia/Kolkata for the lab. A package source requires a non-empty string and an mbz source requires null. Those requirements come from the conditional if/then rules on source.kind, not from this property alone; minLength 1 rejects an empty string. A JSON Schema cannot tell whether a time-zone name is recognised, so validate_course_model() in libs/contracts also checks at run time that Python zoneinfo.ZoneInfo resolves a non-empty name. A model builder gets the value of a package model from site_timezone(os.environ), which reads SITE_TIMEZONE. There is no default timezone: a missing or invalid setting is an error (decision 0003 #20)."
         }
       },
       "allOf": [
@@ -93,8 +93,11 @@
             "required": ["kind"]
           },
           "then": {
-            "required": ["timezone"],
+            "required": ["mode", "timezone"],
             "properties": {
+              "mode": {
+                "const": "full"
+              },
               "timezone": {
                 "type": "null"
               }
@@ -113,7 +116,8 @@
           "description": "The Moodle course shortname."
         },
         "fullname": {
-          "type": "string"
+          "type": "string",
+          "description": "Optional, reporting only. A Moodle course always has a full name and B1 requires one, so it is never null. Section and activity titles may be null because the source may not name them."
         },
         "completion_enabled": {
           "type": ["boolean", "null"],
@@ -210,7 +214,8 @@
         "type": {
           "type": "string",
           "minLength": 1,
-          "description": "page, assignment, url, label or h5p (the B1 names). Any other type keeps Moodle's module name and is reported as not checked (PRD C2.8), so this is not an enum."
+          "not": { "enum": ["assign", "h5pactivity"] },
+          "description": "page, assignment, url, label or h5p (the B1 names). Moodle module names map to B1 names as: assign -> assignment, h5pactivity -> h5p, page -> page, url -> url, label -> label. The raw Moodle aliases assign and h5pactivity are rejected, so each of these activities has exactly one spelling. The builder maps the name before any rule is applied, so a source assign is checked as assignment, including the marking fields the schema requires for assignment. Any other type keeps Moodle's module name unchanged (for example quiz) and is reported as not checked, never silently skipped (PRD C2.8), so this is not an enum."
         },
         "idnumber": { "$ref": "#/$defs/idnumber" },
         "cmid": { "$ref": "#/$defs/cmid" },

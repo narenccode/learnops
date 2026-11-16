@@ -29,6 +29,7 @@ from .helpers import (
     link_or_skip,
     not_checked_codes,
     only,
+    to_sections_only,
     write_course,
 )
 
@@ -160,7 +161,8 @@ def test_the_other_course_rules_and_the_settings_also_apply_to_a_package(
 def test_missing_body_file_is_an_error_at_the_activity(
     package_dir: Path, example_doc: Doc, mode: str
 ) -> None:
-    example_doc["course"]["mode"] = mode
+    if mode == "sections-only":
+        to_sections_only(example_doc)
     write_course(package_dir, example_doc)
     (package_dir / "weeks" / "02-guide.md").unlink()
     issue = only(validate_package(DirectorySource(package_dir)).errors)
