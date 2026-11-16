@@ -25,9 +25,7 @@ from jsonschema.exceptions import ValidationError
 
 from . import messages
 from .report import Issue, Location, ValidationReport
-
-# `_order` is private in B1's schema.py (shared code of another module): see the PR description.
-from .schema import _order as _error_order
+from .schema import error_order
 
 RULE = "B6.2"
 CONTRACTS_DIR = Path(__file__).resolve().parents[2] / "contracts"
@@ -74,7 +72,7 @@ def _pattern_texts() -> dict[str, tuple[str, str]]:
 
 
 def _schema_issues(document: object, filename: str, schema_file: str) -> list[Issue]:
-    errors = sorted(_validator(schema_file).iter_errors(document), key=_error_order)
+    errors = sorted(_validator(schema_file).iter_errors(document), key=error_order)
     return [_schema_issue(error, filename, schema_file) for error in errors]
 
 
