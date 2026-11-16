@@ -78,11 +78,11 @@ complete but the status still says `PENDING`.
 
 | ID | Title | Speaker | Duration (s) | Recording file (lab only) | SHA-256 | Outline | Transcript | Consent | Transcript review |
 |---|---|---|---|---|---|---|---|---|---|
-| lecture-01 | PENDING | PENDING | PENDING | PENDING | PENDING | `b8-5-lecture-videos/lectures/lecture-01/outline.md` | `b8-5-lecture-videos/lectures/lecture-01/transcript.en.txt` | PENDING | pending |
-| lecture-02 | PENDING | PENDING | PENDING | PENDING | PENDING | `b8-5-lecture-videos/lectures/lecture-02/outline.md` | `b8-5-lecture-videos/lectures/lecture-02/transcript.en.txt` | PENDING | pending |
-| lecture-03 | PENDING | PENDING | PENDING | PENDING | PENDING | `b8-5-lecture-videos/lectures/lecture-03/outline.md` | `b8-5-lecture-videos/lectures/lecture-03/transcript.en.txt` | PENDING | pending |
-| lecture-04 | PENDING | PENDING | PENDING | PENDING | PENDING | `b8-5-lecture-videos/lectures/lecture-04/outline.md` | `b8-5-lecture-videos/lectures/lecture-04/transcript.en.txt` | PENDING | pending |
-| lecture-05 | PENDING | PENDING | PENDING | PENDING | PENDING | `b8-5-lecture-videos/lectures/lecture-05/outline.md` | `b8-5-lecture-videos/lectures/lecture-05/transcript.en.txt` | PENDING | pending |
+| lecture-01 | PENDING | PENDING | 62 | WhatsApp Video 2026-11-16 at 10.27.49 AM.mp4 | e42cca9d2f40fb8993a16d883decdec1441503d06ddaff7c16903f08d7567610 | `b8-5-lecture-videos/lectures/lecture-01/outline.md` | `b8-5-lecture-videos/lectures/lecture-01/transcript.en.txt` | PENDING | pending |
+| lecture-02 | PENDING | PENDING | 82 | WhatsApp Video 2026-11-16 at 10.28.33 AM.mp4 | d732504886135d93b402facbaecc9195711b5394f4fc53bed3ca0b1fdec77afe | `b8-5-lecture-videos/lectures/lecture-02/outline.md` | `b8-5-lecture-videos/lectures/lecture-02/transcript.en.txt` | PENDING | pending |
+| lecture-03 | PENDING | PENDING | 43 | WhatsApp Video 2026-11-16 at 10.30.47 AM (1).mp4 | 2b8cbfd578f8091fc803566a5a0b89875f4e1aed64e53f401cd02ec209689432 | `b8-5-lecture-videos/lectures/lecture-03/outline.md` | `b8-5-lecture-videos/lectures/lecture-03/transcript.en.txt` | PENDING | pending |
+| lecture-04 | PENDING | PENDING | 68 | WhatsApp Video 2026-11-16 at 10.30.47 AM.mp4 | 285ed527b3aec2172720c807afd42ea625dd3385e933b8585fe3ad5fab757845 | `b8-5-lecture-videos/lectures/lecture-04/outline.md` | `b8-5-lecture-videos/lectures/lecture-04/transcript.en.txt` | PENDING | pending |
+| lecture-05 | PENDING | PENDING | 83 | WhatsApp Video 2026-11-16 at 10.30.48 AM.mp4 | 8e8a4d57b8a20f85a11187baac1af3cc39304de24c7f2fb5ea19e0c7565789f8 | `b8-5-lecture-videos/lectures/lecture-05/outline.md` | `b8-5-lecture-videos/lectures/lecture-05/transcript.en.txt` | PENDING | pending |
 
 **Total recorded duration:** PENDING
 
@@ -90,3 +90,26 @@ How the total is calculated: the sum of the `Duration (s)` column, where each du
 recording's length measured with `ffprobe` and rounded **down** to whole seconds (so the total is
 never overstated). The set needs a total of at least 1800 s. Write it as `<seconds> s (<m> min <s> s)`,
 for example `1834 s (30 min 34 s)`.
+
+
+### Evidence notes (recorded with the first measurements; not acceptance)
+
+- **Measured** (file name, whole seconds rounded down, SHA-256 in the table): five MP4 files
+  (mp42, video and audio), 13,369,252 / 17,809,327 / 9,416,970 / 14,637,168 / 16,541,907 bytes.
+  The sum of the durations is **338 s (5 min 38 s)**, below the 1800 s threshold. The Total line
+  stays `PENDING` because the Status is `PENDING`.
+- **Duration method:** read from the MP4 header, not with `ffprobe` (not installed on the
+  recording computer). Re-measure with `ffprobe` as the set README says before the Status
+  changes. PENDING re-measurement.
+- **Origin (stated by the developer, no written evidence in Git):** the five files are team
+  recordings that reached the computer through WhatsApp (the file names say so). Who recorded
+  each one: PENDING. Title and Speaker: PENDING.
+- **Consent (stated by the developer as given):** the speakers' own consent lines are not in
+  decision 0004 yet, so every Consent cell stays `PENDING` until each speaker writes their line.
+- **Duration exception (stated by the developer as guide-approved):** the written approval is not
+  in the repository. PENDING: reference to the guide's approval (decision record or PR comment).
+  Until it is recorded, the 1800 s threshold applies and the set is not complete.
+- **Transcripts:** deferred. Outlines and transcripts are still placeholders and Harshitha's
+  review is `pending`.
+- **Storage:** the originals are in a Downloads folder; move them to a folder that is not synced
+  to a cloud service, as in "Original recording storage".
