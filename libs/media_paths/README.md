@@ -1,10 +1,11 @@
 # Media Paths
 
-Shared Python library for generating and validating LearnOps media paths.
+Shared Python library for generating and validating LearnOps media paths and building media URLs.
 
 ## Requirements
 
-- EXT-09: the shared `media_paths` library, including the B6.1 media path templates
+- EXT-09: the shared `media_paths` library, including the B6.1 media path templates and the B6.4
+  media signing interface (`none` baseline implementation)
 - C-08: media is stored as relative paths
 
 ## Path generation
@@ -73,6 +74,40 @@ the two types apart yourself.
 - Custom live-class template `courses/{course_slug}/{cohort}/{nn}-{topic_slug}/`, `cohort` =
   `01-basics`, number 2, topic `intro`: `courses/python/01-basics/02-intro/`, the default lesson
   folder for module 1 `basics`, lesson 2 `intro`.
+
+## Media signing (PRD B6.4)
+
+`MediaSigner` is the interface: `sign(relative_path, ttl_seconds=3600) -> str`.
+
+`create_media_signer()` is the single entry point. It reads `MEDIA_SIGNING` and `MEDIA_BASE_URL`
+(see `.env.example`), or a mapping passed in for tests:
+
+| `MEDIA_SIGNING` | Result |
+|---|---|
+| `none` | `NoneSigner(MEDIA_BASE_URL)` |
+| `hmac`, `s3` | `MediaSigningConfigError`: named in PRD B6.4, not implemented yet |
+| unset or anything else | `MediaSigningConfigError` |
+
+```python
+from media_paths import create_media_signer
+
+signer = create_media_signer()  # MEDIA_SIGNING=none
+url = signer.sign("courses/python/01-basics/01-intro/720p.mp4")
+```
+
+`NoneSigner` builds a plain URL: base URL + `/` + the percent-encoded relative path. **It adds no
+signature and no expiry and provides no access control.** `ttl_seconds` is validated (an `int` of 1
+or more) but not applied.
+
+`sign()` first checks the path with `validate_relative_path` (see Validation below) and raises
+`ValueError` if it fails, so it never builds a URL from an absolute path, a `..` segment or a
+path with `%` (so no encoded form such as `%2e%2e`). It then percent-encodes the remaining
+characters that need it (such as `:` or non-ASCII letters), so the path a server sees after
+decoding the URL once is the relative path itself.
+
+The base URL must be `http://` or `https://` with a host. A query string, fragment, user name or
+password, whitespace, an invalid port or a malformed URL (for example unbalanced IPv6 brackets) is
+rejected; trailing slashes are removed.
 
 ## Validation
 

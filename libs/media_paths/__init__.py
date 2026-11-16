@@ -16,6 +16,12 @@ from media_paths.paths import (
     course_lesson_path,
     live_class_path,
 )
+from media_paths.signing import (
+    MediaSigner,
+    MediaSigningConfigError,
+    NoneSigner,
+    create_media_signer,
+)
 from media_paths.validation import (
     require_int_in_range,
     require_positive_int,
@@ -37,9 +43,13 @@ __all__ = [
     "MIN_PATH_NUMBER",
     "CourseLessonTemplate",
     "LiveClassTemplate",
+    "MediaSigner",
+    "MediaSigningConfigError",
+    "NoneSigner",
     "check_course_lesson_template",
     "check_live_class_template",
     "course_lesson_path",
+    "create_media_signer",
     "live_class_path",
     "require_int_in_range",
     "require_positive_int",
