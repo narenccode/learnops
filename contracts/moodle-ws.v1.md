@@ -245,6 +245,7 @@ item here is a **live lab** check: reading the source (§7) never closes one.
 | 15 | A grade below zero or above the maximum is silently ignored by `mod_assign_save_grade` with no error, and the read-back shows it (R9) | open | open | — |
 | 16 | Writing over a submission already in `readyforrelease`: 5.3 keeps the old grade while the call looks successful; 4.5 overwrites it (R3) | open | open | — |
 | 17 | Whether `core_course_get_contents` returns the activity and section `idnumber` to the service account, which has no `moodle/course:update` (item 1 covers the parameters, not these returned fields). Until it is recorded, neither Module 1 nor Module 2 may rely on an `idnumber` from this call | open | open | — |
+| 18 | Whether `mod_assign_get_assignments` returns to the service account a field that maps each assignment to its activity (course-module) `idnumber`, the key of the B1 package (item 1 covers the parameters, not these returned fields). Until it is recorded, Module 3 may not map assignments to B1 idnumbers from this call (reviewer on PR #64, 16 Nov) | open | open | — |
 
 ## 6. Open questions
 
@@ -253,7 +254,7 @@ Not decided. This file does not settle it.
 | Question | Who decides |
 |---|---|
 | **Grading design §10.1.** `docs/design/grading.md` §10.1 (Release 4, draft) still says an unknown outcome may "write again under the same idempotency key", which conflicts with R11. R11 wins; the fix belongs to the grading design pull request (#62), not here (guide, PR #72, 2026-11-15) | Student 3, guide |
-| **Lab access.** When the Moodle 4.5 and 5.3 lab sites are available. All checks in §5 wait for them. B4 can be merged as a draft before that, but it cannot be frozen at the end of Release 0 until the checks pass (guide, PR #27). Guide, PR #72, 2026-11-15: the 5.3 lab site is available, and a first live run of the web-service calls was made there on 14 November, but it is not matched to the items in §5, so all sixteen stay open until a decision record names the item. 4.5 has no live run and no date. The §5 rule "4.5 and 5.3" stays until the guide decides how the two versions are tested, at the start of Release 1 | Guide |
+| **Lab access.** When the Moodle 4.5 and 5.3 lab sites are available. All checks in §5 wait for them. B4 can be merged as a draft before that, but it cannot be frozen at the end of Release 0 until the checks pass (guide, PR #27). Guide, PR #72, 2026-11-15: the 5.3 lab site is available, and a first live run of the web-service calls was made there on 14 November, but it is not matched to the items in §5, so every item stays open until a decision record names it. 4.5 has no live run and no date. The §5 rule "4.5 and 5.3" stays until the guide decides how the two versions are tested, at the start of Release 1 | Guide |
 
 **Decided by the guide (PR #27, 2026-10-29):**
 - **Q1:** Markdown for the rules plus a small JSON Schema and one example listing the allowed

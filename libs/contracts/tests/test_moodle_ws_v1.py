@@ -681,9 +681,10 @@ def test_the_custom_role_rule_is_stated() -> None:
 
 def test_every_lab_check_is_still_open() -> None:
     """No live check is claimed: every row of the §5 checklist says open on 4.5 and 5.3,
-    including checks 13 to 16 added for the guide's decisions and check 17 (guide, 15 Nov)."""
+    including checks 13 to 16 added for the guide's decisions, check 17 (guide, 15 Nov) and
+    check 18 (reviewer on PR #64, 16 Nov)."""
     rows = lab_checks()
-    assert list(rows) == [str(n) for n in range(1, 18)]
+    assert list(rows) == [str(n) for n in range(1, 19)]
     assert all(row[2:4] == ["open", "open"] for row in rows.values())
     assert all(row[4] == "—" for row in rows.values()), "no decision record exists yet"
 
@@ -700,6 +701,10 @@ def test_the_decision_lab_checks_name_their_rules() -> None:
     assert "`core_course_get_contents`" in rows["17"][1]
     assert "activity and section `idnumber`" in rows["17"][1]
     assert "may rely on" in rows["17"][1]
+    # Reviewer on PR #64, 16 Nov: grading maps assignments, not only course contents.
+    assert "`mod_assign_get_assignments`" in rows["18"][1]
+    assert "course-module) `idnumber`" in rows["18"][1]
+    assert "may not map assignments" in rows["18"][1]
     intro = plain(section(rules(), "## 5. Lab verification checklist", "| #"))
     assert "reading the source (§7) never closes one" in intro
 

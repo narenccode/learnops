@@ -116,7 +116,7 @@ Test names are in `test_moodle_ws_v1.py`.
 | The three former open questions are rules now; each refusal is its own outcome; §6 keeps the lab-access and grading-design rows | B4 §3a, §6 | `test_the_three_proposals_are_rules_now_and_no_longer_open` |
 | Course lookup sends `field` and `value`, by course id or shortname, never idnumber | B4 course identification | `test_course_lookup_does_not_rely_on_idnumber` |
 | The capability lists (needed, never granted) are the guide's and do not overlap; a custom role is required | B4, SEC-03 | `test_the_capability_lists_are_the_guides_and_do_not_overlap`, `test_the_custom_role_rule_is_stated` |
-| Every lab check in rules §5 (1 to 17) is still open on both versions, with no decision record; checks 13 to 16 name the rule they cover, and check 17 records the guide's 15 Nov question about the `idnumber` fields `core_course_get_contents` returns | App-C 1 | `test_every_lab_check_is_still_open`, `test_the_decision_lab_checks_name_their_rules` |
+| Every lab check in rules §5 (1 to 18) is still open on both versions, with no decision record; checks 13 to 16 name the rule they cover; checks 17 and 18 ask whether `core_course_get_contents` and `mod_assign_get_assignments` return the `idnumber` fields (guide, 15 Nov; reviewer on PR #64, 16 Nov) | App-C 1 | `test_every_lab_check_is_still_open`, `test_the_decision_lab_checks_name_their_rules` |
 | The rules stay a draft (Status line `Draft`, not approved), no §2 function is marked verified, and the draft rule never allows `released`; each test fails if that text is changed | B4 draft rule, C-09, App-C 1 | `test_the_contract_is_still_a_draft_and_not_approved`, `test_no_function_is_marked_verified`, `test_a_grade_write_never_sends_released` |
 | A replacement name for a Moodle version also appears in the PRD B4 text | B4 ("replacements recorded here") | `test_a_replacement_name_is_also_in_the_prd` |
 | No verification state is stored in the schema or example | Guide, Q1 | `test_invalid_document_is_rejected_at_the_expected_place` (three verified-flag cases) |
@@ -131,9 +131,9 @@ Test names are in `test_moodle_ws_v1.py`.
 | One service account per site, with a token restricted to those functions and the capabilities in rules §4 (the lists are tested; that they are enough is lab check 9) | B4, SEC-03 |
 | The token is stored only in the environment | SEC-03, C-06 |
 | A grade write uses workflow state `readyforrelease`, never `released`, and counts as done only when both the state and the grade value are confirmed; the grade value is read with `mod_assign_get_grades` (R1); the write rules R1 to R11 are contract text here, and their enforcement in `libs/moodle_ws` is a separate follow-up; only approved drafts are written | B4, C-09 |
-| Each function exists and behaves as expected with the parameters used on Moodle 4.5 and 5.3 (all 16 lab checks are still open) | B4, App-C 1 |
+| Each function exists and behaves as expected with the parameters used on Moodle 4.5 and 5.3 (all lab checks in rules §5 are still open) | B4, App-C 1 |
 
-Open: when the lab Moodle sites are available (all sixteen checks in `moodle-ws.v1.md` §5 wait for
+Open: when the lab Moodle sites are available (all checks in `moodle-ws.v1.md` §5 wait for
 them; B4 cannot be frozen until they pass), and the field for feedback comments inside `plugindata` on
 `mod_assign_save_grade` (lab check 6). Q1, Q24 and Q37 are decided (PR #27); the eleven B4
 questions are decided (PR #64). Still open for the guide: what happens when the state cannot be read
