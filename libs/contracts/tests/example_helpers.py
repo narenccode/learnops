@@ -28,16 +28,22 @@ def make_tree(
     tmp_path: Path,
     examples: Files | None = None,
     *,
+    raw: Files | None = None,
     schema: dict[str, Any] | str | None = SCHEMA,
+    schema_file: str = "thing.v1.schema.json",
 ) -> Path:
-    """A contracts folder with the schema thing.v1 and the given example files (path -> content)."""
+    """A contracts folder with the schema thing.v1 and its examples.
+
+    `examples` are files inside `examples/thing.v1/` (the folder layout); `raw` are files placed
+    anywhere below `examples/` (flat examples such as `thing.v1.x.json`, other schemas' folders)."""
     contracts = tmp_path / "contracts"
     (contracts / "examples").mkdir(parents=True)
     if schema is not None:
         text = schema if isinstance(schema, str) else json.dumps(schema)
-        (contracts / "thing.v1.schema.json").write_text(text, encoding="utf-8")
-    for rel, content in (examples or {}).items():
-        target = contracts / "examples" / "thing.v1" / rel
+        (contracts / schema_file).write_text(text, encoding="utf-8")
+    files = {f"thing.v1/{rel}": c for rel, c in (examples or {}).items()} | (raw or {})
+    for rel, content in files.items():
+        target = contracts / "examples" / rel
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(content if isinstance(content, bytes) else content.encode())
     return contracts
