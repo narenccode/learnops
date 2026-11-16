@@ -237,3 +237,82 @@ confirmed by the contract reviewers): `source.kind` is required inside `source` 
 | Shapes of `chapters.json`, `slides.json`, `cues.json` | B6.2 | No schema yet |
 | Windows reserved names (such as `CON`, `NUL`, `COM1`) and Unicode normalization in paths: considered, not v1 rules (guide decision) | B6.3 | Not enforced in v1: the store is on Linux or S3 and no consumer compares names; a v2 discussion if a store later needs them |
 | A maximum path length | B6.3 | None specified in v1 (guide decision): paths are built from bounded slugs and the store enforces its own limits |
+
+## B3 LTI launch contract (v1), Release 0 foundation
+
+Files: `contracts/lti-launch.v1.md`, `contracts/lti-launch.v1.schema.json`,
+`contracts/examples/lti-launch.v1/` (`instructor-mentor.json`, `institution-administrator.json`,
+`mentor-minimal-with-unknown-field.json`: valid examples only), the optional-claim vectors
+`contracts/test-vectors/lti-launch-optional-claims.v1.json`, and
+`libs/contracts/tests/test_lti_launch_v1.py`. Decision record: `docs/decisions/0001-lti-library.md`.
+B3 has no requirement ID of its own in the PRD (it is a contract, PRD B.0), so no row in the table
+at the top maps to it.
+
+**Tests for this contract (PRD B.0 rule 3).** In Release 0 the shared contract tests listed below
+are the tests that cover B3. A consuming module adds its own tests when its code that reads the
+contract exists; before that, the shared contract tests cover the change. No placeholder or skipped
+module tests exist, and none are planned here.
+
+SEC-01, SEC-02, SEC-06, SEC-09, EXT-07 and FR-X-01 are deliberately not in the table at the top.
+Nothing in this contract's tests implements them: the launch validation, session and refusal
+behaviour belong to `libs/lti`, which does not exist yet (ADR 0001, Stage 2 not approved). Each gets
+its row in the pull request that implements and tests it.
+
+### Enforced by the JSON Schema and covered by automated tests
+
+Structure only. Test names are in `test_lti_launch_v1.py`.
+
+| Rule | Contract section | Test(s) |
+|---|---|---|
+| The schema is a valid Draft 2020-12 schema with the B3 v1 `$id` | PRD B.0 rule 1 | `test_schema_is_valid_draft_2020_12` |
+| Every example validates; the examples folder holds valid examples only (JSON files, none invalid) | PRD B.0 rule 1, §11 | `test_examples_folder_has_the_required_examples`, `test_examples_folder_holds_json_files_only`, `test_every_example_is_valid` |
+| Required fields at every depth: `iss`, `sub`, `deployment_id`, `message_type`, `role`, `context`, `context.id`, `resource_link`, `resource_link.id` | §4 | `test_invalid_launch_result_is_rejected_at_the_right_place` (one `missing-…` case each), `test_every_required_field_has_a_missing_case` (fails if a required field has no case) |
+| `message_type` is `LtiResourceLinkRequest` only | §2, §4 | `test_invalid_launch_result_is_rejected_at_the_right_place` (`wrong-message-type`) |
+| `role` is one of the values in the schema's enum (currently `mentor`, `administrator`; the value set is under review, ADR 0001 OI-25) | §4, §5 | `test_both_baseline_roles_are_accepted`, `test_invalid_launch_result_is_rejected_at_the_right_place` (`role-…` cases) |
+| `context.id` is a positive integer written as a string in ASCII digits: zero, negative, non-numeric, leading-zero, whitespace-padded, non-ASCII-digit and newline-containing values are rejected; no upper bound | §3.1 | `test_positive_integer_context_ids_are_accepted`, `test_invalid_launch_result_is_rejected_at_the_right_place` (`context-id-…` cases, including the trailing newline) |
+| Required strings are non-empty strings; `sub` and `context.id` are strings, not numbers | §4 | `test_invalid_launch_result_is_rejected_at_the_right_place` (`empty-…`, `numeric-…`, `…-not-an-object` cases) |
+| `name` and `email` may be `null` or absent; an empty string is rejected. `context.title` may be omitted; an empty string and `null` are rejected | §3.2, §4 | `test_optional_fields_may_be_absent_or_null`, `test_name_and_email_are_valid_when_null`, `test_name_and_email_are_valid_when_absent`, `test_context_title_is_valid_when_omitted`, `test_invalid_launch_result_is_rejected_at_the_right_place` (`empty-name`, `empty-email`, `empty-context-title`, `null-context-title`) |
+| Unknown fields are accepted | PRD B.0 rule 2, EXT-02 | `test_unknown_fields_are_accepted` |
+
+### Optional-claim rule (§3.2): shared vectors, covered by automated tests
+
+The vectors in `contracts/test-vectors/lti-launch-optional-claims.v1.json` state the rule as data.
+The tests check the vectors and the schema side only. **No normaliser exists:** the rule is to run
+once, in `libs/lti`, which has not been created and must pass the same vectors when it is added.
+
+| Rule | Contract section | Test(s) |
+|---|---|---|
+| `name`, `email`: absent, `null`, empty, White_Space-only and non-string values become `null`. `context.title`: the same values are omitted, never `null` | §3.2 | `test_claim_vectors_cover_every_row_of_section_3_2`, `test_claim_vector_agrees_with_section_3_2`, `test_expected_result_for_every_claim_vector_is_schema_valid` (every vector × `name`, `email`, `context.title`) |
+| Every other string is preserved unchanged, character for character, including white space before, after and inside | §3.2 | `test_claim_vectors_cover_every_row_of_section_3_2` (padded cases must exist), `test_expected_result_for_every_claim_vector_is_schema_valid` (UTF-8 bytes equal the input) |
+| "White_Space-only" is the 25 code points of Unicode 15.0.0 White_Space, not Python's `str.isspace()`: U+001C to U+001F, U+200B, U+FEFF, U+180E and U+2060 are kept | §3.2 | `test_python_unicode_database_is_unicode_15_0`, `test_vectors_file_lists_exactly_unicode_white_space`, `test_white_space_rule_is_not_python_isspace`, `test_each_white_space_character_alone_is_absent`, `test_isspace_only_character_is_preserved` |
+| A non-string value is rejected by the schema, so a result can never carry one | §3.2, §4 | `test_invalid_launch_result_is_rejected_at_the_right_place` (`numeric-name`, `object-name`, `boolean-name`, `boolean-email`, `list-email`, `numeric-email`, `numeric-context-title`, `list-context-title`) |
+| The schema alone accepts a White_Space-only string (the gap the normaliser closes) | §3.2 | `test_schema_alone_accepts_a_white_space_only_string` |
+| Contract text names the vectors file and the `str.isspace()` distinction (drift guard) | §3.2 | `test_contract_section_3_2_names_the_vectors_file` |
+
+### Documented but not automatically enforced
+
+These rules are written in `contracts/lti-launch.v1.md`. No code enforces them today and no test
+covers them. They belong to `libs/lti` (not yet created). ADR 0001 §12, LTI-01 to LTI-32, lists
+*proposed* acceptance tests for the launch boundary: they are not approved (Stage 2 is not
+approved), none exists yet, and none is claimed as working.
+
+| Rule | Contract section | Where it belongs |
+|---|---|---|
+| Signature, `exp`, `aud`, `azp`, `iss`, `deployment_id`, message type, single-use nonce and state checks | §8, PRD SEC-01 | `libs/lti` |
+| `iss` must exactly match a registered platform (no normalisation); an unverified `iss` only locates the candidate configuration for signature verification; B4 is called only through the client bound to the configuration for the registered issuer, with no fallback to another platform's client | §7.1 | `libs/lti` and the B4 client. The B4 owner has confirmed the registered-issuer and client-binding part; the exact-match and untrusted-until-verified wording is B3's. The guide's formal approval of the gateway as a B4 consumer (B4 pull request #27, ADR 0001 OI-15) is pending |
+| Role-URI mapping and precedence; ignoring unlisted roles; refusal when no recognised role remains; refusal under EXT-07 | §5, §8, PRD A5, EXT-07 | `libs/lti`; each tool also refuses what it does not accept |
+| Running the §3.2 normalisation of `name`, `email` and `context.title`, once, at the boundary. The rule and its vectors are tested above; no code performs it yet | §3.2 | `libs/lti` (not yet created), to be tested against `contracts/test-vectors/lti-launch-optional-claims.v1.json` |
+| Session identity `(iss, sub, context id)`, two-hour idle expiry, course-context isolation | §6, §7, PRD SEC-02 | `libs/lti` and each module's authorisation |
+| `name` and `email` never written to logs | §10.1, PRD SEC-06 | Every module's logging; no test yet |
+| No raw ID token, nonce, state or key material reaches a module | §10 | `libs/lti` |
+
+### Requirement text changed by this pull request
+
+Wording only. These changes carry no new tests, because no code implements the requirements yet.
+
+| Text | Change | Tests |
+|---|---|---|
+| PRD A5, rules paragraph | Role URIs not listed in B3 are ignored; a launch is refused only if no recognised role remains | None yet (`libs/lti`) |
+| PRD B3 table | Claims split into inspected by the gateway and exposed to modules; `iss` added; session bound to `(iss, sub, context id)`; `shared.course_link` keyed by `iss` plus context id | The structure is covered by the schema tests above; the rest belongs to `libs/lti` |
+| PRD EXT-07, FR-X-01, A5 player row | Learner wording is under review (ADR 0001 OI-25); see those PRD rows and the ADR for the current state | None (not implemented) |
+| PRD B.0 rule 3 | One sentence added: a consuming module adds its tests when its code that reads the contract exists; before that, the shared contract tests cover the change | Not applicable (process rule) |

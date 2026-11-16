@@ -127,7 +127,7 @@ The PRD's B3 session identity was written as `(sub, context id)`. The guide deci
 
 ### 3.2 Guide clarifications
 
-The guide has provided the following additional decisions. Evidence: [GitHub Issue #58](https://github.com/narenccode/learnops/issues/58), as cited by the earlier draft of this ADR. Issue #58 was not re-opened for this revision, and it is **not** cited as evidence for the final OI-21 and OI-22 decisions below.
+The guide has provided the following additional decisions. Evidence: the guide's comments on [GitHub Issue #58](https://github.com/narenccode/learnops/issues/58). Two of them were re-read for this revision and are cited by link where they are the source: the comment of 8 November 2026 ([issuecomment-6721370757](https://github.com/narenccode/learnops/issues/58#issuecomment-6721370757): role URIs, claims, refusals, sessions, course mapping) and the comment of 12 November 2026, 14:43 UTC ([issuecomment-6826722256](https://github.com/narenccode/learnops/issues/58#issuecomment-6826722256): OI-21, OI-22, OI-23, where the verification plan goes, the two approval stages). The bullets below keep their earlier attribution to Issue #58 and were not re-checked comment by comment.
 
 - PyLTI1p3Next is the preferred candidate. Skip an Authlib + joserfc comparison unless an identified requirement cannot be satisfied by this candidate.
 - Require `exp`; validate `aud` against the configured client ID and validate `azp` when multiple audiences are present.
@@ -148,14 +148,14 @@ The guide has provided the following additional decisions. Evidence: [GitHub Iss
 - Administrator takes precedence over Instructor. Learner-only launches are refused by baseline tools, and a launch is refused when no recognised role remains. Unlisted roles are ignored when a recognised role is present (OI-22).
 - Each tool declares its accepted roles. Baseline tools accept Mentor and Administrator. An earlier guide statement (historical) said Release 6 player functionality may add Learner without changing the gateway. It is not a current decision: it is not reconciled with the v1 schema, which has no Learner role value; it stays open as OI-25 (§10.4).
 
-Further guide decisions recorded in this change. **Evidence status:** the decisions were received by the B3 owner and are recorded as decided. No source link (issue or comment URL) for them has been supplied yet, so none is cited; do not read Issue #58 as their source. Add the link when the guide provides it. This applies in particular to OI-21 (session identity) and OI-22 (unlisted roles ignored, PRD §A5 amended):
+Further guide decisions recorded in this change. **Source:** the guide's comment on Issue #58 of 12 November 2026, 14:43 UTC, [issuecomment-6826722256](https://github.com/narenccode/learnops/issues/58#issuecomment-6826722256): Q1 is OI-21 (session identity and the `shared.course_link` key), Q2 is OI-22 (unlisted roles ignored; PRD §A5 corrected in the same PR), Q3 is OI-23 (the three paths; valid examples only; invalid cases in tests or a vectors file), Q4 is the verification plan as an appendix, and Q5 is the two approval stages with the list of items already decided. Where a bullet has a different source, it says so:
 
 - Session identity is `(iss, sub, context id)`; `shared.course_link` is keyed by `iss` plus context id.
 - Unlisted role URIs, including system administrator roles, are ignored; a launch is refused only if no recognised role remains.
-- Only `LtiResourceLinkRequest` is required in v1; Deep Linking is not.
+- Only `LtiResourceLinkRequest` is required in v1; Deep Linking is not (PRD B3).
 - The schema describes the normalised launch result, not raw Moodle claims.
 - Invalid cases (no recognised role, Learner-only, missing context, wrong deployment) belong in tests or a vectors file, not in the valid examples folder.
-- Launch data is read only through the authenticated server-side session; raw JWTs and full tokens are not exposed to modules.
+- Launch data is read only through the authenticated server-side session (Q5). Raw JWTs and full tokens are not exposed to modules: that is the boundary of this contract (contract §10), consistent with the 8 November comment, where the schema holds what `libs/lti` hands to a module after validation.
 - The verification plan is an appendix of this ADR, not a `docs/testing` folder.
 
 ### 3.3 Proposed implementation choices
@@ -368,6 +368,8 @@ The inspected implementation checks expiry if `exp` is present, but the review d
 **Required behaviour from SEC-01 and the guide:** require `exp` and reject missing or expired values.
 
 **Proposed B3 design:** enforce expiry inside the overridden `validate_jwt_signature()` (§6.9), so that it runs before any state or nonce is consumed and before anything is persisted. A check after `validate()` would be too late, because the library's `save_launch_data()` runs at the end of `validate()` (`message_launch.py:342`). Explicitly require and validate the relevant claims (proposed: `exp`, `iat`, `iss`, `aud`, `sub`, `nonce`), and pin a PyJWT 2.x release (OI-02).
+
+**PyJWT advisory (checked 15 November 2026).** Source: the GitHub advisory record GHSA-75c5-xw7c-p5pm, read as data from GitHub's REST API (`gh api /advisories/GHSA-75c5-xw7c-p5pm`); the human-readable page is <https://github.com/advisories/GHSA-75c5-xw7c-p5pm>. The record gives: CVE-2024-53861; summary "PyJWT Issuer field partial matches allowed"; package `PyJWT` (pip); vulnerable range `= 2.10.0`; first patched version `2.10.1`; severity low (CVSS v4 score 2.1); published 2 December 2024. No other fact from the advisory is used here. It matters here because the §6.9 design passes `issuer` to `jwt.decode`. **Not established:** whether any other PyJWT advisory applies, and any general minimum version. The dependency floor is not set by this ADR: it is decided at pin time from the V3 advisory scan of the resolved tree (Appendix B), and it must also be a PyJWT version that PyLTI1p3Next works with, which has not been verified (it declares `pyjwt>=1.5`).
 
 **Open until approved (OI-04):** the clock-skew leeway, any maximum token age based on `iat`, and the exact required-claim list.
 
@@ -589,7 +591,9 @@ Acceptance tests must prove that:
 3. Persist normalized launch data.
 4. Create the application session bound to the identity tuple.
 
-If the transaction fails, it rolls back completely: nothing is consumed and nothing is saved, and the user relaunches from Moodle. A launch that is refused for a claim or role reason still commits the consumption of its state and nonce, so it cannot be retried. Nothing is consumed before signature verification, so a forged token cannot consume a legitimate user's state or nonce.
+If the transaction fails, it rolls back completely: nothing is consumed and nothing is saved, and the user relaunches from Moodle. A launch that is refused by one of step 2's own decisions (no recognised role, Learner only, or a missing or invalid `context.id`) still commits the consumption of its state and nonce, so it cannot be retried. Nothing is consumed before signature verification, so a forged token cannot consume a legitimate user's state or nonce.
+
+**Consumption boundary (proposed, not approved; §17.1a).** Everything that runs before `save_launch_data()` consumes nothing, and the launch may be retried: the state, JWT-format, nonce-existence and registration checks (an unknown `iss` fails here), the signature checks (including `exp`, `aud`, `azp` and `iss`), the deployment check, the message-type check, and the library's message validators. Those validators check certain claims, so a missing one of those claims is rejected before consumption; at the reviewed commit they are `sub`, the `roles` claim, `resource_link.id` and the LTI version claim (§6.5). Only the decisions inside the transaction (step 2 above) consume state and nonce when they refuse. Which claims the library checks before `save_launch_data()` depends on the pinned version and is confirmed by the startup and validation-chain tests (V4, LTI-29, LTI-30).
 
 ---
 
@@ -711,7 +715,7 @@ The normalized output contains:
 | `deployment_id` | Required |
 | `message_type` | Required; only `LtiResourceLinkRequest` |
 | `role` | Required; `mentor` or `administrator` |
-| `context.id` | Required |
+| `context.id` | Required; a positive integer written as a string (contract §3.1) |
 | `context.title` | Optional |
 | `resource_link.id` | Required |
 | `name` | Optional, nullable |
@@ -725,7 +729,7 @@ The normalized output contains:
 
 Required incoming launch claims include `iss`, `sub`, `deployment_id`, `resource_link.id`, `context.id`, and at least one recognized role.
 
-A missing `context.id` must be refused with guidance to open the tool from a course.
+A missing `context.id`, or one that is not a positive integer in ASCII digits (contract §3.1), must be refused with guidance to open the tool from a course.
 
 Signature, nonce, and expiry validation are responsibilities of `libs/lti` and its tests, not JSON Schema validation.
 
@@ -746,7 +750,7 @@ The guide's role URI observations are based on Moodle source; lab launch confirm
 
 **Earlier PRD wording (now amended).** PRD §A5 said: "a launch with any role not listed is refused with a clear message." Read literally, a launch containing **any** role URI outside the §B3 list would be refused, even if it also contained a listed role.
 
-**Guide's decision (final OI-22 decision: received, source link pending, §3.2).** The earlier draft of this ADR attributed the interpretation below to [Issue #58](https://github.com/narenccode/learnops/issues/58); that attribution is not re-verified here. Moodle site administrators send Instructor, institution administrator, and system administrator URIs. Use the institution administrator URI as the Administrator marker and ignore the system administrator URI. Unlisted role URIs are ignored, and a launch is refused only if no recognized role remains.
+**Guide's decision.** Final: the guide's comment of 12 November 2026, Q2, [issuecomment-6826722256](https://github.com/narenccode/learnops/issues/58#issuecomment-6826722256) ("that is the authoritative behaviour, including for site administrators: ignore roles that B3 does not list, and refuse only when no recognised role remains"). Earlier, the 8 November comment, point 3, [issuecomment-6721370757](https://github.com/narenccode/learnops/issues/58#issuecomment-6721370757), set out the same reading and the Moodle role URIs. Moodle site administrators send Instructor, institution administrator, and system administrator URIs. Use the institution administrator URI as the Administrator marker and ignore the system administrator URI. Unlisted role URIs are ignored, and a launch is refused only if no recognized role remains.
 
 The guide's interpretation applies these rules:
 
@@ -825,7 +829,7 @@ For failed signature, nonce, expiry, or deployment validation, use:
 
 ### 11.3 Missing course context
 
-If `context.id` is missing, refuse the launch and explain that the user must open the tool from a course.
+If `context.id` is missing, or is not a positive integer in ASCII digits (contract §3.1), refuse the launch and explain that the user must open the tool from a course.
 
 ### 11.4 Centralized messages and logs
 
@@ -846,6 +850,8 @@ SEC-01, SEC-02, and SEC-09 are the principal PRD security references for the lau
 
 Each security requirement should have a failing test before its corresponding implementation is added.
 
+**Every row below is a proposed Stage 2 acceptance test. None is approved** (§17.1a), and none exists yet, because `libs/lti` does not exist. Rows that depend on state and nonce use the consumption boundary in §7.8: a failure before `save_launch_data()` consumes nothing (LTI-01 to LTI-08, LTI-10, LTI-32); a refusal by the transaction's own decisions consumes them (LTI-11 to LTI-14, LTI-28); a failure of the transaction itself rolls everything back (LTI-27).
+
 | Test ID | Requirement | Expected behaviour |
 |---|---|---|
 | LTI-01 | Invalid signature | Reject launch |
@@ -857,11 +863,11 @@ Each security requirement should have a failing test before its corresponding im
 | LTI-07 | Incorrect deployment ID | Reject launch |
 | LTI-08 | Unsupported LTI message type | Reject launch |
 | LTI-09 | Reused nonce | Reject launch |
-| LTI-10 | Missing required launch claim | Reject launch |
-| LTI-11 | Learner-only role | HTTP 403 |
-| LTI-12 | Unknown role only | HTTP 403 |
-| LTI-13 | No recognized role | HTTP 403 |
-| LTI-14 | Missing course context | Refuse launch |
+| LTI-10 | Missing required launch claim that the library's validators check before `save_launch_data()` (at the reviewed commit: `sub`, the `roles` claim, `resource_link.id`, the LTI version claim; to be confirmed for the pinned version) | Reject launch; state and nonce stay unconsumed (as LTI-32) |
+| LTI-11 | Learner-only role | HTTP 403; refused inside the launch transaction, so state and nonce are consumed (LTI-28) |
+| LTI-12 | Unknown role only | HTTP 403; as LTI-11 |
+| LTI-13 | No recognized role | HTTP 403; as LTI-11 |
+| LTI-14 | Missing course context, or a `context.id` that is not a positive integer (zero, negative, non-numeric, leading zero, padded, non-ASCII digits, newline) | Refuse launch; refused inside the launch transaction, so state and nonce are consumed (LTI-28) |
 | LTI-15 | Cross-session launch-data access | Reject access |
 | LTI-16 | Launch-data access using launch ID alone | Reject access |
 | LTI-17 | Expired application session | Require Moodle relaunch |
@@ -872,13 +878,14 @@ Each security requirement should have a failing test before its corresponding im
 | LTI-22 | State-changing request without valid CSRF protection | Reject request |
 | LTI-23 | Request to a different course context | Reject access for Mentor; Administrator access follows the all-courses policy in PRD A5 |
 | LTI-24 | Same state and same ID token posted again without the state cookie (the library's ID-token-hash path) | Reject launch |
-| LTI-25 | Invalid signature carrying a legitimate state and nonce | Reject launch; the legitimate launch still succeeds afterwards |
+| LTI-25 | Invalid signature carrying a legitimate state and nonce | Reject launch; the stored state and nonce records are still present and unconsumed (asserted on the stored rows, not only on the HTTP result); the legitimate launch still succeeds afterwards |
 | LTI-26 | Missing library session-ID cookie at launch | Reject launch |
 | LTI-27 | Failure inside the launch transaction | Roll back: nothing consumed, nothing saved |
-| LTI-28 | Launch refused for a claim or role reason, then retried | Retry rejected: state and nonce were consumed |
+| LTI-28 | Launch refused by LearnOps' own decision inside the launch transaction (§7.8 step 2): no recognised role or Learner only (LTI-11 to LTI-13), or a missing or invalid `context.id` (LTI-14); then retried | Retry rejected: state and nonce were consumed (asserted on the stored rows). Does not apply to failures before `save_launch_data()` (LTI-01 to LTI-08, LTI-10), which consume nothing (LTI-32) |
 | LTI-29 | Validation-chain test | Every override in §6.9 runs, with `save_launch_data` last |
 | LTI-30 | Base-class extension point missing (renamed upstream) | Startup compatibility check rejects an incompatible library version |
 | LTI-31 | Stored launch data | Normalized fields only; no ID token or full JWT body |
+| LTI-32 | Each failure covered by LTI-01 to LTI-08 and LTI-10 (signature, `exp`, audience, `azp`, issuer, deployment, message type, a claim the library's validators check) | Reject launch; the stored state and nonce records are unchanged and unconsumed (asserted on the stored rows). This does not change LTI-28 (a refusal by the transaction's own role or `context.id` decision still consumes them) or LTI-27 (a transaction failure rolls back) |
 
 Final test names and file locations must follow repository conventions. Do not claim a test passes until it has actually been run and its output reviewed.
 
@@ -903,6 +910,12 @@ The first successful launch should:
 The service-account visibility requirement remains a lab check.
 
 **Decided by the guide:** `shared.course_link` is keyed by issuer (`iss`) plus context ID. The final columns must still be agreed with Student 3 (B4 owner). B3 documents the key only and does not invent a schema or columns before that agreement (OI-15).
+
+**B4 integration rule (confirmed by the B4 owner).** Harshitha, the B4 owner, has confirmed to the B3 owner that: `iss` must identify a registered platform; the platform configuration is resolved using the verified `iss`; B4 is called only through the client bound to the configuration that corresponds to the registered issuer; and there is never a fallback to another platform's configuration. No link to the confirmation is recorded here. The rule is written into the contract as §7.1.
+
+**Added by B3 in the same section, not part of that confirmation:** the issuer is compared exactly (no trimming, case folding or trailing-slash normalisation), unknown issuers are refused, and the `iss` of an unverified token is used only to locate the candidate registered-platform configuration for signature verification; it is trusted only after the signature verifies. These need the reviewers' agreement with the rest of the contract.
+
+**Formal approval by the guide** of the gateway as a consumer of B4, in B4 pull request #27, is **still pending (OI-15)**.
 
 ---
 
@@ -980,15 +993,15 @@ The proposed overrides (§6.9) rely on undocumented per-step methods and protect
 | OI-12 | No FastAPI adapter was identified | LearnOps uses FastAPI | Guide: approve thin adapter and sync/thread-pool integration approach, including the four proposed `MessageLaunch` overrides and their safeguards (§6.9, §15.5) | High |
 | OI-13 | Trusted-proxy configuration is not established by current setup documentation | Untrusted forwarded headers can undermine secure-request detection | Guide: confirm trusted proxy configuration and ownership | **Blocking deployment security** |
 | OI-14 | Lab HTTPS certificate is pending | HTTPS is mandatory in the lab | Guide: confirm certificate provision and lab readiness | **Blocking lab acceptance** |
-| OI-15 | `shared.course_link` columns are not yet agreed | B3 and B4 need a consistent course identity and record | B4 owner: confirm columns and issuer/context identity | High |
+| OI-15 | `shared.course_link` columns are not yet agreed | B3 and B4 need a consistent course identity and record | B4 owner: confirm columns and issuer/context identity. **Update:** the B4 owner has confirmed the registered-issuer and B4-client binding rule (§13, contract §7.1); the columns, and the guide's formal approval of the gateway as a B4 consumer in PR #27, are **still pending** | High |
 | OI-16 | Moodle role URI observations still need lab confirmation | Source review is not a substitute for a real Moodle launch | Guide/B3: verify actual launch claims in lab | High |
 | OI-17 | Service-account course visibility remains unverified | B4 course lookup depends on visibility | Guide/B4: verify with lab test | High |
 | OI-18 | Upload-resume identity must be confirmed with Video | Upload records must survive session expiry and relaunch | Video owner: confirm `(iss, sub, context id)` identity | High |
 | OI-19 | Per-tool accepted-role declarations need downstream agreement | Learner must not become enabled globally | Module owners/guide: confirm each tool's accepted roles | High |
 | OI-20 | CSRF mechanism must be explicit in the FastAPI/session design | SEC-09 requires CSRF protection on state-changing requests | **Awaiting guide approval.** Guide/B3: approve mechanism compatible with new-window launch | **Blocking security design** |
-| OI-21 | PRD session identity and guide clarification differed in specificity | PRD B3 said `(sub, context id)`; guide says `(iss, sub, context id)` | **Decided by the guide:** `(iss, sub, context id)`. Decision received; source link pending (§3.2). PRD B3 amended in this change | Decided; PRD amended (pending contract PR approval) |
-| OI-22 | PRD §A5 "a launch with any role not listed is refused with a clear message" conflicted with the guide's "ignore unlisted URIs" (as attributed by the earlier ADR draft to [Issue #58](https://github.com/narenccode/learnops/issues/58); not re-verified) | The two readings differed for Instructor + unknown role and for institution administrator + system administrator URI (§10.3) | **Decided by the guide:** unlisted role URIs are ignored; refuse only if no recognised role remains. Decision received; source link pending (§3.2). PRD §A5 amended in this change | Decided; PRD amended (pending contract PR approval) |
-| OI-23 | B3 contract format is confirmed (Markdown, JSON Schema, examples; [Issue #58](https://github.com/narenccode/learnops/issues/58)); schema and example locations were not in the contract inventory | The normalized contract must have its schema and valid examples at agreed locations before contract approval | **Structure and paths decided by the guide and implemented in this draft:** `contracts/lti-launch.v1.md`, `contracts/lti-launch.v1.schema.json`, `contracts/examples/lti-launch.v1/` (Markdown documentation, JSON Schema, valid examples), and the B3 row in `contracts/CLAUDE.md`. **Still pending:** formal approval of the actual contract, schema, examples and PRD changes through the contract PR, by every affected owner and the guide (PRD §B.0). The PR has not been approved | **Blocking contract approval** (structure decided; content awaiting PR approval) |
+| OI-21 | PRD session identity and guide clarification differed in specificity | PRD B3 said `(sub, context id)`; guide says `(iss, sub, context id)` | **Decided by the guide:** `(iss, sub, context id)` ([12 Nov, Q1](https://github.com/narenccode/learnops/issues/58#issuecomment-6826722256); the closing paragraph after point 6 of the [8 Nov comment](https://github.com/narenccode/learnops/issues/58#issuecomment-6721370757) gave the reason: Moodle's `sub` and course ids repeat across sites). PRD B3 amended in this change | Decided; PRD amended (pending contract PR approval) |
+| OI-22 | PRD §A5 "a launch with any role not listed is refused with a clear message" conflicted with the guide's reading that "refuse unlisted roles" means "refuse when no listed role is present" ([8 Nov, point 3](https://github.com/narenccode/learnops/issues/58#issuecomment-6721370757)) | The two readings differed for Instructor + unknown role and for institution administrator + system administrator URI (§10.3) | **Decided by the guide:** unlisted role URIs are ignored; refuse only if no recognised role remains ([12 Nov, Q2](https://github.com/narenccode/learnops/issues/58#issuecomment-6826722256)). PRD §A5 amended in this change | Decided; PRD amended (pending contract PR approval) |
+| OI-23 | B3 contract format is confirmed (Markdown, JSON Schema, examples; [8 Nov, point 1](https://github.com/narenccode/learnops/issues/58#issuecomment-6721370757)); schema and example locations were not in the contract inventory | The normalized contract must have its schema and valid examples at agreed locations before contract approval | **Structure and paths decided by the guide ([12 Nov, Q3](https://github.com/narenccode/learnops/issues/58#issuecomment-6826722256)) and implemented in this draft:** `contracts/lti-launch.v1.md`, `contracts/lti-launch.v1.schema.json`, `contracts/examples/lti-launch.v1/` (Markdown documentation, JSON Schema, valid examples), and the B3 row in `contracts/CLAUDE.md`. **Still pending:** formal approval of the actual contract, schema, examples and PRD changes through the contract PR, by every affected owner and the guide (PRD §B.0). The PR has not been approved | **Blocking contract approval** (structure decided; content awaiting PR approval) |
 | OI-24 | The candidate's cache storage requires a third cookie, `lti1p3-session-id`, that the guide's cookie policy does not cover (§8.7) | It must be sent on Moodle's cross-site launch POST, which (by documented browser behaviour) needs `SameSite=None; Secure` | **Awaiting guide approval.** Guide: whether and how to handle the cookie, its attributes (`SameSite=None; Secure; HttpOnly` proposed), its lifetime, and deletion after launch | **Blocking security design** |
 | OI-25 | The v1 schema constrains `role` to `mentor` or `administrator`, so Release 6 Learner support would need a guide-approved approach, such as an approved enum extension or a new contract version (§10.1, contract §9) | The original EXT-07 wording said Learner launches could be enabled without changing the gateway (historical; EXT-07 is amended in this change to make that conditional on OI-25); widening an enum is not obviously "additive, optional" under PRD B.0 | **Open.** Guide: decide whether `learner` is admitted now, added later as an additive change, or handled in a `v2` file, and when (contract §9). Until then the v1 enum is not widened and no Release 6 Learner support is claimed | High |
 | OI-26 | Which artefact is pinned (release `2.0.2` or a Git commit), its full SHA, and the `jwcrypto` licence evidence are unverified (§4.1, §5.2) | Stage 1 approval needs a pinned, evidenced dependency record | B3 to verify (Appendix B); guide to review the `jwcrypto` LGPL disclosure under PRD C-11 | **Blocking Stage 1 approval** |
@@ -1230,9 +1243,9 @@ This plan lives here, not in `docs/testing`. It lists what must be checked, by w
 |---|---|---|---|
 | V1 | Pinned artefact: PyPI release `2.0.2` versus a Git commit; full SHA; that the pinned code matches the reviewed code | Compare the published artefact with commit `0595282`; re-review the differences if any | Appendix C |
 | V2 | Licence of every direct and transitive dependency, on **Python 3.12**, including `jwcrypto` | Read each package's own metadata and licence file in a throwaway Python 3.12 environment (not the project's); compare with PRD C-11 | Appendix C; then the comment beside each pin in `requirements.txt` |
-| V3 | Security advisories for the resolved tree (SEC-08) | Run the CI dependency scan on the resolved set | Appendix C |
+| V3 | Security advisories for the resolved tree (SEC-08), including PyJWT (§6.2: CVE-2024-53861 affects 2.10.0 only) | Run the CI dependency scan on the resolved set; the PyJWT floor is set from this result | Appendix C |
 | V4 | The extension points in §6.9 exist in the pinned version | Run the startup compatibility checks (LTI-30) | Test report |
-| V5 | Security acceptance tests LTI-01 to LTI-31 (§12) | Automated tests in `tests/`, written failing first | Test report; `docs/traceability.md` |
+| V5 | Security acceptance tests LTI-01 to LTI-32 (§12) | Automated tests in `tests/`, written failing first | Test report; `docs/traceability.md` |
 | V6 | The normalised result and the examples meet the schema | Validate every file in `contracts/examples/lti-launch.v1/` against the schema; negative cases live in tests or a vectors file, never in the examples folder | CI (contract validation) |
 | V7 | Moodle role URIs actually sent (OI-16), including what site administrators send | A real launch from each lab Moodle (4.5 and 5.3) with Instructor, Learner, institution administrator and site-administrator accounts, claims inspected in the lab only | **Release harness report (PRD E2)** |
 | V8 | Launch works on Moodle 4.5 and 5.3, new-window launch, cookies and CSRF behave as designed | Harness run on fresh 4.5 and 5.3 sites | **Release harness report (PRD E2)** |
@@ -1255,7 +1268,7 @@ PRD App-C asks that Release 0 verification results are recorded in `docs/decisio
 | V2 Dependency licences on Python 3.12 | **Not done.** Partial, limited evidence: `typing_extensions` 4.16.0 (PSF-2.0) and `certifi` 2026.5.20 (MPL-2.0) were inspected in other environments (§5.1, §5.3). **`jwcrypto` not verified** | §5.1, §5.3 |
 | V3 Advisory scan | **Not done** | None |
 | V4 to V5 Extension points and security tests | **Not done**; no `libs/lti` exists | None |
-| V6 Schema and examples | Run for this change; see the pull request description for the output | The JSON parse and schema validation run in this change |
+| V6 Schema and examples | **Done for this change, 16 Nov 2026:** `python -m pytest -q libs/contracts` under Python 3.12.16 (Unicode 15.0.0) with the pinned `requirements-dev.txt`: 1773 passed, 0 failed, of which 358 are in `libs/contracts/tests/test_lti_launch_v1.py`. The schema passes the Draft 2020-12 meta-check and the three examples validate. `context.id` behaviour is covered by `test_positive_integer_context_ids_are_accepted`, by the `context-id-…`, `empty-context-id` and `numeric-context-id` cases of `test_invalid_launch_result_is_rejected_at_the_right_place`, and by the drift guard `test_contract_markdown_quotes_the_schema_context_id_pattern`. The same pattern was checked once in JavaScript (Node 20, with and without the `u` flag); that check is not a repository test. The optional-claim rule (contract §3.2) is covered by the shared vectors `contracts/test-vectors/lti-launch-optional-claims.v1.json` and by `test_claim_vectors_are_well_formed`, `test_claim_vectors_cover_every_row_of_section_3_2`, `test_claim_vector_agrees_with_section_3_2`, `test_expected_result_for_every_claim_vector_is_schema_valid`, `test_schema_alone_accepts_a_white_space_only_string`, the White_Space tests (`test_python_unicode_database_is_unicode_15_0`, `test_vectors_file_lists_exactly_unicode_white_space`, `test_white_space_rule_is_not_python_isspace`, `test_each_white_space_character_alone_is_absent`, `test_isspace_only_character_is_preserved`) and the drift guard `test_contract_section_3_2_names_the_vectors_file` | `libs/contracts/tests/test_lti_launch_v1.py`; the output above. Contract checks only: they do not cover signature, nonce, session or Moodle behaviour. The §3.2 tests check the vectors and schema conformance only; **no runtime normaliser exists** (`libs/lti` is not created), so normalisation at the boundary is neither implemented nor tested. `libs/lti` must pass the same vectors (V5) |
 | V7 to V10 Moodle compatibility | **Not done.** No Moodle compatibility is claimed. Results belong in the release harness report (PRD E2) | None |
 
 Update this table when each check runs, with the date, the person, the command or method, and the evidence.

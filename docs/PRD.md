@@ -312,7 +312,7 @@ Moodle sites have: completion tracking on; web services enabled with a dedicated
 
 1. Each contract has an owner, a version (`v1`, `v2`, …) and a JSON Schema in `/contracts`, with at least one valid example file.
 2. **Frozen at the end of Release 0.** After that: additive, optional fields only (EXT-02).
-3. A change is a pull request that updates the schema, the examples, this PRD section, and the tests of every module that uses the contract, approved by all affected owners and the guide.
+3. A change is a pull request that updates the schema, the examples, this PRD section, and the tests of every module that uses the contract, approved by all affected owners and the guide. A consuming module adds its tests when its code that reads the contract exists; before that, the shared contract tests cover the change.
 4. Every module validates contract data it reads and writes against the schema; invalid data is rejected with a clear error.
 
 | Contract | Owner | Used by |
