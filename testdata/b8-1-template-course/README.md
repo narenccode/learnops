@@ -214,7 +214,7 @@ record is held before then is PENDING GUIDE CONFIRMATION (§9).
 
 ## 8. Verification results (Moodle 5.3; Moodle 4.5 not tested)
 
-Scope: B8.1 only. This does not cover B8.2 or the harness: C-03 still applies to the B8.2 generated backups and to FR-C-08, and the B8.2 extension belongs with B8.2 on PR #61, not here.
+Scope: B8.1 only. For B8.2 the guide made a separate decision on 2026-11-16 (A5 on PR #61, recorded there with B8.2): the B8.2 restore and merge tests also run on 5.3 only in Release 0. That decision is not part of this document's scope. C-03 still applies to the harness (FR-C-08).
 
 **Nothing has been verified here: this document records no lab verification result.** Owner: both sites exist, with
 completion tracking and course badges switched on in both (Owner, correcting an earlier answer on

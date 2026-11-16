@@ -9,7 +9,7 @@
 > guide's answers on Issues #55 and #65 (and, for the licence, Issue #61) win. **The owner's answers are decisions, not test results.** Release 0
 > builds and tests on **Moodle 5.3 only** (Owner, the 11-14 reply). Moodle 4.5 is not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only); it is
 > never recorded as passed. The statement that a 5.3 backup is expected not to restore on 4.5 is the owner's report of
-> what Moodle documents (Issue #55, 2026-11-14); it is not verified here, and the PRD does not state it. Scope: B8.1 only. This does not cover B8.2 or the harness: C-03 still applies to the B8.2 generated backups and to FR-C-08, and the B8.2 extension belongs with B8.2 on PR #61, not here.
+> what Moodle documents (Issue #55, 2026-11-14); it is not verified here, and the PRD does not state it. Scope: B8.1 only. For B8.2 the guide made a separate decision on 2026-11-16 (A5 on PR #61, recorded there with B8.2): the B8.2 restore and merge tests also run on 5.3 only in Release 0. That decision is not part of this document's scope. C-03 still applies to the harness (FR-C-08).
 
 ## How to read this document
 
