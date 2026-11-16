@@ -1,3 +1,4 @@
+import re
 import sys
 from pathlib import Path
 
@@ -105,26 +106,17 @@ def test_module_code_still_needs_a_real_requirement_id_not_just_a_contract_ref()
     assert any("No requirement ID" in x.message for x in f)
 
 
-def test_contract_change_with_process_waits_for_the_owners_not_the_guide():
+def test_contract_change_with_process_is_ready():
     f = r.evaluate(
         ctx(
             ["contracts/course.schema.json"],
             body=GOOD_BODY + "\nUses /contract-change.",
         )
     )
-    assert r.verdict_of(f) == "awaiting-owners"
-    assert r.VERDICTS["awaiting-owners"][1] != r.VERDICTS["needs-judgement"][1]
-
-
-def test_a_real_guide_question_beats_the_owners_wait():
-    f = r.evaluate(
-        ctx(
-            ["contracts/course.schema.json"],
-            body=GOOD_BODY + "\nUses /contract-change.",
-        )
+    assert r.verdict_of(f) == "ready-to-merge"
+    assert not any(
+        x.message.startswith("Contract change: every affected owner") for x in f
     )
-    f.append(r.Finding("judgement", "A real question for the guide."))
-    assert r.verdict_of(f) == "needs-judgement"
 
 
 def test_guide_edit_of_prd_not_flagged():
@@ -228,12 +220,15 @@ def test_other_modules_file_is_advice_only():
     assert [x.level for x in f] == ["advice"]
 
 
-def test_oversize_pr_needs_rework_and_lockfile_ignored():
+def test_oversize_pr_is_advice_and_lockfile_ignored():
     c = ctx(["docs/a.md", "package-lock.json"])
     c.numstat = {"docs/a.md": 500, "package-lock.json": 9000}
     assert r.verdict_of(r.evaluate(c)) == "ready-to-merge"
     c.numstat["docs/a.md"] = 900
-    assert r.verdict_of(r.evaluate(c)) == "needs-rework"
+    f = r.evaluate(c)
+    assert r.verdict_of(f) == "ready-to-merge"
+    large = [x for x in f if "900 changed lines" in x.message]
+    assert len(large) == 1 and large[0].level == "advice"
 
 
 def test_malformed_and_unticked_boxes_are_advice():
@@ -260,26 +255,23 @@ def test_codeowners_last_match_and_guide_detection():
 
 def test_render_has_marker_and_sections():
     f = [r.Finding("violation", "bad", "PRD C-04"), r.Finding("advice", "meh")]
-    text = r.render("rule-violation", f, "abcdef123")
-    assert text.startswith(r.MARKER) and "Rule violation" in text and "abcdef1" in text
+    text = r.render(f, "abcdef123")
+    assert text.startswith(r.MARKER)
+    assert "Serious: read before merging" in text and "abcdef1" in text
 
 
-def test_post_comments_first_and_survives_label_failure(monkeypatch):
+def test_post_writes_only_the_comment(monkeypatch):
     calls = []
 
     def fake_gh(*args, check=True):
         calls.append(args)
-        if "labels[]=ready-to-merge" in args:
-            raise RuntimeError("refused")
         return ""
 
     monkeypatch.setattr(r, "gh", fake_gh)
-    r.post("o/r", 7, "ready-to-merge", "body")
+    r.post("o/r", 7, "body")
     posted = [c for c in calls if c[0] == "api" and "body=body" in c]
     assert posted, "comment must be posted"
-    first_label = next(i for i, c in enumerate(calls) if c[:2] == ("label", "create"))
-    assert calls.index(posted[0]) < first_label
-    assert not any(c[:2] == ("pr", "edit") for c in calls)
+    assert not any("label" in " ".join(c) for c in calls)
 
 
 def test_post_updates_existing_bot_comment(monkeypatch):
@@ -292,7 +284,7 @@ def test_post_updates_existing_bot_comment(monkeypatch):
         return ""
 
     monkeypatch.setattr(r, "gh", fake_gh)
-    r.post("o/r", 7, "needs-rework", "body")
+    r.post("o/r", 7, "body")
     assert any("PATCH" in c and "repos/o/r/issues/comments/123" in c for c in calls)
     assert 'user.login == "github-actions[bot]"' in " ".join(calls[0])
 
@@ -389,14 +381,58 @@ def test_contract_pr_over_the_limit_needs_a_file_map_not_a_split():
     )
     c.numstat = {"contracts/x.json": 900}
     f = r.evaluate(c)
-    assert any("file map" in x.message and x.level == "rework" for x in f)
+    file_map = [x for x in f if "file map" in x.message]
+    assert len(file_map) == 1 and file_map[0].level == "advice"
     c.body = GOOD_BODY + "\n## File map\n- contracts/x.json (900): the schema\n"
     f = r.evaluate(c)
-    assert not any(x.level == "rework" and "changed lines" in x.message for x in f)
-    assert any("Allowed" in x.message for x in f)
+    assert not any("changed lines" in x.message for x in f)
 
 
-def test_non_contract_pr_over_the_limit_still_needs_a_split_even_with_a_file_map():
+def test_non_contract_pr_over_the_limit_gets_split_advice_even_with_a_file_map():
     c = ctx(["docs/a.md"], body=GOOD_BODY + "\nfile map\n")
     c.numstat = {"docs/a.md": 900}
-    assert r.verdict_of(r.evaluate(c)) == "needs-rework"
+    f = r.evaluate(c)
+    assert r.verdict_of(f) == "ready-to-merge"
+    assert any("split it if you can" in x.message and x.level == "advice" for x in f)
+
+
+WORKFLOW = (
+    Path(__file__).resolve().parents[3] / ".github" / "workflows" / "pr-review.yml"
+)
+
+
+def test_workflow_cannot_set_statuses():
+    text = WORKFLOW.read_text(encoding="utf-8")
+    assert "statuses: write" not in text
+    assert "pull_request_review" not in text
+
+
+def test_render_is_advice():
+    text = r.render(
+        [r.Finding("rework", "X", "CLAUDE.md §7.1"), r.Finding("advice", "Y")],
+        "abcdef1234",
+        step="S",
+    )
+    assert "### Automated advice" in text
+    assert "It never blocks merging" in text
+    assert "**Summary:** Please fix" in text
+    assert "**Next step:** S" in text
+    assert "**Please fix**" in text
+    assert "- X _(CLAUDE.md §7.1)_" in text
+    assert "**Suggestions**" in text
+    assert "abcdef1" in text
+    assert "<!-- verdict:" not in text
+
+
+def test_render_empty_is_clean():
+    text = r.render([], "abcdef1234")
+    assert "No problems found." in text
+    assert "The rule checks found nothing to fix." in text
+
+
+def test_next_step_never_pings():
+    text = r.next_step("s2", ("s3",))
+    assert "@\u200bs2" in text
+    assert "@\u200bs3" in text
+    assert "Enable auto-merge" in text
+    assert re.search(r"@[A-Za-z]", text) is None
