@@ -12,6 +12,12 @@ AUTOMATED here (structure only, by contracts/lti-launch.v1.schema.json):
     the rule, agree with it (Unicode 15.0.0 White_Space, not Python's str.isspace()), and every
     expected result is schema-valid.
 
+  * the role rules of contract section 5 (OI-22) and the session identity and course-link key
+    of sections 6 and 7 (OI-21): each is restated at the end of this file (_resolve_role,
+    _session_identity, _course_link_key) and checked against the contract table, the PRD text and
+    a list of decided cases. Like _rule_outcome below, this restates the rule to pin the contract
+    text. It is not the gateway: libs/lti must enforce the same rules when it exists.
+
 NOT implemented anywhere yet: the normaliser itself. It is to run once, in libs/lti, which does
 not exist yet; libs/lti must pass the same vectors when it is added. The rule is restated in this file
 (_rule_outcome) only to check the vectors against the contract text.
@@ -19,9 +25,11 @@ not exist yet; libs/lti must pass the same vectors when it is added. The rule is
 These are the shared contract tests that cover B3 in Release 0 (PRD B.0 rule 3): a consuming
 module adds its own tests when its code that reads the contract exists.
 
-NOT checked by the schema, so not tested here (the schema's $comment lists them): signature,
-exp, aud, azp, iss, deployment, nonce and state checks, role-URI mapping and precedence,
-session binding and expiry, course isolation. They belong to libs/lti, which does not exist yet.
+NOT checked by the schema, and not tested as running code here (the schema's $comment lists
+them): signature, exp, aud, azp, iss, deployment, nonce and state checks, role-URI mapping and
+precedence, session binding and expiry, course isolation. They belong to libs/lti, which does
+not exist yet. Role mapping and the identity keys are pinned only as stated rules (see above);
+signature, expiry, nonce, state, session expiry and isolation are not covered at all.
 
 Each invalid case must fail at the expected place with the expected schema keyword, so a case
 cannot pass for the wrong reason. For a dropped required field a separate test also checks that
@@ -31,7 +39,9 @@ the error names that field.
 from __future__ import annotations
 
 import copy
+import itertools
 import json
+import re
 import unicodedata
 from collections.abc import Callable
 from pathlib import Path
@@ -668,3 +678,280 @@ def test_every_required_field_has_a_missing_case() -> None:
     for path in paths:
         case_id = "missing-" + "-".join(path).replace("_", "-")
         assert case_id in covered, case_id
+
+
+# Contract section 5: role mapping and precedence (OI-22, decided by the guide).
+
+PRD_PATH = ROOT / "docs" / "PRD.md"
+
+INSTRUCTOR = "http://purl.imsglobal.org/vocab/lis/v2/membership#Instructor"
+LEARNER = "http://purl.imsglobal.org/vocab/lis/v2/membership#Learner"
+INSTITUTION_ADMIN = (
+    "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Administrator"
+)
+SYSTEM_ADMIN = "http://purl.imsglobal.org/vocab/lis/v2/system/person#Administrator"
+UNLISTED = (
+    "http://purl.imsglobal.org/vocab/lis/v2/membership#Mentor"  # not a B3 role URI
+)
+
+REFUSED_NO_ROLE = "refused: no recognised role"
+REFUSED_LEARNER_ONLY = "refused: learner is the only recognised role"
+
+
+def _flat(text: str) -> str:
+    """Collapse line breaks and runs of spaces, so a sentence wrapped in Markdown still matches."""
+    return " ".join(text.split())
+
+
+def _resolve_role(role_uris: list[str]) -> str:
+    """Contract section 5 restated: unlisted URIs are ignored, Administrator beats Instructor,
+    Learner counts only when it is the only recognised role. It is not the gateway."""
+    recognised = {INSTRUCTOR, INSTITUTION_ADMIN, LEARNER} & set(role_uris)
+    if INSTITUTION_ADMIN in recognised:
+        return "administrator"
+    if INSTRUCTOR in recognised:
+        return "mentor"
+    if LEARNER in recognised:
+        return REFUSED_LEARNER_ONLY
+    return REFUSED_NO_ROLE
+
+
+# (case id, incoming role URIs, normalised role or the refusal). The source of each case is
+# ADR 0001 section 10.3 (OI-22 and the guide's rules 1 to 6) or the contract section 5 rules.
+ROLE_CASES: list[tuple[str, list[str], str]] = [
+    ("instructor", [INSTRUCTOR], "mentor"),
+    ("institution-administrator", [INSTITUTION_ADMIN], "administrator"),
+    ("learner-only", [LEARNER], REFUSED_LEARNER_ONLY),
+    ("no-roles", [], REFUSED_NO_ROLE),
+    ("unlisted-only", [UNLISTED], REFUSED_NO_ROLE),
+    ("system-administrator-only", [SYSTEM_ADMIN], REFUSED_NO_ROLE),
+    # OI-22: an unlisted role is ignored, never a reason to refuse a recognised role
+    ("instructor-plus-unlisted", [INSTRUCTOR, UNLISTED], "mentor"),
+    (
+        "institution-and-system-administrator",
+        [INSTITUTION_ADMIN, SYSTEM_ADMIN],
+        "administrator",
+    ),
+    (
+        "moodle-site-administrator",
+        [INSTRUCTOR, INSTITUTION_ADMIN, SYSTEM_ADMIN],
+        "administrator",
+    ),
+    # rule 1: Administrator takes precedence
+    (
+        "administrator-beats-instructor",
+        [INSTRUCTOR, INSTITUTION_ADMIN],
+        "administrator",
+    ),
+    # rules 2 and 3: Learner counts only when it is the only recognised role
+    ("instructor-plus-learner", [INSTRUCTOR, LEARNER], "mentor"),
+    ("administrator-plus-learner", [INSTITUTION_ADMIN, LEARNER], "administrator"),
+    ("learner-plus-unlisted", [LEARNER, UNLISTED], REFUSED_LEARNER_ONLY),
+    (
+        "learner-plus-system-administrator",
+        [LEARNER, SYSTEM_ADMIN],
+        REFUSED_LEARNER_ONLY,
+    ),
+    ("duplicate-instructor", [INSTRUCTOR, INSTRUCTOR], "mentor"),
+    (
+        "every-role-at-once",
+        [LEARNER, UNLISTED, SYSTEM_ADMIN, INSTRUCTOR, INSTITUTION_ADMIN],
+        "administrator",
+    ),
+]
+
+
+def _section_5_table() -> dict[str, str]:
+    """Contract section 5 table: role URI -> text of the second column."""
+    body = CONTRACT_PATH.read_text(encoding="utf-8")
+    body = body.split("## 5. Role mapping and precedence", 1)[1].split("\n## ", 1)[0]
+    rows: dict[str, str] = {}
+    for line in body.splitlines():
+        if not line.startswith(("| `http", "| Any other URI")):
+            continue
+        first, second = (cell.strip() for cell in line.strip().strip("|").split("|"))
+        found = re.findall(r"`(http[^`]+)`", first)
+        assert len(found) == 1, line
+        rows[found[0]] = second
+    return rows
+
+
+def test_contract_section_5_table_matches_the_agreed_role_uris() -> None:
+    table = _section_5_table()
+    assert set(table) == {INSTRUCTOR, INSTITUTION_ADMIN, LEARNER, SYSTEM_ADMIN}
+    assert table[INSTRUCTOR] == "`mentor`"
+    assert table[INSTITUTION_ADMIN] == "`administrator`"
+    assert table[LEARNER].startswith("Learner: refused by baseline tools")
+    assert table[SYSTEM_ADMIN] == "Ignored"
+
+
+@pytest.mark.parametrize(
+    ("roles", "expected"),
+    [pytest.param(r, e, id=i) for i, r, e in ROLE_CASES],
+)
+def test_role_resolution_follows_oi_22_in_any_order(
+    roles: list[str], expected: str
+) -> None:
+    for ordering in itertools.permutations(roles):
+        assert _resolve_role(list(ordering)) == expected
+
+
+def test_role_cases_cover_every_oi_22_row_and_every_pair_of_recognised_roles() -> None:
+    covered = {frozenset(roles) for _, roles, _ in ROLE_CASES}
+    recognised = [INSTRUCTOR, INSTITUTION_ADMIN, LEARNER]
+    for size in (1, 2, 3):
+        for combo in itertools.combinations(recognised, size):
+            assert any(set(combo) <= c for c in covered), combo
+    # the three OI-22 rows: unknown only, Instructor + unknown, institution + system administrator
+    assert frozenset([UNLISTED]) in covered
+    assert frozenset([INSTRUCTOR, UNLISTED]) in covered
+    assert frozenset([INSTITUTION_ADMIN, SYSTEM_ADMIN]) in covered
+
+
+def test_resolved_roles_are_schema_values_and_refusals_never_are() -> None:
+    allowed = set(_schema()["properties"]["role"]["enum"])
+    assert allowed == {"mentor", "administrator"}
+    for _, _, outcome in ROLE_CASES:
+        if outcome in (REFUSED_NO_ROLE, REFUSED_LEARNER_ONLY):
+            assert outcome not in allowed
+        else:
+            assert outcome in allowed
+
+
+def test_contract_and_prd_state_the_oi_22_rule() -> None:
+    contract = _flat(CONTRACT_PATH.read_text(encoding="utf-8"))
+    prd = _flat(PRD_PATH.read_text(encoding="utf-8"))
+    assert (
+        "An unlisted role never causes a refusal when a recognised role is also present."
+        in contract
+    )
+    assert (
+        "Administrator takes precedence if both administrator and instructor are present."
+        in contract
+    )
+    assert (
+        "Instructor plus Learner resolves to `mentor` for baseline tools." in contract
+    )
+    assert "role URIs not listed in §B3 are ignored" in prd
+    assert "only if no recognised role remains" in prd
+    # the superseded wording must not come back
+    assert "a launch with any role not listed is refused" not in prd.lower()
+
+
+# Contract sections 6 and 7: session identity and course link (OI-21), issuer separation.
+
+
+def _session_identity(doc: Doc) -> tuple[str, str, str]:
+    """Contract section 6: the session is bound to (iss, sub, context id)."""
+    return (doc["iss"], doc["sub"], doc["context"]["id"])
+
+
+def _course_link_key(doc: Doc) -> tuple[str, str]:
+    """Contract section 7: shared.course_link is keyed by iss plus context id."""
+    return (doc["iss"], doc["context"]["id"])
+
+
+def _with_issuer(doc: Doc, iss: str) -> Doc:
+    other = copy.deepcopy(doc)
+    other["iss"] = iss
+    return other
+
+
+def test_two_platforms_with_the_same_user_and_course_numbers_do_not_collide(
+    mentor_doc: Doc,
+) -> None:
+    """Moodle's sub and course ids repeat across sites (ADR 0001 OI-21), so the same pair can
+    come from two issuers. Without iss they would be one identity."""
+    other = _with_issuer(mentor_doc, "https://moodle.other.example.org")
+    assert _validator().is_valid(mentor_doc) and _validator().is_valid(other)
+    assert (mentor_doc["sub"], mentor_doc["context"]["id"]) == (
+        other["sub"],
+        other["context"]["id"],
+    )
+    assert _session_identity(mentor_doc) != _session_identity(other)
+    assert _course_link_key(mentor_doc) != _course_link_key(other)
+
+
+@pytest.mark.parametrize(
+    "iss",
+    ["https://moodle.example.org/", "HTTPS://MOODLE.EXAMPLE.ORG"],
+    ids=["trailing-slash", "upper-case"],
+)
+def test_issuer_is_compared_as_received_not_normalised(
+    mentor_doc: Doc, iss: str
+) -> None:
+    """Contract section 7.1: no case folding and no trailing-slash normalisation. The schema
+    accepts both strings and nothing merges them, so they stay distinct identities (whether such
+    an issuer is registered is the gateway's check)."""
+    other = _with_issuer(mentor_doc, iss)
+    assert _validator().is_valid(other)
+    assert _session_identity(mentor_doc) != _session_identity(other)
+    assert _course_link_key(mentor_doc) != _course_link_key(other)
+
+
+@pytest.mark.parametrize(
+    ("path", "value"),
+    [
+        (("iss",), "https://moodle.other.example.org"),
+        (("sub",), "user-2000"),
+        (("context", "id"), "99"),
+    ],
+    ids=["iss", "sub", "context-id"],
+)
+def test_session_identity_changes_with_each_of_iss_sub_and_context_id(
+    mentor_doc: Doc, path: tuple[str, ...], value: str
+) -> None:
+    other = copy.deepcopy(mentor_doc)
+    _set(path, value)(other)
+    assert _session_identity(other) != _session_identity(mentor_doc)
+
+
+@pytest.mark.parametrize(
+    ("path", "value"),
+    [
+        (("role",), "administrator"),
+        (("deployment_id",), "deployment-2"),
+        (("resource_link", "id"), "link-99"),
+        (("name",), "Someone Else"),
+        (("email",), None),
+        (("context", "title"), "Another title"),
+    ],
+    ids=["role", "deployment-id", "resource-link-id", "name", "email", "context-title"],
+)
+def test_other_fields_are_not_part_of_the_identity_or_course_link(
+    mentor_doc: Doc, path: tuple[str, ...], value: object
+) -> None:
+    other = copy.deepcopy(mentor_doc)
+    _set(path, value)(other)
+    assert _session_identity(other) == _session_identity(mentor_doc)
+    assert _course_link_key(other) == _course_link_key(mentor_doc)
+
+
+def test_course_link_key_has_no_user_part(mentor_doc: Doc) -> None:
+    """Two users of one course on one platform share the course link."""
+    colleague = copy.deepcopy(mentor_doc)
+    colleague["sub"] = "user-2000"
+    assert _course_link_key(colleague) == _course_link_key(mentor_doc)
+    assert _session_identity(colleague) != _session_identity(mentor_doc)
+
+
+def test_contract_prd_and_adr_state_the_decided_identity_and_course_link_key() -> None:
+    contract = _flat(CONTRACT_PATH.read_text(encoding="utf-8"))
+    prd = _flat(PRD_PATH.read_text(encoding="utf-8"))
+    adr = _flat(
+        (ROOT / "docs" / "decisions" / "0001-lti-library.md").read_text("utf-8")
+    )
+    identity = "(`iss`, `sub`, context id)"
+    assert identity in contract and identity in prd
+    assert "(iss, sub, context id)" in adr  # the ADR writes the tuple as one code span
+    assert "keyed by **`iss` plus context id**" in contract
+    assert "keyed by `iss` plus context id" in prd
+    # the superseded identity must not be the stated one
+    assert "(`sub`, context id)" not in contract
+    assert "(`sub`, context id)" not in prd
+    # contract 7.1: exact issuer matching, no fallback to another platform
+    assert (
+        "no trimming, no case folding and no trailing-slash or other normalisation"
+        in contract
+    )
+    assert "never a fallback" in contract
