@@ -2,6 +2,13 @@
 
 Record the source and the licence or consent for every data set here.
 
+## B8.3 Planted-error course packages (owner: Student 2)
+
+- **Where:** `b8-3-planted-errors/` (four mutated copies of the B8.2 sample course; see its [`README.md`](b8-3-planted-errors/README.md) and [`answer.yaml`](b8-3-planted-errors/answer.yaml)).
+- **Status:** Four planted-error variants are checked against the shared B1 validator and D2 CLI. Automated regression tests verify the expected error code, rule, location, idnumber and message. This is a D2 demo subset, not full CK-01…CK-13 coverage or completion of PRD §C2.7.
+- **Source/licence:** Copies of the fictional original LearnOps B8.2 sample course package. B8.2 records Apache-2.0 and no learner data or third-party material; B8.3 changes only the documented defect fields.
+- **Cases:** Missing body file (`body_file_missing`); duplicate activity idnumber (`duplicate_idnumber`); protected idnumber (`schema_not`); invalid course mode (`schema_enum`). See the B8.3 README for exact B1 rule references and locations.
+
 ## B8.1 Template course backup
 
 A Moodle course backup with the protected items (PRD B1.4), course completion and a badge (PRD §B8).
