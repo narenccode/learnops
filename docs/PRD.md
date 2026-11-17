@@ -91,10 +91,11 @@ passwords**.
 | Release grades to learners | In **Moodle** only | ❌ | In Moodle only |
 | Practice review (stretch) | ✅ | ❌ | ✅ |
 | Tool configuration, model provider, keys | ❌ | ❌ | ✅ (environment only) |
-| *(Extension, Release 6)* Watch lessons in the dual-stream player; answer cue activities | ✅ (preview) | ✅ (enrolled courses only) | ✅ |
+| *(Extension, Release 6; Learner access conditional on EXT-07 / OI-25 approval)* Watch lessons in the dual-stream player; answer cue activities | ✅ (preview) | Planned (enrolled courses only); subject to OI-25 approval and the approved contract/gateway approach | ✅ |
 
-Rules: a launch with any role not listed is refused with a clear message. A user sees only data
-for the course (LTI context) they launched from, except administrators.
+Rules: role URIs not listed in §B3 are ignored. A launch is refused, with a clear message, only if
+no recognised role remains. A user sees only data for the course (LTI context) they launched from,
+except administrators.
 
 ## A6. Scope
 
@@ -190,7 +191,7 @@ The rule: **future features must be new consumers of data that already exists, n
 | EXT-04 | **Adapters at every external dependency** | Model provider, speech provider, storage backend (local folder or S3-compatible) and Moodle access sit behind interfaces with one adapter each. Swapping one is configuration, not code. |
 | EXT-05 | **Feature flags** | Optional features (practice, summaries, slide index, BigBlueButton intake) can be switched on or off per deployment. |
 | EXT-06 | **Stable identifiers** | Activities identified by Moodle `idnumber`; lessons by slug; never by position or display name. |
-| EXT-07 | **Reserved extension points** | The LTI gateway already validates the Learner role and refuses it with "not available in this version". F-1 (player) and F-3 (tutor) will enable Learner launches without changing the gateway. |
+| EXT-07 | **Reserved extension points** | Baseline tools refuse Learner-only launches with "not available in this version". Learner access for F-1 (player) and F-3 (tutor) is a planned extension, not currently supported. Whether it can be enabled without changing the gateway or the B3 schema is unresolved (ADR 0001, OI-25): the guide must decide how Learner is represented in the normalised launch result and whether the v1 enum can be extended or a new contract version is required. No Learner support is claimed until that decision and any required contract change are approved (§B.0). |
 | EXT-08 | **Data produced now for features built later** | The video pipeline produces the slide index (`slides.json`) and cue file (`cues.json`) now; F-1 will display them. |
 | EXT-09 | **One shared library per cross-cutting concern** | `lti`, `moodle_ws`, `model_interface`, `contracts` (schemas + validators), `media_paths`. Modules import them; they never copy code. |
 
@@ -311,7 +312,7 @@ Moodle sites have: completion tracking on; web services enabled with a dedicated
 
 1. Each contract has an owner, a version (`v1`, `v2`, …) and a JSON Schema in `/contracts`, with at least one valid example file.
 2. **Frozen at the end of Release 0.** After that: additive, optional fields only (EXT-02).
-3. A change is a pull request that updates the schema, the examples, this PRD section, and the tests of every module that uses the contract. **Until Release 0 is frozen**, it needs the approval of one owner of an affected module; the guide approves the PRD text and reviews the whole contract set once at the Release 0 gate. **After the freeze**, the guide's approval is also required for the contract itself (enforced through CODEOWNERS).
+3. A change is a pull request that updates the schema, the examples, this PRD section, and the tests of every module that uses the contract. **Until Release 0 is frozen**, it needs the approval of one owner of an affected module; the guide approves the PRD text and reviews the whole contract set once at the Release 0 gate. **After the freeze**, the guide's approval is also required for the contract itself (enforced through CODEOWNERS). A consuming module adds its tests when its code that reads the contract exists; before that, the shared contract tests cover the change.
 4. Every module validates contract data it reads and writes against the schema; invalid data is rejected with a clear error.
 
 | Contract | Owner | Used by |
@@ -433,11 +434,12 @@ information is lost.
 | Moodle role | Platform; each LearnOps tool registered as an External tool (LTI 1.3) by the administrator |
 | Tool endpoints | Login initiation, launch (redirect), JWKS; one registration per tool (Studio, Checker, Grading, Video) |
 | Message type | `LtiResourceLinkRequest` (Deep Linking not required in v1) |
-| Claims used | `sub`, `name`, `email` (if shared), `roles`, `context` (course id, title), `resource_link`, `deployment_id` |
-| Role mapping | `…/membership#Instructor` → Mentor; `…/institution/person#Administrator` → Administrator; `…/membership#Learner` → refused by the baseline tools (EXT-07); accepted only by the player tool from Release 6 (§C6) |
+| Claims inspected by the LTI gateway | `iss`, `aud`, `azp`, `exp`, `nonce`, `sub`, `name`, `email` (if shared), `roles`, `context` (course id, title), `resource_link`, `deployment_id`, and the message type. `aud`, `azp`, `exp` and `nonce` are used only to validate the launch (§A13 SEC-01) |
+| Normalised launch result (what modules receive) | `iss`, `sub`, `deployment_id`, message type, one role (Mentor or Administrator), `context` (id, title), `resource_link` (id), `name` and `email` (if shared). Modules never receive the raw ID token, the nonce, the state or other validation-only token material. Fields and schema: `contracts/lti-launch.v1.md` and `contracts/lti-launch.v1.schema.json` |
+| Role mapping | `…/membership#Instructor` → Mentor; `…/institution/person#Administrator` → Administrator; `…/membership#Learner` → Learner-only launches are refused by the baseline tools (EXT-07). Release 6 player support for Learner is conditional on the guide resolving ADR 0001 OI-25 and approving the required contract and gateway compatibility approach (§B.0); no Release 6 Learner acceptance is currently guaranteed |
 | Grade/completion return | Not used by the baseline. The player (Release 6) may use LTI Assignment and Grade Services for watch completion (FR-X-13, feature flag) |
-| Session | Server-side session bound to (`sub`, context id); expires after 2 h idle; re-launch from Moodle to continue |
-| Course binding | The LTI context id is mapped to the Moodle course id (via web services, §B4) and stored in `shared.course_link` |
+| Session | Server-side session bound to (`iss`, `sub`, context id); expires after 2 h idle; re-launch from Moodle to continue |
+| Course binding | The LTI context id is mapped to the Moodle course id (via web services, §B4) and stored in `shared.course_link`, keyed by `iss` plus context id |
 
 ## B4. Moodle web-services usage (v1)
 
@@ -974,7 +976,7 @@ the right moment instead of after the video; recorded and live lessons look the 
 
 | ID | Requirement | Release |
 |---|---|---|
-| FR-X-01 | Learner launch through the LTI gateway (enables Learner role for the player only, per EXT-07); course and lesson from the launch. | R6 |
+| FR-X-01 | Learner launch through the LTI gateway, with course and lesson from the launch (planned for the player; see EXT-07). **Conditional:** not compatible with the current B3 v1 contract, whose normalised result has no Learner role. It depends on the guide resolving ADR 0001 OI-25 and approving the required contract and gateway approach (§B.0). | R6 |
 | FR-X-02 | Read `lesson.json` (B6.3); play tracks by role: `camera` + `screen` → dual modes; `main` only → single-video mode. | R6 |
 | FR-X-03 | Layout modes: **dual** (screen large, camera small), **side-by-side** (equal), **picture-in-picture** (camera over screen) and **picture-in-picture swapped**, **camera only**, **slides only**. The learner's last mode is remembered per course. | R6 |
 | FR-X-04 | Synchronisation: one master clock; drift between tracks corrected when it exceeds 150 ms; seek, pause and speed apply to both. | R6 |
