@@ -187,7 +187,11 @@ No variable has been added to `.env.example` by this document.
 | FR-S-03 | B1 validation through `libs/contracts` (`validate_package` over a `DirectorySource` from `libs/contracts/source.py` for the unpacked temporary folder; Studio writes no package reader of its own), errors per item with location and fix hint | The checker rule library (needs Module 2, §12 items 10 and 26); validation on every save in the editor |
 | FR-S-10 | Mentor or Administrator role from the LTI session; Learner refused | The per-course check against `shared.course_link`; not needed here because the slice stores nothing that belongs to a course |
 
-**Not in this slice:** no stored packages or package versions, no build, no `.mbz`, no preview, no editor, no Moodle web-service call. Whether the slice needs a table for queued validations depends on the OPS-10 decision (Option B under "Heavy work" below). Nothing is kept per course, so the slice does not depend on the course-binding question (§12 item 27).
+**Not in this slice:** no stored packages or package versions, no build, no `.mbz`, no preview, no editor, no Moodle web-service call. What is stored depends on the OPS-10 decision ("Heavy work" below):
+- **Option A** stores nothing; the temporary folder is removed when the request ends.
+- **Option B** is **not** storage-free: it keeps, for a limited time, a validation row, the uploaded zip (until the worker has processed it) and the result, each scoped to the requesting user and the LTI context (`iss`, `sub`, context id as carried by the B3 session).
+
+In both options the slice keeps nothing that has to be linked to a Moodle course id: the LTI context id from the session is enough to scope a validation. So the slice does not need `shared.course_link` and does not depend on the course-binding question (§12 item 27).
 
 **Boundary with Module 2 (checker).** This slice calls **only** `libs/contracts.validate_package()`. It does not call the checker rule library, does not implement any CK rule, and does not implement FR-S-03 in full. Errors that belong to CK-01…CK-13 (for example the semantic B8.3 planted errors that only the checker detects) are **not** detected by this slice. When the checker rule library exists (§12 items 10 and 26), the full FR-S-03 work adds it; this slice does not grow its own copy of any rule (module rule 5).
 
@@ -227,7 +231,9 @@ sequenceDiagram
 |---|---|---|
 | `GET /` | The "Check a course package" page (static React build) | Mentor, Administrator |
 | `POST /api/validate` | Option A: multipart upload of one zip; returns the result below. Stores nothing | Mentor, Administrator |
-| `POST /api/validations`, `GET /api/validations/{id}` | Option B: queue one zip and return an id; read status and result. A user reads only validations they started (`sub` and context id) | Mentor, Administrator |
+| `POST /api/validations`, `GET /api/validations/{id}` | Option B: queue one zip and return an id; read status and result. Read access as below | Mentor, Administrator |
+
+**Read access to a queued validation (Option B; Proposal, Needs guide, §12 item 39).** A validation is readable only by the user who started it, in the same LTI context: the session's (`iss`, `sub`, context id) must equal the values stored with the row. **Administrators get no wider access in this slice:** an Administrator reads only their own validations, like a Mentor. Reason: a validation is a short-lived check for the person who uploaded it, not course data, and §2's "administrators may access all courses" (FR-S-10) is about stored packages, which this slice does not have. For any other user, and for an unknown id, the route returns 404 with the same message, so it does not reveal whether the id exists. Validation ids are random (UUID), never sequential.
 
 The flow diagram above shows Option A; in Option B the "safe unzip" and `validate_package` steps run in the worker, and the page polls `GET /api/validations/{id}`.
 
@@ -332,12 +338,19 @@ Both options return the same result payload and show the same page. The upload l
 | B8.2 sample course zip (#61) | `b1.ok` true; `b1.not_checked` equal to what `libs/contracts` returns; page says "No errors in the B1 checks that ran" and never "valid" or "passed" |
 | Any result, valid or not | `checker.run` is `false` and `checker.notice` is present; the page shows it in its own block, separate from `b1.not_checked` |
 | Payload shape | Examples 1 and 2 above, rebuilt from fixtures, validate against the Pydantic model |
-| B8.3 planted-error copies, split by the B8.3 answer files | Errors that belong to B1 rules: reported with their location. Errors that belong to CK rules: **not** reported by this slice (expected), and the checker notice is shown |
+| B8.3 CK-rule planted-error copies | **Precondition:** each fixture is B1-valid (asserted in the test with `libs/contracts.validate_package`, before the slice runs), so a B1 rejection can never be mistaken for CK detection. Expectation: `b1.ok` true, no CK-rule error reported by this slice, checker notice shown. These fixtures belong to the B8.3 CK detection dataset and are used here only to show that the slice does **not** detect CK errors |
+| B1-invalid packages (separate set) | Built only for these tests (for example duplicate idnumber, protected idnumber, missing body file, missing or unreadable `course.yaml`), kept apart from the B8.3 CK dataset. Each error reported with its code and location exactly as `libs/contracts` returns it |
 | #87 submission-format cases | Same codes as `libs/contracts` returns for the same package |
 | Same package through the page and through `libs/contracts` directly | Identical errors (no Studio-side rule logic) |
 | Zip slip, absolute path, symlink, zip bomb, too many entries, wrong type | Rejected with the messages above; nothing written outside the temporary folder |
 | Temporary folder after success, after error, after timeout | Removed |
-| Option B only: queued validation | Request returns an id without validating; the worker produces the same payload as Option A for the same zip; the stored zip is deleted after processing; migration up/down/up |
+| Option B: `POST /api/validations` | Without session 401; without CSRF token 403; Learner launch refused; upload over a limit refused before anything is stored; valid upload returns a random id without validating in the request |
+| Option B: worker | Produces the same payload as Option A for the same zip; the stored zip is deleted after processing, also after a failure; migration up/down/up |
+| Option B: `GET /api/validations/{id}` by its owner | Status while queued or running; the result payload when done |
+| Option B: `GET` by another Mentor (different `sub`, same context) | 404, same message as for an unknown id |
+| Option B: `GET` by the same user from another LTI context, or another `iss` | 404 |
+| Option B: `GET` by an Administrator who did not start it | 404 (no wider Administrator access, §6.1) |
+| Option B: `GET` without session; unknown id; malformed id | 401; 404; 404 |
 | Logs | No `name`, `email`, package file names or contents |
 | Playwright, three screen profiles | No horizontal scroll; keyboard path through upload and result |
 
@@ -524,6 +537,7 @@ Items marked **Needs guide** need the guide's decision. "Needs the lab" refers t
 | 36 | **OPS-10 for the validation slice (§6.1).** Option A (in the request, child process, time limit) does not meet OPS-10 as written; it is possible only if the guide rules that validating one size-limited package is not "heavy work". Option B (queued for the Studio worker) meets OPS-10 but needs a `studio.validation` table, the queue mechanism (item 12) and the worker first. | No | **Needs guide.** Raised by the peer reviewer on PR #123. Implementation blocked until decided. |
 | 37 | **B3 session key.** §4 and SEC-02 say the session is bound to (`sub`, context id); #83 changes this to (`iss`, `sub`, context id). | No | When #83 merges, update §4, §5, §9 SEC-02 and §6.1 to the accepted key (`iss`, `sub`, context id). |
 | 38 | **Front-end for a one-page slice.** The fixed stack says React + TypeScript static build (A10), which brings the Vite question (§12 item 31) forward. | No | **Needs guide** together with item 31. |
+| 39 | **Administrator access to queued validations (Option B).** Proposal in §6.1: owner-only in the same LTI context, with no wider Administrator access, because the slice stores no course data. Does the guide want Administrators to read every validation instead, in line with FR-S-10's approach for stored packages? | No | **Needs guide.** Raised by the peer reviewer on PR #123. |
 
 ## 13. Work breakdown
 
