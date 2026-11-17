@@ -12,7 +12,7 @@ FR-C-01…09.
 ## Module rules
 1. Every rule in the catalogue (CK-01…13) has an id, severity, message and fix hint, and at least one planted-error test case in `testdata/` (B8.3).
 2. Unknown activity types are reported as "not checked", never silently skipped.
-3. Role tests: 5 roles × 3 screen profiles (375×812; 1366×768 at 100/125/150 % zoom; 683×768) × Moodle 4.5 and 5.3. **Every role has at least one negative check** (something it must NOT see or do).
+3. Role tests: 5 roles × 3 screen profiles (375×812; 1366×768 at 100/125/150 % zoom; 683×768) × Moodle 5.3. **Every role has at least one negative check** (something it must NOT see or do).
 4. Role expectations live in data files (YAML per course), not in test code.
 5. One automatic retry for a flaky browser step, then fail with a screenshot. Never add sleeps to hide timing problems.
 6. The harness runs from a clean state with one command and produces one report. Keep it green; a red harness blocks every release.
