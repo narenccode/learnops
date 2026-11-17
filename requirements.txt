@@ -1,0 +1,4 @@
+# Runtime dependencies. One pinned version per package, licence in a comment (CLAUDE.md §2.10).
+# The Video lesson-processor demo's web dependencies (fastapi, uvicorn, httpx) are in
+# requirements-video-demo.txt, not here: see the comment in that file.
+jsonschema==4.26.0    # MIT. modules/video/demo/lesson_processor/processor.py validates lesson.json against contracts/lesson-manifest.v1.schema.json (same pin as requirements-dev.txt)

@@ -1,0 +1,14 @@
+# Dependencies of the limited local demo in modules/video/demo only (not the Release 3 pipeline).
+# Install after requirements.txt and requirements-dev.txt:
+#   pip install -r requirements.txt -r requirements-dev.txt -r requirements-video-demo.txt
+# The `video-demo` job in .github/workflows/ci.yml does exactly that.
+#
+# Why this is not in requirements.txt / requirements-dev.txt: fastapi needs anyio and httpx needs
+# idna. With idna installed, jsonschema also checks the `idn-hostname` format, which a
+# libs/contracts test expects to be unchecked. Keeping these here leaves the shared environment
+# (the `checks` job) without idna. Revisit when the Video module gets its real web service.
+# One pinned version per package, licence in a comment (CLAUDE.md §2.10).
+fastapi==0.115.6   # MIT
+uvicorn==0.34.0    # BSD-3-Clause
+httpx==0.28.1      # BSD-3-Clause. FastAPI's TestClient needs it (modules/video/demo/tests)
+# Also installed by fastapi (permissive): starlette (BSD-3-Clause), pydantic (MIT), anyio (MIT), idna (BSD-3-Clause).
