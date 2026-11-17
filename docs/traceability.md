@@ -312,7 +312,7 @@ approved), none exists yet, and none is claimed as working.
 | Session identity `(iss, sub, context id)`, two-hour idle expiry, course-context isolation | §6, §7, PRD SEC-02 | `libs/lti` and each module's authorisation |
 | `name` and `email` never written to logs | §10.1, PRD SEC-06 | Every module's logging; no test yet |
 | No raw ID token, nonce, state or key material reaches a module | §10 | `libs/lti` |
-| LTI library dependency record: pinned artefact, licences on Python 3.12 (including the LGPL `jwcrypto`), advisory scan and version floors | ADR 0001 Appendix B V1 to V3, PRD C-11, SEC-08 | Stage 1 of ADR 0001, not approved. Partial evidence only, recorded in ADR 0001 §4.1, §5.2, §5.3, §6.2 and Appendix C. Nothing is installed or pinned; `requirements.txt` does not exist |
+| LTI library dependency record: pinned artefact, licences on Python 3.12 (including the LGPL `jwcrypto`), advisory scan and version floors | ADR 0001 Appendix B V1 to V3, PRD C-11, SEC-08 | Stage 1 of ADR 0001, not approved; open item OI-26. Partial evidence only, recorded in ADR 0001 §4.1, §5.2, §5.3, §6.2 and Appendix C. Nothing is installed or pinned; `requirements.txt` does not exist |
 
 ### Requirement text changed by this pull request
 
