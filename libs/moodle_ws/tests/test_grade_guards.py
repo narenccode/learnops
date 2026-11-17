@@ -1,15 +1,17 @@
 """Client guards for grade writes (B4 §3, §3a R2 and R9): no direct grade write.
 
 MoodleClient.call() runs the draft rule and the attempt and grade guards on mod_assign_save_grade
-and then refuses it. Only a sealed, single-use WriteReceipt can send one, and the guards run again
-on that path. The guarded helper that issues receipts (maximum grade, locked state, marking
-workflow, read-back) is added in a later PR; until then no grade write can be sent at all.
+and then refuses it. The receipt path (WriteReceipt, _issue_receipt, _send_checked_write) is
+removed, because a caller could import it and skip the write checks (the guide on PR #76, 15 Nov:
+close the bypass in code). The only sender is the single-use closure MoodleClient.write_draft_grade
+creates for one run of every check and the read-back (test_grade_write.py).
 """
 
 from __future__ import annotations
 
+import inspect
 import re
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from dataclasses import replace
 from decimal import Decimal
 from pathlib import Path
@@ -17,6 +19,9 @@ from typing import Any
 
 import pytest
 
+import moodle_ws
+import moodle_ws.client
+import moodle_ws.grade_write
 from moodle_ws import (
     GradeWriteNotAllowed,
     MoodleClient,
@@ -27,11 +32,11 @@ from moodle_ws import (
     grade_in_range,
     parse_grade,
 )
-from moodle_ws.client import WriteReceipt, _issue_receipt
-from moodle_ws.messages import WRITE_NEEDS_HELPER
+from moodle_ws.messages import PINNED_ZERO_REQUIRED, WRITE_NEEDS_HELPER
 
-from .conftest import VALID_WRITE, send_checked
+from .conftest import VALID_WRITE
 from .fake_transport import FakeTransport
+from .source_fake import SourceFakeMoodle
 
 SAVE = "mod_assign_save_grade"
 
@@ -39,8 +44,19 @@ SAVE = "mod_assign_save_grade"
 ROOT = Path(__file__).resolve().parents[3]
 
 
-PRIVATE_NAMES = re.compile(
-    r"\b(_issue_receipt|_send_checked_write|_RECEIPT_SEAL|WriteReceipt)\b"
+LIBRARY = ROOT / "libs" / "moodle_ws"
+
+
+# Private client internals that reach, or could reach, the transport. No module outside the
+# library may use them.
+PRIVATE_NAMES = re.compile(r"\._transport\b|\._send\(|\b_copy_params\b")
+
+
+REMOVED_NAMES = (
+    "WriteReceipt",
+    "_RECEIPT_SEAL",
+    "_issue_receipt",
+    "_send_checked_write",
 )
 
 
@@ -107,6 +123,55 @@ def test_r2_call_refuses_a_write_with_no_attempt_at_all(settings: SiteSettings) 
     assert transport.calls == []
 
 
+# --- R15: applytoall=0 and addattempt=0, always (guide, PR #64, 2026-11-16) -------------------
+
+_NOT_ZERO = [1, -1, 2, True, False, "0", 0.0, None, "missing"]
+
+
+def _r15_refused(
+    settings: SiteSettings, monkeypatch: pytest.MonkeyPatch, name: str, value: object
+) -> None:
+    """Refused with the R15 reason on both paths, and nothing reaches the transport."""
+    params = {k: v for k, v in VALID_WRITE.items() if k != name}
+    if value != "missing":
+        params[name] = value
+    transport = FakeTransport()
+    client = MoodleClient(settings, transport)
+    with pytest.raises(GradeWriteNotAllowed) as direct:
+        client.call(SAVE, params)
+    assert str(direct.value) == PINNED_ZERO_REQUIRED
+    # The guarded sender itself, as write_draft_grade would call it after its own checks.
+    reasons: list[str] = []
+
+    def send_unchanged(
+        client: Any, checked: Mapping[str, Any], max_grade: object, send: Any
+    ) -> Any:
+        try:
+            send(params)
+        except GradeWriteNotAllowed as error:
+            reasons.append(str(error))
+        return None
+
+    monkeypatch.setattr(moodle_ws.grade_write, "_checked_write", send_unchanged)
+    client.write_draft_grade(VALID_WRITE, 100)
+    assert reasons == [PINNED_ZERO_REQUIRED]
+    assert transport.calls == []
+
+
+@pytest.mark.parametrize("value", _NOT_ZERO)
+def test_r15_applytoall_other_than_zero_is_refused_before_sending(
+    settings: SiteSettings, monkeypatch: pytest.MonkeyPatch, value: object
+) -> None:
+    _r15_refused(settings, monkeypatch, "applytoall", value)
+
+
+@pytest.mark.parametrize("value", _NOT_ZERO)
+def test_r15_addattempt_other_than_zero_is_refused_before_sending(
+    settings: SiteSettings, monkeypatch: pytest.MonkeyPatch, value: object
+) -> None:
+    _r15_refused(settings, monkeypatch, "addattempt", value)
+
+
 # --- R9: grades as exact numbers; plain non-negative numbers only -----------------------------
 
 
@@ -163,56 +228,7 @@ def test_r9_call_refuses_a_grade_that_is_not_a_plain_number(
         assert transport.calls == []
 
 
-# --- the receipt cannot be forged, reused or moved ---------------------------------------------
-
-
-def test_a_receipt_cannot_be_built_without_the_seal(settings: SiteSettings) -> None:
-    client = MoodleClient(settings, FakeTransport())
-    with pytest.raises(GradeWriteNotAllowed):
-        WriteReceipt(object(), client, dict(VALID_WRITE))
-
-
-def test_a_receipt_works_once(settings: SiteSettings) -> None:
-    transport = FakeTransport()
-    client = MoodleClient(settings, transport)
-    receipt = _issue_receipt(client, VALID_WRITE)
-    client._send_checked_write(receipt)
-    with pytest.raises(GradeWriteNotAllowed):
-        client._send_checked_write(receipt)
-    assert len(transport.calls) == 1
-
-
-def test_a_receipt_is_used_up_even_if_the_send_fails(settings: SiteSettings) -> None:
-    """R11: a write whose answer is lost is never sent again, not even with the same receipt."""
-    transport = FakeTransport(failure=TimeoutError("lost"))
-    client = MoodleClient(settings, transport)
-    receipt = _issue_receipt(client, VALID_WRITE)
-    # A raw TimeoutError from the transport becomes the library's own MoodleUnreachable.
-    with pytest.raises(MoodleUnreachable):
-        client._send_checked_write(receipt)
-    transport.failure = None
-    with pytest.raises(GradeWriteNotAllowed):
-        client._send_checked_write(receipt)
-    assert len(transport.calls) == 1
-
-
-def test_a_receipt_belongs_to_one_client(settings: SiteSettings) -> None:
-    first, second = FakeTransport(), FakeTransport()
-    receipt = _issue_receipt(MoodleClient(settings, first), VALID_WRITE)
-    with pytest.raises(GradeWriteNotAllowed):
-        MoodleClient(settings, second)._send_checked_write(receipt)
-    assert first.calls == [] and second.calls == []
-
-
-@pytest.mark.parametrize("fake", [None, object(), {"_params": VALID_WRITE}])
-def test_only_a_real_receipt_is_accepted(fake: Any, settings: SiteSettings) -> None:
-    transport = FakeTransport()
-    with pytest.raises(GradeWriteNotAllowed):
-        MoodleClient(settings, transport)._send_checked_write(fake)
-    assert transport.calls == []
-
-
-# --- the guards still run on the receipt path --------------------------------------------------
+# --- the guards still give their own reason on a direct call -----------------------------------
 
 
 @pytest.mark.parametrize(
@@ -226,55 +242,139 @@ def test_only_a_real_receipt_is_accepted(fake: Any, settings: SiteSettings) -> N
         ({"note": {"deep": "released"}}, WorkflowStateNotAllowed),
     ],
 )
-def test_the_receipt_path_still_runs_the_attempt_grade_and_draft_guards(
+def test_a_direct_call_reports_the_guards_reason_not_the_direct_write_refusal(
     change: dict[str, Any], error: type[Exception], settings: SiteSettings
 ) -> None:
     transport = FakeTransport()
-    with pytest.raises(error):
-        send_checked(MoodleClient(settings, transport), {**VALID_WRITE, **change})
+    with pytest.raises(error) as caught:
+        MoodleClient(settings, transport).call(SAVE, {**VALID_WRITE, **change})
+    assert str(caught.value) != WRITE_NEEDS_HELPER
     assert transport.calls == []
 
 
-def test_what_is_sent_is_the_receipts_copy(settings: SiteSettings) -> None:
+# --- the receipt bypass is closed in code ------------------------------------------------------
+
+
+@pytest.mark.parametrize("name", REMOVED_NAMES)
+def test_the_receipt_path_no_longer_exists(name: str) -> None:
+    for module in (moodle_ws, moodle_ws.client, moodle_ws.grade_write):
+        assert not hasattr(module, name)
+    assert not hasattr(MoodleClient, name)
+
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        pytest.param(VALID_WRITE, id="valid"),
+        pytest.param({**VALID_WRITE, "note": "anything"}, id="extra parameter"),
+    ],
+)
+def test_the_clients_internal_send_refuses_a_grade_write_too(
+    params: dict[str, Any], settings: SiteSettings
+) -> None:
+    """The one internal method that reaches the transport refuses a grade write itself, so calling
+    it directly, skipping call(), sends nothing either."""
     transport = FakeTransport()
-    client = MoodleClient(settings, transport)
-    params = dict(VALID_WRITE)
-    receipt = _issue_receipt(client, params)
-    params["grade"] = 1000
-    client._send_checked_write(receipt)
-    assert transport.calls == [(SAVE, VALID_WRITE)]
+    with pytest.raises(GradeWriteNotAllowed) as caught:
+        MoodleClient(settings, transport)._send(SAVE, dict(params))
+    assert str(caught.value) == WRITE_NEEDS_HELPER
+    assert transport.calls == []
 
 
-# --- nobody else uses the private write path ---------------------------------------------------
+def test_the_library_reaches_the_transport_in_one_place_only() -> None:
+    """Every transport call goes through MoodleClient._send, which refuses a grade write."""
+    places = {
+        path.name: len(
+            re.findall(r"\._transport\.call\(", path.read_text(encoding="utf-8"))
+        )
+        for path in LIBRARY.glob("*.py")
+    }
+    assert {name: count for name, count in places.items() if count} == {"client.py": 2}
+    assert "._transport.call(" in inspect.getsource(MoodleClient._send)
+    assert "._transport.call(" in inspect.getsource(MoodleClient.write_draft_grade)
+
+
+def test_the_internal_send_cannot_stand_in_for_the_guarded_sender(
+    settings: SiteSettings,
+) -> None:
+    """_checked_write runs every check and then calls the sender it is given. Given anything built
+    from the client's internals instead of write_draft_grade's own sender, nothing is sent."""
+    moodle = SourceFakeMoodle("4.5")  # an unlocked state, so every check passes
+    client = MoodleClient(settings, moodle)
+
+    def internal(values: Mapping[str, Any]) -> Any:
+        return client._send(SAVE, dict(values))
+
+    with pytest.raises(GradeWriteNotAllowed):
+        moodle_ws.grade_write._checked_write(client, VALID_WRITE, 100, internal)
+    assert moodle.count(SAVE) == 0
+    assert moodle.grade is None
+
+
+def test_the_guarded_sender_works_once(
+    settings: SiteSettings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """If the write logic ever called its sender twice, the second call is refused (R8, R11)."""
+    transport = FakeTransport()
+    outcomes: list[str] = []
+
+    def twice(
+        client: Any, params: Mapping[str, Any], max_grade: object, send: Any
+    ) -> Any:
+        send(params)
+        try:
+            send(params)
+        except GradeWriteNotAllowed as error:
+            outcomes.append(str(error))
+        return None
+
+    monkeypatch.setattr(moodle_ws.grade_write, "_checked_write", twice)
+    MoodleClient(settings, transport).write_draft_grade(VALID_WRITE, 100)
+    assert outcomes == [WRITE_NEEDS_HELPER]
+    assert [name for name, _ in transport.calls] == [SAVE]
+
+
+def test_the_guarded_sender_is_used_up_even_if_the_send_fails(
+    settings: SiteSettings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """R11: a write whose answer is lost is never sent again, not even by the same sender."""
+    transport = FakeTransport(failure=TimeoutError("lost"))
+    outcomes: list[str] = []
+
+    def retry_after_a_failure(
+        client: Any, params: Mapping[str, Any], max_grade: object, send: Any
+    ) -> Any:
+        # A raw TimeoutError from the transport becomes the library's own MoodleUnreachable.
+        with pytest.raises(MoodleUnreachable):
+            send(params)
+        transport.failure = None
+        try:
+            send(params)
+        except GradeWriteNotAllowed as error:
+            outcomes.append(str(error))
+        return None
+
+    monkeypatch.setattr(moodle_ws.grade_write, "_checked_write", retry_after_a_failure)
+    MoodleClient(settings, transport).write_draft_grade(VALID_WRITE, 100)
+    assert outcomes == [WRITE_NEEDS_HELPER]
+    assert len(transport.calls) == 1
+
+
+# --- nobody else uses the client's internals ---------------------------------------------------
 
 
 def python_files_outside_the_library() -> Iterator[Path]:
-    library = ROOT / "libs" / "moodle_ws"
     for path in ROOT.rglob("*.py"):
         parts = set(path.relative_to(ROOT).parts)
-        if parts & {".venv", "node_modules", ".git"} or library in path.parents:
+        if parts & {".venv", "node_modules", ".git"} or LIBRARY in path.parents:
             continue
         yield path
 
 
-def test_no_module_outside_the_library_uses_the_private_write_path() -> None:
+def test_no_module_outside_the_library_uses_the_clients_internals() -> None:
     offenders = [
         str(path.relative_to(ROOT))
         for path in python_files_outside_the_library()
         if PRIVATE_NAMES.search(path.read_text(encoding="utf-8", errors="replace"))
     ]
     assert offenders == []
-
-
-def test_inside_the_library_only_the_client_issues_or_sends_receipts() -> None:
-    """Until the guarded write helper exists, nothing in the library issues a receipt."""
-    library = ROOT / "libs" / "moodle_ws"
-    users = sorted(
-        path.name
-        for path in library.glob("*.py")
-        if re.search(
-            r"\b(_issue_receipt|_send_checked_write)\(",
-            path.read_text(encoding="utf-8"),
-        )
-    )
-    assert users == ["client.py"]
