@@ -76,7 +76,7 @@ These are authoring rules for the expected outputs, not requirements from the PR
 
 | # | Decision | Ref | Who |
 |---|---|---|---|
-| O1 | Chapter, summary and practice inputs: which lectures, how many, who supplies them. **Student 4 on PR #33**: keep the fictional t001 for now; B8.5 is PENDING (no consent, placeholder transcripts), so no B8.5 file is an input yet; a transcript marked `checked` in the B8.5 inventory may be added as a second input by its lecture id; she proposes one or two, not all five, and will confirm when the first is checked | design Q12 | Students 1 and 4, integration lead, guide |
+| O1 | Chapter, summary and practice inputs: which lectures, how many, who supplies them. **Student 4 on PR #33**: keep the fictional t001 for now; B8.5 is PENDING (no consent, placeholder transcripts), so no B8.5 file is an input yet; a transcript marked `checked` in the B8.5 inventory may be added as a second input by its lecture id; she proposes one or two, not all five, and will confirm when the first is checked. **Issue #121 (the guide's answer, 17 Nov)**: for the interim demonstration and testing B8.5 may proceed with four lecture recordings, ideally from four speakers, as a temporary exception; B8.5 is complete only at five (PRD B8.5 keeps at least 5) and the 1,800-second rule stays. This set follows B8.5's completion rule and changes nothing because of it | design Q12 | Students 1 and 4, integration lead, guide |
 | O2 | Who writes and who reviews the expected outputs; how "reviewed" is recorded | — | Guide |
 | O3 | Review rubric: the three output levels and the grading-draft wrong rule | design §11.2, Q48 | Guide |
 | O4 | Agreement for chapters, summaries and practice (undefined); band for grading (Q44) | Q44, Q48 | Guide |
