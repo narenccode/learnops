@@ -31,8 +31,15 @@ SOURCE_TIMEZONE: Location = ("source", "timezone")
 
 
 def is_known_timezone(name: object) -> bool:
-    """True when `zoneinfo` resolves `name`. A value that is not text is never known."""
+    """True when `zoneinfo` resolves `name`. A value that is not text is never known.
+
+    A name with leading or trailing whitespace is never known, and it is not trimmed and then
+    accepted: the check runs before `ZoneInfo`, because Windows ignores a trailing space in a
+    file name and would resolve `"Asia/Kolkata "` while Linux rejects it.
+    """
     if not isinstance(name, str):
+        return False
+    if name != name.strip():
         return False
     try:
         ZoneInfo(name)
@@ -45,8 +52,9 @@ def is_known_timezone(name: object) -> bool:
 def site_timezone(environ: Mapping[str, str]) -> str:
     """The configured site time zone, read from `SITE_TIMEZONE` in the mapping given.
 
-    Raises ConfigError when it is missing, blank or not a name `zoneinfo` knows. The value is
-    returned exactly as set, never trimmed or replaced by a default.
+    Raises ConfigError when it is missing, blank, padded with whitespace or not a name `zoneinfo`
+    knows. The value is returned exactly as set, never trimmed or replaced by a default: a padded
+    name is an error, not something to clean up.
     """
     value = environ.get(SITE_TIMEZONE_VARIABLE)
     if value is None or not value.strip():

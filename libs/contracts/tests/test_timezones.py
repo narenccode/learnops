@@ -75,6 +75,84 @@ def test_a_name_zoneinfo_cannot_resolve_is_rejected(name: str) -> None:
     assert "SITE_TIMEZONE" in issue.fix_hint and "UTC+5:30" in issue.fix_hint
 
 
+# --- whitespace around a name: rejected, never trimmed (Windows ignores a trailing space) -----
+
+PADDED = [
+    "Asia/Kolkata ",  # the case Windows resolves and Linux refuses
+    " Asia/Kolkata",
+    "  Asia/Kolkata  ",
+    "Asia/Kolkata\t",
+    "\tAsia/Kolkata",
+    "Asia/Kolkata\n",
+    "UTC ",
+    " UTC",
+    "Asia/Kolkata\u00a0",  # a no-break space is whitespace too
+    "\u00a0UTC",
+]
+
+
+@pytest.fixture
+def windows_like_zoneinfo(monkeypatch: pytest.MonkeyPatch) -> list[str]:
+    """`ZoneInfo` as Windows behaves for a padded name: it resolves anything it is given.
+
+    Returns the list of names it was called with. A check that runs before `ZoneInfo` must
+    reject a padded name without ever calling it, so these tests prove the fix on Linux too."""
+    calls: list[str] = []
+
+    def accepts_everything(key: str) -> object:
+        calls.append(key)
+        return object()
+
+    monkeypatch.setattr("contracts.timezones.ZoneInfo", accepts_everything)
+    return calls
+
+
+@pytest.mark.parametrize("name", PADDED)
+def test_a_padded_name_is_never_known(name: str) -> None:
+    assert not is_known_timezone(name)
+    assert is_known_timezone(name.strip())  # the same name without padding is fine
+
+
+@pytest.mark.parametrize("name", PADDED)
+def test_a_padded_name_is_rejected_before_zoneinfo_is_called(
+    name: str, windows_like_zoneinfo: list[str]
+) -> None:
+    assert not is_known_timezone(name)
+    # Rejected first, so Windows never gets to resolve it.
+    assert windows_like_zoneinfo == []
+
+
+def test_the_windows_like_stub_does_accept_a_clean_name(
+    windows_like_zoneinfo: list[str],
+) -> None:
+    # Guards the stub itself: without the whitespace check, the padded names above would pass.
+    assert is_known_timezone("Asia/Kolkata")
+    assert windows_like_zoneinfo == ["Asia/Kolkata"]
+
+
+@pytest.mark.parametrize("name", PADDED)
+def test_a_padded_model_timezone_is_reported_not_trimmed(
+    name: str, windows_like_zoneinfo: list[str]
+) -> None:
+    package = model("from-package.json")
+    package["source"]["timezone"] = name
+    (issue,) = timezone_issues(package)
+    assert issue.code == "timezone_unknown" and issue.location == PLACE
+    assert repr(name) in issue.message  # the padding is visible in the message
+    assert package["source"]["timezone"] == name  # and the model is not changed
+    assert windows_like_zoneinfo == []
+
+
+@pytest.mark.parametrize("name", PADDED)
+def test_a_padded_site_timezone_fails_closed_and_is_not_trimmed(
+    name: str, windows_like_zoneinfo: list[str]
+) -> None:
+    with pytest.raises(ConfigError, match="not a time zone name") as caught:
+        site_timezone({"SITE_TIMEZONE": name})
+    assert repr(name) in str(caught.value)
+    assert windows_like_zoneinfo == []
+
+
 @pytest.mark.parametrize("value", [1, True, 5.5, ["Asia/Kolkata"], {"a": 1}])
 def test_a_timezone_that_is_not_text_is_never_known(value: object) -> None:
     assert not is_known_timezone(value)
