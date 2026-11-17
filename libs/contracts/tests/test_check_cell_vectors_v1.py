@@ -217,6 +217,11 @@ def open_point_problems(case: Case) -> list[str]:
     problems: list[str] = []
     if cell == "" or cell.strip() == EM_DASH:
         return problems
+    if EM_DASH in cell:
+        # B1.3 defines only a cell that contains only the em dash.
+        problems.append(
+            "a cell that mixes the em dash with other checks is not defined"
+        )
     for raw in cell.split(";"):
         # Spaces around a whole check are ignored (B1.3); a space between the name and the
         # colon is not stated, so no vector may contain one.
@@ -466,6 +471,10 @@ OPEN_POINT_EDITS: dict[str, tuple[str, Callable[[Case], None]]] = {
         "check-without-argument",
         lambda c: c.update(cell="repo_clone:x"),
     ),
+    "an em dash mixed with other checks": (
+        "several-checks-with-spaces",
+        lambda c: c.update(cell=EM_DASH + ";word_count:5"),
+    ),
 }
 
 
@@ -523,6 +532,8 @@ def test_traceability_lists_the_check_cell_open_decisions() -> None:
         "a closing fence with text after it",
         "a tab before a `#` or a fence",
         "result kinds",
+        "mixes the em dash with other checks",
+        "more than one failing piece",
     ):
         assert phrase.lower() in section, phrase
     assert "test_check_cell_vectors_v1.py" in " ".join(raw.split())
