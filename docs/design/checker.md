@@ -5,6 +5,7 @@
 **Owner:** @shraddha0103 · **Peer reviewer:** @Akshita21-09
 **Release(s):** Release 1 (core); harness extended each later release
 **Status:** Draft
+**Contract decisions:** B2 decision record `docs/decisions/0003-b2-course-model.md`, item 21 (CK-07 reference model; see risk 11 in section 12).
 
 ## 1. Purpose and scope
 
