@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
-"""Full pull-request review on the guide's behalf.
+"""Advice on a pull request: rule checks and an AI read, posted as one comment.
 
-Flow (one run per pull_request / pull_request_review event):
-  1. Rule checks (pr_rules.py). Any problem here ends the run: no AI tokens are spent.
-  2. If the rules pass, wait for ONE approval from a path owner other than the author
-     (label `awaiting-peer`, commit status `guide-bot` = pending).
-  3. After that approval, an AI review of the diff runs (DeepSeek, OpenAI-compatible API).
-  4. Verdict -> one comment, one label and the commit status `guide-bot`:
-     success = ready to merge (the author squash-merges); failure/pending = not yet.
+Flow (one run per pull_request event or manual run):
+  1. Rule checks (pr_rules.py).
+  2. An AI read of the diff (DeepSeek, OpenAI-compatible API), at most MAX_AI_RUNS times per pull request.
+     If the AI is unavailable, the comment says so; nothing waits for it.
+  3. One comment, updated in place, with the findings and the next step.
 
-The bot never approves, merges or closes anything. The model has no tools and PR code is never run.
-The model only reports findings; this script decides the verdict.
+The bot sets no label and no commit status, pings nobody and never blocks a merge. CI (`checks`) and one
+approval are the gate. The bot never approves, merges or closes anything. The model has no tools and PR
+code is never run.
 
-Local use (no posting, no network unless --approvers is given and DEEPSEEK_* are set):
+Local use (prints only, posts nothing; the AI step runs only if DEEPSEEK_* are set):
     python .github/scripts/pr_review.py --event event.json --base origin/main --head HEAD --dry-run
 """
 
@@ -31,16 +30,11 @@ from pathlib import Path
 import pr_rules as rules_mod
 from pr_rules import Finding, git, gh
 
-STATUS_CONTEXT = "guide-bot"
-MAX_AI_RUNS = (
-    20  # per pull request: the cost cap (a long design document is pushed many times)
-)
+MAX_AI_RUNS = 5  # per pull request: the cost cap
 DIFF_LIMIT = 60_000  # characters sent to the model
 ITEM_LIMIT = 10
 TEXT_LIMIT = 300
 AI_RUNS = re.compile(r"<!-- ai-runs:(\d+) -->")
-LESSON = re.compile(r"^ *Lesson: *(\S.*)$", re.IGNORECASE | re.MULTILINE)
-MAX_LESSONS = 20  # newest only: keeps the prompt small
 CHAPTER = {"studio": "C1", "checker": "C2", "grading": "C3", "video": "C4"}
 RUBRIC = Path(__file__).resolve().parents[1] / "review" / "rubric.md"
 
@@ -49,92 +43,7 @@ class AIError(Exception):
     pass
 
 
-# ------------------------------------------------------------------ reviews
-
-
-def latest_reviews(lines: list[dict]) -> dict[str, str]:
-    """Latest meaningful review state per user, in order (COMMENTED is ignored, DISMISSED resets)."""
-    state: dict[str, str] = {}
-    for item in lines:
-        user = (item.get("user") or "").lower()
-        review = item.get("state", "")
-        if not user or review in ("COMMENTED", "PENDING"):
-            continue
-        if review == "DISMISSED":
-            state.pop(user, None)
-        else:
-            state[user] = review
-    return state
-
-
-def reviewers(
-    state: dict[str, str], ctx: rules_mod.Context
-) -> tuple[set[str], set[str]]:
-    """(approvers, requesters) among owners of the changed paths, never the author.
-
-    Like GitHub's code-owner rule, every changed path needs an approval from one of its owners;
-    until that holds, `approvers` is empty.
-    """
-    parsed = rules_mod.parse_codeowners(ctx.codeowners)
-    author = ctx.author.lower()
-    owners = {o for p in ctx.files for o in rules_mod.owners_of(parsed, p)}
-    owners.discard(author)
-    approved = {u for u, s in state.items() if s == "APPROVED"}
-    covered = all(
-        approved & (set(rules_mod.owners_of(parsed, p)) - {author}) for p in ctx.files
-    )
-    approvers = {u for u in approved if u in owners} if covered else set()
-    requesters = {
-        u for u, s in state.items() if s == "CHANGES_REQUESTED" and u in owners
-    }
-    return approvers, requesters
-
-
-def fetch_reviews(repo: str, number: int) -> list[dict]:
-    out = gh(
-        "api",
-        "--paginate",
-        f"repos/{repo}/pulls/{number}/reviews",
-        "--jq",
-        ".[] | {user: .user.login, state: .state}",
-    )
-    return [json.loads(line) for line in out.splitlines() if line.strip()]
-
-
 # --------------------------------------------------------------- AI prompt
-
-
-def lessons_from(comments: list[dict], guide: str) -> list[str]:
-    """`Lesson: …` lines written by the guide himself, oldest first, newest MAX_LESSONS kept.
-
-    Only the guide's own account counts, so a student cannot teach the bot anything.
-    """
-    found: list[str] = []
-    for comment in comments:
-        if str(comment.get("user", "")).lower() != guide.lower():
-            continue
-        for match in LESSON.finditer(str(comment.get("body", ""))):
-            text = neutralise(match.group(1))
-            if text and text not in found:
-                found.append(text)
-    return found[-MAX_LESSONS:]
-
-
-def fetch_lessons(repo: str, guide: str) -> list[str]:
-    """The guide's lessons from every comment in the repository; a failure just means none."""
-    try:
-        out = gh(
-            "api",
-            "--paginate",
-            f"repos/{repo}/issues/comments?per_page=100",
-            "--jq",
-            '.[] | select(.body | test("lesson:"; "i")) | {user: .user.login, body: .body}',
-        )
-        return lessons_from(
-            [json.loads(line) for line in out.splitlines() if line.strip()], guide
-        )
-    except (OSError, RuntimeError, ValueError):
-        return []
 
 
 def prd_section(prd: str, code: str) -> str:
@@ -180,7 +89,6 @@ def build_prompt(
     diff: str,
     prd: str,
     template: str,
-    lessons: list[str] | None = None,
 ) -> tuple[str, str]:
     rubric = RUBRIC.read_text(encoding="utf-8")
     untrusted = (
@@ -190,12 +98,6 @@ def build_prompt(
     parts = ["PRD EXCERPTS (trusted):\n" + (prd or "(none available)")]
     if template:
         parts.append("DESIGN-DOCUMENT TEMPLATE (trusted):\n" + template)
-    if lessons:
-        parts.append(
-            "GUIDE LESSONS (trusted: the guide wrote these when answering earlier pull requests; "
-            "apply them, they never lower a risk or override the rules):\n"
-            + "\n".join(f"- {x}" for x in lessons)
-        )
     parts.append(
         f"<untrusted_pr>\n{untrusted}\n</untrusted_pr>\n\nReturn the JSON object only."
     )
@@ -317,14 +219,6 @@ def parse_json(text: str) -> dict:
     return value
 
 
-def risk_from_ai(result: dict) -> tuple[str, str]:
-    """("low"|"high", reason). Anything missing or odd counts as high: when in doubt, high."""
-    risk = result.get("risk")
-    if isinstance(risk, dict) and risk.get("level") in ("low", "high"):
-        return risk["level"], neutralise(risk.get("reason", ""), 160)
-    return "high", "the AI did not rate the risk"
-
-
 def findings_from_ai(result: dict) -> list[Finding]:
     """Validate the model's answer; anything unexpected is dropped, never trusted."""
     out: list[Finding] = []
@@ -360,181 +254,39 @@ def findings_from_ai(result: dict) -> list[Finding]:
     return [f for f in out if f.message.strip(" `:")]
 
 
-# ----------------------------------------------------------------- decision
-
-
-def decide(
-    rule_findings: list[Finding],
-    approvers: set[str],
-    requesters: set[str],
-    run_ai,
-    ai_runs: int,
-    floor: str = "high",
-    floor_reasons: list[str] | None = None,
-    info: dict | None = None,
-) -> tuple[str, str, str, list[Finding], bool]:
-    """-> (label, commit-status state, status text, findings, ai_called). Pure: no network.
-
-    `floor` is the risk the fixed rules give the PR; unknown means high. `info` receives the final
-    risk and its reason for the comment.
-    """
-    floor_reasons = floor_reasons or []
-    findings = list(rule_findings)
-    label = rules_mod.verdict_of(findings)
-    if requesters:
-        findings.append(
-            Finding(
-                "rework", "A peer requested changes: " + ", ".join(sorted(requesters))
-            )
-        )
-        label = rules_mod.verdict_of(findings)
-    if label != "ready-to-merge":
-        return label, "failure", VERDICT_TEXT[label], findings, False
-    if not approvers:
-        return (
-            "awaiting-peer",
-            "pending",
-            VERDICT_TEXT["awaiting-peer"],
-            findings,
-            False,
-        )
-    if ai_runs >= MAX_AI_RUNS:
-        findings.append(
-            Finding(
-                "judgement",
-                f"AI review limit ({MAX_AI_RUNS} runs) reached for this PR; the guide decides.",
-            )
-        )
-        return (
-            "needs-judgement",
-            "failure",
-            VERDICT_TEXT["needs-judgement"],
-            findings,
-            False,
-        )
-    info = info if info is not None else {}
-    try:
-        result = run_ai()
-    except Exception as error:  # an AI failure must never crash the run
-        info.update(risk=floor, reason="; ".join(floor_reasons))
-        if floor == "high":  # a risky change must not go unreviewed: the guide decides
-            findings.append(
-                Finding(
-                    "judgement",
-                    f"AI review unavailable ({neutralise(error, 220)}); the guide decides.",
-                )
-            )
-            return (
-                "needs-judgement",
-                "failure",
-                VERDICT_TEXT["needs-judgement"],
-                findings,
-                False,
-            )
-        # a low-risk change just waits: the retry job asks the AI again by itself
-        findings.append(
-            Finding(
-                "advice",
-                f"The AI review was unavailable ({neutralise(error, 220)}). It is tried again automatically.",
-            )
-        )
-        return (
-            "awaiting-ai",
-            "pending",
-            VERDICT_TEXT["awaiting-ai"],
-            findings,
-            False,
-        )
-    # the AI may raise the risk, never lower it below the fixed rules' floor
-    ai_findings, ai_risk, ai_reason = (
-        result if isinstance(result, tuple) else (result, "high", "")
-    )
-    risk = "high" if "high" in (floor, ai_risk) else "low"
-    reasons = floor_reasons + ([ai_reason] if ai_risk == "high" and ai_reason else [])
-    info.update(risk=risk, reason="; ".join(reasons))
-    if risk == "low":  # a low-risk change does not need the guide for a judgement call
-        ai_findings = [
-            Finding("advice", f.message) if f.level == "judgement" else f
-            for f in ai_findings
-        ]
-    findings += ai_findings
-    label = rules_mod.verdict_of(findings)
-    state = "success" if label == "ready-to-merge" else "failure"
-    return label, state, VERDICT_TEXT[label], findings, True
-
-
-VERDICT_TEXT = {
-    "awaiting-ai": "Waiting for the AI review: retried automatically",
-    "rule-violation": "Rule violation: the guide decides",
-    "needs-rework": "Needs rework: see the bot comment",
-    "needs-judgement": "Needs the guide's judgement",
-    "awaiting-owners": "Waiting for every affected owner's review",
-    "awaiting-peer": "Waiting for one peer approval",
-    "ready-to-merge": "Peer approved, bot review passed: may merge",
-}
-
-
-def should_notify(repo: str, number: int, label: str) -> bool:
-    """True when the verdict on the PR is not yet `label` (read fresh, just before posting)."""
-    try:
-        _, body = rules_mod.find_bot_comment(repo, number)
-    except Exception:
-        return True
-    previous = rules_mod.VERDICT_MARK.search(body)
-    return not previous or previous.group(1) != label
-
-
 def event_from_pr(repo: str, number: int) -> dict:
     """Build the same event shape from the API, for a manual re-run (after an outage, say)."""
     pr = json.loads(gh("api", f"repos/{repo}/pulls/{number}"))
     return {"pull_request": pr, "repository": {"full_name": repo}}
 
 
-STANDING_CONTRACT = "Contract change: every affected owner"
-
-
-def only_standing_contract_rule(findings: list) -> bool:
-    """True when the only reason for the guide's label is the standing contract rule (PRD B.0).
-
-    That rule is not a question: the PR waits for the affected owners' reviews. The inbox already
-    leaves it out of "needs your decision", so the email ping must leave it out too.
-    """
-    reasons = [f for f in findings if f.level in ("violation", "rework", "judgement")]
-    return bool(reasons) and all(
-        f.message.startswith(STANDING_CONTRACT) for f in reasons
-    )
-
-
-def notification(
-    label: str,
-    author: str,
-    peer: str,
-    guide: str,
-    others: tuple[str, ...] = (),
-    ping_guide: bool = True,
-) -> str:
-    """The short comment that actually notifies people when the verdict changes."""
-    title = rules_mod.VERDICTS[label][0]
-    text = (
-        f"@{author} the review status is now **{title}**. {rules_mod.next_step(label)}"
-    )
-    if label == "awaiting-peer" and peer:
-        text = f"@{author} the rule checks passed. @{peer}, please review this pull request."
-        if others:
-            names = ", ".join("@​" + o for o in others)
-            text += f" If you are busy, any one of {names} can approve instead."
-        text += " The AI review runs right after one approval."
-    if label in ("rule-violation", "needs-judgement") and guide and ping_guide:
-        text += f" @{guide}: your decision is needed."
-    return text + " Details are in the bot comment above."
-
-
-def set_status(repo: str, sha: str, state: str, text: str, url: str) -> None:
-    gh(
-        "api", f"repos/{repo}/statuses/{sha}",
-        "-f", f"state={state}", "-f", f"context={STATUS_CONTEXT}",
-        "-f", f"description={text[:140]}", "-f", f"target_url={url}",
-    )  # fmt: skip
+def advise(
+    rule_findings: list[Finding], run_ai, ai_runs: int
+) -> tuple[list[Finding], bool]:
+    """-> (findings to show, ai_called). Pure: no network. Nothing returned here can block a merge."""
+    findings = list(rule_findings)
+    if ai_runs >= MAX_AI_RUNS:
+        findings.append(
+            Finding(
+                "unverified",
+                f"AI advice limit ({MAX_AI_RUNS} runs) reached for this pull request; "
+                "the rule checks still run.",
+            )
+        )
+        return findings, False
+    try:
+        result = run_ai()
+    except Exception as error:  # an AI failure is advice, never a block
+        findings.append(
+            Finding(
+                "unverified",
+                f"AI advice is unavailable right now ({neutralise(error, 220)}). "
+                "It runs again on your next push.",
+            )
+        )
+        return findings, False
+    findings += result[0] if isinstance(result, tuple) else result
+    return findings, True
 
 
 # --------------------------------------------------------------------- main
@@ -551,9 +303,6 @@ def main() -> int:
     parser.add_argument("--head", default="HEAD")
     parser.add_argument(
         "--dry-run", action="store_true", help="print only; post nothing"
-    )
-    parser.add_argument(
-        "--approvers", help="dry-run only: pretend these users approved"
     )
     args = parser.parse_args()
 
@@ -572,7 +321,6 @@ def main() -> int:
         pr["head"]["sha"],
     )
     base = args.base or f"origin/{pr['base']['ref']}"
-    page = f"https://github.com/{repo}/pull/{number}"
     if pr.get("draft"):
         print("Draft: skipped.")
         return 0
@@ -580,21 +328,8 @@ def main() -> int:
         ctx = rules_mod.collect(event, base, args.head)
         guide = rules_mod.guide_of(rules_mod.parse_codeowners(ctx.codeowners))
         if ctx.author.lower() == guide:
-            if not args.dry_run:
-                set_status(repo, sha, "success", "Guide's own pull request", page)
-            print("Guide's own PR: status success, no comment.")
+            print("Guide's own pull request: no advice comment.")
             return 0
-        if args.approvers is not None:
-            state = {
-                u.strip().lower(): "APPROVED"
-                for u in args.approvers.split(",")
-                if u.strip()
-            }
-        elif args.dry_run:
-            state = {}
-        else:
-            state = latest_reviews(fetch_reviews(repo, number))
-        approvers, requesters = reviewers(state, ctx)
         rule_findings = rules_mod.evaluate(ctx)
         _, old_body = (
             ("", "") if args.dry_run else rules_mod.find_bot_comment(repo, number)
@@ -607,7 +342,7 @@ def main() -> int:
         )
         model = os.environ.get("DEEPSEEK_MODEL", "?")
 
-        def run_ai() -> tuple[list[Finding], str, str]:
+        def run_ai() -> list[Finding]:
             nonlocal usage, attempted
             attempted = True
             diff, cut = read_diff(base, args.head)
@@ -619,14 +354,12 @@ def main() -> int:
                 else ""
             )
             notes = "\n".join(f"- {f.message}" for f in rule_findings)
-            lessons = [] if args.dry_run else fetch_lessons(repo, guide)
             system, user = build_prompt(
                 ctx,
                 notes,
                 diff,
                 prd_excerpt(prd, sorted(ctx.files)),
                 template,
-                lessons,
             )
             result, usage = ask_model(system, user)
             found_items = findings_from_ai(result)
@@ -637,121 +370,53 @@ def main() -> int:
                         f"The AI saw only the first {DIFF_LIMIT} characters of the diff.",
                     )
                 )
-            ai_risk, ai_reason = risk_from_ai(result)
-            return found_items, ai_risk, ai_reason
+            return found_items
 
         parsed_rules = rules_mod.parse_codeowners(ctx.codeowners)
-        floor, floor_reasons = rules_mod.rules_risk(ctx, parsed_rules, guide)
-        risk_info: dict = {}
-        label, state_name, text, findings, ai_called = decide(
-            rule_findings,
-            approvers,
-            requesters,
-            run_ai,
-            runs,
-            floor,
-            floor_reasons,
-            risk_info,
-        )
+        findings, ai_called = advise(rule_findings, run_ai, runs)
         footer = (
-            f"AI review: {model}, {usage.get('prompt_tokens', '?')} in / {usage.get('completion_tokens', '?')} out tokens. "
-            "It reports findings only; a person stays responsible."
+            f"AI advice: {model}, {usage.get('prompt_tokens', '?')} in / "
+            f"{usage.get('completion_tokens', '?')} out tokens. "
+            "The AI can be wrong; your reviewer decides."
             if ai_called
-            else "The AI review did not run (see above). Peer review is always required."
-            if approvers
-            else "No AI review yet: it runs after one peer approval. Peer review is always required."
+            else "Rule checks only this time."
         )
         peer = rules_mod.peer_of(parsed_rules, ctx.author)
         eligible = rules_mod.eligible_reviewers(
             parsed_rules, sorted(ctx.files), ctx.author, guide
         )
         others = tuple(o for o in eligible if o != peer)
-        intro = ""
-        if approvers:
-            intro = (
-                "Peer approval from "
-                + ", ".join(f"@​{u}" for u in sorted(approvers))
-                + "."
-            )
         body = rules_mod.render(
-            label,
             findings,
             sha,
-            intro=intro,
+            step=rules_mod.next_step(peer, others),
             footer=footer,
-            step=rules_mod.next_step(label, peer, others),
             help_url=f"https://github.com/{repo}/blob/main/docs/REVIEW-PROCESS.md",
-            risk=(risk_info["risk"], risk_info["reason"]) if risk_info else None,
         )
         if attempted or found:
             body += f"\n<!-- ai-runs:{runs + (1 if attempted else 0)} -->"
     except (
         Exception
-    ) as error:  # a checker bug must not block merging forever: the guide can bypass
+    ) as error:  # a bot bug must never leave the students without an answer
         print(f"::warning::pr_review failed: {error}")
         if not args.dry_run:
             try:  # say so on the PR: a silent failure would leave the students stuck and confused
-                who = rules_mod.guide_of(
-                    rules_mod.parse_codeowners(
-                        git("show", f"{base}:.github/CODEOWNERS", check=False)
-                    )
+                rules_mod.post(
+                    repo,
+                    number,
+                    f"{rules_mod.MARKER}\n### Automated advice\n\n"
+                    "The advice bot hit an internal error on this pull request. "
+                    "Nothing is blocked: ask your reviewer to review as usual.",
                 )
-                apology = (
-                    f"{rules_mod.MARKER}\n### Automated review: **Needs your judgement**\n\n"
-                    "**Next step:** Do not wait on the bot. It hit an internal error, and the guide has "
-                    "been told. Keep working; the guide will reply or approve this pull request by hand.\n\n"
-                    f"<!-- verdict:needs-judgement -->"
-                )
-                rules_mod.post(repo, number, "needs-judgement", apology)
-                if who:
-                    gh(
-                        "api",
-                        f"repos/{repo}/issues/{number}/comments",
-                        "-f",
-                        f"body=@{who} the review bot failed on this pull request ({type(error).__name__}). "
-                        "Your decision is needed.",
-                    )
             except Exception as inner:
                 print(f"::warning::could not explain the failure on the PR: {inner}")
-            try:
-                set_status(repo, sha, "failure", "Bot error: the guide decides", page)
-            except Exception as inner:
-                print(f"::warning::status failed too: {inner}")
         return 0
     print(body)
-    print(f"\nlabel: {label}   status: {state_name} ({text})")
     if not args.dry_run:
-        # decide about the ping from the comment as it is NOW, not as it was when this run began:
-        # a slow AI call lets an overlapping run post first, which caused duplicate pings
-        notify = should_notify(repo, number, label)
         try:
-            rules_mod.post(repo, number, label, body)
+            rules_mod.post(repo, number, body)
         except Exception as error:
-            print(f"::warning::could not post comment/label: {error}")
-        try:
-            set_status(repo, sha, state_name, text, page)
-        except Exception as error:
-            print(f"::warning::could not set status: {error}")
-        if (
-            notify and label != "awaiting-ai"
-        ):  # a retry is automatic: nobody needs an email
-            try:  # edits to the main comment send no email, so a changed verdict gets its own short ping
-                gh(
-                    "api",
-                    f"repos/{repo}/issues/{number}/comments",
-                    "-f",
-                    "body="
-                    + notification(
-                        label,
-                        ctx.author,
-                        peer,
-                        guide,
-                        others,
-                        ping_guide=not only_standing_contract_rule(findings),
-                    ),
-                )
-            except Exception as error:
-                print(f"::warning::could not notify: {error}")
+            print(f"::warning::could not post the comment: {error}")
     return 0
 
 

@@ -9,7 +9,7 @@
 | Owner | Project guide |
 | Contributors | Student 1–4 (module owners) |
 | Status | Draft. Becomes binding when the guide approves it. |
-| Change rule | Changes only by pull request. Sections marked **Contract** also need approval from every affected module owner and the guide (§B.0). |
+| Change rule | Changes only by pull request. Sections marked **Contract** follow §B.0 rule 3. |
 
 > **How to read this document.** Part A describes the whole system and its fixed rules. Part B is
 > the set of **shared contracts**: the exact formats and interfaces between modules. Part C has one
@@ -282,8 +282,8 @@ Moodle sites have: completion tracking on; web services enabled with a dedicated
 ## A15. Assumptions
 
 1. The lab VMs and AI services are available from Release 0.
-2. Moodle's standard web-services functions listed in §B4 exist on 4.5 and 5.3 (verified in Release 0; see §App-C).
-3. Moodle's Restore can merge sections from a backup into an existing course (verified in Release 0).
+2. Moodle's standard web-services functions listed in §B4 exist on 4.5 and 5.3 (verified in the first release that relies on them; see §App-C).
+3. Moodle's Restore can merge sections from a backup into an existing course (verified in the first release that relies on it).
 4. Lecture videos with reference transcripts can be obtained with permission (§B8.5).
 5. A hosted-API key with a spending cap is provided by the guide for the comparison study.
 6. Course reuse for a new cohort is done with Moodle's own **Copy course**. Course Studio is the
@@ -311,7 +311,7 @@ Moodle sites have: completion tracking on; web services enabled with a dedicated
 
 1. Each contract has an owner, a version (`v1`, `v2`, …) and a JSON Schema in `/contracts`, with at least one valid example file.
 2. **Frozen at the end of Release 0.** After that: additive, optional fields only (EXT-02).
-3. A change is a pull request that updates the schema, the examples, this PRD section, and the tests of every module that uses the contract, approved by all affected owners and the guide.
+3. A change is a pull request that updates the schema, the examples, this PRD section, and the tests of every module that uses the contract. **Until Release 0 is frozen**, it needs the approval of one owner of an affected module; the guide approves the PRD text and reviews the whole contract set once at the Release 0 gate. **After the freeze**, the guide's approval is also required for the contract itself (enforced through CODEOWNERS).
 4. Every module validates contract data it reads and writes against the schema; invalid data is rejected with a clear error.
 
 | Contract | Owner | Used by |
@@ -367,6 +367,19 @@ sections:
       after: wk-01-task            # opens when this activity is complete (submitted)
     activities: [...]
 ```
+
+- **Paths (C-08).** `body` is a path inside the package folder. It follows exactly the same
+  relative-path rule as the B6.3 lesson manifest (`$defs/relative_path` in
+  `contracts/lesson-manifest.v1.schema.json`): not empty; not absolute; no URL scheme or drive
+  letter; forward slashes only, no backslashes; no whitespace; no `?` or `#`; no empty, `.` or `..`
+  segment; no control or format character, that is, nothing in the Unicode 15.0.0 categories Cc
+  and Cf (the complete categories, as listed in the schema's `relative_path` description); and no
+  `%` anywhere, so no percent-encoded form. The path is never decoded or normalized. The B1
+  pattern is a copy of the B6 pattern, so the two contracts cannot differ, and a test checks that
+  they are equal. A package that used a name this rule rejects (for example a file name with a
+  space) must rename the file. Shared test cases:
+  `contracts/test-vectors/relative-path.v1.json`. Windows reserved names and Unicode
+  normalization are not enforced in v1, as in B6.3.
 
 ### B1.2 Course pattern rules (validated)
 
@@ -584,7 +597,7 @@ information is lost.
 
 - One dedicated **service account** per Moodle site, with a token restricted to an external service containing only the functions below.
 - The account has only the capabilities those functions need, in the courses where it is enrolled for grading.
-- Function list (each verified on 4.5 and 5.3 in Release 0; replacements recorded here if names differ):
+- Function list (each verified on 4.5 and 5.3 in the first release that relies on them; replacements recorded here if names differ):
 
 | Purpose | Function |
 |---|---|
@@ -594,7 +607,6 @@ information is lost.
 | Submissions | `mod_assign_get_submissions`, `mod_assign_get_submission_status` |
 | Submission files | Download through the token-authenticated file URL returned by the API |
 | Write draft grade + feedback | `mod_assign_save_grade` with marking-workflow state **`readyforrelease`** and feedback comments; never `released` |
-| Workflow state | `mod_assign_set_user_flags` (only if needed to set the state) |
 
 - **Draft rule:** grades written by LearnOps stay invisible to learners until the mentor releases them in Moodle (marking workflow). Only mentor-approved drafts are written.
 
@@ -659,9 +671,44 @@ Slugs: lowercase ASCII, hyphens, immutable. Numbers zero-padded to two digits.
 | `chapters.json` | `[{start, end, title}]` | Yes |
 | `summary.en.md` | Short summary | Optional (feature flag) |
 | `slides.json` + `slides/NNN.jpg` | Slide-change index: `[{t, thumb, text?}]`, thumbnails 320 px wide | Optional (feature flag, on by default) |
-| `cues.json` | `[{t, type, ref, label}]`: moments where an activity should appear | Optional |
+| `cues.json` | `[{t, type, ref, label, required?}]`: moments where an activity should appear | Optional |
 | `camera.mp4`, `screen.mp4` | Separate tracks for F-1 | Optional; accepted and listed, not played in v1 |
 | `lesson.json` | The manifest (B6.3) | Yes |
+
+**Shapes of `chapters.json`, `slides.json` and `cues.json` (v1).** Each file is a bare JSON array,
+described by `contracts/chapters.v1.schema.json`, `contracts/slides.v1.schema.json` and
+`contracts/cues.v1.schema.json`. Unknown fields are accepted (B.0, EXT-02).
+
+- **Times** (`start`, `end`, `t`) are numbers of seconds from the beginning of the main track, never
+  `HH:MM:SS`, and at least 0. Fractional seconds are allowed. `duration_s` is kept unrounded. When a
+  validator has the manifest and one of `chapters.json`, `slides.json` or `cues.json`, every `start`,
+  `end` and `t` in that file must be at most the unrounded manifest `duration_s`, with no tolerance.
+  This is a consumer-level cross-file check; the individual JSON schema cannot enforce it.
+- **`chapters.json`**: `[{start, end, title}]`. `end` is greater than `start`; chapters are in
+  ascending order of `start` and do not overlap; gaps between chapters are allowed. These three
+  rules are checked by the validator, not by the schema (a schema cannot compare two properties);
+  a chapter that starts before any earlier chapter has ended is an overlap. `title` contains at
+  least one character that is not whitespace.
+- **`slides.json`**: `[{t, thumb, text?}]`. `thumb` follows the manifest's relative-path rule (B6.3),
+  is relative to the lesson folder, starts with `slides/` and ends in lowercase `.jpg` with at least
+  one character before it (`slides/.jpg` is invalid); its number of digits is not fixed. `text` is
+  optional plain text with no restriction in v1.
+- **`cues.json`**: `[{t, type, ref, label, required?}]`. `label` is required, shown to the learner,
+  and contains at least one character that is not whitespace; it has no length limit in v1.
+  `required: true` means the learner cannot skip the cue; when it is missing the cue is skippable.
+  `ref` is never empty. Types supported in v1 and their `ref`: `h5p`, the Moodle activity
+  `idnumber` (EXT-06), in the form of B1.2 rule 6 (lowercase ASCII letters and digits separated by
+  single hyphens); `image`, a path relative to the lesson folder (the B6.3 rule); `url`, an absolute
+  `https` address (C-08 does not apply to it) with a host, without user information, `@` before the
+  path, or a backslash. The contract checks only this basic syntax; the player parses the address and
+  checks its host against its configured allow-list (FR-X-12). `type` is written like a track role:
+  lowercase ASCII letters and digits separated by single hyphens, so underscores, dots and spaces
+  are rejected. The schema accepts any such token, and a v1 reader ignores a cue whose type it does
+  not know; for such a type `ref` is any non-empty string. A branching scenario is a B7 practice
+  item and uses `h5p`.
+- **Release scope.** Release 3 writes all three files; `cues.json` may then be an empty array `[]`.
+  Release 5 adds the `h5p` cue entries (FR-V-14). A lesson with no cues may leave `cues.json` out
+  (the manifest's `cues` path stays optional); an empty array is also valid.
 
 ### B6.3 Lesson manifest
 
@@ -728,7 +775,7 @@ url = media_signing.sign(relative_path, ttl_seconds=3600)
 
 ## B7. H5P practice output (v1, stretch)
 
-- Content types pinned in Release 0 (exact library versions recorded): question set (checkpoints), drag-the-words or drag-and-drop / ordering, branching scenario. Interactive video only in lab demonstrations (with openly licensed videos).
+- Content types pinned in the first release that uses them (exact library versions recorded): question set (checkpoints), drag-the-words or drag-and-drop / ordering, branching scenario. Interactive video only in lab demonstrations (with openly licensed videos).
 - Each practice item is a standard `.h5p` file plus an entry in `course.yaml` (`type: h5p`, `idnumber`, `graded: false`).
 - Placed after the week's guide Page; **never graded** (no grade item; the checker enforces this).
 - Video checkpoints are produced in two modes: a separate activity after the video (default), and `cues.json` entries for the future player (F-1).
@@ -1169,7 +1216,7 @@ Each release is **frozen, tagged and adoptable on its own**. Releases are number
 
 | Release | Name | Contents | Depends on |
 |---|---|---|---|
-| **Release 0** | Foundation | Lab VMs ready (A11); repository, CI, coding standards; contracts B1–B8 v1 **frozen**; shared libraries `lti`, `moodle_ws`, `model_interface` (FR-M-01, FR-M-02), `contracts`, `media_paths`; test data B8 v1; verification of assumptions (App-C); design document per module approved | — |
+| **Release 0** | Foundation | Lab VMs ready (A11); repository, CI, coding standards; contracts B1–B8 v1 **frozen**; shared libraries `contracts` and `media_paths`; test data B8 v1; App-C items 6 and 9; design document per module approved. The libraries `lti`, `moodle_ws` and `model_interface` (FR-M-01, FR-M-02) and the other App-C items belong to the first release that uses them; the Release 0 notes list where each one goes. | — |
 | **Release 1** | Course quality | Module 2: checker (FR-C-01…05, 09), role tests (FR-C-06, 07), harness v1 (FR-C-08) | R0 |
 | **Release 2** | Course creation | Module 1: Course Studio (FR-S-01…11); harness extended to build → check → restore | R0, R1 |
 | **Release 3** | Video | Module 4: video pipeline (FR-V-01…13, FR-V-15) incl. BigBlueButton intake, summaries, slide index, manifest, retention; harness smoke test | R0 |
@@ -1184,7 +1231,7 @@ without any extension release. Extension releases follow the same exit criteria 
 built by this team after the baseline or by a later team.
 
 Work on later releases may start in parallel (e.g. Modules 3 and 4 build on Release 0 while
-Module 2 finishes Release 1); **freezing** follows the order above.
+Module 2 finishes Release 1); a release is **frozen** once every release in its "Depends on" column is frozen.
 
 ## D2. Release exit criteria (all must hold)
 
@@ -1273,7 +1320,7 @@ requests; report chapter; final-demo segment.
 | Integration | L3 Apply |
 | Testing and evaluation | L5 Evaluate |
 
-## App-C. To verify in Release 0 (record results in `docs/decisions/`)
+## App-C. To verify (items 6 and 9 in Release 0; each other item in the first release that relies on it; record results in `docs/decisions/`)
 
 1. Every web-services function in B4 exists on 4.5 and 5.3 with the parameters used (incl. `workflowstate` on `mod_assign_save_grade`).
 2. Moodle Restore merges a sections-only backup into a template course without touching protected items.

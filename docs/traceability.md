@@ -3,6 +3,7 @@
 | Requirement | Test(s) | Demo step | Bloom level |
 |---|---|---|---|
 | EXT-09, C-08 – `media_paths` library: slug, relative-path and number validation; `validate_relative_path` is the B6.3 `$defs/relative_path` rule (B6 has no requirement ID of its own, PRD B.0) | `libs/media_paths/tests/test_validation.py`: slugs `test_valid_slugs_are_accepted`, `test_invalid_slugs_are_rejected`, `test_traversal_and_non_ascii_slugs_are_rejected`, `test_validate_slug_returns_false_for_non_strings`; relative paths `test_valid_relative_paths_are_accepted`, `test_invalid_relative_paths_are_rejected`, `test_prd_b6_2_and_other_legitimate_paths_are_accepted`, `test_colon_that_is_not_a_scheme_or_drive_is_accepted`, `test_scheme_or_drive_at_the_start_is_rejected`, `test_unsafe_relative_paths_are_rejected`, `test_validate_relative_path_returns_false_for_non_strings`; Unicode Cc and complete Cf, explicit Unicode 15.0.0 tables (guide decision) `test_control_and_format_characters_are_rejected`, `test_range_tables_are_sorted_non_overlapping_and_not_adjacent`, `test_range_tables_hold_the_unicode_15_0_counts`, `test_every_range_is_rejected_at_its_edges_and_inside`, `test_code_point_next_to_a_range_is_accepted`, `test_private_use_surrogate_and_unassigned_are_not_rejected_by_category`, `test_tables_match_the_unicode_database_of_the_running_python`, `test_mismatch_check_reports_a_new_unicode_version`, `test_mismatch_check_reports_a_character_whose_category_changed`; no `%` anywhere (guide decision) `test_percent_sign_is_rejected_anywhere`, `test_encoded_characters_without_a_percent_sign_are_accepted`; same rule as the contract `test_every_valid_shared_vector_is_accepted`, `test_every_invalid_shared_vector_is_rejected`, `test_library_and_schema_pattern_agree_on_every_code_point`; helpers `test_require_slug_returns_valid_value`, `test_require_slug_error_names_the_field`, `test_require_positive_int_returns_valid_value`, `test_require_positive_int_rejects_non_integers`, `test_require_positive_int_rejects_values_below_one`, `test_require_int_in_range_returns_valid_value`, `test_require_int_in_range_rejects_values_outside_the_range`, `test_require_int_in_range_rejects_non_integers`. Not enforced in v1 (guide decision): Windows reserved names, Unicode normalization, a maximum length | Show that `validate_relative_path` accepts `slides/001.jpg` and rejects `../720p.mp4`, `%2e%2e/720p.mp4`, `lecture%20notes.mp4`, `https://example.org/x.mp4` and paths containing U+061C or U+202E, and accepts one containing U+E000; show that `require_slug("../x", "cohort")` raises a clear error | — |
+| EXT-09, C-08 – `media_paths` library: B6.1 media path templates (defaults, placeholders, required and segment-separated identifying placeholders, checked once at load; slugs and numbers 1–99; output is a safe relative path; known v1 limit, guide decision: custom lesson and live-class templates are not checked against each other, so an administrator's custom templates can give a lesson and a live class the same folder, in either direction, while the defaults cannot collide; no cross-check before the freeze, to be revisited after Release 0 only if adopters need it; documented in the README) (B6 has no requirement ID of its own, PRD B.0) | `libs/media_paths/tests/test_paths.py`: `test_course_lesson_path_uses_prd_template`, `test_live_class_path_uses_prd_template`, `test_path_numbers_are_zero_padded`, `test_default_templates_match_prd_b6_1`, `test_default_templates_use_exactly_the_documented_placeholders`, `test_default_templates_are_loaded_checked_templates`, `test_posixpath_join_adds_a_file_name_to_a_folder_with_or_without_a_slash`, `test_required_placeholders_are_the_guide_decision`, `test_course_lesson_custom_template_with_documented_placeholders`, `test_live_class_custom_template_with_documented_placeholders`, `test_each_course_lesson_placeholder_is_supported`, `test_each_live_class_placeholder_is_supported`, `test_template_without_identifying_placeholder_is_rejected`, `test_identifying_placeholders_sharing_a_segment_are_rejected`, `test_identifying_placeholder_may_share_a_segment_with_numbers`, `test_missing_placeholder_error_names_every_missing_one`, `test_number_placeholders_are_optional`, `test_lessons_differing_only_by_lesson_slug_get_different_folders`, `test_template_is_checked_once_when_loaded_not_at_each_call`, `test_checked_template_cannot_be_created_unchecked`, `test_path_functions_reject_an_unloaded_template`, `test_lesson_template_is_not_accepted_for_live_class`, `test_unknown_placeholder_is_rejected_with_clear_error`, `test_lesson_placeholder_in_live_class_template_is_rejected`, `test_malformed_template_is_rejected`, `test_format_spec_or_conversion_is_rejected`, `test_escaped_literal_braces_are_allowed`, `test_template_producing_unsafe_path_is_rejected_at_load`, `test_unsafe_live_class_template_is_rejected_at_load`, `test_non_string_template_is_rejected`, `test_course_lesson_rejects_invalid_slugs`, `test_live_class_rejects_invalid_slugs_and_cohorts`, `test_cohort_in_slug_form_such_as_a_date_is_accepted`, `test_non_string_slug_is_rejected`, `test_course_lesson_rejects_non_integer_numbers`, `test_course_lesson_rejects_numbers_outside_1_to_99`, `test_course_lesson_accepts_numbers_1_and_99`, `test_live_class_rejects_non_integer_number`, `test_live_class_rejects_number_outside_1_to_99`, `test_live_class_accepts_number_99`. Not decided, so not tested: whether a custom template must end with `/` (the README says to join file names with `posixpath.join`, which handles both) | Load the default and a custom template; show that a template without `{lesson_slug}`, `{course_slug}{module_slug}/`, an unknown placeholder, a `../` slug, `module_number=100` and `module_number=True` are rejected with a clear message | — |
 | EXT-09, C-08 – `media_paths` library: B6.4 media signing interface (`none` baseline); `sign()` accepts only paths that pass `validate_relative_path`, so no `%` (B6 has no requirement ID of its own, PRD B.0) | `libs/media_paths/tests/test_signing.py`: `test_none_signer_builds_media_url`, `test_none_signer_accepts_custom_ttl`, `test_none_signer_removes_trailing_slash_from_base_url`, `test_none_signer_implements_media_signer_interface`, `test_default_ttl_matches_prd_b6_4`, `test_none_signer_output_has_no_signature_or_expiry`, `test_valid_base_urls_are_joined_with_a_single_slash`, `test_invalid_base_urls_are_rejected`, `test_base_url_error_does_not_echo_credentials`, `test_non_string_base_url_is_rejected`, `test_sign_percent_encodes_path_characters`, `test_sign_rejects_unsafe_relative_paths`, `test_decoding_a_none_signed_url_never_yields_a_traversal`, `test_sign_uses_validate_relative_path`, `test_sign_rejects_non_integer_ttl`, `test_sign_rejects_ttl_below_one`, `test_media_signing_none_returns_none_signer`, `test_create_media_signer_reads_os_environ_by_default`, `test_planned_signing_modes_raise_not_implemented_config_error`, `test_unknown_signing_modes_raise_config_error`, `test_missing_media_signing_raises_config_error`, `test_missing_media_base_url_raises_config_error`, `test_invalid_media_base_url_raises_config_error`, `test_config_error_is_a_value_error` | Select the signer with `MEDIA_SIGNING=none` and build a plain media URL; show that `%2e%2e/720p.mp4` is refused and that `hmac`/`s3` and unknown modes give a configuration error. Only `none` is implemented (enough for the baseline per B6.4) | — |
 
 ## Contract example checking engine (PRD B.0 rule 1, E1), Release 0 foundation
@@ -69,13 +70,15 @@ Structure only. Test names are in `test_course_package_v1.py`.
 | `unlock.start_date` is an ISO date string or null (impossible dates are rejected; an unquoted YAML date is rejected) | B1.1 | `test_invalid_start_date_is_rejected`, `test_unquoted_yaml_date_is_rejected_so_it_must_be_quoted` |
 | An H5P activity has `graded: false` | B7 | `test_missing_required_field_is_rejected`, `test_wrong_type_or_value_is_rejected` |
 | Unknown fields are accepted | B.0 rule 2, EXT-02 | `test_valid_variation_is_accepted` |
+| `body` is a path inside the package folder and follows the shared relative-path rule (C-08): the same `$defs/relative_path` pattern as B6.3, including the pinned Unicode 15.0.0 Cc and Cf ranges; the same shared vectors as B6 (every valid vector accepted and every invalid vector rejected, through `$defs/relative_path` alone and through `body` in a whole package); the B1 pattern equals the B6 pattern; with each code point placed after the first character of a one-segment name (`a<c>.mp4`), the pattern rejects exactly Cc, Cf, whitespace, `\`, `?`, `#`, `%` and `:`. The colon is rejected there only because it makes a URL scheme or drive-letter prefix (`a:`), not in every position: `notes/b:c.md` and `12:30.mp4` are valid. The pin and exhaustive tests need Python 3.12 (Unicode 15.0.0) and fail by design on another version | B1.1, C-08, B6.3 | `test_every_valid_path_vector_is_accepted`, `test_every_invalid_path_vector_is_rejected`, `test_body_accepts_every_valid_path_vector`, `test_body_rejects_every_invalid_path_vector`, `test_b1_relative_path_pattern_is_exactly_the_b6_pattern`, `test_python_unicode_database_is_the_pinned_version`, `test_unicode_15_0_has_2_cc_and_21_cf_ranges`, `test_pattern_rejects_exactly_cc_and_cf_among_all_code_points`, `test_body_that_is_not_a_relative_path_is_rejected` |
 | The schema is valid, and the example package validates (also as `sections-only`) | B.0 rule 1 | `test_schema_is_a_valid_draft_2020_12_schema`, `test_example_package_is_valid`, `test_example_in_sections_only_mode_is_valid` |
 
 Enforced and tested, but chosen in the schema rather than stated as a rule in the PRD (to be
 confirmed by the contract reviewers): the `type` spellings `url` and `label`; `completion` limited
 to `submit`; `submission` limited to `onlinetext` and `file`; `section.number` at least 1; points
-as non-negative integers; non-empty titles; the shape of `body` (relative path, no `..`);
-`activities` and `sections` not empty.
+as non-negative integers; non-empty titles; `activities` and `sections` not empty. (The shape of
+`body` is no longer in this list: it is the shared relative-path rule, stated in PRD B1.1 and
+listed in the table above.)
 
 ### Enforced by validator code (`libs/contracts`) and covered by automated tests
 
@@ -243,6 +246,47 @@ Left out because the PRD does not establish the mapping:
   Studio screen and CLI that show it do not exist yet.
 - **Requirement IDs for the contract work itself.** None in the PRD.
 
+## B4 Moodle web-services contract (v1), Release 0 foundation
+
+Files: `contracts/moodle-ws.v1.md` (normative rules), `contracts/moodle-ws.v1.schema.json`,
+`contracts/examples/moodle-ws.v1.functions.json` (allow-list), `libs/contracts/tests/test_moodle_ws_v1.py`.
+**Contract work only, draft, not verified on any Moodle site.** Guide's decisions on Q1, Q24 and
+Q37: PR #27.
+
+FR-G-01 ("Fetch assignments, the marking table and submissions … through B4") and FR-G-06 ("Write
+only approved drafts to Moodle via B4"), both Release 4, are deliberately not in the table above. They
+need `libs/moodle_ws` and the grading module, which do not exist yet.
+
+### Enforced by automated tests
+
+Test names are in `test_moodle_ws_v1.py`.
+
+| Rule | PRD | Test(s) |
+|---|---|---|
+| The allow-list names exactly the PRD B4 functions, no extra, none missing, no duplicates | B4 | `test_function_names_equal_the_prd_b4_list`, `test_prd_b4_lists_the_expected_number_of_functions` |
+| The allow-list and the rules text (`moodle-ws.v1.md` §2) name the same functions | B.0 rule 1 | `test_function_names_equal_the_rules_table` |
+| Each entry's purpose is the PRD B4 purpose | B4 | `test_purpose_is_the_prd_purpose` |
+| No parameter is listed unless the PRD names it for that function; `mod_assign_save_grade` sends `workflowstate` | B4, App-C 1 | `test_every_parameter_is_named_in_the_prd_for_its_function`, `test_the_prd_names_workflowstate_only_for_save_grade`, `test_save_grade_sends_the_workflow_state` |
+| `mod_assign_set_user_flags` is not allowed: it can set `released` with only `mod/assign:grade` | Guide, 11 Nov; C-09 | `test_the_dropped_user_flags_function_is_not_listed` |
+| A replacement name for a Moodle version also appears in the PRD B4 text | B4 ("replacements recorded here") | `test_a_replacement_name_is_also_in_the_prd` |
+| No verification state is stored in the schema or example | Guide, Q1 | `test_invalid_document_is_rejected_at_the_expected_place` (five verified-flag cases, including capital letters) |
+| Schema is valid; example validates; invalid documents fail at the expected place; unknown fields are accepted | B.0 rule 1, rule 2 | `test_schema_is_a_valid_draft_2020_12_schema`, `test_example_is_valid`, `test_invalid_document_is_rejected_at_the_expected_place`, `test_unknown_fields_are_accepted` |
+| One token variable per site with a placeholder; no single `MOODLE_WS_TOKEN` | B4, SEC-03, C-06; guide, Q24 | `test_one_token_variable_per_site_with_a_placeholder` |
+
+### Documented but not automatically enforced
+
+| Rule | PRD |
+|---|---|
+| Only the functions listed in the contract are called (`libs/moodle_ws` will build its allow-list from the example; the library does not exist yet) | B4 |
+| One service account per site, with a token restricted to those functions and minimum capabilities | B4, SEC-03 |
+| The token is stored only in the environment | SEC-03, C-06 |
+| A grade write uses workflow state `readyforrelease`, never `released`; only approved drafts are written | B4, C-09 |
+| Each function exists with the parameters used on Moodle 4.5 and 5.3 (all 10 lab checks are still open) | B4, App-C 1 |
+
+Open: when the lab Moodle sites are available (all ten checks in `moodle-ws.v1.md` §5 wait for
+them; B4 cannot be frozen until they pass), and the parameter name for feedback comments on
+`mod_assign_save_grade` (not in the PRD; lab check 1). Q1, Q24 and Q37 are decided (PR #27).
+
 ## B8.1 template course backup (test data), Release 0 foundation
 
 Files: `testdata/b8-1-template-course/README.md` (the requirements, the proposals and the open
@@ -256,7 +300,8 @@ and no test exist for B8.1 yet.
 | The template course backup holds the four protected items: the final project assignment (`final-project`), the course feedback activity (`course-feedback`), the course completion criteria and the course badge. The idnumbers are the PRD defaults and are configurable. The protected section number (3) is a proposal | B8.1, B1.4 | None yet: the `.mbz` does not exist |
 | A plain list of the expected protected items (idnumber, type, section, count) for the checker, which builds its model from the `.mbz` | B8.1, B1.4 | None yet |
 | A sections-only backup is merged into the template and the protected items stay unchanged. The intended comparison writes down the same table for each protected item before and after the merge, with the fields type, name, idnumber, section number, points, completion setting and visibility, and the two tables must be equal (Owner, Issue #55, 2026-11-12); no check or test implements this yet. The Release 0 backup procedure is written as an untested draft | B1.4, C1.7, App-C item 2 | None yet: needs a Moodle site |
-| Moodle 4.5 is the owner-confirmed build version. The owner stated that a 4.5 backup restores into the same or a newer Moodle version, including 5.3. That 4.5-to-5.3 restore is the owner's statement, not a result. The owner decided to build once on 4.5, test the restore on 4.5 and on 5.3, and not test 5.3 to 4.5, recording the Moodle version, the date and the outcome of each restore (Issue #55, 2026-11-12) | C-03 | None yet: not verified; needs Moodle lab testing on 4.5 and 5.3 |
+| Moodle 5.3 is the owner-confirmed build and test version for Release 0 (Issue #55, 2026-11-14 reply, which replaces the 2026-11-12 decision to build on 4.5). Every restore and the sections-only merge are tested on 5.3 only, recording the Moodle version, the date and the outcome of each restore; the `.mbz` is labelled "built on Moodle 5.3". The owner reports that Moodle documents that a backup restores into the same or a newer version only, so the 5.3 template is expected not to restore on 4.5 (the owner's report: not verified here, and the PRD does not state it). Moodle 4.5 is **not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only)**, not recorded as passed; if PRD C-03 later needs the template on 4.5, it is rebuilt once on 4.5 | C-03 | None yet: not verified; needs Moodle lab testing on 5.3. Moodle 4.5: not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only) |
+| Deviation - C-03: the B8.1 template is built and tested on Moodle 5.3 only; 4.5 not tested, waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only). The B8.2 restore and merge tests have their own decision, made by the guide on 2026-11-16 (A5 on PR #61, recorded there with B8.2, not here); C-03 still applies to the harness (FR-C-08) | C-03 | None (a recorded deviation, not a test) |
 
 ### Not covered here
 
@@ -264,13 +309,15 @@ These are pending and are not claimed by this change:
 
 - **The `.mbz` backup, its SHA-256, the release asset (tag `testdata-b8-1-v1`) and the download
   script.** None of them exists yet.
-- **Moodle 4.5 and 5.3 verification:** the restore, the protected items, the completion criteria,
-  the badge and the sections-only merge (PRD C1.7, App-C item 2). The owner's statement that a 4.5
-  backup restores on 5.3 has not been verified.
-- **The decision record for App-C item 2** (`docs/decisions/NNNN-b8-1-template-course.md`). It is
-  not written; the next free number is taken when you merge, after rebasing (Owner, Issue #55). The
-  owner also asks for a short, text-only results table in it that names the local evidence files;
-  screenshots and logs stay local and are not committed.
+- **Moodle 5.3 verification:** the restore, the protected items, the completion criteria, the badge
+  and the sections-only merge (PRD C1.7, App-C item 2). The B8.1 owner's lab access is ready (in person, the
+  owner's 2026-11-14 reply), but access is not a result and no lab verification result is recorded. **Moodle 4.5 is not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only)**
+  and is not claimed as passed.
+- **The App-C item 2 results.** The decision record `docs/decisions/0009-b8-1-template-course.md`
+  exists and holds the Moodle 4.5 waiver (PR #95); its number is taken again at merge, after
+  rebasing (Owner, Issue #55). The results are not written. The owner asks for a short, text-only
+  results table in the same file that names the local evidence files; screenshots and logs stay
+  local and are not committed.
 - **The open decisions** in the B8.1 README (§9) are pending guide confirmation. This entry does
   not settle them.
 
@@ -366,6 +413,67 @@ confirmed by the contract reviewers): `source.kind` is required inside `source` 
 | `course_slug` and `lesson_id` match the folder's place in the path template | B6.1 | `libs/media_paths` (Release 0, separate pull request) |
 | Calendar validity of `processing.completed_at` (for example no 31 February) | — | Only with a `date-time` format checker (`rfc3339-validator`, not installed in CI) |
 | Contents of `transcript.en.json` (B5.4 shape) | B5.4, B6.2 | B5 contract (no schema in `contracts/` yet) |
-| Shapes of `chapters.json`, `slides.json`, `cues.json` | B6.2 | No schema yet |
+| Shapes of `chapters.json`, `slides.json`, `cues.json` | B6.2 | Their own schemas, see the next section |
 | Windows reserved names (such as `CON`, `NUL`, `COM1`) and Unicode normalization in paths: considered, not v1 rules (guide decision) | B6.3 | Not enforced in v1: the store is on Linux or S3 and no consumer compares names; a v2 discussion if a store later needs them |
 | A maximum path length | B6.3 | None specified in v1 (guide decision): paths are built from bounded slugs and the store enforces its own limits |
+
+## App-C item 4: BigBlueButton recording metadata (Release 0 verification record)
+
+`docs/decisions/0006-app-c-4-bbb-recording-metadata.md`. Documentation only: no code, contract or
+test changed. App-C item 4 has no requirement ID of its own; it is a precondition of FR-V-09.
+
+| What is recorded | PRD | Test(s) |
+|---|---|---|
+| The verification record for App-C item 4 exists with its steps, the evidence tables and the comparison with B6.1 and the B6.3 `source` field. Its status is **NOT VERIFIED**: every lab observation (metadata keys and values, the video-format output location, versions) is PENDING until T17 supplies it | App-C 4, FR-V-09, B6.1, B6.3 | None: needs the lab BigBlueButton and a Moodle site (task T17) |
+
+## App-C item 4: BigBlueButton recording metadata and video-format output (T17)
+
+Files: `docs/decisions/0005-app-c-4-bbb-recording-metadata.md` and
+`docs/decisions/evidence/0005-app-c-4-bbb/`. Supports FR-V-09 (Release 3).
+
+**Status: PENDING.** The lab BigBlueButton was not reachable from this session (only placeholder
+configuration exists), so no server, version, recording, metadata or video-format result is
+verified. The record holds a read-only check script (self-tested on synthetic data only) and a
+checklist for the manual run. It does **not** show that App-C 4 or FR-V-09 is met.
+
+## B6.2 chapters, slides and cues contracts (v1), Release 0 foundation
+
+Files: `contracts/chapters.v1.schema.json`, `contracts/slides.v1.schema.json`,
+`contracts/cues.v1.schema.json`, `contracts/examples/{chapters,slides,cues}.v1/`, the validators in
+`libs/contracts/lesson_files.py` (shared validator reference EXT-09) and their tests in
+`libs/contracts/tests/test_lesson_files_v1.py`. B6.2 has no requirement ID of its own in the PRD (it
+is a contract, PRD B.0). It is the schema that FR-V-05, FR-V-07, FR-V-14 (Release 3 and 5, which
+write the files) and FR-X-06, FR-X-07, FR-X-12 (Release 6, which read them) will be checked against,
+and the data EXT-08 requires "now". None of those requirements is implemented by this change, so none
+gets a row in the table at the top.
+
+### Enforced by a JSON Schema or by the validator, and covered by automated tests
+
+Test names are in `test_lesson_files_v1.py`. "Validator" means `lesson_files.py`.
+
+| Rule | PRD | Test(s) |
+|---|---|---|
+| Each file is a bare JSON array (not an object wrapper); unknown fields accepted | B6.2, B.0, EXT-02 | `test_schema_is_a_valid_draft_2020_12_schema`, `test_a_document_that_is_not_an_array_is_rejected`, `test_unknown_fields_are_accepted` |
+| Each schema has a valid top-level example, and every example validates | B.0 rule 1 | `test_each_schema_has_a_top_level_example`, `test_every_example_is_valid`, `test_examples_show_what_the_guide_decided`, `test_valid_chapter_list_is_accepted`, `test_empty_chapter_list_is_accepted_by_the_schema`, `test_valid_slide_list_is_accepted` |
+| Times are numbers of seconds, fractional allowed, not strings; at least 0 and 0 itself allowed (guide, 2026-11-15) | B6.2 | `test_fractional_chapter_times_are_accepted`, `test_fractional_slide_time_is_accepted`, `test_fractional_cue_time_is_accepted`, `test_chapter_with_wrong_fields_is_rejected`, `test_slide_with_wrong_fields_is_rejected`, `test_cue_time_must_not_be_negative`, `test_times_of_zero_are_accepted`, `test_times_below_zero_are_rejected_by_the_schema` |
+| A time that is NaN or infinite is rejected (Python's JSON reader accepts them; the schema does not stop NaN); an integer too large for a float (such as 10**400) is a finite number and must not crash the validators (peer review of PR #93) | B6.2 | `test_non_finite_chapter_time_is_rejected`, `test_non_finite_slide_time_is_rejected`, `test_non_finite_cue_time_is_rejected`, `test_a_huge_integer_time_does_not_crash_the_validators`, `test_a_huge_integer_time_is_still_checked_by_the_other_rules`, `test_a_float_that_is_not_finite_is_still_rejected` |
+| Chapters: `end` greater than `start`; ascending order; no overlap with any earlier chapter (the largest earlier `end`); gaps and touching chapters allowed (validator, because a schema cannot compare two properties) | B6.2 | `test_chapter_end_not_after_start_is_rejected`, `test_unordered_chapters_are_rejected`, `test_overlapping_chapters_are_rejected`, `test_a_chapter_inside_another_is_an_overlap`, `test_chapters_with_the_same_start_are_an_overlap`, `test_chapter_gaps_are_accepted`, `test_chapters_that_touch_are_not_an_overlap`, `test_overlap_with_an_earlier_longer_chapter_is_reported_for_every_chapter`, `test_a_chapter_overlaps_only_if_it_starts_before_the_latest_earlier_end`, `test_one_mistake_is_reported_once`, `test_schema_alone_does_not_enforce_the_order_rules` |
+| Slides: `thumb` follows the manifest relative-path rule, starts with `slides/`, ends in `.jpg`; no fixed digit count; `text` optional and unrestricted | B6.2, B6.3, C-08 | `test_slide_text_is_optional`, `test_slide_text_has_no_restriction_in_v1`, `test_slide_thumbnail_names_have_no_fixed_digit_count`, `test_slide_thumbnail_may_be_in_a_subfolder_of_slides`, `test_slide_thumbnail_outside_slides_or_not_jpg_is_rejected`, `test_slide_thumbnail_breaking_the_relative_path_rule_is_rejected`, `test_slide_thumbnail_needs_a_character_before_the_extension` |
+| The relative-path and type-token patterns are the same text as in the manifest schema, and the shared path vectors pass (this includes the no-`%` rule) | B6.3, C-08 | `test_relative_path_pattern_is_the_manifest_pattern`, `test_type_token_pattern_is_the_manifest_slug_pattern`, `test_shared_path_vectors_are_accepted_and_rejected_in_slides_and_cues` |
+| No `%` anywhere in a slide thumbnail or an image ref, so no percent-encoded dot or separator such as `%2e` or `%252e` (guide decision, B6.3 `relative_path`; the schemas carry the same pattern text); a `url` ref may contain percent-encoding, because C-08 does not apply to it | B6.2, B6.3, C-08 | `test_slide_thumbnail_with_a_percent_sign_is_rejected`, `test_slide_thumbnail_without_a_percent_sign_is_accepted`, `test_image_ref_with_a_percent_sign_is_rejected`, `test_url_ref_with_a_percent_sign_is_accepted`, `test_shared_path_vectors_are_accepted_and_rejected_in_slides_and_cues` |
+| Chapter `title` has at least one character that is not whitespace (empty and blank titles are rejected; confirmed by the guide and implemented, [guide, PR #93 comment of 2026-11-15](https://github.com/narenccode/learnops/pull/93#issuecomment-6902711086)) | B6.2, FR-V-05, FR-X-07 | `test_empty_or_blank_chapter_title_is_rejected`, `test_chapter_title_with_a_visible_character_is_accepted` |
+| Cues: `t`, `type`, `ref`, `label` required; `label` not empty (guide, 2026-11-15) and not only whitespace (confirmed by the guide and implemented, [guide, PR #93 comment of 2026-11-15](https://github.com/narenccode/learnops/pull/93#issuecomment-6902711086)); `ref` never empty for every cue type, including unknown types (confirmed by the guide and implemented); `required` optional boolean, absent means false; empty array valid | B6.2, FR-X-12 | `test_missing_required_cue_field_is_rejected`, `test_empty_or_non_string_label_is_rejected`, `test_missing_label_is_rejected`, `test_blank_label_is_rejected`, `test_label_with_a_visible_character_is_accepted`, `test_label_has_no_length_limit_in_v1`, `test_missing_required_means_false`, `test_required_true_and_false_are_accepted`, `test_non_boolean_required_is_rejected`, `test_empty_cues_array_is_accepted` |
+| Cue types `h5p`, `image`, `url`; `ref` is a Moodle idnumber (EXT-06) in the B1.2 form (lowercase ASCII letters and digits, single hyphens; the pattern equals B1's `$defs/identifier`; confirmed by the guide and implemented, [guide, PR #93 comment of 2026-11-15](https://github.com/narenccode/learnops/pull/93#issuecomment-6902711086)), a relative path, an absolute `https` address (guide, 2026-11-15) with a host (scheme in any letter case; no credentials, no `@` before the path, no backslash; percent-encoding allowed; these syntax restrictions are confirmed by the guide and implemented); the url is not subject to the relative-path rule; for an unknown type `ref` is any non-empty string (confirmed by the guide and implemented) | B6.2, EXT-06, C-08, FR-X-12 | `test_all_three_known_cue_types_are_accepted`, `test_h5p_ref_that_is_an_idnumber_is_accepted`, `test_h5p_ref_that_is_not_an_idnumber_form_is_rejected`, `test_h5p_ref_that_is_empty_or_not_a_string_is_rejected`, `test_h5p_ref_pattern_is_the_b1_identifier_pattern`, `test_ref_of_an_unknown_type_is_only_a_string`, `test_ref_of_an_unknown_type_must_not_be_empty`, `test_image_ref_that_is_a_relative_path_is_accepted`, `test_image_ref_that_is_not_a_relative_path_is_rejected`, `test_absolute_https_url_is_accepted`, `test_url_that_is_not_an_absolute_https_address_is_rejected`, `test_url_with_no_host_credentials_or_backslash_is_rejected`, `test_url_with_a_host_and_percent_encoding_or_at_after_the_path_start_is_accepted`, `test_url_ref_is_not_subject_to_the_relative_path_rule` |
+| `type` is lowercase ASCII letters and digits with single hyphens, the track-role slug form (underscores, dots, spaces rejected); the schema accepts any such token; a v1 reader ignores an unknown type; no separate `scenario` type (guide, 2026-11-15) | B6.2, FR-X-12 | `test_unknown_lowercase_type_is_accepted_and_ignored_by_a_v1_reader`, `test_a_cue_with_a_type_the_contract_dropped_is_not_special`, `test_malformed_or_uppercase_type_is_rejected`, `test_cue_type_in_the_track_role_slug_form_is_accepted`, `test_cue_type_with_underscore_dot_space_or_other_characters_is_rejected`, `test_cue_type_form_agrees_with_the_manifest_track_role_form`, `test_type_that_is_not_a_string_is_rejected`, `test_ref_of_an_unknown_type_is_only_a_string` |
+| Every `start`, `end` and `t` in `chapters.json`, `slides.json` or `cues.json` is at most the manifest's `duration_s`, used unrounded and with no tolerance (guide, 2026-11-15, confirmed for all three files): a consumer-level cross-file rule (`check_within_duration`), not a schema rule | B6.2 | `test_schemas_do_not_check_times_against_the_duration`, `test_time_beyond_duration_is_rejected_by_the_consumer_check`, `test_time_exactly_at_the_duration_is_accepted`, `test_absent_files_are_not_checked`, `test_lesson_with_no_cues_file_has_no_readable_cues`, `test_invalid_duration_is_a_programming_error`, `test_examples_are_within_the_example_lesson_duration`, `test_duration_is_used_as_given_without_rounding`, `test_duration_check_has_no_tolerance`, `test_every_chapter_start_and_end_and_cue_t_is_checked_against_duration`, `test_a_huge_integer_duration_does_not_crash_the_duration_check`, `test_a_huge_integer_time_is_beyond_a_normal_duration`, `test_a_boolean_or_non_finite_duration_is_still_a_programming_error` |
+| Every report lists what it did not check; a message names the file and place and says what to do; a path, thumbnail, url, idnumber or blank-text error does not show a regular expression | EXT-09, UI-05 | `test_reports_list_what_was_not_checked`, `test_error_messages_name_the_file_place_and_next_step`, `test_invalid_path_message_is_short_and_says_what_to_do`, `test_thumbnail_outside_slides_has_its_own_message`, `test_other_pattern_messages_say_what_to_write`, `test_a_pattern_error_keeps_its_code_and_place` |
+
+### Documented but not automatically enforced
+
+| Rule | PRD | Where the PRD places it |
+|---|---|---|
+| The thumbnail and image files exist; thumbnails are 320 px wide | B6.2 | FR-V-07 (R3), FR-V-08 |
+| An `h5p` ref is the `idnumber` of an activity in the course | B6.2, B7, EXT-06 | The checker (M2) and FR-V-14 (R5) |
+| A `url` is on the player's allow-list | B6.2, FR-X-12 | The player (R6) |
+| Slides or cues in ascending order of `t`; chapters, slides or cues have a minimum count | B6.2 | Not decided by the guide, so nothing is required (`test_slides_and_cues_need_no_particular_order`, `test_empty_chapter_list_is_accepted_by_the_schema`) |
+| Release 3 writes the three files (`cues.json` may be empty); Release 5 adds `h5p` cues; a lesson with no cues may omit the file | B6.2, EXT-08, FR-V-14 | Documented in PRD B6.2; the pipeline (R3, R5) implements it |
