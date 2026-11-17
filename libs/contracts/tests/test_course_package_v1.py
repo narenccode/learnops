@@ -5,7 +5,10 @@ AUTOMATED here (structure only, by contracts/course-package.v1.schema.json):
   * the example package's course.yaml validates, also with mode "sections-only";
   * required fields, types, enums, identifier and path patterns, ISO dates, the two default
     protected idnumbers (B1.4), the per-type required fields (B1.1, B7), and that unknown
-    fields are accepted (PRD B.0, EXT-02).
+    fields are accepted (PRD B.0, EXT-02);
+  * the relative-path rule (C-08): `$defs/relative_path` is the same pattern as B6, accepts every
+    valid vector and rejects every invalid vector of contracts/test-vectors/relative-path.v1.json,
+    and rejects exactly the Unicode 15.0.0 categories Cc and Cf (plus the ASCII and whitespace rules).
 
 NOT checked by the schema, so not tested here (the schema's $comment lists them). The validator
 in libs/contracts (tests: test_validate_course.py, test_config.py) enforces two of them:
@@ -31,6 +34,8 @@ from __future__ import annotations
 import copy
 import datetime
 import json
+import re
+import unicodedata
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -419,6 +424,123 @@ def test_body_that_is_not_a_relative_path_is_rejected(
 ) -> None:
     case.edit(doc)
     assert (case.at, case.keyword) in error_keys(validator, doc)
+
+
+# --- paths: the one relative-path rule shared with B6 (PRD C-08; guide decisions on #32, #38) --
+#
+# B1 uses the same $defs/relative_path rule as B6.3, and the same shared vectors. The vector file
+# is loaded here, never copied, so the schemas and libs/media_paths test one list.
+
+B6_SCHEMA_PATH = ROOT / "contracts" / "lesson-manifest.v1.schema.json"
+PATH_VECTORS_PATH = ROOT / "contracts" / "test-vectors" / "relative-path.v1.json"
+PATH_VECTORS = json.loads(PATH_VECTORS_PATH.read_text(encoding="utf-8"))
+VALID_PATHS: list[str] = [v["path"] for v in PATH_VECTORS["valid"]]
+BAD_PATHS: list[str] = [v["path"] for v in PATH_VECTORS["invalid"]]
+
+
+@pytest.fixture(scope="module")
+def path_validator(schema: dict[str, Any]) -> Draft202012Validator:
+    """A validator for $defs/relative_path alone."""
+    return Draft202012Validator(schema["$defs"]["relative_path"])
+
+
+@pytest.mark.parametrize("path", VALID_PATHS, ids=repr)
+def test_every_valid_path_vector_is_accepted(
+    path_validator: Draft202012Validator, path: str
+) -> None:
+    assert messages(path_validator, path) == []
+
+
+@pytest.mark.parametrize("path", BAD_PATHS, ids=repr)
+def test_every_invalid_path_vector_is_rejected(
+    path_validator: Draft202012Validator, path: str
+) -> None:
+    assert ((), "pattern") in error_keys(path_validator, path)
+
+
+@pytest.mark.parametrize("path", VALID_PATHS, ids=repr)
+def test_body_accepts_every_valid_path_vector(
+    validator: Draft202012Validator, doc: Doc, path: str
+) -> None:
+    set_at(PAGE + ("body",), path)(doc)
+    assert messages(validator, doc) == []
+
+
+@pytest.mark.parametrize("path", BAD_PATHS, ids=repr)
+def test_body_rejects_every_invalid_path_vector(
+    validator: Draft202012Validator, doc: Doc, path: str
+) -> None:
+    set_at(PAGE + ("body",), path)(doc)
+    assert (PAGE + ("body",), "pattern") in error_keys(validator, doc)
+
+
+def test_b1_relative_path_pattern_is_exactly_the_b6_pattern(
+    schema: dict[str, Any],
+) -> None:
+    # One rule, one list: the B1 pattern is a copy of the B6 pattern, including the Unicode
+    # 15.0.0 Cc and Cf ranges inside it. If either changes alone, this fails.
+    b6 = json.loads(B6_SCHEMA_PATH.read_text(encoding="utf-8"))["$defs"][
+        "relative_path"
+    ]
+    b1 = schema["$defs"]["relative_path"]
+    assert b1["type"] == b6["type"] == "string"
+    assert b1["pattern"] == b6["pattern"]
+
+
+# --- paths: Unicode Cc and Cf (guide decision on #32, copied into B1) ----------------------
+#
+# The pattern rejects the complete Unicode 15.0.0 categories Cc and Cf. The expected sets here
+# come from Python's Unicode database, never from a list typed in this file. The first test
+# fails if Python's database is not 15.0.0, because the pattern's list is pinned and must not
+# follow Python: a new Unicode version is a reviewed contract decision (PRD B.0).
+
+UNICODE_VERSION = "15.0.0"
+CONTROL_AND_FORMAT = ("Cc", "Cf")
+
+
+def _code_points_in(categories: tuple[str, ...]) -> list[int]:
+    return [p for p in range(0x110000) if unicodedata.category(chr(p)) in categories]
+
+
+def _range_count(code_points: list[int]) -> int:
+    return sum(
+        1 for i, p in enumerate(code_points) if i == 0 or code_points[i - 1] != p - 1
+    )
+
+
+def test_python_unicode_database_is_the_pinned_version() -> None:
+    assert unicodedata.unidata_version == UNICODE_VERSION, (
+        f"This Python uses Unicode {unicodedata.unidata_version}; the relative-path rule "
+        f"is pinned to Unicode {UNICODE_VERSION}. A new Unicode version needs a reviewed "
+        "contract decision (PRD B.0) for B1, B6 and libs/media_paths together."
+    )
+
+
+def test_unicode_15_0_has_2_cc_and_21_cf_ranges() -> None:
+    # UCD 15.0.0 DerivedGeneralCategory.txt: Cc 65 code points, Cf 170.
+    cc, cf = (_code_points_in((c,)) for c in CONTROL_AND_FORMAT)
+    assert (_range_count(cc), len(cc), _range_count(cf), len(cf)) == (2, 65, 21, 170)
+
+
+def test_pattern_rejects_exactly_cc_and_cf_among_all_code_points(
+    schema: dict[str, Any],
+) -> None:
+    # Every code point, placed after the first character of a one-segment name (a<c>.mp4),
+    # through the schema's own pattern (jsonschema checks "pattern" with re.search, as here).
+    # Whitespace and the ASCII rules reject a few more; nothing else may differ. The colon is
+    # in the expected set only because in this position it forms a URL scheme or drive-letter
+    # prefix ("a:"): the rule does not reject a colon everywhere (notes/b:c.md and 12:30.mp4
+    # are valid, see the shared vectors).
+    pattern = re.compile(schema["$defs"]["relative_path"]["pattern"])
+    forbidden = set(_code_points_in(CONTROL_AND_FORMAT))
+    whitespace = {p for p in range(0x110000) if re.fullmatch(r"\s", chr(p))}
+    rejected = forbidden | whitespace | {ord(c) for c in ":\\?#%"}
+    wrong = [
+        f"U+{p:04X}"
+        for p in range(0x110000)
+        if (pattern.search(f"a{chr(p)}.mp4") is None) != (p in rejected)
+    ]
+    assert wrong == []
 
 
 # --- valid variations: the schema must NOT reject these ------------------------------------

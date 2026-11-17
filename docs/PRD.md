@@ -368,6 +368,19 @@ sections:
     activities: [...]
 ```
 
+- **Paths (C-08).** `body` is a path inside the package folder. It follows exactly the same
+  relative-path rule as the B6.3 lesson manifest (`$defs/relative_path` in
+  `contracts/lesson-manifest.v1.schema.json`): not empty; not absolute; no URL scheme or drive
+  letter; forward slashes only, no backslashes; no whitespace; no `?` or `#`; no empty, `.` or `..`
+  segment; no control or format character, that is, nothing in the Unicode 15.0.0 categories Cc
+  and Cf (the complete categories, as listed in the schema's `relative_path` description); and no
+  `%` anywhere, so no percent-encoded form. The path is never decoded or normalized. The B1
+  pattern is a copy of the B6 pattern, so the two contracts cannot differ, and a test checks that
+  they are equal. A package that used a name this rule rejects (for example a file name with a
+  space) must rename the file. Shared test cases:
+  `contracts/test-vectors/relative-path.v1.json`. Windows reserved names and Unicode
+  normalization are not enforced in v1, as in B6.3.
+
 ### B1.2 Course pattern rules (validated)
 
 1. Each week section contains exactly **one guide Page and one task Assignment**. Optional extra activities: URL, Label, ungraded H5P practice (B7).
