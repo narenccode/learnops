@@ -41,13 +41,16 @@ their own. `call()` returns the transport's answer unchanged.
   deep. `bytes`, `bytearray`, generators, subclasses and other objects raise `InvalidParameters`. The
   transport receives a private copy, so it cannot change the caller's data.
 - **Every direct grade write.** `call("mod_assign_save_grade", ...)` runs the guards above and then
-  raises `GradeWriteNotAllowed`. A grade write is sent only through a `WriteReceipt`: sealed,
-  single-use, bound to one client, holding its own copy of the checked parameters, with the guards
-  above run again on that path. Only the guarded write helper may issue one, after the checks
-  `call()` cannot run alone (maximum grade, locked state, marking workflow) and with a read-back:
-  `write_draft_grade()` (below).
-  This stops accidental bypass; it is not a boundary against code that imports private names, and a
-  test fails if any module outside this library uses them.
+  raises `GradeWriteNotAllowed`. The client's internal send refuses it too. The only way a grade
+  write reaches Moodle is `write_draft_grade()` (below): it runs the checks `call()` cannot run alone
+  (maximum grade, locked state, marking workflow), sends once and reads the result back, and the
+  sender it uses is created inside that call, so there is nothing to import that skips the checks.
+  That sender works once, on its own copy of the checked parameters, and runs the guards above again
+  before it sends.
+  (The earlier `WriteReceipt` path is removed: the guide on PR #76, 15 Nov, asked for the bypass to
+  be closed in code.) A test fails if the transport is called anywhere else in the library, or if a
+  module outside it uses the client's internals. Code that calls a transport directly is outside
+  what a library can stop; the restricted Moodle service account is the boundary for that (B4 §4).
 
 Apart from `workflowstate`, `attemptnumber` and `grade` on `mod_assign_save_grade`, parameter names are
 not checked. An empty `parameters` list in the contract means "not yet determined"
@@ -110,9 +113,9 @@ that copy for every check and for the write, and sends `mod_assign_save_grade` *
    silently. The caller reads `max_grade` from the assignment (lab check 2).
 2. Reads the learner's state and writes only over an unlocked marking-workflow state (see
    [Outcomes](#outcomes-of-a-draft-grade-write-b4-3a-3b)). A permission error is `ACCESS_DENIED` (R10).
-3. Writes, through a receipt. If the answer is lost or cannot be understood, it does **not** write
-   again (R11). A permission or token error from the write is `ACCESS_DENIED`, with no read-back and
-   no resend.
+3. Writes once, through a sender that exists only inside this call. If the answer is lost or cannot
+   be understood, it does **not** write again (R11). A permission or token error from the write is
+   `ACCESS_DENIED`, with no read-back and no resend.
 4. Reads back with `mod_assign_get_submission_status` and `mod_assign_get_grades`. Only an exact
    numeric match of the grade, for the same learner and attempt, with the state `readyforrelease`, is
    `VERIFIED`. Anything else, including a failed read-back, is `NOT_VERIFIED` (R8, §3b). If the write's
@@ -125,8 +128,14 @@ Release 4).
 
 **On 4.5 and 5.3:** the tests use `tests/source_fake.py`, which behaves as the Moodle **source**
 says: 5.3 keeps a locked grade while the call looks successful, 4.5 overwrites it, and both ignore an
-out-of-range grade. None of this is lab-verified (lab checks 4 and 12 to 16). On 4.5 only the pre-write
-check in step 2 protects a locked grade.
+out-of-range grade. None of this is lab-verified (lab checks 4 and 12 to 16).
+
+**R3 on 4.5 (the guide's decision, PR #80, 15 Nov):** only the pre-write check in step 2 protects a
+grade that is locked before the write. A state that ends `released` after the write is `NOT_VERIFIED`
+on both versions. A normal write stays `VERIFIED` on 4.5. **Known limitation, accepted by the guide:**
+if another grader sets `readyforrelease` between the check and the write, 4.5 overwrites their grade
+and the read-back cannot tell this from a normal write, so it is reported as `VERIFIED`. No allowed
+function makes the check and the write one step, and no second pre-write read is made.
 
 ## Configuration
 

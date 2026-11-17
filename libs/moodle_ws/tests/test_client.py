@@ -31,19 +31,19 @@ from moodle_ws import (
     load_allowlist,
 )
 
-from .conftest import FAKE_TOKEN, VALID_WRITE, send_checked
+from .conftest import FAKE_TOKEN, VALID_WRITE, refused_as_direct_write
 from .fake_transport import FakeTransport
 
 SAVE_GRADE = "mod_assign_save_grade"
 SET_USER_FLAGS = "mod_assign_set_user_flags"
 
 
-def test_a_checked_grade_write_with_readyforrelease_is_sent(
+def test_a_grade_write_with_readyforrelease_passes_the_guards_and_is_still_not_sent(
     settings: SiteSettings,
 ) -> None:
     transport = FakeTransport()
-    send_checked(MoodleClient(settings, transport), VALID_WRITE)
-    assert transport.calls == [(SAVE_GRADE, VALID_WRITE)]
+    refused_as_direct_write(MoodleClient(settings, transport), VALID_WRITE)
+    assert transport.calls == []
 
 
 @pytest.mark.parametrize(
@@ -84,10 +84,11 @@ def test_released_gets_its_own_message(settings: SiteSettings) -> None:
 def test_a_sentence_containing_the_word_is_allowed(
     other: Any, settings: SiteSettings
 ) -> None:
+    """The draft rule lets it through (the refusal is the direct-write one, not the draft rule's)."""
     transport = FakeTransport()
     params = {**VALID_WRITE, "note": other}
-    send_checked(MoodleClient(settings, transport), params)
-    assert len(transport.calls) == 1
+    refused_as_direct_write(MoodleClient(settings, transport), params)
+    assert transport.calls == []
 
 
 NESTED_RELEASED = [
@@ -170,10 +171,10 @@ def test_the_answer_is_returned_unchanged(settings: SiteSettings) -> None:
 
 def test_the_caller_cannot_change_what_was_sent(settings: SiteSettings) -> None:
     transport = FakeTransport()
-    params = dict(VALID_WRITE)
-    send_checked(MoodleClient(settings, transport), params)
-    params["workflowstate"] = "released"
-    assert transport.calls[0][1] == VALID_WRITE
+    params: dict[str, Any] = {"assignmentids": [7]}
+    MoodleClient(settings, transport).call("mod_assign_get_grades", params)
+    params["assignmentids"].append(8)
+    assert transport.calls[0][1] == {"assignmentids": [7]}
 
 
 def test_a_transport_cannot_change_the_callers_parameters(
