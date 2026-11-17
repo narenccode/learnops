@@ -28,7 +28,7 @@ from moodle_ws import (
     parse_grade,
 )
 from moodle_ws.client import WriteReceipt, _issue_receipt
-from moodle_ws.messages import WRITE_NEEDS_HELPER
+from moodle_ws.messages import PINNED_ZERO_REQUIRED, WRITE_NEEDS_HELPER
 
 from .conftest import VALID_WRITE, send_checked
 from .fake_transport import FakeTransport
@@ -105,6 +105,36 @@ def test_r2_call_refuses_a_write_with_no_attempt_at_all(settings: SiteSettings) 
     with pytest.raises(GradeWriteNotAllowed):
         MoodleClient(settings, transport).call(SAVE, params)
     assert transport.calls == []
+
+
+# --- R15: applytoall=0 and addattempt=0, always (guide, PR #64, 2026-11-16) -------------------
+
+_NOT_ZERO = [1, -1, 2, True, False, "0", 0.0, None, "missing"]
+
+
+def _r15_refused(settings: SiteSettings, name: str, value: object) -> None:
+    transport = FakeTransport()
+    params = {k: v for k, v in VALID_WRITE.items() if k != name}
+    if value != "missing":
+        params[name] = value
+    with pytest.raises(GradeWriteNotAllowed) as raised:
+        send_checked(MoodleClient(settings, transport), params)
+    assert str(raised.value) == PINNED_ZERO_REQUIRED
+    assert transport.calls == []
+
+
+@pytest.mark.parametrize("value", _NOT_ZERO)
+def test_r15_applytoall_other_than_zero_is_refused_before_sending(
+    settings: SiteSettings, value: object
+) -> None:
+    _r15_refused(settings, "applytoall", value)
+
+
+@pytest.mark.parametrize("value", _NOT_ZERO)
+def test_r15_addattempt_other_than_zero_is_refused_before_sending(
+    settings: SiteSettings, value: object
+) -> None:
+    _r15_refused(settings, "addattempt", value)
 
 
 # --- R9: grades as exact numbers; plain non-negative numbers only -----------------------------
