@@ -232,3 +232,102 @@ HELD_RULES: tuple[tuple[str, str, str], ...] = (
         "Not checked: that no section uses the protected section number.",
     ),
 )
+
+
+# --- B6.2 lesson files: chapters.json, slides.json, cues.json -------------------------------
+
+
+def lesson_file_where(filename: str, location: Location) -> str:
+    """A readable place in a lesson file, e.g. `chapters.json[2].end`."""
+    text = filename
+    for part in location:
+        text += f"[{part}]" if isinstance(part, int) else f".{part}"
+    return text
+
+
+LESSON_FILE_SCHEMA_ERROR = "{where}: {detail}"
+LESSON_FILE_SCHEMA_HINT = (
+    "Change this value so that {filename} matches contracts/{schema}. "
+    "It must be a JSON array, as PRD B6.2 describes."
+)
+
+TIME_NOT_FINITE = "{where}: {value} is not a finite number of seconds."
+TIME_NOT_FINITE_HINT = "Use a number of seconds such as 95.5 (PRD B6.2)."
+
+CHAPTER_END_NOT_AFTER_START = (
+    "{where}: the chapter ends at {end} s, which is not after its start at {start} s."
+)
+CHAPTER_END_NOT_AFTER_START_HINT = "Make end greater than start."
+CHAPTER_NOT_IN_ORDER = (
+    "{where}: this chapter starts at {start} s, before the previous chapter starts at "
+    "{previous} s."
+)
+CHAPTER_NOT_IN_ORDER_HINT = "List the chapters in ascending order of start."
+CHAPTER_OVERLAP = (
+    "{where}: this chapter starts at {start} s, before an earlier chapter ends at "
+    "{previous_end} s."
+)
+CHAPTER_OVERLAP_HINT = (
+    "Start the chapter at or after the end of every earlier chapter. A gap between chapters is "
+    "allowed."
+)
+
+TIME_BEYOND_DURATION = (
+    "{where}: {value} s is after the end of the lesson at {duration} s (duration_s in "
+    "lesson.json)."
+)
+TIME_BEYOND_DURATION_HINT = (
+    "Use a time that is not after duration_s, or correct duration_s in lesson.json."
+)
+
+# What a lesson-file report does not check, so that "no errors" is not read as "fully checked".
+# Each is (code, PRD rule, text).
+LESSON_FILE_HELD_DURATION: tuple[str, str, str] = (
+    "duration_not_checked",
+    "B6.2",
+    "Not checked: that every time is within duration_s. That value is in lesson.json, "
+    "another file. check_within_duration does it.",
+)
+LESSON_FILE_HELD_FILES: tuple[str, str, str] = (
+    "files_not_checked",
+    "B6.2",
+    "Not checked: that the files named here exist in the lesson folder.",
+)
+LESSON_FILE_HELD_H5P: tuple[str, str, str] = (
+    "h5p_activities_not_checked",
+    "B6.2, B7",
+    "Not checked: that an h5p ref is the idnumber of an activity in the course.",
+)
+LESSON_FILE_HELD_URL: tuple[str, str, str] = (
+    "url_allow_list_not_checked",
+    "B6.2, FR-X-12",
+    "Not checked: that a url is allowed by the player's configuration. The player checks it.",
+)
+
+LESSON_FILE_SEE_SCHEMA = "The rule is in contracts/{schema}."
+
+# A `pattern` that fails in a lesson file: (message, hint). Each says what the value must be.
+PATH_NOT_RELATIVE = (
+    "{where}: '{value}' is not a path relative to the lesson folder.",
+    "Use a path such as images/diagram.png: forward slashes, no leading slash, no '.' or '..' "
+    "part, no empty part, no space, no ?, #, % or backslash, and no URL scheme such as https:.",
+)
+THUMB_NOT_IN_SLIDES = (
+    "{where}: '{value}' is not a thumbnail path: it must start with slides/ and end in .jpg, "
+    "with at least one character before the lowercase extension.",
+    "Use a path such as slides/001.jpg, relative to the lesson folder.",
+)
+URL_NOT_HTTPS = (
+    "{where}: '{value}' is not an https address with a host.",
+    "Use an address such as https://example.org/page: the https scheme, a host, an optional "
+    "numeric port, no user name or password, no @ before the path and no backslash.",
+)
+H5P_REF_NOT_IDNUMBER = (
+    "{where}: '{value}' is not an activity idnumber.",
+    "Use the idnumber of the H5P activity in course.yaml: lowercase letters and digits "
+    "separated by single hyphens, for example wk-01-quiz (PRD B1.2).",
+)
+TEXT_IS_BLANK = (
+    "{where}: the text is blank.",
+    "Write at least one character that is not a space.",
+)
