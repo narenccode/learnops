@@ -67,7 +67,7 @@ and say why.
 | Library | Pinned version | Licence | Why needed | Alternative |
 |---|---|---|---|---|
 
-Licences must be MIT, BSD or Apache-2.0 (LGPL only as an unmodified library): PRD C-11.
+Licences follow PRD C-11: permissive OSI-approved (MIT, BSD, Apache-2.0, ISC, PSF-2.0 and similar); LGPL or MPL-2.0 only unmodified; no GPL or AGPL.
 
 ## 9. Security and privacy
 

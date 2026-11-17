@@ -86,6 +86,8 @@ schema plus one example list the allowed functions in machine-readable form.
 | `contracts/examples/moodle-ws.v1.functions.json` | The functions of §2, each with the parameters LearnOps sends and, only where a name differs on a Moodle version, the replacement name |
 
 Rules for the allow-list:
+- `parameters` is **informative**: it records what LearnOps sends. It is not a parameter allow-list,
+  and a client is not required to enforce it. Only the function name is allowed or refused.
 - It holds **no verification state**. Lab results go to `docs/decisions/`, and the "Verified"
   columns in §2 above stay "no" until those records exist. The schema refuses any field whose name
   contains "verif".

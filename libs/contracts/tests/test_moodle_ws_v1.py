@@ -342,6 +342,12 @@ def test_a_parameter_not_named_for_its_function_is_found(functions: list[Doc]) -
     assert wrongly_placed(functions, prd_b4()) != []
 
 
+def test_the_dropped_user_flags_function_is_not_listed(example: Doc) -> None:
+    """Guide, 11 Nov: it can set `released` with only mod/assign:grade, so it is not allowed."""
+    assert "mod_assign_set_user_flags" not in [f["name"] for f in example["functions"]]
+    assert "mod_assign_set_user_flags" not in prd_functions()
+
+
 def test_save_grade_sends_the_workflow_state(example: Doc) -> None:
     """PRD App-C 1 names `workflowstate` on mod_assign_save_grade; B4 requires readyforrelease."""
     save = next(f for f in example["functions"] if f["name"] == "mod_assign_save_grade")
@@ -542,6 +548,18 @@ def edited(example: Doc, change: Any) -> Doc:
             lambda d: d["functions"][0].update(verified_on_45=True),
             ("functions", 0),
             "not",  # the "not 'verif'" rule inside propertyNames
+        ),
+        (
+            "capitalised verified flag on a function",
+            lambda d: d["functions"][0].update(Verified_45=True),
+            ("functions", 0),
+            "not",
+        ),
+        (
+            "upper-case verified flag at the top",
+            lambda d: d.update(VERIFIED=True),
+            (),
+            "not",
         ),
         (
             "verified flag at the top",
