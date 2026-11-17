@@ -167,10 +167,123 @@ All commands accept `--dry-run`, `--check`, `--config <file>`. Exit codes: 0 = O
 | `STUDIO_MAX_UNZIPPED_MB` | total unzipped size limit, zip-bomb protection (SEC-05) | 200 (Proposal, §12 item 30) | to add |
 | `STUDIO_MAX_ZIP_ENTRIES` | maximum files in an uploaded archive (SEC-05) | 5000 (Proposal, §12 item 30) | to add |
 | `STUDIO_PRACTICE_ENABLED` | feature flag for the practice step, FR-S-12 (EXT-05) | `false`; no effect before Release 5 | to add |
+| `STUDIO_VALIDATE_TIMEOUT_SECONDS` | time limit for one validation in the §6.1 slice (OPS-10, §12 item 36) | 10 (Proposal) | to add |
 | LTI, session and secret variables | via `libs/lti` | owned by that library | by that library |
 | `MODEL_PROVIDER`, `MODEL_NAME` | R5 only, via `libs/model_interface` | B5.2 | by that library |
 
 No variable has been added to `.env.example` by this document.
+
+### 6.1 First Moodle slice: validate a package from an LTI launch (Proposal; Needs guide, §12 item 35)
+
+**Why.** The interim evaluation (17 Nov 2026) showed course input (demo D5) from the command line only. This slice is the smallest Studio feature that a mentor can open from inside a Moodle course: upload a course package and see its B1 validation result. It is pulled forward from Release 2 and needs the guide's go before any code (root `CLAUDE.md` §1 and §6a).
+
+**Requirements, in part only:**
+
+| Requirement | Part delivered by this slice | Part left for the full Release 2 work |
+|---|---|---|
+| FR-S-02 | Import a zip and unpack it safely, for validation only | Export; storing the package; versions |
+| FR-S-03 | B1 validation through `libs/contracts` (`validate_package` over a `DirectorySource` from `libs/contracts/source.py` for the unpacked temporary folder; Studio writes no package reader of its own), errors per item with location and fix hint | The checker rule library (needs Module 2, §12 items 10 and 26); validation on every save in the editor |
+| FR-S-10 | Mentor or Administrator role from the LTI session; Learner refused | The per-course check against `shared.course_link`; not needed here because the slice stores nothing that belongs to a course |
+
+**Not in this slice:** no database tables, no migration, no storage of packages, no build, no `.mbz`, no preview, no editor, no Moodle web-service call. Nothing is kept after the request ends. Because nothing is stored per course, the slice does not depend on the course-binding question (§12 item 27).
+
+**Prerequisites (each outside this module):**
+
+1. #83 (B3 launch contract, `contracts/lti-launch.v1`) merged.
+2. ADR 0001 Stage 1 (library and pins) and Stage 2 (security design) approved, and `libs/lti` built with a FastAPI router (login, launch, JWKS) and a session check that returns the normalised B3 result.
+3. #61 (B8.2 sample course) and #87 (B1 submission-format rules) merged, so the demo shows those rules.
+4. HTTPS on the `tools` VM (the B3 state cookie is `SameSite=None; Secure`).
+5. This document `Approved`.
+
+**Flow.**
+
+```mermaid
+sequenceDiagram
+    participant M as Mentor (browser)
+    participant MO as Moodle 5.3 (unmodified)
+    participant L as libs/lti (in the Studio service)
+    participant S as Studio web service
+    participant C as libs/contracts
+    M->>MO: open activity "LearnOps Studio" (idnumber demo-d5)
+    MO->>L: OIDC login, then signed launch (LtiResourceLinkRequest)
+    L->>L: validate; map role; refuse Learner (EXT-07)
+    L->>S: session with normalised B3 result
+    S-->>M: "Check a course package" page
+    M->>S: POST zip (CSRF token)
+    S->>S: size and type checks, safe unzip to a temporary folder
+    S->>C: validate_package(DirectorySource(tmp), config)
+    C-->>S: ValidationReport (errors, not_checked)
+    S->>S: delete the temporary folder
+    S-->>M: result table
+```
+
+**Routes (additions to §6; all except `/health` and the LTI endpoints need a valid session):**
+
+| Route | Purpose | Allowed roles |
+|---|---|---|
+| `GET /` | The "Check a course package" page (static React build) | Mentor, Administrator |
+| `POST /api/validate` | Multipart upload of one zip; returns the result below. Stores nothing | Mentor, Administrator |
+
+**Result payload (Pydantic model; Proposal).** A direct mapping of `ValidationReport`, so no rule logic sits in Studio:
+
+| Field | Source |
+|---|---|
+| `ok` | `ValidationReport.ok` |
+| `errors[]`: `code`, `rule`, `message`, `fix_hint`, `location`, `idnumber` | `ValidationReport.errors` (`Issue`) |
+| `not_checked[]`: same fields | `ValidationReport.not_checked` |
+| `package_name` | Upload file name, shortened; never the file contents |
+| `checker_rules_run` | Always `false` in this slice; the page shows the "not run" line from it |
+
+**Page (UI-01 to UI-05, UI-07).** One file input, one button, one result area. `not_checked` lists only the B1 rules that `libs/contracts` has not implemented; it does not cover the checker rule library, which this slice never calls. So the page **always** shows the line "Checker rules (CK-01…CK-13) were not run in this version.", whatever the result. When `ok` is true, the page says "No errors in the rules that ran. These rules did not run:" followed by that line and the `not_checked` list, so "no errors" is never shown as "fully checked" (FR-S-03, §C1.8; §10 row "Checker rule library unavailable"). Every error row shows the place (`location` and `idnumber`), the message and the fix hint. All strings live in the module's one strings file. Works at 375×812, 1366×768 (100, 125, 150 %) and 683×768 without horizontal scrolling; keyboard operable; labelled field.
+
+**Security (additions to §9 for this slice).**
+- SEC-01, SEC-02: only through `libs/lti`; the route reads the role from the server-side session, never from the request.
+- SEC-05: the limits of §6 (`STUDIO_MAX_UPLOAD_MB`, `STUDIO_MAX_UNZIPPED_MB`, `STUDIO_MAX_ZIP_ENTRIES`) apply. Zip structure checked by content; entries outside the target folder, absolute paths and links rejected; the temporary folder is outside any web root and removed in a `finally` block, also on error.
+- SEC-06: the slice stores nothing. Logs carry request id, `sub`, context id, outcome and counts of errors; never `name`, `email` (B3 §10.1), file names inside the package or file contents.
+- SEC-09: CSRF token on `POST /api/validate`; cookie flags as set by `libs/lti`.
+
+**Heavy work (OPS-10; Proposal, Needs guide, §12 item 36).** Validation of a package within the upload limits reads one YAML file and checks that body files exist; it does not render, build or transcode. The slice runs it inside the request with a time limit (`STUDIO_VALIDATE_TIMEOUT_SECONDS`, Proposal: 10). **How the limit is enforced (Proposal):** a Python thread cannot be stopped from outside, so the unzip and `validate_package` run in a short-lived child process (standard-library `multiprocessing`, no new dependency); when the limit is reached the request ends the child process, removes the temporary folder and returns the time-limit message. The upload limits (SEC-05) are checked before the child process starts. If the guide rules that this is "heavy work", the slice uses the build-worker queue of §3 instead, which needs the migration of §13 row 5 first.
+
+**Configuration added:** `STUDIO_VALIDATE_TIMEOUT_SECONDS` (Proposal; listed in the §6 configuration table). The LTI variables belong to `libs/lti`. Nothing is added to `.env.example` by this document.
+
+**Errors (additions to §10).**
+
+| Situation | Message (what to do next) |
+|---|---|
+| No file or not a zip | "The file is not a zip archive. Export the course package as a zip and upload it again." |
+| Over a size or entry limit | "The package is larger than {limit}. Remove large files from the package and upload it again." |
+| Unsafe entry in the zip | "The zip contains a file outside the package folder ({entry}). Re-create the zip from the package folder." |
+| `course.yaml` missing or unreadable | The message and hint from `libs/contracts` (`messages.py`), unchanged |
+| Time limit reached | "The check took too long and was stopped. Try again; if it happens again, tell the administrator." |
+| Session expired | "Your session has ended. Open LearnOps Studio again from the Moodle course." |
+
+**Tests (written first; additions to §11).**
+
+| Test | Expectation |
+|---|---|
+| Launch as Instructor | Page returned. Uses signed launch fixtures provided by `libs/lti` tests; the #83 test vectors cover only the normalised result, not signed launches |
+| Launch as Learner only (signed fixture from `libs/lti`) | Refused with "not available in this version" (EXT-07) |
+| Payload from the session matches B3 | Checked against the #83 schema and test vectors |
+| `POST /api/validate` without session / without CSRF token | 401 / 403 |
+| B8.2 sample course zip (#61) | `ok` true; `not_checked` listed; the "Checker rules (CK-01…CK-13) were not run" line shown |
+| Any result, valid or not | The "Checker rules (CK-01…CK-13) were not run" line is always present (page and payload) |
+| B8.3 planted-error copies | Each known error reported with its location; answers from the B8.3 answer files |
+| #87 submission-format cases | Same codes as `libs/contracts` returns for the same package |
+| Same package through the page and through `libs/contracts` directly | Identical errors (no Studio-side rule logic) |
+| Zip slip, absolute path, symlink, zip bomb, too many entries, wrong type | Rejected with the messages above; nothing written outside the temporary folder |
+| Temporary folder after success, after error, after timeout | Removed |
+| Logs | No `name`, `email`, package file names or contents |
+| Playwright, three screen profiles | No horizontal scroll; keyboard path through upload and result |
+
+**Registering the slice on the lab (administrator; Moodle's own settings only, C-01, C-02).**
+
+1. Site administration → Plugins → Activity modules → External tool → Manage tools → configure a tool manually: name `LearnOps Studio`; LTI 1.3; tool URL, initiate login URL and redirection URI on the `tools` VM over HTTPS; public key type "Keyset URL" pointing at the Studio JWKS route; default launch container "New window". Menu names to be checked on 5.3 before they go into the README.
+2. Copy the platform details Moodle shows for the tool (issuer, client ID, deployment ID, platform key and auth URLs) into the environment of the `tools` VM. Never into the repository (C-06).
+3. In the demo course: add the tool as an activity; ID number `demo-d5` (EXT-06).
+4. Check as the test teacher (page opens) and the test student (refused).
+5. **Undo:** delete the activity, delete the tool registration, stop the Studio service. Nothing in Moodle or in Studio's storage needs cleaning, because the slice stores nothing.
+
+**Moodle 4.5 (C-03).** The same registration and the same tests run on the 4.5 lab site before the slice counts as done. Until then the slice is "verified on 5.3 only".
 
 ## 7. Key decisions and alternatives
 
@@ -341,6 +454,10 @@ Items marked **Needs guide** need the guide's decision. "Needs the lab" refers t
 | 32 | **Database driver licence:** psycopg is LGPL-3.0-only (allowed as an unmodified library); asyncpg is Apache-2.0. Which one? | No | **Needs guide** if LGPL is not wanted. |
 | 33 | **`shared.course_link` columns:** the PRD does not define them, and `studio.package` refers to it (§5). | No | Agree the key with the B3 owner (Student 2). |
 | 34 | **Backup and restore procedure (OPS-08)** for the `studio` schema and the package/`.mbz` storage is described only in outline (§5). | No | Write it in the module README with the first storage PR. |
+| 35 | **Pulling the validation slice (§6.1) forward from Release 2.** PRD §D1 already allows "Work on later releases may start in parallel"; root `CLAUDE.md` §1 still asks for the guide's word for work outside the current release, and §6a asks for this document to be `Approved`. The decision needed is about this slice only, not the principle. | No | **Needs guide.** |
+| 36 | **Validation inside the request (§6.1).** Is validating one package within the upload limits "heavy work" under OPS-10, or may it run in the request with a time limit? | No | **Needs guide.** If heavy, the slice waits for §13 row 5 and the build worker. |
+| 37 | **B3 session key.** §4 says the session is bound to (`sub`, context id); #83 changes this to (`iss`, `sub`, context id). | No | Update §4 and §5 when #83 merges. |
+| 38 | **Front-end for a one-page slice.** The fixed stack says React + TypeScript static build (A10), which brings the Vite question (§12 item 31) forward. | No | **Needs guide** together with item 31. |
 
 ## 13. Work breakdown
 
@@ -353,7 +470,8 @@ One requirement (or one tightly related group) per pull request. Feature work st
 | 3 | B8.1 template course and B8.2 sample course | B8.1, B8.2 | 2 | **Release 0** test data (owner: Student 1) |
 | 4 | Record the backup-format and restore findings (§12 items 1–5) | App-C #2, #3, #10 | Lab VMs | **Release 0**; decision records in `docs/decisions/` |
 | 5 | `studio` schema migration (`package`, `package_version`, `build`), reversible | Supports FR-S-02, FR-S-09 | Approved design | Migration up/down/up test (OPS-07) |
-| 6 | LTI wiring and per-course authorisation middleware | FR-S-10 | `libs/lti` (Release 0), 5; §12 item 27 | Before any route that returns package data |
+| 6a | *(Pulled forward, only with the guide's go)* Validation slice launched from Moodle (§6.1): LTI wiring, role check, `POST /api/validate`, one-page front end | FR-S-02 (part), FR-S-03 (part), FR-S-10 (part) | 1, 2, `libs/lti` (Release 1, PRD §D1), #83, #61, #87; §12 items 35, 36, 38 | Stores nothing; no migration. May be split into two PRs (back end, front end) to stay under 800 lines |
+| 6 | LTI wiring and per-course authorisation middleware | FR-S-10 | `libs/lti` (built in the first release that uses it, Release 1, PRD §D1), 5; §12 item 27 | Before any route that returns package data |
 | 7 | Package read/write and zip import/export | FR-S-02 | 2, 5, 6 | |
 | 8 | Validation on save (B1 plus checker rule library) and the validation panel API | FR-S-03 | 2, 7, shared rule library (R1); §12 items 10, 26 | Blocked if the library is missing |
 | 9 | Marking-table renderer and parser | FR-S-04 | 2 | |
