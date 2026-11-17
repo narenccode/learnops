@@ -591,7 +591,6 @@ information is lost.
 | Submissions | `mod_assign_get_submissions`, `mod_assign_get_submission_status` |
 | Submission files | Download through the token-authenticated file URL returned by the API |
 | Write draft grade + feedback | `mod_assign_save_grade` with marking-workflow state **`readyforrelease`** and feedback comments; never `released` |
-| Workflow state | `mod_assign_set_user_flags` (only if needed to set the state) |
 
 - **Draft rule:** grades written by LearnOps stay invisible to learners until the mentor releases them in Moodle (marking workflow). Only mentor-approved drafts are written.
 
