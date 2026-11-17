@@ -18,8 +18,11 @@ client = create_client("moodle45", transport)
 answer = client.call("mod_assign_get_assignments", params)
 ```
 
-`create_client()` raises `NotSupported` without a transport, because no real one exists. Tests pass
-their own. `call()` returns the transport's answer unchanged.
+`create_client()` raises `NotSupported` without a transport. Tests pass their own; a lab run passes
+`HttpTransport()` (Moodle's REST protocol, standard library only, **not yet run on a lab site**:
+lab check 1). It POSTs to `<url>/webservice/rest/server.php` with the token in the body, never in
+the URL, and maps Moodle's `errorcode` to these error classes; an unknown one is
+`UnexpectedResponse`. `call()` returns the transport's answer unchanged.
 
 ## What it refuses, before anything is sent
 
@@ -192,8 +195,8 @@ This shows the guards work. It shows nothing about Moodle.
 
 Each of these waits for the lab checks in `contracts/moodle-ws.v1.md` §5:
 
-- A real transport: the endpoint, how the token is sent, and the response format.
-- Mapping Moodle's error answers to these classes.
+- Confirming `HttpTransport` on a lab site: the endpoint, how the token is sent, the response format
+  and the error codes are written from Moodle's documented protocol and source, not observed.
 - Parameter names, apart from `workflowstate`, `attemptnumber` and `grade`. The parameter for feedback
   comments is unknown.
 - Normalized models (`docs/design/grading.md` §4.1). Until they exist, `call()` returns data as is.

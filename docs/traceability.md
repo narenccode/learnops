@@ -153,6 +153,7 @@ FR-G-06. Neither requirement is implemented by this skeleton.
 | One token per site, from the environment only | B4 §1, Q24, SEC-03, C-06 | `test_config.py` |
 | Tokens and full URLs stay out of logs and errors | SEC-03, OPS-04, design §4.1 | `test_redaction.py` |
 | One error family with stable codes | Design §4.1, §10.2 (library documentation, Q37) | `test_errors.py` |
+| HTTP transport (not yet run on a lab site, lab check 1): REST POST with the token in the body, never the URL; Moodle's array form; `errorcode` mapped to the error family, unknown ones `UnexpectedResponse`; non-JSON or oversized answers refused; no token in any error | B4 §1, §5 lab check 1, SEC-03, OPS-04 | `test_http_transport.py` |
 | `mod_assign_set_user_flags` is refused: by the contract allow-list, and by name even if an allow-list lists it | Guide's B4 findings, PR #64 | `test_client.py`: `test_set_user_flags_is_refused_by_the_contract_allow_list`, `test_set_user_flags_is_refused_even_if_an_allow_list_lists_it` |
 | No direct grade write: `call()` refuses `mod_assign_save_grade` after its guards; only a sealed, single-use, client-bound receipt can send one, and the guards run on that path too; no module outside the library uses it | B4 §3, §3a | `test_grade_guards.py` |
 | R2: `attemptnumber` is explicit (a whole number from 0, never `-1`) on every grade-write path | B4 §3a | `test_grade_guards.py`: `test_r2_*` |
