@@ -1,8 +1,8 @@
 """How the client reaches Moodle.
 
-http_transport.HttpTransport implements this over Moodle's REST protocol. It is not yet run on a lab
-site, so the endpoint, token and response format are unconfirmed (contracts/moodle-ws.v1.md §5, lab
-check 1). A transport maps Moodle's answers to the classes in errors.py and alone calls Token.reveal().
+Only the Protocol exists. A real transport needs the endpoint, how the token is sent and the response
+format, none of which B4 records until the lab checks in contracts/moodle-ws.v1.md §5 are done. A
+real transport maps Moodle's answers to the classes in errors.py and alone calls Token.reveal().
 """
 
 from __future__ import annotations

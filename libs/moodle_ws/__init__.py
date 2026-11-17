@@ -1,4 +1,4 @@
-"""Shared Moodle web-services client (PRD B4). HttpTransport is not yet run on a lab site.
+"""Shared Moodle web-services client (PRD B4). Release 0 skeleton; no real transport yet.
 
     from moodle_ws import create_client
     client = create_client("moodle45", transport)
@@ -33,7 +33,6 @@ from .grade_write import (
     write_draft_grade,
 )
 from .grades import grade_in_range, parse_grade
-from .http_transport import HttpTransport
 from .redact import RedactingFilter, redact, safe_url, sanitize, sanitize_value
 from .secrets import Token
 from .transport import MoodleTransport
@@ -42,7 +41,6 @@ __all__ = [
     "AllowList",
     "FunctionNotAllowed",
     "GradeWriteNotAllowed",
-    "HttpTransport",
     "InvalidParameters",
     "MoodleClient",
     "MoodleConfigError",

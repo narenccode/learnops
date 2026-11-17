@@ -120,9 +120,5 @@ NOT_INTEGRATED: Final = (
     "No real Moodle transport exists yet: it waits for the lab checks in contracts/moodle-ws.v1.md "
     "§5. Pass a transport in tests."
 )
-TRANSPORT_PARAMETER_REFUSED: Final = (
-    "A parameter could not be sent in Moodle's form format (use lists, not sets), so nothing was "
-    "sent to Moodle. Pass a list instead."
-)
 UNREACHABLE: Final = "Moodle site '{site}' did not answer. Try again in a few minutes."
 UNEXPECTED: Final = "Moodle site '{site}' gave an answer that could not be understood. Ask your administrator."
