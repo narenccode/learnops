@@ -396,8 +396,9 @@ sections:
 field out. A section may omit `idnumber`. When it is present it must be a valid idnumber (absent is
 the only way to have none: `null` and an empty string are errors) and it is unique within the
 package (rule 6). Every activity has an `idnumber`. A protected item is defined by its `idnumber`
-(B1.4), so a section without one is never a protected item. Decision record
-`docs/decisions/0007-b1-optional-section-idnumber.md`.
+(B1.4), so CK-07, which matches a protected item by its `idnumber`, does not apply to a section
+without one. The configurable `protected_section` number of B1.4 is a separate rule and is unchanged.
+Decision record `docs/decisions/0007-b1-optional-section-idnumber.md`.
 
 ### B1.3 Marking table format
 
