@@ -1,0 +1,22 @@
+[
+  {
+    "t": 120.5,
+    "type": "h5p",
+    "ref": "wk-01-practice",
+    "label": "Practice: installing Python",
+    "required": true
+  },
+  {
+    "t": 305,
+    "type": "image",
+    "ref": "images/installer-options.png",
+    "label": "The installer options"
+  },
+  {
+    "t": 500.25,
+    "type": "url",
+    "ref": "https://example.org/python/downloads",
+    "label": "Download page",
+    "required": false
+  }
+]
