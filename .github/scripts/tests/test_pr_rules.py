@@ -1,3 +1,4 @@
+import re
 import sys
 from pathlib import Path
 
@@ -56,19 +57,66 @@ def test_feature_code_complete_pr_is_ready():
     assert r.verdict_of(r.evaluate(ctx(files))) == "ready-to-merge"
 
 
-def test_contract_change_without_process_is_violation():
+def test_contract_change_without_the_process_line_goes_back_to_the_students():
     f = r.evaluate(ctx(["contracts/course.schema.json"]))
-    assert r.verdict_of(f) == "rule-violation"
+    assert (
+        r.verdict_of(f) == "needs-rework"
+    )  # the guide is not pinged for a missing phrase
+    assert "/contract-change" in " ".join(x.message for x in f)
 
 
-def test_contract_change_with_process_needs_judgement():
+def test_validators_and_tests_in_libs_contracts_are_not_contract_changes():
+    files = ["libs/contracts/validate.py", "libs/contracts/tests/test_validate.py"]
+    body = GOOD_BODY.replace("FR-S-03", "B1")
+    f = r.evaluate(ctx(files, title="Add B1 validator", body=body))
+    assert not any("contract-change" in x.message.lower() for x in f)
+    assert not any(x.level in ("violation", "judgement") for x in f)
+
+
+def test_contracts_claude_md_is_not_a_contract_change():
+    f = r.evaluate(ctx(["contracts/CLAUDE.md"]))
+    assert not any("contract-change" in x.message.lower() for x in f)
+
+
+def test_a_contract_reference_counts_for_library_work_without_an_fr_id():
+    files = ["libs/media_paths/paths.py", "libs/media_paths/tests/test_paths.py"]
+    ok = r.evaluate(
+        ctx(
+            files,
+            title="[B6.1] Media path templates",
+            body=GOOD_BODY.replace("FR-S-03", ""),
+        )
+    )
+    assert not any("No requirement ID" in x.message for x in ok)
+    bad = r.evaluate(
+        ctx(files, title="Media path templates", body=GOOD_BODY.replace("FR-S-03", ""))
+    )
+    assert any("No requirement ID" in x.message for x in bad)
+
+
+def test_module_code_still_needs_a_real_requirement_id_not_just_a_contract_ref():
+    files = [
+        "modules/studio/app.py",
+        "modules/studio/tests/t.py",
+        "docs/traceability.md",
+    ]
+    f = r.evaluate(
+        ctx(files, title="Studio B1 work", body=GOOD_BODY.replace("FR-S-03", ""))
+    )
+    assert any("No requirement ID" in x.message for x in f)
+
+
+def test_contract_change_with_process_is_ready():
     f = r.evaluate(
         ctx(
             ["contracts/course.schema.json"],
             body=GOOD_BODY + "\nUses /contract-change.",
         )
     )
-    assert r.verdict_of(f) == "needs-judgement"
+    assert r.verdict_of(f) == "ready-to-merge"
+    assert not any(
+        x.message.startswith("Contract change: every affected owner") for x in f
+    )
 
 
 def test_guide_edit_of_prd_not_flagged():
@@ -172,12 +220,15 @@ def test_other_modules_file_is_advice_only():
     assert [x.level for x in f] == ["advice"]
 
 
-def test_oversize_pr_needs_rework_and_lockfile_ignored():
+def test_oversize_pr_is_advice_and_lockfile_ignored():
     c = ctx(["docs/a.md", "package-lock.json"])
     c.numstat = {"docs/a.md": 500, "package-lock.json": 9000}
     assert r.verdict_of(r.evaluate(c)) == "ready-to-merge"
     c.numstat["docs/a.md"] = 900
-    assert r.verdict_of(r.evaluate(c)) == "needs-rework"
+    f = r.evaluate(c)
+    assert r.verdict_of(f) == "ready-to-merge"
+    large = [x for x in f if "900 changed lines" in x.message]
+    assert len(large) == 1 and large[0].level == "advice"
 
 
 def test_malformed_and_unticked_boxes_are_advice():
@@ -204,26 +255,23 @@ def test_codeowners_last_match_and_guide_detection():
 
 def test_render_has_marker_and_sections():
     f = [r.Finding("violation", "bad", "PRD C-04"), r.Finding("advice", "meh")]
-    text = r.render("rule-violation", f, "abcdef123")
-    assert text.startswith(r.MARKER) and "Rule violation" in text and "abcdef1" in text
+    text = r.render(f, "abcdef123")
+    assert text.startswith(r.MARKER)
+    assert "Serious: read before merging" in text and "abcdef1" in text
 
 
-def test_post_comments_first_and_survives_label_failure(monkeypatch):
+def test_post_writes_only_the_comment(monkeypatch):
     calls = []
 
     def fake_gh(*args, check=True):
         calls.append(args)
-        if "labels[]=ready-to-merge" in args:
-            raise RuntimeError("refused")
         return ""
 
     monkeypatch.setattr(r, "gh", fake_gh)
-    r.post("o/r", 7, "ready-to-merge", "body")
+    r.post("o/r", 7, "body")
     posted = [c for c in calls if c[0] == "api" and "body=body" in c]
     assert posted, "comment must be posted"
-    first_label = next(i for i, c in enumerate(calls) if c[:2] == ("label", "create"))
-    assert calls.index(posted[0]) < first_label
-    assert not any(c[:2] == ("pr", "edit") for c in calls)
+    assert not any("label" in " ".join(c) for c in calls)
 
 
 def test_post_updates_existing_bot_comment(monkeypatch):
@@ -236,7 +284,7 @@ def test_post_updates_existing_bot_comment(monkeypatch):
         return ""
 
     monkeypatch.setattr(r, "gh", fake_gh)
-    r.post("o/r", 7, "needs-rework", "body")
+    r.post("o/r", 7, "body")
     assert any("PATCH" in c and "repos/o/r/issues/comments/123" in c for c in calls)
     assert 'user.login == "github-actions[bot]"' in " ".join(calls[0])
 
@@ -287,3 +335,104 @@ def test_fake_password_in_a_test_is_fine_but_real_key_formats_are_not():
     assert r.verdict_of(r.evaluate(ctx(files, added=real))) == "rule-violation"
     code = {"modules/studio/a.py": ['password = "dummy-password-123"']}
     assert r.verdict_of(r.evaluate(ctx(files, added=code))) == "rule-violation"
+
+
+def test_libs_init_file_is_rework_but_a_deletion_is_fine():
+    f = r.evaluate(
+        ctx(["libs/media_paths/paths.py", "libs/__init__.py"], title="B6.1 EXT-09")
+    )
+    assert any(
+        "breaks the other libraries" in x.message and x.level == "rework" for x in f
+    )
+    c = ctx(["libs/media_paths/paths.py", "libs/__init__.py"], title="B6.1 EXT-09")
+    c.files["libs/__init__.py"] = "D"
+    assert not any("breaks the other libraries" in x.message for x in r.evaluate(c))
+
+
+def test_libs_prefix_import_is_rework_in_code_but_not_in_the_bot_scripts():
+    bad = ctx(
+        ["libs/media_paths/tests/test_paths.py"],
+        title="B6.1 EXT-09",
+        added={
+            "libs/media_paths/tests/test_paths.py": [
+                "from libs.media_paths.paths import x"
+            ]
+        },
+    )
+    assert any("libs." in x.message and x.level == "rework" for x in r.evaluate(bad))
+    ok = ctx(
+        ["libs/media_paths/tests/test_paths.py"],
+        title="B6.1 EXT-09",
+        added={
+            "libs/media_paths/tests/test_paths.py": ["from media_paths.paths import x"]
+        },
+    )
+    assert not any("import the library" in x.message for x in r.evaluate(ok))
+    bot = ctx(
+        [".github/scripts/tests/t.py"],
+        added={".github/scripts/tests/t.py": ["from libs.x import y"]},
+    )
+    assert not any("import the library" in x.message for x in r.evaluate(bot))
+
+
+def test_contract_pr_over_the_limit_needs_a_file_map_not_a_split():
+    c = ctx(
+        ["contracts/x.json"], title="Contract x FR-S-03 contract-change", author="guide"
+    )
+    c.numstat = {"contracts/x.json": 900}
+    f = r.evaluate(c)
+    file_map = [x for x in f if "file map" in x.message]
+    assert len(file_map) == 1 and file_map[0].level == "advice"
+    c.body = GOOD_BODY + "\n## File map\n- contracts/x.json (900): the schema\n"
+    f = r.evaluate(c)
+    assert not any("changed lines" in x.message for x in f)
+
+
+def test_non_contract_pr_over_the_limit_gets_split_advice_even_with_a_file_map():
+    c = ctx(["docs/a.md"], body=GOOD_BODY + "\nfile map\n")
+    c.numstat = {"docs/a.md": 900}
+    f = r.evaluate(c)
+    assert r.verdict_of(f) == "ready-to-merge"
+    assert any("split it if you can" in x.message and x.level == "advice" for x in f)
+
+
+WORKFLOW = (
+    Path(__file__).resolve().parents[3] / ".github" / "workflows" / "pr-review.yml"
+)
+
+
+def test_workflow_cannot_set_statuses():
+    text = WORKFLOW.read_text(encoding="utf-8")
+    assert "statuses: write" not in text
+    assert "pull_request_review" not in text
+
+
+def test_render_is_advice():
+    text = r.render(
+        [r.Finding("rework", "X", "CLAUDE.md §7.1"), r.Finding("advice", "Y")],
+        "abcdef1234",
+        step="S",
+    )
+    assert "### Automated advice" in text
+    assert "It never blocks merging" in text
+    assert "**Summary:** Please fix" in text
+    assert "**Next step:** S" in text
+    assert "**Please fix**" in text
+    assert "- X _(CLAUDE.md §7.1)_" in text
+    assert "**Suggestions**" in text
+    assert "abcdef1" in text
+    assert "<!-- verdict:" not in text
+
+
+def test_render_empty_is_clean():
+    text = r.render([], "abcdef1234")
+    assert "No problems found." in text
+    assert "The rule checks found nothing to fix." in text
+
+
+def test_next_step_never_pings():
+    text = r.next_step("s2", ("s3",))
+    assert "@\u200bs2" in text
+    assert "@\u200bs3" in text
+    assert "Enable auto-merge" in text
+    assert re.search(r"@[A-Za-z]", text) is None

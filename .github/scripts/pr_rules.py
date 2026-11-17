@@ -22,6 +22,12 @@ import sys
 from dataclasses import dataclass, field
 
 MARKER = "<!-- learnops-pr-review -->"
+SUMMARY = {
+    "rule-violation": "A serious rule problem is listed below. Do not merge until your reviewer has read it.",
+    "needs-rework": "Please fix the items under **Please fix** before you ask for review.",
+    "needs-judgement": "There are questions below for your reviewer.",
+    "ready-to-merge": "The rule checks found nothing to fix.",
+}
 MODULES = ("studio", "checker", "grading", "video")
 SIZE_LIMIT = 800  # added + deleted lines, lockfiles excluded
 LOCKFILES = (
@@ -31,35 +37,6 @@ LOCKFILES = (
     "poetry.lock",
     "uv.lock",
 )
-
-VERDICTS = {
-    "rule-violation": (
-        "Rule violation",
-        "b60205",
-        "Breaks a non-negotiable rule: guide decides",
-    ),
-    "needs-rework": ("Needs rework", "d93f0b", "Fix the listed items, then push again"),
-    "needs-judgement": (
-        "Needs your judgement",
-        "fbca04",
-        "A call only the guide can make",
-    ),
-    "awaiting-peer": (
-        "Waiting for the peer review",
-        "c5def5",
-        "Rules passed: one peer approval is next",
-    ),
-    "awaiting-ai": (
-        "Waiting for the AI review",
-        "d4c5f9",
-        "The AI was unavailable; the bot retries by itself",
-    ),
-    "ready-to-merge": (
-        "Ready to merge",
-        "0e8a16",
-        "Peer approved and the bot review passed: the author may squash-merge",
-    ),
-}
 
 SECRET_PATTERNS = [
     (re.compile(r"sk-[A-Za-z0-9_\-]{20,}"), "an API key (sk-…)"),
@@ -80,7 +57,13 @@ REQ_ID = re.compile(
     r"\b(?:FR-[A-Z]{1,2}-\d{2}|OPS-\d{2}|SEC-\d{2}|EXT-\d{2}|UI-\d{2}|C-\d{2}|G-\d{1,2})\b",
     re.IGNORECASE,
 )
+CONTRACT_REF = re.compile(
+    r"\bB[1-8](?:\.\d+)?\b"
+)  # a contract has no FR id: "B6.1" is its reference
 CODE_EXT = (".py", ".ts", ".tsx", ".js", ".jsx")
+LIBS_IMPORT = re.compile(
+    r"^\s*(?:from|import)\s+libs\."
+)  # libraries are imported by their own name
 REFACTOR_ONLY = re.compile(r"refactor only\s*:", re.IGNORECASE)
 WEAK_SECRET = "a hard-coded secret value"  # not applied to tests and test data
 
@@ -169,11 +152,15 @@ def evaluate(ctx: Context) -> list[Finding]:
 
     # Requirement IDs
     ids = {i.upper() for i in REQ_ID.findall(text)}
-    if code and not ids:
+    contract_work = not feature and bool(
+        CONTRACT_REF.search(text)
+    )  # libs/ code that implements a contract
+    if code and not ids and not contract_work:
         out.append(
             Finding(
                 "rework",
-                "No requirement ID in the title or description.",
+                "No requirement ID in the title or description (for contract or library work "
+                "name the contract instead, for example B6.1).",
                 "CLAUDE.md §7.1",
             )
         )
@@ -186,28 +173,47 @@ def evaluate(ctx: Context) -> list[Finding]:
                 )
             )
 
+    # Shared libraries are imported by their own name (guide decision, 2026-10-31): a libs/__init__.py
+    # or a `libs.` prefix breaks the other libraries' tests once two such pull requests are merged.
+    if ctx.files.get("libs/__init__.py", "D") != "D":
+        out.append(
+            Finding(
+                "rework",
+                "libs/__init__.py breaks the other libraries' imports. Each library is imported by "
+                "its own name (`import media_paths`). Delete the file and drop the `libs.` prefix.",
+                "guide decision",
+            )
+        )
+    for path, lines in sorted(ctx.added.items()):
+        if (
+            path.endswith(".py")
+            and not path.startswith(".github/")
+            and any(LIBS_IMPORT.search(ln) for ln in lines)
+        ):
+            out.append(
+                Finding(
+                    "rework",
+                    f"{path}: import the library by its own name (`import media_paths`), "
+                    "not with a `libs.` prefix.",
+                    "guide decision",
+                )
+            )
+
     # Contracts and the PRD
     touched = [
         p
         for p in paths
-        if p.startswith(("contracts/", "libs/contracts/")) or p == "docs/PRD.md"
+        if (p.startswith("contracts/") and p != "contracts/CLAUDE.md")
+        or p == "docs/PRD.md"
     ]
     if touched and author != guide:
         if "contract-change" not in text.lower():
             out.append(
                 Finding(
-                    "violation",
-                    "Contract or PRD change without the `/contract-change` process: "
+                    "rework",
+                    "Contract or PRD change: add a `/contract-change` section to the description "
+                    "(which contract, why, which modules are affected): "
                     + ", ".join(touched[:5]),
-                    "PRD §B.0",
-                )
-            )
-        else:
-            out.append(
-                Finding(
-                    "judgement",
-                    "Contract change: every affected owner and the guide must review "
-                    "(GitHub only enforces one).",
                     "PRD §B.0",
                 )
             )
@@ -305,7 +311,7 @@ def evaluate(ctx: Context) -> list[Finding]:
                 "advice",
                 "Changes files owned by someone else; list and explain them in the description: "
                 + ", ".join(others[:6]),
-                "CLAUDE.md §7.8",
+                "CLAUDE.md §8",
             )
         )
 
@@ -354,13 +360,28 @@ def evaluate(ctx: Context) -> list[Finding]:
         if p.rsplit("/", 1)[-1] not in LOCKFILES and not p.startswith("testdata/")
     )
     if total > SIZE_LIMIT:
-        out.append(
-            Finding(
-                "rework",
-                f"{total} changed lines (limit {SIZE_LIMIT}). Split into smaller PRs.",
-                "CLAUDE.md §8",
-            )
+        is_contract_pr = any(
+            p.startswith("contracts/") and p != "contracts/CLAUDE.md" for p in paths
         )
+        has_file_map = re.search(r"file map", ctx.body, flags=re.IGNORECASE) is not None
+        if is_contract_pr and not has_file_map:
+            out.append(
+                Finding(
+                    "advice",
+                    f"{total} changed lines. A contract pull request this large needs a file map "
+                    "in its description (each file, its length, what a reviewer checks).",
+                    "CLAUDE.md §7.8",
+                )
+            )
+        elif not is_contract_pr:
+            out.append(
+                Finding(
+                    "advice",
+                    f"{total} changed lines. Pull requests over about {SIZE_LIMIT} lines are slow "
+                    "to review; split it if you can.",
+                    "CLAUDE.md §7.8",
+                )
+            )
 
     # Description
     stripped = re.sub(r"<!--.*?-->", "", ctx.body, flags=re.DOTALL)
@@ -405,57 +426,6 @@ def verdict_of(findings: list[Finding]) -> str:
     return "ready-to-merge"
 
 
-RISK_MARK = re.compile(r"<!-- risk:(low|high) -->")
-SENSITIVE_NAME = re.compile(
-    r"(^|[/_.\-])(auth|login|token|secret|crypto|password|upload|sandbox|lti|session|permission)",
-    re.IGNORECASE,
-)
-DEPENDENCY_FILES = (
-    "requirements",
-    "pyproject.toml",
-    "package.json",
-    "package-lock",
-    "poetry.lock",
-    "dockerfile",
-    "docker-compose",
-    "compose.y",
-)
-
-
-def rules_risk(
-    ctx: "Context", rules: list[tuple[str, list[str]]], guide: str
-) -> tuple[str, list[str]]:
-    """Risk floor from fixed rules: ("high"|"low", reasons). The AI may raise it, never lower it."""
-    reasons: list[str] = []
-    for path in sorted(ctx.files):
-        name = path.rsplit("/", 1)[-1].lower()
-        if owners_of(rules, path) == [guide]:
-            reasons.append(f"guide-only file {path}")
-        elif path.startswith(("contracts/", "libs/contracts/")):
-            reasons.append(f"contract file {path}")
-        if any(d in name for d in DEPENDENCY_FILES):
-            reasons.append(f"dependencies or container setup in {path}")
-        if "/migrations/" in "/" + path:
-            reasons.append(f"database migration {path}")
-        if (
-            not is_test(path)
-            and path.endswith(CODE_EXT)
-            and SENSITIVE_NAME.search(path)
-        ):
-            reasons.append(f"security-sensitive code {path}")
-    for path, lines in ctx.added.items():
-        if path.startswith("docs/design/") and any(
-            re.search(r"\*\*Status:\*\*\s*Approved", ln) for ln in lines
-        ):
-            reasons.append(f"{path} is set to Approved")
-    if sum(ctx.numstat.values()) > SIZE_LIMIT // 2:
-        reasons.append("a large change")
-    return ("high" if reasons else "low"), reasons[:3]
-
-
-VERDICT_MARK = re.compile(r"<!-- verdict:([a-z-]+) -->")
-
-
 def peer_of(rules: list[tuple[str, list[str]]], author: str) -> str:
     """The author's peer reviewer: second owner of the module or library the author owns."""
     for pattern, owners in rules:
@@ -473,55 +443,55 @@ def eligible_reviewers(
     return sorted(set.intersection(*sets) - {author.lower(), guide})
 
 
-def next_step(verdict: str, peer: str = "", others: tuple[str, ...] = ()) -> str:
+def next_step(peer: str = "", others: tuple[str, ...] = ()) -> str:
     """One plain sentence telling the team what to do now (mentions are neutralised)."""
     quiet = "@​"
     if peer and others:
-        review = (
-            f"Ask a teammate to review and approve: your usual peer ({quiet}{peer}) "
-            f"or anyone free of {', '.join(quiet + o for o in others)}. One approval is enough. "
+        return (
+            f"Ask a teammate to review: your usual peer ({quiet}{peer}) or anyone free of "
+            f"{', '.join(quiet + o for o in others)}. One approval is enough. "
+            "Then click **Enable auto-merge**: the pull request merges by itself once it is "
+            "approved and the checks pass."
         )
-    elif peer:
-        review = f"Ask your peer reviewer ({quiet}{peer}) to review and approve. "
-    else:
-        review = "Ask a teammate to review and approve. "
-    return {
-        "needs-rework": "Fix the items listed in the bot comment and push. The bot re-checks by itself.",
-        "rule-violation": "Do not merge. The guide will decide.",
-        "needs-judgement": "Do not merge. The guide will decide.",
-        "awaiting-peer": review + "The AI review runs right after.",
-        "awaiting-ai": "The AI review is not available right now. The bot tries again "
-        "by itself; you do not need to do anything.",
-        "ready-to-merge": "Squash-merge it.",
-    }[verdict]
+    if peer:
+        return (
+            f"Ask your peer ({quiet}{peer}) to review. One approval is enough. "
+            "Then click **Enable auto-merge**: the pull request merges by itself once it is "
+            "approved and the checks pass."
+        )
+    return (
+        "Ask a teammate to review. One approval is enough. "
+        "Then click **Enable auto-merge**: the pull request merges by itself once it is "
+        "approved and the checks pass."
+    )
 
 
 def render(
-    verdict: str,
     findings: list[Finding],
     sha: str,
-    intro: str = "",
-    footer: str = "",
     step: str = "",
+    footer: str = "",
     help_url: str = "",
-    risk: tuple[str, str] | None = None,
 ) -> str:
-    title = VERDICTS[verdict][0]
     sections = [
-        ("violation", "Rule violations (the guide decides: reject or rework)"),
-        ("rework", "Fix before merging"),
-        ("judgement", "Needs the guide's judgement"),
-        ("advice", "Better ways to do it (advice)"),
-        ("unverified", "Could not verify"),
+        ("violation", "Serious: read before merging"),
+        ("rework", "Please fix"),
+        ("judgement", "Questions for your reviewer"),
+        ("advice", "Suggestions"),
+        ("unverified", "Could not check"),
     ]
-    lines = [MARKER, f"### Automated review: **{title}**", ""]
+    lines = [
+        MARKER,
+        "### Automated advice",
+        "",
+        "**This comment is advice. It never blocks merging.** "
+        "Your reviewer decides what must change.",
+        "",
+        f"**Summary:** {SUMMARY[verdict_of(findings)]}",
+        "",
+    ]
     if step:
         lines += [f"**Next step:** {step}", ""]
-    if risk:
-        why = f" ({risk[1]})" if risk[1] else ""
-        lines += [f"**Risk:** {risk[0]}{why}", ""]
-    if intro:
-        lines += [intro, ""]
     for level, heading in sections:
         items = [f for f in findings if f.level == level]
         if items:
@@ -532,17 +502,12 @@ def render(
             lines.append("")
     if not findings:
         lines += ["No problems found.", ""]
+    lines.append(f"<sub>{footer or 'Rule checks only.'}</sub>")
     lines.append(
-        f"<sub>{footer or 'Rules only. Peer review is always required.'}</sub>"
-    )
-    lines.append(
-        f"<sub>Checked commit `{sha[:7]}`; re-checked on every push, review or description edit.</sub>"
+        f"<sub>Checked commit `{sha[:7]}`; checked again on every push or description edit.</sub>"
     )
     if help_url:
         lines.append(f"<sub>[How the review works]({help_url})</sub>")
-    if risk:
-        lines.append(f"<!-- risk:{risk[0]} -->")
-    lines.append(f"<!-- verdict:{verdict} -->")
     return "\n".join(lines)
 
 
@@ -627,8 +592,8 @@ def find_bot_comment(repo: str, number: int) -> tuple[str, str]:
     return "", ""
 
 
-def post(repo: str, number: int, verdict: str, body: str) -> None:
-    """Comment first (the part that matters), then label; a label failure must not lose the comment."""
+def post(repo: str, number: int, body: str) -> None:
+    """Update the bot's one comment, or create it the first time."""
     comment_id, _ = find_bot_comment(repo, number)
     if comment_id:
         gh(
@@ -641,34 +606,6 @@ def post(repo: str, number: int, verdict: str, body: str) -> None:
         )
     else:
         gh("api", f"repos/{repo}/issues/{number}/comments", "-f", f"body={body}")
-    try:
-        for name, (_, color, description) in VERDICTS.items():
-            gh(
-                "label",
-                "create",
-                name,
-                "--color",
-                color,
-                "--description",
-                description,
-                "--force",
-                "--repo",
-                repo,
-                check=False,
-            )
-        for name in VERDICTS:
-            if name != verdict:
-                gh(
-                    "api",
-                    "-X",
-                    "DELETE",
-                    f"repos/{repo}/issues/{number}/labels/{name}",
-                    check=False,
-                )
-        # REST, not `gh pr edit`: that uses GraphQL, which the Actions token can be refused.
-        gh("api", f"repos/{repo}/issues/{number}/labels", "-f", f"labels[]={verdict}")
-    except Exception as error:
-        print(f"::warning::comment posted but the label failed: {error}")
 
 
 def main() -> int:
@@ -679,9 +616,6 @@ def main() -> int:
     )
     parser.add_argument("--base", help="base ref (default origin/<base branch>)")
     parser.add_argument("--head", default="HEAD")
-    parser.add_argument(
-        "--post", action="store_true", help="write label and comment to the PR"
-    )
     args = parser.parse_args()
 
     with open(args.event, encoding="utf-8") as handle:
@@ -695,9 +629,7 @@ def main() -> int:
             print("Guide's own PR: no review comment.")
             return 0
         findings = evaluate(ctx)
-        verdict = verdict_of(findings)
         body = render(
-            verdict,
             findings,
             pr.get("head", {}).get("sha") or git("rev-parse", args.head).strip(),
         )
@@ -705,12 +637,6 @@ def main() -> int:
         print(f"::warning::pr_rules failed: {error}")
         return 0
     print(body)
-    print(f"\nlabel: {verdict}")
-    if args.post:
-        try:
-            post(event["repository"]["full_name"], pr["number"], verdict, body)
-        except Exception as error:
-            print(f"::warning::could not post the result: {error}")
     return 0
 
 

@@ -1,4 +1,5 @@
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -38,89 +39,6 @@ def ctx(files=("docs/x.md",), author="s1"):
     )
 
 
-# -------------------------------------------------------------- reviews
-
-
-def test_latest_review_wins_and_dismissed_resets():
-    lines = [
-        {"user": "S2", "state": "CHANGES_REQUESTED"},
-        {"user": "S2", "state": "APPROVED"},
-        {"user": "guide", "state": "APPROVED"},
-        {"user": "guide", "state": "DISMISSED"},
-        {"user": "s3", "state": "COMMENTED"},
-    ]
-    assert v.latest_reviews(lines) == {"s2": "APPROVED"}
-
-
-def test_only_path_owners_other_than_author_count():
-    approvers, requesters = v.reviewers(
-        {
-            "s2": "APPROVED",
-            "s1": "APPROVED",
-            "stranger": "APPROVED",
-            "guide": "CHANGES_REQUESTED",
-        },
-        ctx(),
-    )
-    assert approvers == {"s2"}
-    assert requesters == {"guide"}
-
-
-# ------------------------------------------------------------- decision
-
-
-def test_rule_problem_stops_before_ai_and_before_peer():
-    f = [r.Finding("rework", "no id")]
-    label, state, _, _, called = v.decide(f, {"s2"}, set(), no_ai, 0)
-    assert (label, state, called) == ("needs-rework", "failure", False)
-
-
-def test_rules_pass_but_no_peer_is_pending_without_ai():
-    label, state, _, _, called = v.decide([], set(), set(), no_ai, 0)
-    assert (label, state, called) == ("awaiting-peer", "pending", False)
-
-
-def test_peer_changes_requested_is_rework():
-    label, state, _, _, called = v.decide([], {"s2"}, {"s3"}, no_ai, 0)
-    assert (label, state, called) == ("needs-rework", "failure", False)
-
-
-def test_peer_approved_and_clean_ai_is_success():
-    label, state, _, findings, called = v.decide([], {"s2"}, set(), lambda: [], 0)
-    assert (label, state, called, findings) == ("ready-to-merge", "success", True, [])
-
-
-def test_ai_advice_and_unverified_do_not_block():
-    ai = [r.Finding("advice", "better"), r.Finding("unverified", "needs lab")]
-    label, state, *_ = v.decide([], {"s2"}, set(), lambda: ai, 0)
-    assert (label, state) == ("ready-to-merge", "success")
-
-
-def test_ai_blocking_and_judgement_block():
-    label, state, *_ = v.decide(
-        [], {"s2"}, set(), lambda: [r.Finding("rework", "bug")], 0
-    )
-    assert (label, state) == ("needs-rework", "failure")
-    label, state, *_ = v.decide(
-        [], {"s2"}, set(), lambda: [r.Finding("judgement", "scope?")], 0
-    )
-    assert (label, state) == ("needs-judgement", "failure")
-
-
-def test_ai_outage_fails_closed_for_the_guide():
-    def broken():
-        raise v.AIError("HTTP 503")
-
-    label, state, _, findings, called = v.decide([], {"s2"}, set(), broken, 0)
-    assert (label, state, called) == ("needs-judgement", "failure", False)
-    assert "unavailable" in findings[-1].message
-
-
-def test_run_limit_stops_spending():
-    label, state, _, _, called = v.decide([], {"s2"}, set(), no_ai, v.MAX_AI_RUNS)
-    assert (label, state, called) == ("needs-judgement", "failure", False)
-
-
 # ------------------------------------------------------------- AI output
 
 
@@ -149,8 +67,7 @@ def test_model_cannot_set_the_verdict():
     f = v.findings_from_ai(
         {"verdict": "ready-to-merge", "blocking": [{"issue": "bad", "file": "a"}]}
     )
-    label, *_ = v.decide([], {"s2"}, set(), lambda: f, 0)
-    assert label == "needs-rework"
+    assert r.verdict_of(f) == "needs-rework"
 
 
 def test_parse_json_tolerates_fences_and_rejects_text():
@@ -211,6 +128,50 @@ def test_ask_model_parses_response(monkeypatch):
     assert data == {"blocking": []} and usage == {"prompt_tokens": 5}
 
 
+# ------------------------------------------------------------- advice only
+
+
+def test_advise_adds_ai_findings():
+    f, called = v.advise(
+        [r.Finding("rework", "R")],
+        lambda: ([r.Finding("advice", "A")], "low", ""),
+        0,
+    )
+    assert [x.level for x in f] == ["rework", "advice"] and called is True
+
+
+def test_advise_accepts_a_plain_list():
+    f, called = v.advise([], lambda: [r.Finding("advice", "A")], 0)
+    assert [x.message for x in f] == ["A"] and called is True
+
+
+def test_advise_ai_error_is_unverified_advice():
+    def boom():
+        raise RuntimeError("timeout")
+
+    f, called = v.advise([], boom, 0)
+    assert f[-1].level == "unverified"
+    assert "timeout" in f[-1].message and "next push" in f[-1].message
+    assert called is False
+
+
+def test_advise_cap_does_not_call_the_ai():
+    f, called = v.advise([], no_ai, 5)
+    assert "AI advice limit (5 runs)" in f[-1].message
+    assert called is False
+
+
+def test_no_status_labels_or_pings_exist():
+    for name in (
+        "set_status",
+        "decide",
+        "notification",
+        "fetch_lessons",
+        "should_notify",
+    ):
+        assert not hasattr(v, name), name
+
+
 # ----------------------------------------------------------- notifications
 
 
@@ -226,33 +187,10 @@ def test_peer_is_second_owner_of_the_authors_module():
     assert r.peer_of(RULES, "stranger") == ""
 
 
-def test_next_step_covers_every_verdict_and_never_pings():
-    for label in r.VERDICTS:
-        assert r.next_step(label, "s2")
-    assert "@s2" not in r.next_step("awaiting-peer", "s2")  # zero-width mark inside
-
-
-def test_notification_pings_author_peer_and_guide_only_where_needed():
-    ready = v.notification("ready-to-merge", "s1", "s2", "guide")
-    assert "@s1" in ready and "@guide" not in ready and "@s2" not in ready
-    waiting = v.notification("awaiting-peer", "s1", "s2", "guide")
-    assert "@s1" in waiting and "@s2" in waiting and "@guide" not in waiting
-    stuck = v.notification("rule-violation", "s1", "s2", "guide")
-    assert "@guide" in stuck and "decision" in stuck
-    assert r.MARKER not in ready  # must never be mistaken for the main comment
-
-
-def test_render_ends_with_verdict_marker_and_next_step():
-    text = r.render("needs-rework", [], "abcdef1", step=r.next_step("needs-rework"))
-    assert "**Next step:**" in text
-    found = r.VERDICT_MARK.search(text)
-    assert found and found.group(1) == "needs-rework"
-
-
 def test_render_links_to_the_process_page_when_given():
-    text = r.render("needs-rework", [], "abcdef1", help_url="https://example.org/p.md")
+    text = r.render([], "abcdef1", help_url="https://example.org/p.md")
     assert "[How the review works](https://example.org/p.md)" in text
-    assert "How the review works" not in r.render("needs-rework", [], "abcdef1")
+    assert "How the review works" not in r.render([], "abcdef1")
 
 
 # ------------------------------------------------- who may review (any free person)
@@ -275,24 +213,10 @@ def test_docs_can_be_reviewed_by_anyone_free_but_module_code_only_by_the_pair():
 
 
 def test_next_step_names_the_usual_peer_and_the_others_without_pinging():
-    text = r.next_step("awaiting-peer", "s2", ("s3", "s4"))
+    text = r.next_step("s2", ("s3", "s4"))
     assert "anyone free" in text and "One approval is enough" in text
     assert "@s3" not in text and "@​s3" in text
-    assert "anyone free" not in r.next_step("awaiting-peer", "s2", ())
-
-
-def test_notification_pings_only_the_usual_peer():
-    text = v.notification("awaiting-peer", "s1", "s2", "guide", ("s3", "s4"))
-    assert "@s2," in text and "@s3" not in text and "any one of" in text
-
-
-def test_bot_needs_every_path_covered_by_an_approval():
-    c = ctx(["docs/x.md", "modules/studio/a.py"])
-    c.codeowners = "*  @s2 @s1 @guide\n/modules/studio/ @s1 @s2 @guide\n/docs/ @s1 @s2 @s3 @s4 @guide\n"
-    approvers, _ = v.reviewers({"s3": "APPROVED"}, c)
-    assert approvers == set()  # s3 may approve docs but not the module code
-    approvers, _ = v.reviewers({"s2": "APPROVED"}, c)
-    assert approvers == {"s2"}
+    assert "anyone free" not in r.next_step("s2", ())
 
 
 # ------------------------------------------------ the AI step must never crash the run
@@ -308,7 +232,7 @@ def test_bot_needs_every_path_covered_by_an_approval():
         b"<html>",
     ],
 )
-def test_odd_api_answers_become_a_guide_decision_not_a_crash(monkeypatch, payload):
+def test_odd_api_answers_become_unverified_advice_not_a_crash(monkeypatch, payload):
     class Response:
         def __enter__(self):
             return self
@@ -327,21 +251,21 @@ def test_odd_api_answers_become_a_guide_decision_not_a_crash(monkeypatch, payloa
         v.ask_model("s", "u", env)
         return []
 
-    label, state, *_ = v.decide([], {"s2"}, set(), run_ai, 0)
-    assert (label, state) == ("needs-judgement", "failure")
+    findings, called = v.advise([], run_ai, 0)
+    assert findings[-1].level == "unverified"
+    assert called is False
 
 
-def test_any_exception_in_the_ai_step_reaches_the_guide():
+def test_any_exception_in_the_ai_step_becomes_unverified_advice():
     def boom():
         raise RuntimeError("bug")
 
-    label, state, _, findings, called = v.decide([], {"s2"}, set(), boom, 0)
-    assert (label, state, called) == ("needs-judgement", "failure", False)
+    findings, called = v.advise([], boom, 0)
+    assert findings[-1].level == "unverified"
+    assert called is False
 
 
-def test_unexpected_crash_is_explained_on_the_pr_and_the_guide_is_pinged(
-    monkeypatch, tmp_path
-):
+def test_unexpected_crash_is_explained_on_the_pr_without_pinging(monkeypatch, tmp_path):
     event = {
         "pull_request": {
             "number": 9,
@@ -368,10 +292,16 @@ def test_unexpected_crash_is_explained_on_the_pr_and_the_guide_is_pinged(
     monkeypatch.setattr(v, "git", lambda *a, check=True: "/CLAUDE.md @guide\n")
     monkeypatch.setattr(sys, "argv", ["pr_review.py", "--event", str(path)])
     assert v.main() == 0
+    posted = [
+        arg[len("body=") :]
+        for call in calls
+        for arg in call
+        if isinstance(arg, str) and arg.startswith("body=")
+    ]
+    assert any("Nothing is blocked" in body for body in posted)
+    assert re.search(r"@[A-Za-z]", " ".join(posted)) is None
     flat = " ".join(" ".join(c) for c in calls)
-    assert "Do not wait on the bot" in flat  # explained on the PR
-    assert "@guide the review bot failed" in flat  # guide pinged
-    assert "state=failure" in flat  # and the status says so
+    assert "statuses" not in flat and "labels" not in flat
 
 
 # ----------------------------------------- real-world AI answers found by testing
@@ -512,156 +442,3 @@ def test_provider_that_rejects_options_is_asked_again_plainly(monkeypatch):
         and "response_format" in sent[1]
     )
     assert "response_format" not in sent[2]
-
-
-# ----------------------------------------------------- tuning: one ping per verdict change
-
-
-def test_ping_decision_uses_the_comment_as_it_is_now(monkeypatch):
-    monkeypatch.setattr(
-        r, "find_bot_comment", lambda repo, n: ("1", "x <!-- verdict:needs-rework -->")
-    )
-    assert v.should_notify("o/r", 1, "ready-to-merge") is True
-    assert (
-        v.should_notify("o/r", 1, "needs-rework") is False
-    )  # an overlapping run already posted it
-    monkeypatch.setattr(r, "find_bot_comment", lambda repo, n: ("", ""))
-    assert v.should_notify("o/r", 1, "awaiting-peer") is True  # first comment on the PR
-
-
-def test_ping_is_sent_if_the_comment_cannot_be_read(monkeypatch):
-    def boom(repo, n):
-        raise RuntimeError("api down")
-
-    monkeypatch.setattr(r, "find_bot_comment", boom)
-    assert v.should_notify("o/r", 1, "needs-rework") is True
-
-
-def test_the_cap_allows_a_long_review_cycle():
-    assert v.MAX_AI_RUNS >= 20
-    label, *_ = v.decide([], {"s2"}, set(), lambda: [], v.MAX_AI_RUNS - 1)
-    assert label == "ready-to-merge"
-
-
-# ------------------------------------------------ risk: merge when it all passes, call the guide on doubt
-
-RISK_RULES = r.parse_codeowners(
-    "*  @s2 @s1 @guide\n/modules/studio/ @s1 @s2 @guide\n/docs/ @s1 @s2 @s3 @s4 @guide\n"
-    "/contracts/ @s1 @s2 @s3 @s4 @guide\n/CLAUDE.md @guide\n/.github/ @guide\n"
-)
-
-
-def risk_of(files, added=None, numstat=None):
-    c = ctx(files)
-    c.added = added or {}
-    c.numstat = numstat or {f: 10 for f in files}
-    return r.rules_risk(c, RISK_RULES, "guide")
-
-
-def test_fixed_rules_set_the_risk_floor():
-    assert risk_of(["docs/design/studio.md"])[0] == "low"
-    assert risk_of(["modules/studio/app.py", "modules/studio/tests/t.py"])[0] == "low"
-    for risky in (
-        [".github/workflows/x.yml"],
-        ["contracts/a.json"],
-        ["modules/studio/auth.py"],
-        ["modules/studio/lti_launch.py"],
-        ["modules/studio/requirements.txt"],
-        ["modules/studio/migrations/0002.sql"],
-        ["modules/studio/Dockerfile"],
-    ):
-        assert risk_of(risky)[0] == "high", risky
-    assert risk_of(["docs/x.md"], numstat={"docs/x.md": 500})[0] == "high"
-    approved = {"docs/design/studio.md": ["**Status:** Approved"]}
-    assert risk_of(["docs/design/studio.md"], added=approved)[0] == "high"
-    assert "multiple" not in str(risk_of(["modules/studio/multiple_choice.py"]))
-
-
-def test_risk_from_the_ai_defaults_to_high_when_missing_or_odd():
-    assert v.risk_from_ai({"risk": {"level": "low", "reason": "docs only"}}) == (
-        "low",
-        "docs only",
-    )
-    for odd in (
-        {},
-        {"risk": "low"},
-        {"risk": {"level": "medium"}},
-        {"risk": None},
-        {"risk": []},
-    ):
-        assert v.risk_from_ai(odd)[0] == "high"
-
-
-def _ai(findings, level, reason=""):
-    return lambda: (findings, level, reason)
-
-
-def test_low_risk_ai_questions_become_advice_and_the_pr_merges():
-    q = [r.Finding("judgement", "is this big?"), r.Finding("advice", "rename x")]
-    info = {}
-    label, state, _, findings, _ = v.decide(
-        [], {"s2"}, set(), _ai(q, "low"), 0, "low", [], info
-    )
-    assert (label, state, info["risk"]) == ("ready-to-merge", "success", "low")
-    assert all(f.level != "judgement" for f in findings)
-
-
-def test_high_risk_with_nothing_wrong_still_merges():
-    label, state, _, _, _ = v.decide(
-        [], {"s2"}, set(), _ai([], "high", "login code"), 0, "low", []
-    )
-    assert (label, state) == ("ready-to-merge", "success")
-    label, state, *_ = v.decide(
-        [], {"s2"}, set(), _ai([], "low"), 0, "high", ["guide-only file"]
-    )
-    assert (label, state) == ("ready-to-merge", "success")
-
-
-def test_high_risk_with_an_open_question_calls_the_guide():
-    q = [r.Finding("judgement", "this changes token storage")]
-    info = {}
-    label, state, *_ = v.decide(
-        [], {"s2"}, set(), _ai(q, "high", "tokens"), 0, "low", [], info
-    )
-    assert (label, state) == ("needs-judgement", "failure")
-    assert info["risk"] == "high" and "tokens" in info["reason"]
-    label, *_ = v.decide(
-        [], {"s2"}, set(), _ai(q, "low"), 0, "high", ["a large change"]
-    )
-    assert label == "needs-judgement"  # the AI cannot lower the rules' floor
-
-
-def test_blocking_items_go_back_to_the_students_whatever_the_risk():
-    b = [r.Finding("rework", "bug in x")]
-    for floor in ("low", "high"):
-        label, *_ = v.decide([], {"s2"}, set(), _ai(b, "high"), 0, floor, [])
-        assert label == "needs-rework"
-
-
-def test_ai_outage_waits_for_low_risk_and_calls_the_guide_for_high_risk():
-    def down():
-        raise v.AIError("HTTP 503")
-
-    label, state, _, findings, called = v.decide([], {"s2"}, set(), down, 0, "low", [])
-    assert (label, state, called) == ("awaiting-ai", "pending", False)
-    assert "tried again automatically" in findings[-1].message
-    label, state, *_ = v.decide([], {"s2"}, set(), down, 0, "high", ["guide-only file"])
-    assert (label, state) == ("needs-judgement", "failure")
-
-
-def test_old_style_ai_results_count_as_high_risk():
-    q = [r.Finding("judgement", "x")]
-    label, *_ = v.decide([], {"s2"}, set(), lambda: q, 0)
-    assert label == "needs-judgement"
-
-
-def test_comment_shows_the_risk_and_marker_and_awaiting_ai_text():
-    text = r.render("ready-to-merge", [], "abcdef1", risk=("high", "login code"))
-    assert "**Risk:** high (login code)" in text and "<!-- risk:high -->" in text
-    assert r.RISK_MARK.search(text).group(1) == "high"
-    assert "tries again by itself" in r.next_step("awaiting-ai")
-    assert "awaiting-ai" in r.VERDICTS
-
-
-def test_awaiting_ai_never_pings_the_guide():
-    assert "@guide" not in v.notification("awaiting-ai", "s1", "s2", "guide")
