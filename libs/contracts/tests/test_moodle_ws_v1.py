@@ -459,9 +459,10 @@ def write_rules() -> dict[str, str]:
     return {row[0]: plain(row[1]) for row in rows}
 
 
-def test_the_write_rules_are_exactly_r1_to_r14() -> None:
-    """R1 to R11: the guide on PR #64; R12 to R14: the guide on PR #72 (2026-11-15)."""
-    assert list(write_rules()) == [f"R{n}" for n in range(1, 15)]
+def test_the_write_rules_are_exactly_r1_to_r15() -> None:
+    """R1 to R11: the guide on PR #64; R12 to R14: the guide on PR #72 (2026-11-15); R15: the
+    guide on PR #64 (2026-11-16)."""
+    assert list(write_rules()) == [f"R{n}" for n in range(1, 16)]
 
 
 def test_r1_get_grades_is_the_stored_grade_read_back(example: Doc) -> None:
@@ -633,6 +634,12 @@ def test_r14_a_matching_read_back_after_a_lost_answer_needs_the_mentor() -> None
     r14 = write_rules()["R14"]
     assert "not counted as done until the mentor confirms it" in r14
     assert "`NEEDS_MENTOR_CONFIRMATION`" in r14
+
+
+def test_r15_applytoall_and_addattempt_are_pinned_to_zero() -> None:
+    r15 = write_rules()["R15"]
+    assert "always sends `applytoall=0` and `addattempt=0`" in r15
+    assert "refuses any other value before anything is sent" in r15
 
 
 def test_the_three_proposals_are_rules_now_and_no_longer_open() -> None:

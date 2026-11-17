@@ -147,6 +147,7 @@ uses; the library's class and code names are not contract text (guide on Q37, PR
 | R12 | **State unreadable or unknown before the write** (guide, PR #72, 2026-11-15). If the learner's state cannot be read before the write (for example `lastattempt` is missing, R6), or is none of the six marking-workflow values in Moodle's source (`notmarked`, `inmarking`, `readyforreview`, `inreview`, `readyforrelease`, `released`; the same constants on 4.5 and 5.3 in `mod/assign/locallib.php`) and not a value of R13, the write is **refused before anything is sent**. Outcome `REFUSED_STATE_UNKNOWN` (name proposed in PR #72). This is R3 applied to a state that cannot be read, so a locked submission cannot be missed |
 | R13 | **Marking workflow off** (guide, PR #72, 2026-11-15). With marking workflow off the state is `graded` or `notgraded` (§7), and a saved grade can reach the learner at once, which breaks the draft rule (PRD C-09). The write is **refused before anything is sent**: LearnOps writes only over `notmarked`, `inmarking`, `readyforreview` or `inreview`. Outcome `REFUSED_WORKFLOW_OFF` (name proposed in PR #72). Course Studio builds assignments with marking workflow on (PRD §B1.2 rule 4), so this refusal only meets an assignment created by hand. Lab check 4 stays open |
 | R14 | **Lost answer, matching read-back** (guide, PR #72, 2026-11-15). After an uncertain write (R11), a read-back that matches exactly is **not counted as done until the mentor confirms it**. Outcome `NEEDS_MENTOR_CONFIRMATION` (name proposed in PR #72). This follows R11, "the mentor decides" |
+| R15 | **`applytoall` and `addattempt` are pinned** (guide, PR #64, 2026-11-16). LearnOps always sends `applytoall=0` and `addattempt=0` with `mod_assign_save_grade`, and the client **refuses any other value before anything is sent**, including a missing value or a bool. With `applytoall=1` a grade on a group assignment would be written to every group member, and with `addattempt=1` a new attempt would be opened for the learner, so both change a learner's grade and are not left to the default. What Moodle does with each value is not yet run on a lab site (lab check 1) |
 
 The refusals of R12 and R13 are each their own outcome, separate from `NOT_VERIFIED` (R8, which is
 after a write) and never reported as success (R10).
@@ -270,6 +271,9 @@ as rules R1 to R11 in §3a, with the grade-value matching rule in §3b.
 **Decided by the guide (PR #72, 2026-11-15):** the three fail-closed proposals that were open here
 (state unreadable or unknown, marking workflow off, lost answer with a matching read-back),
 recorded as rules R12 to R14 in §3a.
+
+**Decided by the guide (PR #64, 2026-11-16):** the values of `applytoall` and `addattempt`, recorded
+as rule R15 in §3a.
 
 ### 6a. `mod_assign_get_grades`: source facts (decided, R1)
 
