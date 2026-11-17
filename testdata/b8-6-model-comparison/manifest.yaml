@@ -43,11 +43,12 @@ items:
     status: pending
     provisional: true
     depends_on:
-      - B8.4 merged (PR #31)
+      - B8.4 merged (PR #31, which waits for B8.2, PR #61)
       - Submission-content rule for B8.4 submissions (design Q32)
-      - B8.4 mentor reference grades (design Q13)
+      - The guide confirms who the B8.4 mentor is (design Q13, B8.4 O3); one mentor has graded all 32 submissions
       - GradeDraftInputV1 / GradeDraftV1 agreed (design §4.3d, Q41)
-    note: Inputs will be B8.4 submissions and expected outputs their mentor reference grades.
+      - The input kinds in schemas/manifest.schema.json are extended to B8.4 submissions
+    note: Inputs will be B8.4 submissions and expected outputs their mentor reference grades. The mentor review form for grade drafts is in templates/ (PROPOSED).
 
   - id: pr-001
     task: practice

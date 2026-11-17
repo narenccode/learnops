@@ -455,8 +455,8 @@ Test names are in `test_lesson_files_v1.py`. "Validator" means `lesson_files.py`
 
 ## B8.6 model comparison set (PROVISIONAL), Release 0 foundation
 
-Files: `testdata/b8-6-model-comparison/` (manifest, rubric, three schemas, one transcript input,
-two expected outputs), `libs/contracts/tests/test_b8_6_dataset.py`. B8.6 is a test-data set
+Files: `testdata/b8-6-model-comparison/` (manifest, rubric, five schemas, one transcript input,
+two expected outputs, two PROPOSED mentor review forms), `libs/contracts/tests/test_b8_6_dataset.py`. B8.6 is a test-data set
 (PRD B8) with no requirement ID of its own. It is the input of FR-M-03 (Release 4), which is not
 implemented, so no row in the table above maps to it.
 
@@ -466,6 +466,7 @@ implemented, so no row in the table above maps to it.
 |---|---|---|
 | Manifest, rubric and expected chapters validate against their schemas | Proposed format (set README, O10) | `test_schema_is_a_valid_draft_2020_12_schema`, `test_manifest_and_rubric_are_valid`, `test_expected_chapters_are_valid_and_fit_the_transcript` |
 | Fixed inputs linked to expected outputs; pending and placeholder items hold no content | PRD B8 | `test_ids_are_unique_and_references_resolve`, `test_pending_and_placeholder_items_have_no_content` |
+| Two PROPOSED mentor review forms (grade-draft review and output review): valid schemas, invented examples validate, output-review levels equal the rubric's, a draft id never names a provider, the grade-draft example is consistent (differences, totals, band), no real review is claimed | Proposed format (set README, O2 to O5); design 11.2, Q48 | `test_review_schema_is_a_valid_draft_2020_12_schema`, `test_the_invented_review_examples_validate`, `test_output_review_levels_equal_the_rubric_levels`, `test_a_draft_id_never_names_a_provider`, `test_the_grade_draft_example_is_consistent`, `test_review_forms_reject_missing_blind_and_extra_fields`, `test_no_real_reviews_are_claimed` |
 | Transcript input has the B5.4 shape and consistent times | PRD B5.4 | `test_transcript_has_the_prd_b5_4_shape_and_consistent_times`, `test_time_checks_catch_bad_transcripts`, `test_transcript_validates_against_the_b5_contract` (skipped until B5 is on `main`) |
 | Expected chapters use the B6.2 shape and fit the transcript | PRD B6.2 | `test_expected_chapters_are_valid_and_fit_the_transcript`, `test_chapter_checks_catch_overlap` |
 | The four FR-M-03 measures are in the rubric | PRD FR-M-03 | `test_rubric_covers_the_measures_and_tasks` |

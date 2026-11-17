@@ -22,7 +22,7 @@ run, and nothing here says how well any model performs.
 |---|---|---|---|---|
 | Chapters | ch-001 | ready, PROVISIONAL | `inputs/t001/transcript.en.json` | `expected/ch-001/chapters.json`, NOT REVIEWED |
 | Summaries | su-001 | ready, PROVISIONAL | `inputs/t001/transcript.en.json` | `expected/su-001/summary.en.md`, NOT REVIEWED |
-| Grading drafts | gd-001 | pending | B8.4 submissions (PR #31, not merged) | B8.4 mentor reference grades (none yet, Q13) |
+| Grading drafts | gd-001 | pending | B8.4 submissions (PR #31, not merged) | B8.4 mentor reference grades (32 from one mentor; the guide has not confirmed the mentor, Q13). Review form: `templates/` (PROPOSED) |
 | Practice drafts | pr-001 | placeholder | Not agreed (Q12) | None. No practice questions are written until Q12 is agreed |
 
 "Ready" means the files exist. It does not mean they are agreed or reviewed.
@@ -32,10 +32,12 @@ run, and nothing here says how well any model performs.
 ```
 manifest.yaml                  inputs and items (task, status, input, expected, review status)
 rubric.yaml                    review levels and the four FR-M-03 measures (PROVISIONAL, frozen: false)
-schemas/                       manifest, rubric and expected-chapters schemas (Draft 2020-12)
+schemas/                       manifest, rubric, expected-chapters and two review-form schemas (Draft 2020-12)
+templates/                     PROPOSED mentor review forms with invented examples (see templates/README.md)
 inputs/t001/                   transcript.en.json (B5.4 shape) + source.md (provenance)
 expected/<item id>/            author-drafted expected outputs (see expected/README.md)
 results/                       empty: no comparison has been run
+reviews/                       not created yet: real mentor reviews go here
 ```
 
 How an item links to its input, expected output and rubric:

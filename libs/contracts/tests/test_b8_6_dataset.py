@@ -21,6 +21,10 @@ AUTOMATED here:
     start on a segment boundary (authoring rules);
   * the rubric lists the four FR-M-03 measures, covers every non-grading task in the manifest and
     has at least one review level that counts as wrong;
+  * the two PROPOSED mentor review forms (grade-draft and output review) have valid schemas, their
+    invented examples validate, the output-review levels equal the rubric's levels, a draft id
+    never names a provider, and the grade-draft example is internally consistent (differences, totals,
+    the wrong rule and the band); real reviews are not claimed (no reviews/ folder);
   * results/ holds no results; synthetic-data guards: reserved .invalid hosts only, no email
     address, text files of at most 64 KiB.
 
@@ -47,6 +51,7 @@ SCHEMA_DIR = SET_DIR / "schemas"
 B5_SCHEMA = ROOT / "contracts" / "model-interface.v1.schema.json"
 
 SCHEMA_NAMES = ("manifest", "rubric", "chapters")
+REVIEW_SCHEMA_NAMES = ("grade-draft-review", "output-review")
 FR_M_03_MEASURES = {
     "wrong_answer_rate",
     "agreement",
@@ -325,6 +330,107 @@ def test_rubric_covers_the_measures_and_tasks(rubric: Doc, manifest: Doc) -> Non
     output_tasks = {i["task"] for i in manifest["items"]} - {"grade_draft"}
     assert output_tasks <= set(rubric["output_review"]["applies_to"])
     assert any(level["counts_as_wrong"] for level in rubric["output_review"]["levels"])
+
+
+# --- mentor review forms (PROPOSED) ----------------------------------------------------------
+
+TEMPLATES_DIR = SET_DIR / "templates"
+PROVIDER_WORDS = (
+    "local",
+    "hosted",
+    "openai",
+    "anthropic",
+    "claude",
+    "gpt",
+    "whisper",
+    "ollama",
+)
+
+
+@pytest.fixture(scope="module")
+def review_validators() -> dict[str, Draft202012Validator]:
+    return {
+        name: Draft202012Validator(load_schema(name)) for name in REVIEW_SCHEMA_NAMES
+    }
+
+
+@pytest.mark.parametrize("name", REVIEW_SCHEMA_NAMES)
+def test_review_schema_is_a_valid_draft_2020_12_schema(name: str) -> None:
+    Draft202012Validator.check_schema(load_schema(name))
+
+
+@pytest.mark.parametrize("name", REVIEW_SCHEMA_NAMES)
+def test_the_invented_review_examples_validate(
+    review_validators: dict[str, Draft202012Validator], name: str
+) -> None:
+    example = load_yaml(TEMPLATES_DIR / f"{name}.example.yaml")
+    assert errors(review_validators[name], example) == []
+
+
+def test_output_review_levels_equal_the_rubric_levels(rubric: Doc) -> None:
+    schema_levels = load_schema("output-review")["properties"]["level"]["enum"]
+    assert schema_levels == [level["id"] for level in rubric["output_review"]["levels"]]
+
+
+def test_a_draft_id_never_names_a_provider(
+    review_validators: dict[str, Draft202012Validator],
+) -> None:
+    example = load_yaml(TEMPLATES_DIR / "output-review.example.yaml")
+    for word in PROVIDER_WORDS:
+        bad = {**example, "draft_id": f"{word}-001"}
+        assert errors(review_validators["output-review"], bad) != [], word
+    assert errors(review_validators["output-review"], {**example, "level": "ok"}) != []
+
+
+def band(points: float, total_points: float) -> int:
+    """Proposed band (Q44): 10 % of the total points, lower-inclusive, closed top band."""
+    return min(int(points // (total_points / 10)), 9)
+
+
+def test_the_grade_draft_example_is_consistent() -> None:
+    example = load_yaml(TEMPLATES_DIR / "grade-draft-review.example.yaml")
+    for crit in example["criteria"]:
+        assert crit["score_difference"] == crit["draft_score"] - crit["reference_score"]
+        # The proposed wrong rule for a criterion worth up to 4 points or more (rubric.yaml).
+        if crit["wrong"] == "no":
+            assert crit["evidence_supported"] == "yes", crit["criterion"]
+    assert example["total"]["reference_total"] == sum(
+        c["reference_score"] for c in example["criteria"]
+    )
+    assert example["total"]["draft_total"] == sum(
+        c["draft_score"] for c in example["criteria"]
+    )
+    maximum = 25  # the B8.2 week 1 task is worth 25 points
+    within = (
+        abs(
+            band(example["total"]["draft_total"], maximum)
+            - band(example["total"]["reference_total"], maximum)
+        )
+        <= 1
+    )
+    assert example["total"]["within_one_band"] == ("yes" if within else "no")
+
+
+def test_review_forms_reject_missing_blind_and_extra_fields(
+    review_validators: dict[str, Draft202012Validator],
+) -> None:
+    example = load_yaml(TEMPLATES_DIR / "grade-draft-review.example.yaml")
+    no_blind = {k: v for k, v in example.items() if k != "blind_to_provider"}
+    assert errors(review_validators["grade-draft-review"], no_blind) != []
+    assert (
+        errors(review_validators["grade-draft-review"], {**example, "provider": "x"})
+        != []
+    )
+
+
+def test_no_real_reviews_are_claimed() -> None:
+    assert not (SET_DIR / "reviews").exists()
+    files = sorted(p.name for p in TEMPLATES_DIR.iterdir())
+    assert files == [
+        "README.md",
+        "grade-draft-review.example.yaml",
+        "output-review.example.yaml",
+    ]
 
 
 def test_no_results_are_claimed() -> None:
