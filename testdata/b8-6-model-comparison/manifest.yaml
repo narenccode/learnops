@@ -15,6 +15,12 @@ inputs:
     source_note: inputs/t001/source.md
     provisional: true
 
+  - id: b8-4
+    kind: b8-4-set
+    path: testdata/b8-4-synthetic-submissions/manifest.yaml
+    source_note: inputs/b8-4/source.md
+    provisional: true
+
 items:
   - id: ch-001
     task: chapters
@@ -40,15 +46,18 @@ items:
 
   - id: gd-001
     task: grade_draft
-    status: pending
+    status: ready
     provisional: true
+    input: b8-4
+    expected: testdata/b8-4-synthetic-submissions/reference-grades/mentor-01
+    expected_review:
+      status: not_reviewed
+    authored_by: mentor-01 (the B8.4 reference grades; not written by the set's author)
     depends_on:
-      - B8.4 merged (PR #31, which waits for B8.2, PR #61)
-      - Submission-content rule for B8.4 submissions (design Q32)
-      - The guide confirms who the B8.4 mentor is (design Q13, B8.4 O3); one mentor has graded all 32 submissions
-      - GradeDraftInputV1 / GradeDraftV1 agreed (design §4.3d, Q41)
-      - The input kinds in schemas/manifest.schema.json are extended to B8.4 submissions
-    note: Inputs will be B8.4 submissions and expected outputs their mentor reference grades. The mentor review form for grade drafts is in templates/ (PROPOSED).
+      - B8.4 merged (PR #31, which waits for B8.2, PR #61); until then the paths do not exist in this tree
+      - The guide confirms who the B8.4 mentor is (design Q13, B8.4 O3), and a second mentor on at least 10 submissions (Q47)
+      - GradeDraftInputV1 / GradeDraftV1 agreed (design §4.3d, Q41), before a model is run on this item
+    note: Input is the 32 B8.4 submissions and the expected output the mentor reference grades, one file per submission. READY here means the files exist in the B8.4 set, not that they are agreed or reviewed. The mentor review form is in templates/ (PROPOSED).
 
   - id: pr-001
     task: practice

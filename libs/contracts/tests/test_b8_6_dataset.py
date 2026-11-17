@@ -31,7 +31,7 @@ AUTOMATED here:
 NOT automated, and therefore NOT claimed:
   * that any expected output is correct or reviewed (none is reviewed; open decision O2);
   * the rubric's content (every definition is proposed or open, Q48), set size, or Q12 inputs;
-  * grading-draft and practice items (pending and placeholder); any model run or result.
+  * the agreement of the grading-draft item (gd-001 points at B8.4's reference grades; the mentor is not confirmed); practice items (placeholder); any model run or result.
 """
 
 from __future__ import annotations
@@ -184,6 +184,14 @@ def inputs(manifest: Doc) -> dict[str, Doc]:
     return {i["id"]: i for i in manifest["inputs"]}
 
 
+B8_4_DIR = ROOT / "testdata" / "b8-4-synthetic-submissions"
+
+
+def is_b8_4_path(path: str) -> bool:
+    """A path that points into the separate B8.4 set (repository-root relative), not this set."""
+    return path.startswith("testdata/b8-4-synthetic-submissions/")
+
+
 def ready_items(kind: str) -> list[Doc]:
     items: list[Doc] = load_yaml(SET_DIR / "manifest.yaml")["items"]
     return [i for i in items if i["task"] == kind and i["status"] == "ready"]
@@ -218,13 +226,14 @@ def test_ids_are_unique_and_references_resolve(
     for item in manifest["items"]:
         if "input" in item:
             assert item["input"] in inputs, item["id"]
-        if "expected" in item:
+        if "expected" in item and not is_b8_4_path(item["expected"]):
             assert (SET_DIR / item["expected"]).is_file(), item["id"]
             assert Path(item["expected"]).parts[:2] == ("expected", item["id"]), item[
                 "id"
             ]
     for source in inputs.values():
-        assert (SET_DIR / source["path"]).is_file(), source["id"]
+        if not is_b8_4_path(source["path"]):
+            assert (SET_DIR / source["path"]).is_file(), source["id"]
         assert (SET_DIR / source["source_note"]).is_file(), source["id"]
 
 
@@ -431,6 +440,52 @@ def test_no_real_reviews_are_claimed() -> None:
         "grade-draft-review.example.yaml",
         "output-review.example.yaml",
     ]
+
+
+# --- the grading-draft item points at B8.4 --------------------------------------------------
+
+
+def test_the_grading_draft_item_points_at_b8_4_and_never_copies_it(
+    manifest: Doc,
+) -> None:
+    item = next(i for i in manifest["items"] if i["id"] == "gd-001")
+    source = next(i for i in manifest["inputs"] if i["id"] == item["input"])
+    assert item["task"] == "grade_draft" and source["kind"] == "b8-4-set"
+    assert is_b8_4_path(source["path"]) and is_b8_4_path(item["expected"])
+    assert not any(p.name == "reference-grades" for p in SET_DIR.rglob("*"))
+    assert item["expected_review"]["status"] == "not_reviewed"
+    assert any("mentor" in d and "confirms" in d for d in item["depends_on"])
+
+
+def test_the_b8_4_files_exist_when_the_set_is_present(manifest: Doc) -> None:
+    if not B8_4_DIR.is_dir():
+        pytest.skip(
+            "B8.4 (PR #31, which waits for B8.2, PR #61) is not in this tree yet; "
+            "the gd-001 paths are checked once it is"
+        )
+    item = next(i for i in manifest["items"] if i["id"] == "gd-001")
+    assert (ROOT / item["expected"]).is_dir()
+    for source in manifest["inputs"]:
+        if is_b8_4_path(source["path"]):
+            assert (ROOT / source["path"]).is_file(), source["id"]
+    graded = {p.stem for p in (ROOT / item["expected"]).glob("*.yaml")}
+    submissions = {
+        s["id"] for s in load_yaml(B8_4_DIR / "manifest.yaml")["submissions"]
+    }
+    assert graded == submissions
+
+
+def test_a_b8_4_path_cannot_leave_the_b8_4_set(
+    validators: dict[str, Draft202012Validator], manifest: Doc
+) -> None:
+    for bad in (
+        "testdata/b8-4-synthetic-submissions/../secrets",
+        "testdata/b8-2-sample-course/package/course.yaml",
+        "/testdata/b8-4-synthetic-submissions/manifest.yaml",
+    ):
+        doc = load_yaml(SET_DIR / "manifest.yaml")
+        doc["inputs"][-1]["path"] = bad
+        assert errors(validators["manifest"], doc) != [], bad
 
 
 def test_no_results_are_claimed() -> None:

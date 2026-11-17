@@ -24,6 +24,11 @@
     }
   },
   "$defs": {
+    "b8_4_path": {
+      "type": "string",
+      "description": "Path in the B8.4 set, relative to the repository root, with forward slashes and no '..' segment. B8.4 is a separate set (PR #31), so this set points at it and never copies it.",
+      "pattern": "^testdata/b8-4-synthetic-submissions/(?!(.*/)?\\.\\.(/|$))[A-Za-z0-9._/-]+$"
+    },
     "set_path": {
       "type": "string",
       "description": "Path relative to the set folder, with forward slashes and no '..' segment.",
@@ -33,15 +38,25 @@
       "type": "object",
       "required": ["id", "kind", "path", "source_note", "provisional"],
       "properties": {
-        "id": { "type": "string", "pattern": "^t[0-9]{3}$" },
+        "id": { "type": "string", "pattern": "^(t[0-9]{3}|b8-4)$" },
         "kind": {
-          "enum": ["transcript"],
-          "description": "transcript: a B5.4-shaped transcript. Grading inputs come from B8.4 and practice inputs from Module 1; their kinds are added when they are agreed."
+          "enum": ["transcript", "b8-4-set"],
+          "description": "transcript: a B5.4-shaped transcript. b8-4-set: the B8.4 synthetic submissions, the input of grading drafts (points at the B8.4 manifest). Practice inputs come from Module 1; their kind is added when agreed (Q12)."
         },
-        "path": { "$ref": "#/$defs/set_path" },
+        "path": { "type": "string" },
         "source_note": { "$ref": "#/$defs/set_path" },
         "provisional": { "type": "boolean" }
-      }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "transcript" } } },
+          "then": { "properties": { "id": { "pattern": "^t[0-9]{3}$" }, "path": { "$ref": "#/$defs/set_path" } } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "b8-4-set" } } },
+          "then": { "properties": { "id": { "const": "b8-4" }, "path": { "$ref": "#/$defs/b8_4_path" } } }
+        }
+      ]
     },
     "item": {
       "type": "object",
@@ -54,8 +69,8 @@
           "description": "ready: input and expected output exist; pending: waits on a named dependency; placeholder: kept so the task kind is not forgotten, nothing agreed yet."
         },
         "provisional": { "type": "boolean" },
-        "input": { "type": "string", "pattern": "^t[0-9]{3}$" },
-        "expected": { "$ref": "#/$defs/set_path" },
+        "input": { "type": "string", "pattern": "^(t[0-9]{3}|b8-4)$" },
+        "expected": { "type": "string" },
         "expected_review": {
           "type": "object",
           "required": ["status"],
@@ -93,7 +108,11 @@
         },
         {
           "if": { "properties": { "task": { "const": "grade_draft" } } },
-          "then": { "properties": { "id": { "pattern": "^gd-" } } }
+          "then": { "properties": { "id": { "pattern": "^gd-" }, "expected": { "$ref": "#/$defs/b8_4_path" } } }
+        },
+        {
+          "if": { "properties": { "task": { "enum": ["chapters", "summary", "practice"] } } },
+          "then": { "properties": { "expected": { "$ref": "#/$defs/set_path" } } }
         },
         {
           "if": { "properties": { "task": { "const": "practice" } } },
