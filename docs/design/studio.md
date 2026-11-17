@@ -167,10 +167,202 @@ All commands accept `--dry-run`, `--check`, `--config <file>`. Exit codes: 0 = O
 | `STUDIO_MAX_UNZIPPED_MB` | total unzipped size limit, zip-bomb protection (SEC-05) | 200 (Proposal, §12 item 30) | to add |
 | `STUDIO_MAX_ZIP_ENTRIES` | maximum files in an uploaded archive (SEC-05) | 5000 (Proposal, §12 item 30) | to add |
 | `STUDIO_PRACTICE_ENABLED` | feature flag for the practice step, FR-S-12 (EXT-05) | `false`; no effect before Release 5 | to add |
+| `STUDIO_VALIDATE_TIMEOUT_SECONDS` | time limit for one validation in the §6.1 slice (OPS-10, §12 item 36) | 10 (Proposal) | to add |
 | LTI, session and secret variables | via `libs/lti` | owned by that library | by that library |
 | `MODEL_PROVIDER`, `MODEL_NAME` | R5 only, via `libs/model_interface` | B5.2 | by that library |
 
 No variable has been added to `.env.example` by this document.
+
+### 6.1 First Moodle slice: validate a package from an LTI launch (Proposal; Needs guide, §12 item 35)
+
+**Why.** The interim evaluation (17 Nov 2026) showed course input (demo D5) from the command line only. This slice is the smallest Studio feature that a mentor can open from inside a Moodle course: upload a course package and see its B1 validation result. It is pulled forward from Release 2 and needs the guide's go before any code (root `CLAUDE.md` §1 and §6a).
+
+> **Implementation gate.** No code for this slice starts until (1) the guide has explicitly approved the pull-forward (§12 item 35), (2) the guide has decided how validation runs under OPS-10 (§12 item 36), and (3) this document says `Status: Approved`.
+
+**Requirements, in part only:**
+
+| Requirement | Part delivered by this slice | Part left for the full Release 2 work |
+|---|---|---|
+| FR-S-02 | Import a zip and unpack it safely, for validation only | Export; storing the package; versions |
+| FR-S-03 | B1 validation through `libs/contracts` (`validate_package` over a `DirectorySource` from `libs/contracts/source.py` for the unpacked temporary folder; Studio writes no package reader of its own), errors per item with location and fix hint | The checker rule library (needs Module 2, §12 items 10 and 26); validation on every save in the editor |
+| FR-S-10 | Mentor or Administrator role from the LTI session; Learner refused | The per-course check against `shared.course_link`; not needed here because the slice stores nothing that belongs to a course |
+
+**Not in this slice:** no stored packages or package versions, no build, no `.mbz`, no preview, no editor, no Moodle web-service call. What is stored depends on the OPS-10 decision ("Heavy work" below):
+- **Option A** stores nothing; the temporary folder is removed when the request ends.
+- **Option B** is **not** storage-free: it keeps, for a limited time, a validation row, the uploaded zip (until the worker has processed it) and the result, each scoped to the requesting user and the LTI context (`iss`, `sub`, context id as carried by the B3 session).
+
+In both options the slice keeps nothing that has to be linked to a Moodle course id: the LTI context id from the session is enough to scope a validation. So the slice does not need `shared.course_link` and does not depend on the course-binding question (§12 item 27).
+
+**Boundary with Module 2 (checker).** This slice calls **only** `libs/contracts.validate_package()`. It does not call the checker rule library, does not implement any CK rule, and does not implement FR-S-03 in full. Errors that belong to CK-01…CK-13 (for example the semantic B8.3 planted errors that only the checker detects) are **not** detected by this slice. When the checker rule library exists (§12 items 10 and 26), the full FR-S-03 work adds it; this slice does not grow its own copy of any rule (module rule 5).
+
+**Prerequisites (each outside this module):**
+
+1. #83 (B3 launch contract, `contracts/lti-launch.v1`) merged.
+2. ADR 0001 Stage 1 (library and pins) and Stage 2 (security design) approved, and `libs/lti` built with a FastAPI router (login, launch, JWKS) and a session check that returns the normalised B3 result.
+3. #61 (B8.2 sample course) and #87 (B1 submission-format rules) merged, so the demo shows those rules.
+4. HTTPS on the `tools` VM (the B3 state cookie is `SameSite=None; Secure`).
+5. This document `Approved`.
+
+**Flow.**
+
+```mermaid
+sequenceDiagram
+    participant M as Mentor (browser)
+    participant MO as Moodle 5.3 (unmodified)
+    participant L as libs/lti (in the Studio service)
+    participant S as Studio web service
+    participant C as libs/contracts
+    M->>MO: open activity "LearnOps Studio" (idnumber demo-d5)
+    MO->>L: OIDC login, then signed launch (LtiResourceLinkRequest)
+    L->>L: validate; map role; refuse Learner (EXT-07)
+    L->>S: session with normalised B3 result
+    S-->>M: "Check a course package" page
+    M->>S: POST zip (CSRF token)
+    S->>S: size and type checks, safe unzip to a temporary folder
+    S->>C: validate_package(DirectorySource(tmp), config)
+    C-->>S: ValidationReport (errors, not_checked)
+    S->>S: delete the temporary folder
+    S-->>M: result table
+```
+
+**Routes (additions to §6; all except `/health` and the LTI endpoints need a valid session):**
+
+| Route | Purpose | Allowed roles |
+|---|---|---|
+| `GET /` | The "Check a course package" page (static React build) | Mentor, Administrator |
+| `POST /api/validate` | Option A: multipart upload of one zip; returns the result below. Stores nothing | Mentor, Administrator |
+| `POST /api/validations`, `GET /api/validations/{id}` | Option B: queue one zip and return an id; read status and result. Read access as below | Mentor, Administrator |
+
+**Read access to a queued validation (Option B; Proposal, Needs guide, §12 item 39).** A validation is readable only by the user who started it, in the same LTI context: the session's (`iss`, `sub`, context id) must equal the values stored with the row. **Administrators get no wider access in this slice:** an Administrator reads only their own validations, like a Mentor. Reason: a validation is a short-lived check for the person who uploaded it, not course data, and §2's "administrators may access all courses" (FR-S-10) is about stored packages, which this slice does not have. For any other user, and for an unknown id, the route returns 404 with the same message, so it does not reveal whether the id exists. Validation ids are random (UUID), never sequential.
+
+The flow diagram above shows Option A; in Option B the "safe unzip" and `validate_package` steps run in the worker, and the page polls `GET /api/validations/{id}`.
+
+**Result payload (Pydantic model; Proposal).** Two separate parts: `b1` is a direct mapping of `ValidationReport`, so no rule logic sits in Studio; `checker` is a fixed notice that the checker rules did not run. The two are never merged into one list.
+
+| Field | Source / meaning |
+|---|---|
+| `package_name` | Upload file name, shortened; never the file contents |
+| `b1.ok` | `ValidationReport.ok`. **Means only that the implemented B1 checks found no error.** It does not mean that the package is fully valid, nor that the Course Checker passed |
+| `b1.errors[]`: `code`, `rule`, `message`, `fix_hint`, `location`, `idnumber` | `ValidationReport.errors` (`Issue`); message and hint unchanged from `libs/contracts` |
+| `b1.not_checked[]`: same fields | `ValidationReport.not_checked`: the **B1** rules that `libs/contracts` has not implemented yet or that did not run |
+| `checker.run` | Always `false` in this slice |
+| `checker.notice` | Always "Checker rules (CK-01…CK-13) were not run in this version." |
+
+*Example 1, valid package (B8.2 sample course).* The codes and texts are those `libs/contracts` on `main` returns today; the list of `not_checked` codes changes as `libs/contracts` implements more rules (for example when #87 merges), and the tests read it from `libs/contracts`, not from this document.
+
+```json
+{
+  "package_name": "b8-2-sample-course.zip",
+  "b1": {
+    "ok": true,
+    "errors": [],
+    "not_checked": [
+      {"code": "week_structure_not_checked", "rule": "B1.2 rule 1",
+       "message": "Not checked: exactly one guide Page and one task Assignment in each week.",
+       "fix_hint": "…", "location": [], "idnumber": null},
+      {"code": "points_total_not_checked", "rule": "B1.2 rule 3",
+       "message": "Not checked: graded points across the course sum to total_points.",
+       "fix_hint": "…", "location": [], "idnumber": null}
+    ]
+  },
+  "checker": {"run": false, "notice": "Checker rules (CK-01…CK-13) were not run in this version."}
+}
+```
+
+(Shortened: the real `not_checked` list also carries `unlock_chain_not_checked`, `unlock_completion_not_checked`, `idnumber_reuse_not_checked`, `marking_table_not_checked`, `check_vocabulary_not_checked` and `protected_section_not_checked`; `fix_hint` is the text from `libs/contracts`.)
+
+*Example 2, invalid package (one duplicate idnumber).*
+
+```json
+{
+  "package_name": "week2-duplicate.zip",
+  "b1": {
+    "ok": false,
+    "errors": [
+      {"code": "duplicate_idnumber", "rule": "B1.2 rule 6",
+       "message": "sections[1].activities[0].idnumber: the idnumber 'w1-task' is already used at sections[0].activities[1].idnumber. Idnumbers must be unique in the course.",
+       "fix_hint": "Give this section or activity its own idnumber. Idnumbers are unique across the whole course, sections and activities together.",
+       "location": ["sections", 1, "activities", 0, "idnumber"], "idnumber": "w1-task"}
+    ],
+    "not_checked": ["… same B1 list as in example 1 …"]
+  },
+  "checker": {"run": false, "notice": "Checker rules (CK-01…CK-13) were not run in this version."}
+}
+```
+
+**Page (UI-01 to UI-05, UI-07).** One file input, one button, one result area in three separate blocks, in this order:
+1. **B1 result.** If `b1.ok` is true: "No errors in the B1 checks that ran." Never "valid", "passed" or "ready". If false: one row per error with the place (`location` and `idnumber`), the message and the fix hint.
+2. **B1 checks that did not run.** The `b1.not_checked` list, under its own heading.
+3. **Course Checker.** The `checker.notice`, always shown, under its own heading, whatever the B1 result.
+
+So "no errors" is never shown as "fully checked" (FR-S-03, §C1.8; §10 row "Checker rule library unavailable"). Every error row shows the place (`location` and `idnumber`), the message and the fix hint. All strings live in the module's one strings file. Works at 375×812, 1366×768 (100, 125, 150 %) and 683×768 without horizontal scrolling; keyboard operable; labelled field.
+
+**Security (additions to §9 for this slice).**
+- SEC-01, SEC-02: only through `libs/lti`; the route reads the role from the server-side session, never from the request.
+- SEC-05: the limits of §6 (`STUDIO_MAX_UPLOAD_MB`, `STUDIO_MAX_UNZIPPED_MB`, `STUDIO_MAX_ZIP_ENTRIES`) apply. Zip structure checked by content; entries outside the target folder, absolute paths and links rejected; the temporary folder is outside any web root and removed in a `finally` block, also on error.
+- SEC-06: Option A stores nothing; Option B stores the zip until processed and the result with the requesting `sub` and context id (add to `docs/data-map.md` with the implementing PR). Logs carry request id, `sub`, context id, outcome and counts of errors; never `name`, `email` (B3 §10.1), file names inside the package or file contents.
+- SEC-09: CSRF token on `POST /api/validate` (Option A) or `POST /api/validations` (Option B); cookie flags as set by `libs/lti`.
+
+**Heavy work (OPS-10; Needs guide, §12 item 36).** OPS-10 says heavy work runs in worker containers fed by a job queue, never inside web request handlers. Two options; **the guide decides, and no code starts before that** (implementation gate above):
+
+| | Option A: in the request, with a time limit | Option B: queued for the Studio worker |
+|---|---|---|
+| Meets OPS-10 as written? | **No**, unless the guide rules that validating one size-limited package is not "heavy work". A child process inside the request is still work inside the request handler | **Yes** |
+| Flow | `POST /api/validate` unzips and runs `validate_package` in a short-lived child process (standard-library `multiprocessing`; a thread cannot be stopped from outside) and returns the result. At `STUDIO_VALIDATE_TIMEOUT_SECONDS` (Proposal: 10) the child is ended, the temporary folder removed and the time-limit message returned | `POST /api/validations` checks the upload limits, stores the zip through the storage adapter (§3), inserts a queued row and returns a validation id. The worker of §3 claims it, unzips, validates, writes the result and deletes the zip. `GET /api/validations/{id}` returns status and, when done, the result payload (UI-04 progress) |
+| Data | None | A `studio.validation` table (id, state, requesting `sub`, context id, result JSON, timestamps) with a reversible migration (OPS-07); the uploaded zip until processed (SEC-05: outside any web root); result retention Needs guide (§12 item 16) |
+| Extra cost | None | The queue mechanism (§12 item 12) and the worker container must exist first; §13 row 5 style migration |
+
+Both options return the same result payload and show the same page. The upload limits (SEC-05) are checked before any unzip in both.
+
+**Configuration added:** `STUDIO_VALIDATE_TIMEOUT_SECONDS` (Option A, or the worker-side limit in Option B; Proposal; listed in the §6 configuration table). The LTI variables belong to `libs/lti`. Nothing is added to `.env.example` by this document.
+
+**Errors (additions to §10).**
+
+| Situation | Message (what to do next) |
+|---|---|
+| No file or not a zip | "The file is not a zip archive. Export the course package as a zip and upload it again." |
+| Over a size or entry limit | "The package is larger than {limit}. Remove large files from the package and upload it again." |
+| Unsafe entry in the zip | "The zip contains a file outside the package folder ({entry}). Re-create the zip from the package folder." |
+| `course.yaml` missing or unreadable | The message and hint from `libs/contracts` (`messages.py`), unchanged |
+| Time limit reached | "The check took too long and was stopped. Try again; if it happens again, tell the administrator." |
+| Session expired | "Your session has ended. Open LearnOps Studio again from the Moodle course." |
+
+**Tests (written first; additions to §11).**
+
+| Test | Expectation |
+|---|---|
+| Launch as Instructor | Page returned. Uses signed launch fixtures provided by `libs/lti` tests; the #83 test vectors cover only the normalised result, not signed launches |
+| Launch as Learner only (signed fixture from `libs/lti`) | Refused with "not available in this version" (EXT-07) |
+| Payload from the session matches B3 | Checked against the #83 schema and test vectors |
+| `POST /api/validate` without session / without CSRF token | 401 / 403 |
+| B8.2 sample course zip (#61) | `b1.ok` true; `b1.not_checked` equal to what `libs/contracts` returns; page says "No errors in the B1 checks that ran" and never "valid" or "passed" |
+| Any result, valid or not | `checker.run` is `false` and `checker.notice` is present; the page shows it in its own block, separate from `b1.not_checked` |
+| Payload shape | Examples 1 and 2 above, rebuilt from fixtures, validate against the Pydantic model |
+| B8.3 CK-rule planted-error copies | **Precondition:** each fixture is B1-valid (asserted in the test with `libs/contracts.validate_package`, before the slice runs), so a B1 rejection can never be mistaken for CK detection. Expectation: `b1.ok` true, no CK-rule error reported by this slice, checker notice shown. These fixtures belong to the B8.3 CK detection dataset and are used here only to show that the slice does **not** detect CK errors |
+| B1-invalid packages (separate set) | Built only for these tests (for example duplicate idnumber, protected idnumber, missing body file, missing or unreadable `course.yaml`), kept apart from the B8.3 CK dataset. Each error reported with its code and location exactly as `libs/contracts` returns it |
+| #87 submission-format cases | Same codes as `libs/contracts` returns for the same package |
+| Same package through the page and through `libs/contracts` directly | Identical errors (no Studio-side rule logic) |
+| Zip slip, absolute path, symlink, zip bomb, too many entries, wrong type | Rejected with the messages above; nothing written outside the temporary folder |
+| Temporary folder after success, after error, after timeout | Removed |
+| Option B: `POST /api/validations` | Without session 401; without CSRF token 403; Learner launch refused; upload over a limit refused before anything is stored; valid upload returns a random id without validating in the request |
+| Option B: worker | Produces the same payload as Option A for the same zip; the stored zip is deleted after processing, also after a failure; migration up/down/up |
+| Option B: `GET /api/validations/{id}` by its owner | Status while queued or running; the result payload when done |
+| Option B: `GET` by another Mentor (different `sub`, same context) | 404, same message as for an unknown id |
+| Option B: `GET` by the same user from another LTI context, or another `iss` | 404 |
+| Option B: `GET` by an Administrator who did not start it | 404 (no wider Administrator access, §6.1) |
+| Option B: `GET` without session; unknown id; malformed id | 401; 404; 404 |
+| Logs | No `name`, `email`, package file names or contents |
+| Playwright, three screen profiles | No horizontal scroll; keyboard path through upload and result |
+
+**Registering the slice on the lab (administrator; Moodle's own settings only, C-01, C-02).**
+
+1. Site administration → Plugins → Activity modules → External tool → Manage tools → configure a tool manually: name `LearnOps Studio`; LTI 1.3; tool URL, initiate login URL and redirection URI on the `tools` VM over HTTPS; public key type "Keyset URL" pointing at the Studio JWKS route; default launch container "New window". Menu names to be checked on 5.3 before they go into the README.
+2. Copy the platform details Moodle shows for the tool (issuer, client ID, deployment ID, platform key and auth URLs) into the environment of the `tools` VM. Never into the repository (C-06).
+3. In the demo course: add the tool as an activity; ID number `demo-d5` (EXT-06).
+4. Check as the test teacher (page opens) and the test student (refused).
+5. **Undo:** delete the activity, delete the tool registration, stop the Studio service. Nothing in Moodle or in Studio's storage needs cleaning, because the slice stores nothing.
+
+**Moodle 4.5 (C-03).** The same registration and the same tests run on the 4.5 lab site before the slice counts as done. Until then the slice is "verified on 5.3 only".
 
 ## 7. Key decisions and alternatives
 
@@ -341,6 +533,11 @@ Items marked **Needs guide** need the guide's decision. "Needs the lab" refers t
 | 32 | **Database driver licence:** psycopg is LGPL-3.0-only (allowed as an unmodified library); asyncpg is Apache-2.0. Which one? | No | **Needs guide** if LGPL is not wanted. |
 | 33 | **`shared.course_link` columns:** the PRD does not define them, and `studio.package` refers to it (§5). | No | Agree the key with the B3 owner (Student 2). |
 | 34 | **Backup and restore procedure (OPS-08)** for the `studio` schema and the package/`.mbz` storage is described only in outline (§5). | No | Write it in the module README with the first storage PR. |
+| 35 | **Pulling the validation slice (§6.1) forward from Release 2.** PRD §D1 already allows "Work on later releases may start in parallel"; root `CLAUDE.md` §1 still asks for the guide's word for work outside the current release, and §6a asks for this document to be `Approved`. The decision needed is about this slice only, not the principle. | No | **Needs guide.** |
+| 36 | **OPS-10 for the validation slice (§6.1).** Option A (in the request, child process, time limit) does not meet OPS-10 as written; it is possible only if the guide rules that validating one size-limited package is not "heavy work". Option B (queued for the Studio worker) meets OPS-10 but needs a `studio.validation` table, the queue mechanism (item 12) and the worker first. | No | **Needs guide.** Raised by the peer reviewer on PR #123. Implementation blocked until decided. |
+| 37 | **B3 session key.** §4 and SEC-02 say the session is bound to (`sub`, context id); #83 changes this to (`iss`, `sub`, context id). | No | When #83 merges, update §4, §5, §9 SEC-02 and §6.1 to the accepted key (`iss`, `sub`, context id). |
+| 38 | **Front-end for a one-page slice.** The fixed stack says React + TypeScript static build (A10), which brings the Vite question (§12 item 31) forward. | No | **Needs guide** together with item 31. |
+| 39 | **Administrator access to queued validations (Option B).** Proposal in §6.1: owner-only in the same LTI context, with no wider Administrator access, because the slice stores no course data. Does the guide want Administrators to read every validation instead, in line with FR-S-10's approach for stored packages? | No | **Needs guide.** Raised by the peer reviewer on PR #123. |
 
 ## 13. Work breakdown
 
@@ -353,7 +550,8 @@ One requirement (or one tightly related group) per pull request. Feature work st
 | 3 | B8.1 template course and B8.2 sample course | B8.1, B8.2 | 2 | **Release 0** test data (owner: Student 1) |
 | 4 | Record the backup-format and restore findings (§12 items 1–5) | App-C #2, #3, #10 | Lab VMs | **Release 0**; decision records in `docs/decisions/` |
 | 5 | `studio` schema migration (`package`, `package_version`, `build`), reversible | Supports FR-S-02, FR-S-09 | Approved design | Migration up/down/up test (OPS-07) |
-| 6 | LTI wiring and per-course authorisation middleware | FR-S-10 | `libs/lti` (Release 0), 5; §12 item 27 | Before any route that returns package data |
+| 6a | *(Pulled forward, only with the guide's go)* Validation slice launched from Moodle (§6.1): LTI wiring, role check, the validation route(s) for the option the guide picks, one-page front end | FR-S-02 (part), FR-S-03 (part), FR-S-10 (part) | 1, 2, `libs/lti` (Release 1, PRD §D1), #83, #61, #87; §12 items 35, 36, 38; **blocked until the guide approves the pull-forward, decides item 36, and this document is `Approved`** | Option A: no table, no migration. Option B: adds `studio.validation` and its migration, and depends on the worker and queue (§12 item 12). May be split into two PRs (back end, front end) to stay under 800 lines |
+| 6 | LTI wiring and per-course authorisation middleware | FR-S-10 | `libs/lti` (built in the first release that uses it, Release 1, PRD §D1), 5; §12 item 27 | Before any route that returns package data |
 | 7 | Package read/write and zip import/export | FR-S-02 | 2, 5, 6 | |
 | 8 | Validation on save (B1 plus checker rule library) and the validation panel API | FR-S-03 | 2, 7, shared rule library (R1); §12 items 10, 26 | Blocked if the library is missing |
 | 9 | Marking-table renderer and parser | FR-S-04 | 2 | |
