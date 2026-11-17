@@ -215,6 +215,11 @@ def _expected_result(doc: Doc, path: tuple[str, ...], vector: dict[str, Any]) ->
     return doc
 
 
+def test_optional_claim_vectors_file_is_ascii() -> None:
+    """Keep Unicode test values JSON-escaped so the vectors file itself is ASCII."""
+    assert CLAIM_VECTORS_PATH.read_bytes().isascii()
+
+
 def test_python_unicode_database_is_unicode_15_0() -> None:
     """The White_Space set below is pinned to Unicode 15.0.0, the version CI uses."""
     assert unicodedata.unidata_version == "15.0.0"
@@ -683,6 +688,8 @@ def test_every_required_field_has_a_missing_case() -> None:
 # Contract section 5: role mapping and precedence (OI-22, decided by the guide).
 
 PRD_PATH = ROOT / "docs" / "PRD.md"
+# The LTI 1.3 version claim, named by its full URI (it is validation-only, never in the result).
+LTI_VERSION_CLAIM = "https://purl.imsglobal.org/spec/lti/claim/version"
 
 INSTRUCTOR = "http://purl.imsglobal.org/vocab/lis/v2/membership#Instructor"
 LEARNER = "http://purl.imsglobal.org/vocab/lis/v2/membership#Learner"
@@ -836,6 +843,39 @@ def test_contract_and_prd_state_the_oi_22_rule() -> None:
     assert "only if no recognised role remains" in prd
     # the superseded wording must not come back
     assert "a launch with any role not listed is refused" not in prd.lower()
+
+
+def test_contract_and_prd_document_lti_version_as_validation_only() -> None:
+    """The LTI version claim is named by its full URI, must be exactly "1.3.0", and is only
+    checked: it never reaches the normalised result."""
+    contract = _flat(CONTRACT_PATH.read_text(encoding="utf-8"))
+    prd = _flat(PRD_PATH.read_text(encoding="utf-8"))
+    claim = f"`{LTI_VERSION_CLAIM}`"
+
+    # Both documents name the claim by its full URI, never by a bare `version`.
+    assert claim in contract and claim in prd
+    assert "| `version` |" not in contract and "`azp`, `version`," not in prd
+
+    # Contract section 3: required, exactly "1.3.0", validation only.
+    assert (
+        f'| {claim} | Yes; must equal `"1.3.0"` exactly | Checked only; never passed on |'
+        in contract
+    )
+    # Contract section 8: a missing or incorrect version refuses the launch.
+    assert f'{claim} (missing, or not exactly `"1.3.0"`)' in contract
+
+    # The PRD lists it among the inspected claims and states the same rule.
+    assert (
+        'The version claim must equal `"1.3.0"`; it, `aud`, `azp`, `exp` and `nonce` are '
+        "used only to validate the launch" in prd
+    )
+
+    # Contract section 4: version is validation material, not part of the normalised result.
+    normalised_section = contract.split("## 4. Normalised launch result", 1)[1].split(
+        "## 5.", 1
+    )[0]
+    assert LTI_VERSION_CLAIM not in normalised_section
+    assert "`version`" not in normalised_section
 
 
 # Contract sections 6 and 7: session identity and course link (OI-21), issuer separation.

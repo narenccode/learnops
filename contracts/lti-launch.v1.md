@@ -35,6 +35,7 @@ id as the Moodle course id.
 |---|---|---|
 | `iss` | Yes | `iss` |
 | `sub` | Yes | `sub` |
+| `https://purl.imsglobal.org/spec/lti/claim/version` | Yes; must equal `"1.3.0"` exactly | Checked only; never passed on |
 | `aud`, `azp` | Yes (`azp` when `aud` has several values) | Checked only; never passed on |
 | `exp`, `nonce` | Yes | Checked only; never passed on |
 | `https://purl.imsglobal.org/spec/lti/claim/deployment_id` | Yes | `deployment_id` |
@@ -185,7 +186,7 @@ A launch is refused, and no normalised result or session is created, when any of
 
 | Condition | Class |
 |---|---|
-| Signature, `exp`, `aud` (against the configured client id), `azp` (for several audiences), `iss`, `deployment_id`, message type or single-use nonce check fails, or state is invalid | Authentication: "Your Moodle sign-in could not be verified. Open the tool again from your course." |
+| Signature, `https://purl.imsglobal.org/spec/lti/claim/version` (missing, or not exactly `"1.3.0"`), `exp`, `aud` (against the configured client id), `azp` (for several audiences), `iss`, `deployment_id`, message type or single-use nonce check fails, or state is invalid | Authentication: "Your Moodle sign-in could not be verified. Open the tool again from your course." |
 | `iss` does not exactly match a registered platform (§7.1) | Authentication |
 | A required claim is missing (`sub`, `deployment_id`, `resource_link.id`, …) | Authentication |
 | `context.id` is missing, or is not a positive integer in ASCII digits (§3.1) | Refused with guidance to open the tool from a course |
