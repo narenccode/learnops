@@ -80,6 +80,15 @@ def _json(path: Path) -> Doc:
     return loaded
 
 
+def _document(path: Path) -> Doc:
+    # The shared example validator accepts JSON and YAML examples, so read each by its suffix:
+    # a YAML B7 example then fails on its content, not with a JSON decode error.
+    if path.suffix.lower() in {".yaml", ".yml"}:
+        loaded: Doc = yaml.safe_load(path.read_text(encoding="utf-8"))
+        return loaded
+    return _json(path)
+
+
 def _prd_b7_text() -> str:
     prd = PRD_PATH.read_text(encoding="utf-8")
     match = re.search(r"^## B7\..*?(?=^## B8\.)", prd, flags=re.DOTALL | re.MULTILINE)
@@ -336,9 +345,12 @@ def test_b7_example_folder_holds_only_b7_documents(
     ]
     assert ALLOW_LIST_PATH in top
     for path in top:
-        document = _json(path)
+        document = _document(path)
         assert document["schema"] == "learnops.h5p-practice/v1", path.name
         assert [e.message for e in validator.iter_errors(document)] == [], path.name
+    # Stricter than the shared validator on purpose: it allows supporting subfolders, but B7 has
+    # no body files, and the B1 package's bodies belong in the B1 example folder (layout decided
+    # by the guide on 2026-11-15). A subfolder here would mean B1 files had drifted back in.
     assert [p for p in B7_EXAMPLES.iterdir() if p.is_dir()] == []
 
 
