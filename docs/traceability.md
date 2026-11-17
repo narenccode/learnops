@@ -306,6 +306,49 @@ These are pending and are not claimed by this change:
 - **The open decisions** in the B8.1 README (§9) are pending guide confirmation. This entry does
   not settle them.
 
+## B8.2 sample course (test data), Release 0 foundation
+
+Files: `testdata/b8-2-sample-course/` (`package/course.yaml` in `full` mode, eight Markdown bodies
+under `package/weeks/`, and a `README.md` with the expected structure and open decisions); its
+test `libs/contracts/tests/test_b8_2_dataset.py`; the entry in `testdata/README.md`; the decision record
+`docs/decisions/0010-b8-2-sample-course.md`. B8.2 is a test data set (PRD §B8) with no requirement ID of its
+own, so no row in the table at the top maps to it.
+
+The dataset test checks this one package only. The rules the shared validator lists as "not checked" are
+checked here for B8.2 alone, with test-local helpers: that does not enforce them for any other package, and
+it is not CK-03, CK-09 or any other checker rule.
+
+| What is checked | PRD | Test(s) |
+|---|---|---|
+| The package passes the shared validator (schema, idnumbers unique and not protected, body files exist) | B1.1, B1.2 rule 6 (first half), B1.4 | `test_the_shared_validator_accepts_the_package` |
+| `full` mode, `total_points: 100`; four week sections numbered 4 to 7 (after the B8.1 template's sections 1 to 3; Owner, Issue #55, 2026-11-12) with idnumbers `wk-01` … `wk-04` (kept until the B1 section-idnumber change of Issue #65 is implemented) | B8, B1.1 | `test_course_is_full_mode_with_a_total_of_100` (100 for this package; the merged course's 200 is declared in the README, A6, and no test here uses it), `test_there_are_four_week_sections_numbered_4_to_7` |
+| Twelve unique idnumbers following the week pattern; no default protected idnumber, no protected item and no `.mbz` in the dataset | B1.2 rule 6, B1.4 | `test_idnumbers_are_the_week_pattern_and_never_protected`, `test_no_protected_item_and_no_backup_file_is_in_the_dataset` |
+| The bodies hold no links (a dataset choice so that no third-party material is pulled in; not a PRD rule) | n/a (supports C-07) | `test_bodies_hold_no_links` |
+| One guide Page then one task Assignment per week | B1.2 rule 1 | `test_week_has_one_guide_page_then_one_task_assignment` (4 cases) |
+| Week N unlocks after the week N-1 task, which has `completion: submit`; week 1 is open | B1.2 rule 2 | `test_week_unlocks_when_the_previous_task_is_submitted` (4 cases) |
+| Each task is 25 points and the tasks add up to `total_points` | B1.2 rule 3 | `test_each_task_is_worth_25_and_the_tasks_add_up_to_the_total` |
+| Each task has one valid marking table: markers, header, a valid Markdown separator row, non-empty Criterion and Full marks cells, row points add up to the assignment's points, `Check` names from C3.5; no `command:` checks are used | B1.3, C3.5 | `test_task_has_a_valid_marking_table` (4 cases), `test_the_sample_does_not_use_command_checks`, `test_the_table_check_catches_the_mistakes_it_exists_for`, `test_the_table_check_rejects_empty_cells_and_a_bad_separator` (8 negative cases), `test_the_table_check_accepts_valid_markdown_separators` (2 positive controls) |
+| A task whose table has a `word_count:N` check tells the learner the report needs at least N words (weeks 1 and 4: 150 and 250) | B1.3, C3.5 (`word_count:<min>`) | `test_task_states_the_minimum_word_count` (4 cases), `test_the_word_minimum_check_catches_a_missing_or_wrong_number` (negative control) |
+| Each task body explains the submission format confirmed by the guide on PR #61: `Repository:`, `Demo:` and `Report:` labels, `report.md` or `report.txt` as the report, and which part a check reads, said exactly for the checks that week's own marking table has (weeks 2 to 4 claimed checks their tables lack) | Grading design Q6 (`grading.md` §4.3a); written into B1.3 and B1.5 by PR #87 (open) | `test_task_explains_the_confirmed_submission_format` (4 cases) |
+| The week sections are numbered after the template's last section (3), and do not collide with the protected section (3; confirmed by the guide on PR #61, 2026-11-16, A2; not a contract value) | B1.4 | `test_week_sections_are_numbered_after_the_templates_last_section`, `test_week_numbers_do_not_collide_with_the_protected_section`, `test_the_numbering_checks_would_catch_the_old_numbering_1_to_4` (negative control) |
+| Deviation - C-03: the B8.2 restore and merge tests run on Moodle 5.3 only in Release 0; 4.5 not tested, waived by the guide for Release 0 (extended to the B8.2 restore and merge tests, decided 2026-11-16 as A5 on PR #61; scope B8.2 restore and merge tests only). Reason: the only template for Release 0 is the 5.3-built one. C-03 returns in Release 1, when the template is rebuilt on 4.5. Scope: B8.2 restore and merge tests only; the B8.1 row and its record (`docs/decisions/0009-b8-1-template-course.md`) are from PR #95, merged | C-03 | None (a recorded deviation, not a test) |
+
+### Not covered here
+
+These need Studio, the checker or a Moodle site and are not claimed by this change:
+
+- **PRD C1.7** "B8.2 sample course: package → `.mbz` (full) → restored on fresh 4.5 and 5.3 → M2
+  checker reports 0 errors", the sections-only merge into B8.1, and the ≤ 15 min loading time.
+  The `.mbz` comes from FR-S-06 and FR-S-07 (Release 2).
+- **PRD C2.7** "no false errors on B8.2": needs the checker (Release 1).
+- **B1.2 rules 4 and 5** (marking workflow, completion tracking): not package fields.
+- Decided by the guide on PR #61 (2026-11-16): A2 (section 3 protected; weeks are sections 4 to 7), A6 (totals 100 and 200), A7 (CK-07 and CK-08 not applied on the package
+  alone, applied on the merged course), A8 (theme, titles, shortname, 25-point split) and A5 (the deviation row above). Still open: A4 (pending the Moodle lab) and how the
+  sections-only variant is made in Release 0. The licence (Apache-2.0) and the submission and check formats (A12, A13) were confirmed by the guide on PR #61; the formats
+  are written into PRD B1.3 and B1.5 by PR #87, which is open and waits for the guide.
+- The section idnumbers `wk-01` … `wk-04` are kept for now. They need updating when the B1
+  section-idnumber contract change (Issue #65) is implemented.
+
 ## B8.5 lecture video test data set, Release 0 foundation
 
 Files: `testdata/b8-5-lecture-videos/` (README, folder `.gitignore`, placeholder outlines and
@@ -401,6 +444,41 @@ confirmed by the contract reviewers): `source.kind` is required inside `source` 
 | Shapes of `chapters.json`, `slides.json`, `cues.json` | B6.2 | Their own schemas, see the next section |
 | Windows reserved names (such as `CON`, `NUL`, `COM1`) and Unicode normalization in paths: considered, not v1 rules (guide decision) | B6.3 | Not enforced in v1: the store is on Linux or S3 and no consumer compares names; a v2 discussion if a store later needs them |
 | A maximum path length | B6.3 | None specified in v1 (guide decision): paths are built from bounded slugs and the store enforces its own limits |
+
+## B5 model and speech interface contract (v1), Release 0 foundation
+
+Files: `contracts/model-interface.v1.schema.json`, `contracts/examples/model-interface.v1.*.json`
+(flat, one file per case), `libs/contracts/tests/test_model_interface_v1.py`. Guide decisions: `docs/decisions/0001-b5-model-interface-v1.md`.
+
+FR-M-01 ("Shared model interface library (B5.1–B5.3)", R0) and FR-M-02 ("Speech interface library
+(B5.4)", R0) are deliberately not in the table above. This work covers the data shapes and two
+rules the libraries must follow. It does not implement FR-M-01 or FR-M-02, which still need the
+`model.run` call, the providers themselves, one retry, versioned prompts, logging, and
+`speech.transcribe`. FR-M-01 and FR-M-02 get their rows in the pull request that completes them.
+
+### Enforced by the JSON Schema and covered by automated tests
+
+Structure only. Test names are in `test_model_interface_v1.py`.
+
+| Rule | PRD | Test(s) |
+|---|---|---|
+| `result.meta` has provider, model, input and output tokens, `latency_ms`, `cost_estimate`, `prompt_version` | B5.1, B5.3 | `test_missing_required_field_is_rejected`, `test_wrong_type_or_value_is_rejected` |
+| `provider` is `local`, `hosted` or `fake` (meta and transcript meta) | B5.2, B5.4 | `test_wrong_type_or_value_is_rejected`, `test_wrong_type_or_value_is_rejected`, `test_examples_cover_every_provider` |
+| Token counts and `cost_estimate` are required but may be `null` (not reported) | B5.1, B5.4 | `test_missing_required_field_is_rejected`, `test_valid_variation_is_accepted`, `test_valid_variation_is_accepted`, `test_examples_show_known_and_unknown_usage`, `test_transcript_examples_show_known_and_unknown_cost` |
+| Examples follow the cost rule: local reports `0.0`, unknown usage and cost are `null` | B5.1 | `test_examples_follow_the_cost_rule` |
+| A transcript has `segments` (start, end, text, words) and `meta`; each word has start, end, word | B5.4 | `test_missing_required_field_is_rejected`, `test_wrong_type_or_value_is_rejected` |
+| `transcript.meta` has provider, model, `duration_s`, `latency_ms`, `cost_estimate` | B5.4 | same two tests |
+| A document is either a meta record or a transcript, never neither and never both (no discriminator field) | B5 | `test_document_that_is_neither_kind_is_rejected`, `test_document_that_is_both_kinds_is_rejected` |
+| `segments: []`, `words: []` and empty segment `text` are valid, and examples show each | B5.4 | `test_valid_variation_is_accepted`, `test_transcript_examples_cover_the_empty_cases` |
+| An example shows times after a chunk boundary, counted from the start of the original audio | B5.4 | `test_chunked_example_keeps_times_from_the_start_of_the_audio` |
+| Unknown fields are accepted (including the Q38 names and `language`, which are not part of v1) | B.0 rule 2, EXT-02 | `test_valid_variation_is_accepted`, `test_valid_variation_is_accepted` |
+| By the guide's decision (15 Nov), not a rule: segments and words may arrive out of time order and a consumer sorts by `start` (PRD B5.4); no rule on times past `duration_s`, and a reader must not fail on one | B5.4, decision 0001 (10, 11) | `test_segments_out_of_time_order_pass_the_schema`, `test_a_segment_past_duration_s_passes_the_schema` |
+| A segment's and a word's `end` is not below its `start` (decision 9): **not a schema rule**; the check is in PR #35 and is not merged yet, so today nothing enforces it | B5.4, decision 0001 (5, 9) | `test_segment_ending_before_it_starts_passes_the_schema`, `test_a_word_ending_before_it_starts_passes_the_schema` (record the gap) |
+| The schema is valid, and every example validates against the whole schema and its definition | B.0 rule 1 | `test_schema_is_a_valid_draft_2020_12_schema`, `test_example_is_valid_against_the_whole_schema`, `test_example_is_valid_against_its_definition`, `test_every_example_file_is_listed` |
+
+Chosen in the schema rather than stated in the PRD: token counts and `latency_ms` are non-negative
+integers; seconds and `cost_estimate` are non-negative numbers; `model`, `prompt_version` and `word`
+are non-empty strings; `prompt_version` has no set format.
 
 ## App-C item 4: BigBlueButton recording metadata (Release 0 verification record)
 

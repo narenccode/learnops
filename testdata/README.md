@@ -15,6 +15,14 @@ A Moodle course backup with the protected items (PRD B1.4), course completion an
 | Section layout | Owner-confirmed (Issue #55, 2026-11-12): section 1 `Orientation` (Page `Welcome`, `tpl-welcome`); section 2 `Sample week` (Page `Sample guide`, `tpl-sample-guide`; Assignment `Sample task`, `tpl-sample-task`); section 3 `Final project` (the two protected items). No availability rules. The protected section number 3 (`protected_section`) and the final-project settings are a **Proposal**, configurable, not a confirmed requirement |
 | SHA-256 | Added here when the `.mbz` exists (PENDING MOODLE LAB) |
 
+## B8.2 Sample course
+
+| Item | Value |
+|---|---|
+| Folder | `testdata/b8-2-sample-course/` (details and open decisions in its `README.md`) |
+| Source | Fictional, original content written for LearnOps. No real learner data, real course content or third-party material |
+| Licence or consent | Apache-2.0, the same as the repository (PRD C-11, root `LICENSE`); confirmed by the guide on PR #61. No consent needed: no real person's work is included |
+
 ## B8.5 Lecture videos (owner: Student 4), PENDING
 
 - **Where:** `b8-5-lecture-videos/` (folder layout, recording and hashing steps, and the
