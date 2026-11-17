@@ -34,7 +34,7 @@ has been run.
 
 ## Not decided here
 
-- The practice draft format is proposed (FR-S-12 review card) and not confirmed by the guide (design
+- The practice draft format (FR-S-12 review card) is confirmed by the guide (reported by Harshitha on 18 Nov; the link to his answer is still to be added) (design
   Q12). The generic output review form applies to practice drafts.
 - Agreement for chapters, summaries and practice, the timing protocol for review time (O4, O5), and
   how many mentors review each draft.

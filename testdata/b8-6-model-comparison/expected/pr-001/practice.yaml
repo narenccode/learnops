@@ -1,7 +1,7 @@
 # B8.6 expected practice draft pr-001: PROVISIONAL, NOT REVIEWED.
 # Author-drafted by Student 3 from the fictional transcript t001 ("Why caches work"). It is one
 # author's reading, not a model output, and no mentor has reviewed it (open decision O2).
-# Format proposed by Student 1 on PR #33 (FR-S-12 review card) and NOT yet confirmed by the guide
+# Format proposed by Student 1 on PR #33 (FR-S-12 review card) and confirmed by the guide (reported by Harshitha on 18 Nov; the link to his answer is still to be added)
 # (design Q12). Multiple-choice checkpoint questions only; no short answer.
 schema: learnops.testdata.b8-6.practice/v1
 item: pr-001

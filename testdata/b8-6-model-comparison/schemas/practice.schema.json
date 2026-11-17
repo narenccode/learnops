@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:learnops:testdata:b8-6:practice:v1",
   "title": "B8.6 expected practice draft: multiple-choice checkpoint questions (PROPOSED, test data, not a contract)",
-  "description": "One practice draft as the review card of PRD FR-S-12 shows it: question, correct answer, distractors, explanation. PROPOSED by Student 1 on PR #33 and not yet confirmed by the guide (design Q12). B7 (PR #54) defines no JSON structure for a draft or a review card, so this is a test-data shape for B8.6 only. If Studio later needs it as a fixed B5 task output, that goes through /contract-change.",
+  "description": "One practice draft as the review card of PRD FR-S-12 shows it: question, correct answer, distractors, explanation. Proposed by Student 1 on PR #33 and confirmed by the guide (reported by Harshitha on 18 Nov; the link to his answer is still to be added) (design Q12). B7 (PR #54) defines no JSON structure for a draft or a review card, so this is a test-data shape for B8.6 only. If Studio later needs it as a fixed B5 task output, that goes through /contract-change.",
   "type": "object",
   "required": ["schema", "item", "input", "content_type", "questions"],
   "additionalProperties": false,

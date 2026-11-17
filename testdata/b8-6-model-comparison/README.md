@@ -23,7 +23,7 @@ run, and nothing here says how well any model performs.
 | Chapters | ch-001 | ready, PROVISIONAL | `inputs/t001/transcript.en.json` | `expected/ch-001/chapters.json`, NOT REVIEWED |
 | Summaries | su-001 | ready, PROVISIONAL | `inputs/t001/transcript.en.json` | `expected/su-001/summary.en.md`, NOT REVIEWED |
 | Grading drafts | gd-001 | ready, PROVISIONAL | B8.4 submissions (`inputs/b8-4/source.md`; the files are in PR #31, not merged) | B8.4 mentor reference grades, 32 from one mentor (the guide has not confirmed the mentor, Q13), NOT REVIEWED. Review form: `templates/` (PROPOSED) |
-| Practice drafts | pr-001 | ready, PROVISIONAL | `inputs/t001/transcript.en.json` | `expected/pr-001/practice.yaml`, NOT REVIEWED. Four multiple-choice checkpoint questions in the review-card shape proposed by Student 1 (FR-S-12); the guide has not confirmed the format (Q12) |
+| Practice drafts | pr-001 | ready, PROVISIONAL | `inputs/t001/transcript.en.json` | `expected/pr-001/practice.yaml`, NOT REVIEWED. Four multiple-choice checkpoint questions in the review-card shape proposed by Student 1 (FR-S-12); the format is confirmed by the guide (reported by Harshitha on 18 Nov; the link to his answer is still to be added) |
 
 "Ready" means the files exist. It does not mean they are agreed or reviewed.
 
@@ -82,7 +82,7 @@ These are authoring rules for the expected outputs, not requirements from the PR
 | O4 | Agreement for chapters, summaries and practice (undefined); band for grading (Q44) | Q44, Q48 | Guide |
 | O5 | Mentor review time protocol for non-grading outputs (only grading has one, Q46) | Q46 | Guide |
 | O6 | Grading-draft items: B8.4 merged, its submission-content rule (Q32), reference grades (Q13), `GradeDraftV1` (Q41) | §4.3a, §4.3d | Guide, Students 1 and 3 |
-| O7 | Practice: task shape and output format (B7, FR-S-12, Release 5 stretch). **Proposed by Student 1 on PR #33**: multiple-choice checkpoint questions (H5P question set) in the review-card shape; ordering optional, branching scenario left out, no short answer; B7 defines no draft format. The guide confirms | Q12 | Students 1 and 4, guide |
+| O7 | Practice: task shape and output format (B7, FR-S-12, Release 5 stretch). **Proposed by Student 1 on PR #33**: multiple-choice checkpoint questions (H5P question set) in the review-card shape; ordering optional, branching scenario left out, no short answer; B7 defines no draft format. Format confirmed by the guide (reported by Harshitha on 18 Nov; the link to his answer is still to be added); the lecture input is still open | Q12 | Students 1 and 4, guide |
 | O8 | Size of the set per task (the PRD gives none) | — | Guide |
 | O9 | Licence of the test content (proposal: Apache-2.0, like the repository) | root `CLAUDE.md` §2.10 | Guide |
 | O10 | Accept this format as the B8.6 part of the B8 contract before the Release 0 freeze | `contracts/CLAUDE.md` | All four students, guide |

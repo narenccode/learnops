@@ -34,7 +34,7 @@ AUTOMATED here:
 NOT automated, and therefore NOT claimed:
   * that any expected output is correct or reviewed (none is reviewed; open decision O2);
   * the rubric's content (every definition is proposed or open, Q48), set size, or Q12 inputs;
-  * the agreement of the grading-draft item (gd-001 points at B8.4's reference grades; the mentor is not confirmed); practice items (placeholder); any model run or result.
+  * the agreement of the grading-draft item (gd-001 points at B8.4's reference grades; the mentor is not confirmed); that the guide's confirmation of the practice format is on record (it is reported, not linked); any model run or result.
 """
 
 from __future__ import annotations
