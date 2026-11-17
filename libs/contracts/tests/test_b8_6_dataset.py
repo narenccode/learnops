@@ -21,6 +21,9 @@ AUTOMATED here:
     start on a segment boundary (authoring rules);
   * the rubric lists the four FR-M-03 measures, covers every non-grading task in the manifest and
     has at least one review level that counts as wrong;
+  * an expected practice draft validates against its test-data schema (review-card fields, one
+    H5P content type, at least two distractors, the correct answer not among them, a source range
+    that sits on transcript segment boundaries), and interactive video is never used;
   * the two PROPOSED mentor review forms (grade-draft and output review) have valid schemas, their
     invented examples validate, the output-review levels equal the rubric's levels, a draft id
     never names a provider, and the grade-draft example is internally consistent (differences, totals,
@@ -50,7 +53,7 @@ SET_DIR = ROOT / "testdata" / "b8-6-model-comparison"
 SCHEMA_DIR = SET_DIR / "schemas"
 B5_SCHEMA = ROOT / "contracts" / "model-interface.v1.schema.json"
 
-SCHEMA_NAMES = ("manifest", "rubric", "chapters")
+SCHEMA_NAMES = ("manifest", "rubric", "chapters", "practice")
 REVIEW_SCHEMA_NAMES = ("grade-draft-review", "output-review")
 FR_M_03_MEASURES = {
     "wrong_answer_rate",
@@ -486,6 +489,51 @@ def test_a_b8_4_path_cannot_leave_the_b8_4_set(
         doc = load_yaml(SET_DIR / "manifest.yaml")
         doc["inputs"][-1]["path"] = bad
         assert errors(validators["manifest"], doc) != [], bad
+
+
+# --- expected practice drafts ------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("item", ready_items("practice"), ids=lambda i: str(i["id"]))
+def test_expected_practice_is_valid_and_fits_the_input(
+    validators: dict[str, Draft202012Validator], inputs: dict[str, Doc], item: Doc
+) -> None:
+    practice = load_yaml(SET_DIR / item["expected"])
+    assert errors(validators["practice"], practice) == []
+    assert practice["item"] == item["id"] and practice["input"] == item["input"]
+    transcript = load_json(SET_DIR / inputs[item["input"]]["path"])
+    boundaries = {s["start"] for s in transcript["segments"]} | {
+        s["end"] for s in transcript["segments"]
+    }
+    ids = [q["id"] for q in practice["questions"]]
+    assert len(ids) == len(set(ids))
+    for q in practice["questions"]:
+        assert q["source"] == item["input"], q["id"]
+        start, end = q["source_seconds"]
+        assert start < end <= transcript["meta"]["duration_s"], q["id"]
+        assert {
+            start,
+            end,
+        } <= boundaries, f"{q['id']} does not sit on segment boundaries"
+        assert q["correct_answer"] not in q["distractors"], q["id"]
+        assert q["question"].strip() not in q["distractors"], q["id"]
+
+
+def test_practice_rules_catch_a_bad_draft(
+    validators: dict[str, Draft202012Validator],
+) -> None:
+    good = load_yaml(SET_DIR / "expected" / "pr-001" / "practice.yaml")
+    one_distractor = {
+        **good,
+        "questions": [{**good["questions"][0], "distractors": ["x"]}],
+    }
+    assert (
+        errors(validators["practice"], one_distractor) != []
+    )  # no short answer, no weak card
+    for content_type in ("interactive_video", "short_answer", "branching_scenario"):
+        assert (
+            errors(validators["practice"], {**good, "content_type": content_type}) != []
+        )
 
 
 def test_no_results_are_claimed() -> None:

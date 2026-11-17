@@ -23,7 +23,7 @@ run, and nothing here says how well any model performs.
 | Chapters | ch-001 | ready, PROVISIONAL | `inputs/t001/transcript.en.json` | `expected/ch-001/chapters.json`, NOT REVIEWED |
 | Summaries | su-001 | ready, PROVISIONAL | `inputs/t001/transcript.en.json` | `expected/su-001/summary.en.md`, NOT REVIEWED |
 | Grading drafts | gd-001 | ready, PROVISIONAL | B8.4 submissions (`inputs/b8-4/source.md`; the files are in PR #31, not merged) | B8.4 mentor reference grades, 32 from one mentor (the guide has not confirmed the mentor, Q13), NOT REVIEWED. Review form: `templates/` (PROPOSED) |
-| Practice drafts | pr-001 | placeholder | Not agreed (Q12) | None. No practice questions are written until Q12 is agreed |
+| Practice drafts | pr-001 | ready, PROVISIONAL | `inputs/t001/transcript.en.json` | `expected/pr-001/practice.yaml`, NOT REVIEWED. Four multiple-choice checkpoint questions in the review-card shape proposed by Student 1 (FR-S-12); the guide has not confirmed the format (Q12) |
 
 "Ready" means the files exist. It does not mean they are agreed or reviewed.
 
@@ -32,7 +32,7 @@ run, and nothing here says how well any model performs.
 ```
 manifest.yaml                  inputs and items (task, status, input, expected, review status)
 rubric.yaml                    review levels and the four FR-M-03 measures (PROVISIONAL, frozen: false)
-schemas/                       manifest, rubric, expected-chapters and two review-form schemas (Draft 2020-12)
+schemas/                       manifest, rubric, expected-chapters, expected-practice and two review-form schemas (Draft 2020-12)
 templates/                     PROPOSED mentor review forms with invented examples (see templates/README.md)
 inputs/t001/                   transcript.en.json (B5.4 shape) + source.md (provenance)
 expected/<item id>/            author-drafted expected outputs (see expected/README.md)
@@ -58,6 +58,7 @@ items[].task     ──> rubric.yaml output_review.applies_to / grade_draft_revi
 - **Chapters:** PRD B6.2 `chapters.json` `[{start, end, title}]`. B6 (PR #32) names the file but
   does not define its content, so `schemas/chapters.schema.json` is a test-data schema, **not a
   contract**.
+- **Practice:** `practice.yaml` (`schemas/practice.schema.json`), a test-data shape, **not a contract**. B7 (PR #54) defines no JSON structure for a draft or a review card, so this follows the FR-S-12 review card (question, correct answer, distractors, explanation, source) as proposed by Student 1 on PR #33. One H5P content type per item (`question_set`); interactive video is never used.
 - **Summary:** PRD B6.2 `summary.en.md`, Markdown. No shape is defined. The first line of the
   expected file is an HTML comment carrying the PROVISIONAL / NOT REVIEWED label. A rendered
   summary does not show it.
@@ -81,7 +82,7 @@ These are authoring rules for the expected outputs, not requirements from the PR
 | O4 | Agreement for chapters, summaries and practice (undefined); band for grading (Q44) | Q44, Q48 | Guide |
 | O5 | Mentor review time protocol for non-grading outputs (only grading has one, Q46) | Q46 | Guide |
 | O6 | Grading-draft items: B8.4 merged, its submission-content rule (Q32), reference grades (Q13), `GradeDraftV1` (Q41) | §4.3a, §4.3d | Guide, Students 1 and 3 |
-| O7 | Practice: task shape and output format (B7, FR-S-12, Release 5 stretch) | Q12 | Students 1 and 4 |
+| O7 | Practice: task shape and output format (B7, FR-S-12, Release 5 stretch). **Proposed by Student 1 on PR #33**: multiple-choice checkpoint questions (H5P question set) in the review-card shape; ordering optional, branching scenario left out, no short answer; B7 defines no draft format. The guide confirms | Q12 | Students 1 and 4, guide |
 | O8 | Size of the set per task (the PRD gives none) | — | Guide |
 | O9 | Licence of the test content (proposal: Apache-2.0, like the repository) | root `CLAUDE.md` §2.10 | Guide |
 | O10 | Accept this format as the B8.6 part of the B8 contract before the Release 0 freeze | `contracts/CLAUDE.md` | All four students, guide |

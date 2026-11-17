@@ -9,5 +9,6 @@ None is approved, and none may be used as a reference in a comparison run until 
 |---|---|---|
 | ch-001 | `ch-001/chapters.json` | not reviewed |
 | su-001 | `su-001/summary.en.md` | not reviewed |
+| pr-001 | `pr-001/practice.yaml` | not reviewed |
 
 These are one author's reading of a fictional transcript, not model outputs.
