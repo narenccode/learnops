@@ -335,6 +335,19 @@ def test_protected_idnumbers_are_allowed_unlike_b1(doc: Doc) -> None:
     assert messages(doc) == []
 
 
+def test_protected_feedback_item_type_does_not_affect_model_validity(doc: Doc) -> None:
+    # Schema and model validity only. This does NOT run CK-07 and does not show that CK-07 is
+    # implemented (the checker does not exist yet). It shows that the course-feedback item stays a
+    # valid item, with the same idnumber, when its `type` has no mapping in decision 0003 #6:
+    # `type` is an open string (PRD C2.8).
+    feedback = doc["sections"][3]["activities"][1]
+    assert feedback["idnumber"] == "course-feedback"
+    assert feedback["type"] == "feedback"
+    feedback["type"] = "unmapped_test_type"
+    assert messages(doc) == []
+    assert feedback["idnumber"] == "course-feedback"
+
+
 # --- null and absent values that are valid -------------------------------------------------
 
 ACCEPTED = {

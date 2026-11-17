@@ -82,6 +82,7 @@ CK-03 compares the sum of graded activity points with an independent course targ
 - **No independent target:** if an `.mbz` model has no independently supplied target, `course.total_points` remains absent or null and CK-03 returns `cannot judge`. Do not apply the package default of 100 and do not infer a target from gradebook items.
 - **Calculation:** sum `grade_item.max_grade` across graded activities and exclude ungraded activities. Compare that sum with the independent target. A matching sum is `pass`; a mismatch is `finding`.
 - **Report:** include the target, calculated sum, difference and the grade items counted.
+- **Open (not decided):** how to compare when points are not integers (exact, rounded to a precision or within a tolerance) is not specified and no rule is implemented. This section says `cannot judge` where risk 11 and PRD C2.8 say `not checked`; whether these are one report state or two is not decided. See decision 0003, section 3.
 
 For a merged course, the final project is part of the course and counts in the graded sum. The intended merged total must be declared independently before the test when the merged package adds graded points. The builder's exact API/input mechanism remains an implementation detail to be specified when FR-C-01 is designed; this document does not invent a CLI flag or another source for the target.
 
@@ -174,7 +175,7 @@ Exact HTTP route names and request/response schemas will be recorded after the s
 Proposed command structure:
 
 ```text
-checker check <input> --config <file>
+checker check <input> [--reference-model <path>] --config <file>
 checker diff <model-a> <model-b> --config <file>
 checker roles --config <file>
 checker integration --config <file>
@@ -193,13 +194,14 @@ Expected behaviour:
 - `--dry-run`: Print the intended operations without making changes.
 - `--check`: Perform read-only validation; exit with code `0` if no problems are found, `1` if problems are found and `2` for an execution error.
 - `--config`: Read configuration from the specified file.
+- `--reference-model <path>` (`checker check` only): supplies the B2 course model of the B8.1 template course, built from its `.mbz` backup. CK-07 uses it to compare protected items field by field (decision 0003 #21). If it is absent, CK-07 cannot perform that comparison. The resulting report state and wording remain subject to the open question in decision 0003, section 3. Planned, not implemented.
 - Normal execution: Perform the requested operation and save the results.
 
 The exact subcommand names are proposed and must be aligned with the repository's existing CLI conventions before implementation.
 
 ### 6.3 Undo and recovery
 
-Course checking and model comparison are read-only and need no data rollback. Test-run records and generated artefacts must have a documented cleanup procedure.
+Course checking and model comparison are read-only and need no data rollback. Planned design: `--reference-model` only reads the model file it is given, writes nothing and needs no undo; this is not yet implemented or tested. Test-run records and generated artefacts must have a documented cleanup procedure.
 
 The integration harness must document how to clean up disposable test resources and restore the lab to a known clean state. It must not automatically modify a mentor's live course.
 

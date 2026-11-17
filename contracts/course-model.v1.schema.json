@@ -39,7 +39,7 @@
     },
     "availability": {
       "type": ["object", "null"],
-      "description": "Moodle's own availability JSON, kept whole so that no information is lost (PRD B2). null means no restriction. A package unlock rule is stored as an availability object too, with its date as a Unix timestamp for 00:00 in the configured site timezone (see source.timezone). The contract does not fix the inner structure of an availability object (its operator, condition list, show flags, condition values and their order belong to Moodle), and the examples are illustrations only, so a reader finds conditions by their type, never by position. In completion conditions, cm = -1 means OPTION_PREVIOUS: the nearest earlier activity in course order with manual or automatic completion tracking; for a section's availability, earlier means strictly before that section. Activities without tracking are skipped. If no eligible activity exists, the condition cannot be met. An unresolved -1 is reported as CK-04. This rule is documented but still requires Moodle lab verification."
+      "description": "Provisional until Moodle lab verification (decision 0003 section 4, items 1 and 2): the cm = -1 resolution described below is documented, not verified on Moodle 4.5 or 5.3. Moodle's own availability JSON, kept whole so that no information is lost (PRD B2). null means no restriction. A package unlock rule is stored as an availability object too, with its date as a Unix timestamp for 00:00 in the configured site timezone (see source.timezone). The contract does not fix the inner structure of an availability object (its operator, condition list, show flags, condition values and their order belong to Moodle), and the examples are illustrations only, so a reader finds conditions by their type, never by position. In completion conditions, cm = -1 means OPTION_PREVIOUS: the nearest earlier activity in course order with manual or automatic completion tracking; for a section's availability, earlier means strictly before that section. Activities without tracking are skipped. If no eligible activity exists, the condition cannot be met. An unresolved -1 is reported as CK-04."
     },
     "cmid": {
       "type": "integer",
@@ -137,11 +137,11 @@
         "number": {
           "type": "integer",
           "minimum": 0,
-          "description": "Moodle's section number. Moodle has a section 0, so the minimum is 0, not 1 as in B1."
+          "description": "Moodle's section number. The schema permits 0; whether Moodle 4.5 and 5.3 source backups use section 0 remains pending Moodle lab item 5 (decision 0003, section 4)."
         },
         "idnumber": {
           "$ref": "#/$defs/idnumber",
-          "description": "Nullable section identity. Moodle course_sections has no idnumber field, so mbz-derived models use null. Sections are matched by section number."
+          "description": "Nullable section identity. Moodle course_sections has no idnumber field, so mbz-derived models use null (the guide read the Moodle 4.5 and 5.3 source: issue #65, comment of 2026-11-12). Sections are matched by section number."
         },
         "title": { "$ref": "#/$defs/title" },
         "visible": { "$ref": "#/$defs/visible" },
@@ -188,7 +188,7 @@
         "max_grade": {
           "type": "number",
           "minimum": 0,
-          "description": "Maximum grade. A number, not an integer, because Moodle grades can be decimal."
+          "description": "Maximum grade. A number, not restricted to an integer. How CK-03 compares non-integer points is undecided (decision 0003 section 3)."
         }
       }
     },

@@ -33,6 +33,16 @@ This document records the decisions and outstanding verification items for Contr
 | 24 | A sections-only section must not reference an activity of its own section. The guide: "A reference to an activity in the same section is not an earlier activity; the sections-only exception is for an activity outside the package, not one at or after the section." The validator rejects it, wherever the activity sits in that section, with the same issue as a reference to a later section. CK-05 still covers cycles across sections. |
 | 25 | CK-03 uses an independent grading target (guide-confirmed, 2026-11-16). For a package model, the target is the package's declared `total_points`, with the B1 default of 100 only when the package omits it. For an `.mbz` model, including a merged course, the independently declared target is supplied to the model builder as a separate input and must be written to `course.total_points`; a merged course remains `source.kind = mbz`. The target must never be derived from the gradebook items being checked. If no independent target is supplied, `course.total_points` remains absent or null and CK-03 returns `cannot judge` (no default of 100 for `.mbz`). The merged target includes the final project because it is part of the merged course; the intended merged total must be declared before testing when the package adds graded points. CK-03 sums `grade_item.max_grade` for graded activities, excludes ungraded activities, and compares the sum with the independent target. Its report includes the target, calculated sum, difference and items counted. This decision confirms the target handoff and calculation semantics; it does not define a builder API or input mechanism. |
 
+## Checker implementation clarification
+
+This clarifies decision 6. It is the checker owner's clarification and is not a new decision confirmed by the Guide. It rests on PRD B1.4 and on the Guide's comment of 2026-11-15 that a protected item is defined by its `idnumber`.
+
+- A protected item is identified by its `idnumber` (`final-project`, `course-feedback`), independently of its activity `type`.
+- The example course feedback item has `type: feedback`, which has no mapping in the activity-type mapping of decision 6.
+- CK-07 can still identify that protected item by its `idnumber`.
+- "Not checked" applies to unsupported activity-level rules for an activity type. It does not apply to CK-07's independent identification of protected items.
+- B1.4 behaviour is unchanged.
+
 ## 2. Confirmed by Student 1
 
 | # | Decision |
@@ -50,6 +60,8 @@ The following items have not yet received explicit confirmation:
 | Other completion properties | `{tracking, view?, submit?, use_grade?, pass_grade?}` | The `submit` mapping and tracking enum are confirmed. The exact semantics and support for the other optional properties still need verification. |
 | `marking_workflow` | Nullable boolean | Confirm whether null is appropriate for package-derived models and whether the current representation covers the required checker behaviour. |
 | `course_completion` and `badges` | Null in package-derived models | Confirm how CK-10 should assess package models when these values are unavailable. |
+| CK-03 comparison of non-integer points | `total_points`, `max_grade` and `points_total` are JSON numbers with a minimum of 0, so decimals are structurally valid; B1 `points` is an integer. The checker design says only: sum `max_grade`, compare with the target; a match is `pass`, a mismatch is `finding`. | **Undecided:** whether the comparison is exact, rounded to a precision or within a tolerance. No rule is specified or implemented. The guide and the checker owner decide this before CK-03 is built. |
+| Report state: `cannot judge` versus `not checked` | Decision 25 and the CK-03 design say `cannot judge`; risk 11 (CK-07) and PRD C2.8 say `not checked`. | **Undecided:** whether these are one report state or two, and how they affect the zero-errors condition. To be defined in the checker design's report section before FR-C-03 starts. |
 | `fullname` and activity/section `title` | Optional | Retain as optional reporting fields unless further requirements dictate otherwise. `fullname` is never null: a Moodle course always has a full name and B1 requires one. Section and activity titles may be null because the source may not name them. |
 
 ## 4. Required Moodle Lab Verification
