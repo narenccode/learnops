@@ -1,0 +1,6 @@
+[
+  { "t": 0, "thumb": "slides/001.jpg", "text": "Install Python" },
+  { "t": 95.5, "thumb": "slides/002.jpg" },
+  { "t": 301.25, "thumb": "slides/003.jpg", "text": "Run the installer" },
+  { "t": 430.75, "thumb": "slides/004.jpg" }
+]
