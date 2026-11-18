@@ -345,7 +345,7 @@ course:
 sections:
   - number: 1
     title: "Week 1 — Set up your tools"
-    idnumber: wk-01
+    idnumber: wk-01                 # optional authoring label (B1.2 rule 6)
     unlock:
       after: null                 # first week: open
       start_date: null            # optional ISO date
@@ -389,7 +389,17 @@ sections:
 3. Graded points across the course sum to `total_points` (default 100).
 4. Assignments use marking workflow (so grades stay hidden until released, §B4).
 5. Completion tracking is on for every activity used in an unlock rule.
-6. All `idnumber`s are unique within the course, lowercase ASCII with hyphens, and never reused for a different activity.
+6. All `idnumber`s that are present are unique within the course (a section's `idnumber` is optional, see below), lowercase ASCII with hyphens, and never reused for a different activity.
+
+**The section `idnumber` is optional.** It is an authoring label for Studio: Moodle stores no
+`idnumber` for a section, so a section is identified by its `number`. A restore, a reverse import
+(FR-S-08) and the round trip (C1.7) match a section by its number, and a reverse import leaves the
+field out. A section may omit `idnumber`. When it is present it must be a valid idnumber (absent is
+the only way to have none: `null` and an empty string are errors) and it is unique within the
+package (rule 6). Every activity has an `idnumber`. A protected item is defined by its `idnumber`
+(B1.4), so CK-07, which matches a protected item by its `idnumber`, does not apply to a section
+without one. The configurable `protected_section` number of B1.4 is a separate rule and is unchanged.
+Decision record `docs/decisions/0007-b1-optional-section-idnumber.md`.
 
 ### B1.3 Marking table format
 
@@ -447,6 +457,9 @@ HTML table in the Moodle assignment description; the grading assistant parses it
     field (`http_ok:`) and a trailing `;` fail the same way (CK-09). The `command:<name>` check
     and its configuration, the argument format of `repo_file:<path>`, the criterion keys, and the
     other parsing details of a marking table are not defined here.
+  - Shared test cases for a `Check` cell, with the result a parser must give, are in
+    `contracts/test-vectors/check-cells.v1.json`. They cover what this section states and decide
+    none of the points above that it leaves open.
 - The HTML rendering keeps the `data-marking-table="v1"` attribute so the table can be parsed back.
 
 ### B1.4 Protected activities and output modes
@@ -784,7 +797,7 @@ url = media_signing.sign(relative_path, ttl_seconds=3600)
 ## B7. H5P practice output (v1, stretch)
 
 - Content types pinned in the first release that uses them (exact library versions recorded): question set (checkpoints), drag-the-words or drag-and-drop / ordering, branching scenario. Interactive video only in lab demonstrations (with openly licensed videos).
-- Each practice item is a standard `.h5p` file plus an entry in `course.yaml` (`type: h5p`, `idnumber`, `graded: false`).
+- Each practice item is a standard `.h5p` file plus an entry in `course.yaml` (`type: h5p`, `idnumber`, `graded: false`, `file`: a relative path to the `.h5p` file).
 - Placed after the week's guide Page; **never graded** (no grade item; the checker enforces this).
 - Video checkpoints are produced in two modes: a separate activity after the video (default), and `cues.json` entries for the future player (F-1).
 
