@@ -17,8 +17,11 @@ from demo_live_common import (  # noqa: E402
     Connection,
     DemoError,
     Recorder,
+    check_output_path,
     connect,
+    course_id_from,
     describe,
+    read_config,
 )
 from moodle_ws import MoodleError  # noqa: E402
 from readonly_connection import ReadOnlyTransport  # noqa: E402
@@ -105,3 +108,51 @@ def test_a_path_that_climbs_into_the_repository_is_refused(tmp_path: Path) -> No
     sneaky = ROOT.parent / ROOT.name / "scripts" / ".." / "docs" / "h4.json"
     with pytest.raises(DemoError):
         Recorder().save(sneaky)
+
+
+# --- the shared --config and --out helpers (used by the Tier 2 and Tier 3 scripts) ---------------
+
+
+def test_no_config_gives_an_empty_config_and_no_course() -> None:
+    config = read_config(None)
+    assert config == {} and course_id_from(config) is None
+
+
+def test_a_config_file_is_read_and_its_course_id_taken(tmp_path: Path) -> None:
+    path = tmp_path / "c.yaml"
+    path.write_text("course_id: 7\nlearners:\n  A: x\n", encoding="utf-8")
+    config = read_config(path)
+    assert course_id_from(config) == 7 and config["learners"] == {"A": "x"}
+
+
+@pytest.mark.parametrize("text", ["- a list\n", "just text\n", "a: [unclosed\n"])
+def test_a_config_that_is_not_a_mapping_is_a_demo_error(
+    tmp_path: Path, text: str
+) -> None:
+    path = tmp_path / "c.yaml"
+    path.write_text(text, encoding="utf-8")
+    with pytest.raises(DemoError) as caught:
+        read_config(path)
+    assert "--config" in str(caught.value)
+
+
+def test_a_missing_config_file_is_a_demo_error(tmp_path: Path) -> None:
+    with pytest.raises(DemoError, match="--config"):
+        read_config(tmp_path / "no-such-file.yaml")
+
+
+@pytest.mark.parametrize("value", ["nope", 0, -3, True, 2.5])
+def test_a_course_id_that_is_not_a_whole_number_above_zero_is_a_demo_error(
+    value: object,
+) -> None:
+    with pytest.raises(DemoError, match="--config"):
+        course_id_from({"course_id": value})
+
+
+def test_check_output_path_accepts_none_and_outside_paths_and_refuses_inside(
+    tmp_path: Path,
+) -> None:
+    check_output_path(None)
+    check_output_path(tmp_path / "x.json")
+    with pytest.raises(DemoError, match="inside the repository"):
+        check_output_path(ROOT / "docs" / "x.json")

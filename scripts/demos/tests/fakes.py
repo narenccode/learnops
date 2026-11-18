@@ -13,6 +13,8 @@ from collections.abc import Iterable
 from pathlib import Path
 from urllib.parse import parse_qs
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "libs"))
 sys.path.insert(0, str(ROOT / "scripts" / "demos"))
@@ -64,3 +66,13 @@ def connection_for(fake: FakeSite) -> Connection:
     transport = ReadOnlyTransport(post=fake.post, get=fake.get)
     client = MoodleClient(base.settings, transport)
     return Connection(client, transport, base.settings, True, fake)
+
+
+def install(
+    monkeypatch: "pytest.MonkeyPatch", module: object, fake: FakeSite | None = None
+) -> Connection:
+    """Make the demo module's main() use one offline connection, so a test can choose the fake and
+    look at it afterwards."""
+    connection = connection_for(FakeSite() if fake is None else fake)
+    monkeypatch.setattr(module, "connect", lambda offline, environ=None: connection)
+    return connection

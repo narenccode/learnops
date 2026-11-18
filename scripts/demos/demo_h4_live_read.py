@@ -35,8 +35,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Final
 
-import yaml
-
 ROOT = Path(__file__).resolve().parents[2]
 # The repository has a data folder named contracts/ at its root. Put libs/ first so that imports
 # find the libraries, not that folder.
@@ -44,12 +42,14 @@ sys.path.insert(0, str(ROOT / "libs"))
 
 from demo_fake_site import COURSE_ID as OFFLINE_COURSE_ID  # noqa: E402
 from demo_live_common import (  # noqa: E402
-    OUTPUT_INSIDE_REPOSITORY,
     Connection,
     DemoError,
     Recorder,
+    check_output_path,
     connect,
+    course_id_from,
     describe,
+    read_config,
 )
 from moodle_ws import MoodleError  # noqa: E402
 
@@ -91,10 +91,6 @@ SUMMARY_OK = "Tier 2: all six steps ran. Findings: {findings}."
 SUMMARY_BAD = "Tier 2: {count} step(s) failed; see the lines marked STEP n FAILED. Findings: {findings}."
 LAST_OFFLINE = "OFFLINE: built-in fake, not a live run. Nothing was written to Moodle."
 LAST_LIVE = "LIVE: read-only run. Nothing was written to Moodle."
-ERR_CONFIG = (
-    "The --config file {path} could not be used: {reason}. Use a YAML file with one key, "
-    "course_id, a whole number."
-)
 ERR_NO_COURSE = (
     "Live mode needs the course id. Put course_id in the --config file (the id from the "
     "'Test course ready' post in #112)."
@@ -373,26 +369,6 @@ def _error(text: str) -> int:
     return 2
 
 
-def _course_from_config(path: Path | None) -> int | None:
-    if path is None:
-        return None
-    try:
-        loaded = yaml.safe_load(path.read_text(encoding="utf-8"))
-        course = loaded["course_id"]
-        if type(course) is not int or course <= 0:
-            raise ValueError("course_id must be a whole number above zero")
-    except (OSError, yaml.YAMLError, KeyError, TypeError, ValueError) as error:
-        raise DemoError(
-            ERR_CONFIG.format(path=path, reason=type(error).__name__)
-        ) from None
-    return course
-
-
-def _check_output_path(out: Path | None) -> None:
-    if out is not None and Path(out).resolve().is_relative_to(ROOT.resolve()):
-        raise DemoError(OUTPUT_INSIDE_REPOSITORY.format(path=out))
-
-
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="demo_h4_live_read",
@@ -426,8 +402,8 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 def _main(args: argparse.Namespace) -> int:
-    course = _course_from_config(args.config)
-    _check_output_path(args.out)
+    course = course_id_from(read_config(args.config))
+    check_output_path(args.out)
     connection = connect(offline=args.offline)
     if course is None and args.offline:
         course = OFFLINE_COURSE_ID

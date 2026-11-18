@@ -15,6 +15,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Final
 
+import yaml
+
 ROOT = Path(__file__).resolve().parents[2]
 # The repository has a data folder named contracts/ at its root. Put libs/ first so that imports
 # find the libraries, not that folder.
@@ -46,6 +48,10 @@ OUTPUT_INSIDE_REPOSITORY = (
 )
 OUTPUT_NOT_WRITTEN = (
     "The output could not be saved to {path}: {reason}. Name another path."
+)
+ERR_CONFIG = (
+    "The --config file {path} could not be used: {reason}. Use a YAML file with the key "
+    "course_id (a whole number above zero) and, for the dry run, optionally learners."
 )
 DESCRIBE_OFFLINE = "Moodle 5.3 fake (offline), read-only connection"
 DESCRIBE_LIVE = "Moodle 5.3 lab (live), read-only connection"
@@ -120,3 +126,38 @@ class Recorder:
             raise DemoError(
                 OUTPUT_NOT_WRITTEN.format(path=path, reason=type(error).__name__)
             ) from None
+
+
+def read_config(path: Path | None) -> dict[str, Any]:
+    """The --config file as a mapping (empty when there is none)."""
+    if path is None:
+        return {}
+    try:
+        loaded = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError) as error:
+        raise DemoError(
+            ERR_CONFIG.format(path=path, reason=type(error).__name__)
+        ) from None
+    if not isinstance(loaded, dict):
+        raise DemoError(ERR_CONFIG.format(path=path, reason="it is not a mapping"))
+    return loaded
+
+
+def course_id_from(config: Mapping[str, Any]) -> int | None:
+    """`course_id` from the config: None when absent, an error when it is not a whole number."""
+    if "course_id" not in config:
+        return None
+    course = config["course_id"]
+    if type(course) is not int or course <= 0:
+        raise DemoError(
+            ERR_CONFIG.format(
+                path="", reason="course_id must be a whole number above zero"
+            )
+        )
+    return course
+
+
+def check_output_path(out: Path | None) -> None:
+    """Refuse an --out path inside the repository, before any work is done."""
+    if out is not None and Path(out).resolve().is_relative_to(ROOT.resolve()):
+        raise DemoError(OUTPUT_INSIDE_REPOSITORY.format(path=out))
