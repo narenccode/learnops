@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import importlib.util
+import io
 from pathlib import Path
 from types import ModuleType
 
@@ -135,6 +136,32 @@ def test_check_reports_a_changed_or_missing_file(
         == 2
     )
     assert target.read_bytes() == b"something else"  # --check writes nothing
+
+
+def test_ctrl_c_removes_the_partial_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A download stopped with Ctrl+C leaves no .part file and still stops."""
+
+    class Interrupted(io.BytesIO):
+        def read(self, size: int | None = -1) -> bytes:
+            if self.tell():
+                raise KeyboardInterrupt
+            return super().read(4)
+
+    monkeypatch.setattr(
+        download.urllib.request, "urlopen", lambda *_a, **_k: Interrupted(b"abcdefgh")
+    )
+    target = tmp_path / "b.mbz"
+    with pytest.raises(KeyboardInterrupt):
+        download.main(
+            [], target=target, source="https://example.invalid/b.mbz", expected="0" * 64
+        )
+    assert not target.exists() and not list(tmp_path.glob("*.part"))
+
+
+def test_partial_downloads_are_gitignored() -> None:
+    assert "*.part" in (DATASET_DIR / ".gitignore").read_text(encoding="utf-8").split()
 
 
 def test_dry_run_writes_nothing(tmp_path: Path) -> None:

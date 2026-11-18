@@ -53,7 +53,7 @@ PRD C-07 and §B8: test data only, no real learner data (CLAUDE.md rule 4: no re
 | User data in the backup | OFF, so the file contains no users (Owner). Check on the finished file, including for real learner data: PENDING MOODLE LAB |
 | Exact build, backup format version, other backup settings, file size, date | PENDING MOODLE LAB |
 | Section identity | Owner (Issue #65, 2026-11-12): Moodle sections have no `idnumber` on 4.5 or 5.3, so the template's sections carry none. Sections are matched by section number, and the protected section is found by its number (PRD §B1.4). The matching change to the B1 contract is a separate `/contract-change` pull request, not part of B8.1 |
-| `protected_section` (PRD §B1.4: configurable, no default) | Proposal (Owner, 2026-11-07): section 3, kept configurable |
+| `protected_section` (PRD §B1.4: configurable, no default) | Section 3 (Owner, #61 A2, 2026-11-16; first proposed on 2026-11-07). The value stays configurable: the contract and the validator never hard-code it |
 | Availability and visibility | Owner (2026-11-12): no availability rules; everything is visible |
 
 **Section layout** (titles, activities and `idnumber`s in the table below: Owner, 2026-11-12). The
@@ -90,8 +90,8 @@ unless a row below says Owner.
 
 | idnumber | Type | Section | Count |
 |---|---|---|---|
-| `final-project` | Assignment | 3 "Final project" (Owner for the title; the number 3 is a Proposal) | 1 |
-| `course-feedback` | Feedback | 3 "Final project" (Owner for the title; the number 3 is a Proposal) | 1 |
+| `final-project` | Assignment | 3 "Final project" (Owner for the title; Owner, #61 A2, for the number 3) | 1 |
+| `course-feedback` | Feedback | 3 "Final project" (Owner for the title; Owner, #61 A2, for the number 3) | 1 |
 | none | Course completion criteria | course level | 2: final project, feedback (Owner) |
 | none | Course badge "Template course badge" | course level | 1 (Owner) |
 
@@ -135,6 +135,14 @@ tables must be equal field by field.
 | Completion | the completion setting | the criteria list | the award rule |
 | Visibility | filled | not applicable | not applicable |
 | Extra fields | none | none | issuer, description, active state |
+
+**The manual and the checker comparisons differ for the badge** (Shraddha, checker owner, review of
+#141, 2026-11-19). The checker builds its model from the `.mbz` (course model v1, B2). For the final
+project and the course feedback, that model holds all seven fields above; for course completion, its
+criteria list. For the badge it holds only the name and the award rule: **issuer, description and active
+state are not in model v1**, so only the lab tables compare them. If 5.3 leaves the unawarded badge out
+of the `.mbz` (P35, §6), the model has no badge at all; the checker treats that as the recorded deviation,
+not as a missing protected item, and takes it from the decision record after lab step 8.5.
 
 ## 5. Course completion configuration
 
@@ -285,7 +293,7 @@ the clean-up rule in §7 (Owner, the 14:43, 09:36 and 11-14 replies).
 |---|---|
 | Decision record for App-C item 2 | `docs/decisions/0009-b8-1-template-course.md`, added in PR #95 at the guide's request (2026-11-16). It holds the 4.5 waiver (phrase, B8.1-only scope, cost, links to the guide's comments). The number is the next one no open pull request claims; it is taken again at merge, after rebasing (Owner, Issue #55, 2026-11-12), and a renumbering is one file rename plus the paths in this README, the runbook and `docs/traceability.md`. The same file later holds the short, text-only results table that names the local evidence files (Owner, the 14:43 reply); the results must be in it before the merge-test course is deleted (Owner, the 09:36 reply). The results table is not written yet |
 | `docs/traceability.md` | Owner: one B8.1 entry, following the B1 and B8 pattern, no FR id, citing PRD B8.1 and B1.4. Added in PR #57, merged on 2026-11-13 |
-| `testdata/README.md` entry | Updated for the 2026-11-12 owner answers. It now records the owner-confirmed Apache-2.0 licence and the owner-confirmed section titles and activity idnumbers. The protected-section number and the final-project settings remain proposals. The `.mbz` file and its SHA-256 are still pending, because no backup exists yet |
+| `testdata/README.md` entry | Updated for the 2026-11-12 owner answers. It now records the owner-confirmed Apache-2.0 licence and the owner-confirmed section titles and activity idnumbers. The protected-section number is owner-confirmed (#61 A2); the final-project settings remain proposals. The `.mbz` file and its SHA-256 are still pending, because no backup exists yet |
 
 **Still open:**
 

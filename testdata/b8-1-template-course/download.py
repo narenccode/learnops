@@ -92,6 +92,11 @@ def download(source: str, target: Path, expected: str) -> int:
         partial.unlink(missing_ok=True)
         print(FAILED.format(reason=error, removed=REMOVED), file=sys.stderr)
         return 2
+    except KeyboardInterrupt:
+        # Ctrl+C: leave nothing half-written behind, then stop as the user asked.
+        partial.unlink(missing_ok=True)
+        print(REMOVED, file=sys.stderr)
+        raise
     actual = sha256_of(partial)
     if actual != expected:
         partial.unlink()
