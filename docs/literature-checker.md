@@ -1,10 +1,10 @@
 # Literature Survey — Course Checker, Role Tests and Integration Harness
 
-**Module:** checker (M2)  
-**Owner:** @shraddha0103  
-**Peer reviewer:** @Akshita21-09  
-**Release:** Release 0 research supporting Release 1 implementation  
-**Prepared:** 19 November 2026  
+**Module:** checker (M2)
+**Owner:** @shraddha0103
+**Peer reviewer:** @Akshita21-09
+**Release:** Release 0 research supporting Release 1 implementation
+**Prepared:** 19 November 2026
 **Status:** Literature survey — source verification completed for the references listed below
 
 ## 1. Purpose and scope
