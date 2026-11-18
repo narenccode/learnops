@@ -52,6 +52,22 @@ def identifier_pattern() -> re.Pattern[str]:
     return re.compile(load_schema()["$defs"]["identifier"]["pattern"])
 
 
+@functools.cache
+def pattern_texts() -> dict[str, tuple[str, str]]:
+    """The message and hint for each `pattern` in the B1 schema, keyed by the pattern text.
+
+    The patterns are read from the schema, so a changed pattern keeps its words. A test checks
+    that every pattern in the schema is listed here (UI-05: never show a regular expression).
+    """
+    defs = load_schema()["$defs"]
+    return {
+        defs["relative_path"]["pattern"]: messages.B1_PATH_NOT_RELATIVE,
+        defs["identifier"]["pattern"]: messages.B1_IDNUMBER_INVALID,
+        defs["h5p_file"]["allOf"][1]["pattern"]: messages.B1_H5P_FILE_NOT_H5P,
+        defs["unlock"]["properties"]["start_date"]["pattern"]: messages.B1_DATE_NOT_ISO,
+    }
+
+
 def schema_issues(document: object) -> list[Issue]:
     """Every schema error, ordered by place so the result is the same on every run."""
     errors = sorted(_validator().iter_errors(document), key=error_order)
@@ -101,6 +117,18 @@ def _to_issue(error: ValidationError) -> Issue:
             fix_hint=messages.PROTECTED_DEFAULT_HINT,
             location=location,
         )
+    pattern = error.validator_value
+    if error.validator == "pattern" and isinstance(pattern, str):
+        texts = pattern_texts().get(pattern)
+        if texts is not None:
+            message, hint = texts
+            return Issue(
+                code="schema_pattern",
+                rule=RULE,
+                message=message.format(where=place, value=error.instance),
+                fix_hint=hint,
+                location=location,
+            )
     return Issue(
         code=f"schema_{error.validator}",
         rule=RULE,

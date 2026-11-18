@@ -137,6 +137,97 @@ def test_default_protected_idnumber_gets_a_clear_message(
     assert "template" in issue.fix_hint
 
 
+# --- a failed pattern says in words what the value must be (UI-05) --------------------------
+
+
+def _set_page_body(doc: Doc, value: object) -> None:
+    doc["sections"][0]["activities"][0]["body"] = value
+
+
+def _set_activity_idnumber(doc: Doc, value: object) -> None:
+    doc["sections"][0]["activities"][0]["idnumber"] = value
+
+
+def _set_start_date(doc: Doc, value: object) -> None:
+    doc["sections"][0].setdefault("unlock", {})["start_date"] = value
+
+
+PATTERN_CASES = {
+    "relative path": (
+        _set_page_body,
+        "https://example.org/weeks/01-guide.md",
+        "not a path relative to the package folder",
+        "weeks/01-guide.md",
+    ),
+    "idnumber": (
+        _set_activity_idnumber,
+        "Week_1",
+        "not a valid idnumber",
+        "wk-01-guide",
+    ),
+    "start date": (_set_start_date, "2026-1-5", "not a date", "YYYY-MM-DD"),
+}
+
+
+@pytest.mark.parametrize("name", list(PATTERN_CASES))
+def test_failed_pattern_message_is_plain_words_not_the_regular_expression(
+    example_doc: Doc, name: str
+) -> None:
+    set_value, value, words, example = PATTERN_CASES[name]
+    set_value(example_doc, value)
+    # A malformed date also fails the date format, so take the pattern error by its code.
+    pattern_errors = [
+        i
+        for i in validate_course_document(example_doc).errors
+        if i.code == "schema_pattern"
+    ]
+    assert len(pattern_errors) == 1
+    issue = pattern_errors[0]
+    assert value in issue.message and words in issue.message
+    assert example in issue.fix_hint
+    # No part of a pattern reaches the user: not the anchor, the lookahead or a range.
+    for fragment in ("^", "(?!", "[a-z", "\\u"):
+        assert fragment not in issue.message + issue.fix_hint, fragment
+
+
+def test_failed_h5p_file_pattern_has_a_plain_message(example_doc: Doc) -> None:
+    example_doc["sections"][0]["activities"].append(
+        {
+            "type": "h5p",
+            "idnumber": "wk-01-practice",
+            "title": "Practice",
+            "graded": False,
+            "file": "practice/wk-01.zip",
+        }
+    )
+    issue = only(validate_course_document(example_doc).errors)
+    assert issue.code == "schema_pattern"
+    assert "practice/wk-01.zip" in issue.message and ".h5p" in issue.message
+    assert "(?!" not in issue.message + issue.fix_hint
+
+
+def test_every_pattern_in_the_b1_schema_has_a_plain_message() -> None:
+    # A new pattern added to the schema must get its own words too, or this fails.
+    from contracts import schema
+
+    found: list[str] = []
+
+    def walk(node: object) -> None:
+        if isinstance(node, dict):
+            for key, value in node.items():
+                if key == "pattern" and isinstance(value, str):
+                    found.append(value)
+                else:
+                    walk(value)
+        elif isinstance(node, list):
+            for item in node:
+                walk(item)
+
+    walk(schema.load_schema())
+    assert found
+    assert sorted(found) == sorted(schema.pattern_texts())
+
+
 # --- the course-level rules wait for a valid structure ---------------------------------------
 
 
