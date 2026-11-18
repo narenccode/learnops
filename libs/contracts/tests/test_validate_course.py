@@ -19,6 +19,7 @@ from typing import Any
 import pytest
 
 from contracts import ConfigError, ValidationConfig, messages, validate_course_document
+from contracts.course_rules import iter_items
 
 from .helpers import (
     HELD_RULE_CODES,
@@ -281,6 +282,77 @@ def test_duplicate_idnumbers_are_an_error_in_sections_only_mode_too(
     issue = only(validate_course_document(example_doc).errors)
     assert issue.code == "duplicate_idnumber"
     assert issue.location == WEEK2 + ("idnumber",)
+
+
+# --- a section idnumber is optional (issue #65, decided by the guide) ---------------------------
+
+
+def test_iter_items_skips_a_section_without_idnumber_and_never_yields_an_empty_one(
+    example_doc: Doc,
+) -> None:
+    del example_doc["sections"][0]["idnumber"]
+    items = list(iter_items(example_doc))
+    # Week 1's section is skipped; its activities and week 2 are still there, in document order.
+    assert [(item.location, item.idnumber) for item in items] == [
+        (WEEK1_GUIDE + ID, "wk-01-guide"),
+        (WEEK1_TASK + ID, "wk-01-task"),
+        (WEEK2 + ID, "wk-02"),
+        (WEEK2_GUIDE + ID, "wk-02-guide"),
+        (WEEK2_TASK + ID, "wk-02-task"),
+    ]
+    assert all(item.idnumber for item in items)
+
+
+@pytest.mark.parametrize("mode", ["full", "sections-only"])
+def test_sections_without_idnumber_are_valid_and_are_not_duplicates_of_each_other(
+    example_doc: Doc, mode: str
+) -> None:
+    # Two sections that both lack an idnumber must not look like one idnumber used twice
+    # (CK-06, duplicate_idnumber): an absent idnumber is simply not reported.
+    example_doc["course"]["mode"] = mode
+    for section in example_doc["sections"]:
+        del section["idnumber"]
+    report = validate_course_document(example_doc)
+    assert report.errors == ()
+    assert report.ok
+    assert not_checked_codes(report) == HELD_RULE_CODES
+
+
+def test_a_section_without_idnumber_does_not_hide_a_real_duplicate(
+    example_doc: Doc,
+) -> None:
+    # Week 1 has no idnumber; week 2's idnumber equals an activity's. That is still a duplicate,
+    # reported at the later use, and the first use is the activity.
+    del example_doc["sections"][0]["idnumber"]
+    set_at(example_doc, W2, "wk-01-task")
+    issue = only(validate_course_document(example_doc).errors)
+    assert issue.code == "duplicate_idnumber"
+    assert issue.location == W2
+    assert issue.idnumber == "wk-01-task"
+    assert f"already used at {messages.where(W1T)}." in issue.message
+
+
+def test_a_site_protected_idnumber_is_not_matched_by_a_section_without_one(
+    example_doc: Doc,
+) -> None:
+    # A protected item is defined by its idnumber (B1.4), so a section without one can never be
+    # a protected item: nothing is reported for it.
+    del example_doc["sections"][0]["idnumber"]
+    config = ValidationConfig(protected_idnumbers=frozenset({"wk-01"}))
+    assert validate_course_document(example_doc, config=config).errors == ()
+
+
+@pytest.mark.parametrize("value", [None, ""], ids=repr)
+def test_a_null_or_empty_section_idnumber_is_an_error_not_a_missing_one(
+    example_doc: Doc, value: Any
+) -> None:
+    # Only an absent idnumber is valid (D3): null and "" stay schema errors, so a reader that
+    # writes null for "no idnumber" is told to leave the field out.
+    example_doc["sections"][0]["idnumber"] = value
+    report = validate_course_document(example_doc)
+    assert report.errors
+    assert all(issue.location == W1 for issue in report.errors)
+    assert not any(issue.code == "duplicate_idnumber" for issue in report.errors)
 
 
 # --- extra protected idnumbers (B1.4), passed in as configuration ---------------------------

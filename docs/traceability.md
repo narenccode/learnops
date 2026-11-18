@@ -62,7 +62,8 @@ Structure only. Test names are in `test_course_package_v1.py`.
 | Rule | PRD | Test(s) |
 |---|---|---|
 | `schema` equals `learnops.course/v1`; `course` and `sections` required | B1.1 | `test_missing_required_field_is_rejected`, `test_wrong_type_or_value_is_rejected` |
-| Required fields and types on course, section and activity (`type`, `idnumber`, `title`; section `number`, `activities`) | B1.1 | same two tests |
+| Required fields and types on course, section and activity (activity `type`, `idnumber`, `title`; section `number`, `title`, `activities`). A section's `idnumber` is **not** required (next row) | B1.1 | same two tests |
+| **A section's `idnumber` is optional** (guide's decision, issue #65): absent is valid, alone or on every section, in both modes, and the second example (`course-without-section-idnumber.yaml`) is the first minus the section idnumbers. A present value is still validated: wrong pattern, a type that is not text, `null` and an empty string, and the two protected defaults are all errors | B1.1, B1.2 rule 6, B1.4 | `test_example_without_section_idnumbers_is_valid`, `test_example_without_section_idnumbers_differs_from_the_main_example_only_there`, `test_section_without_idnumber_is_valid` (first section or all, both modes), `test_a_present_section_idnumber_is_still_validated`, `test_invalid_identifier_is_rejected` (empty string), `test_wrong_type_or_value_is_rejected` (`null` and a number), `test_protected_idnumber_is_rejected` |
 | `mode` is `full` or `sections-only` | B1.1, B1.4 | `test_wrong_type_or_value_is_rejected`, `test_example_in_sections_only_mode_is_valid` |
 | `slug`, `idnumber` and `unlock.after` are lowercase ASCII with hyphens (format only, not uniqueness) | B1.1, B1.2 rule 6 | `test_invalid_identifier_is_rejected` |
 | The two default protected idnumbers (`final-project`, `course-feedback`) are rejected on sections and activities, in both modes | B1.4 | `test_protected_idnumber_is_rejected` |
@@ -103,13 +104,14 @@ claimed as fully implemented.
 | The schema is applied to a parsed `course.yaml`; every error is reported (not only the first), in a fixed order by place (list positions in numeric order: `sections[2]` before `sections[10]`), with its place, a message and a fix hint; an impossible calendar date and a document that is not an object are errors | B.0 rule 4, B1.1 | `test_example_document_has_no_errors`, `test_schema_errors_are_reported_with_their_place`, `test_every_schema_error_is_reported_not_only_the_first`, `test_errors_are_ordered_by_number_not_by_text`, `test_an_impossible_calendar_date_is_rejected`, `test_a_document_that_is_not_an_object_is_an_error` |
 | The two default protected idnumbers are rejected with a clear message that names the place and says what to do; the validator reports each one once | B1.4 | `test_default_protected_idnumbers_are_left_to_the_schema`, `test_default_protected_idnumber_gets_a_clear_message` |
 | **Uniqueness within one package** (first half of rule 6): `idnumber`s are unique in the `course.yaml` being checked. Sections and activities share one namespace. The later use in document order is the error, with its exact place, and the message names the first use. Reported in both modes. Two different duplicated ids are reported in document order | B1.2 rule 6 | `test_duplicate_idnumber_is_an_error_at_the_later_use` (7 cases, each with the exact error place and first-use place, including an activity reusing an earlier or a later section id), `test_an_idnumber_used_three_times_is_reported_for_each_extra_use`, `test_two_different_duplicated_ids_are_both_reported_in_document_order`, `test_similar_idnumbers_are_not_duplicates`, `test_duplicate_idnumbers_are_an_error_in_sections_only_mode_too` |
+| **A section without an `idnumber`** (optional, issue #65) is skipped by the idnumber rules: `iter_items` never yields it, so there is no `KeyError`, no empty idnumber, and two sections without one are not duplicates of each other (CK-06 does not report an absent idnumber). An id-less section does not hide a real duplicate elsewhere, and a section without an `idnumber` is never matched by a configured protected idnumber (a protected item is defined by its `idnumber`). A `null` or empty section `idnumber` is still a schema error. Works through `validate_package` too | B1.1, B1.2 rule 6, B1.4 | `test_iter_items_skips_a_section_without_idnumber_and_never_yields_an_empty_one`, `test_sections_without_idnumber_are_valid_and_are_not_duplicates_of_each_other` (both modes), `test_a_section_without_idnumber_does_not_hide_a_real_duplicate`, `test_a_site_protected_idnumber_is_not_matched_by_a_section_without_one`, `test_a_null_or_empty_section_idnumber_is_an_error_not_a_missing_one`, `test_a_package_without_section_idnumbers_is_valid` (both modes), `test_the_second_example_is_a_valid_package` |
 | **Not enforced: reuse across package versions** (second half of rule 6) is listed in every report as `idnumber_reuse_not_checked`, with a message that says why (it needs the previous version of the package) | B1.2 rule 6 | `test_cross_version_reuse_of_idnumbers_is_listed_as_not_checked`, `test_held_rules_are_reported_as_not_checked_never_skipped_silently` |
 | Protected idnumbers a site adds to the two defaults are rejected on sections and activities, in both modes, with the exact place, the idnumber and a fix hint. They add to the defaults and never replace them, are matched exactly, and several can be configured. The result does not depend on the order in which they were given | B1.4 | `test_configured_protected_idnumber_is_rejected_in_both_modes`, `test_the_library_reads_no_environment_variables` (also: not protected unless configured), `test_only_an_exact_match_is_protected`, `test_several_configured_ids_are_each_rejected_in_document_order`, `test_protected_and_duplicate_problems_are_both_reported`, `test_a_default_protected_id_is_always_rejected_and_reported_once` |
 | `ValidationConfig` accepts a collection of valid idnumbers and keeps its own immutable `frozenset` copy (later changes to the caller's collection do not reach it; equal configurations hash alike). It refuses with a `ConfigError` that says what to fix: a bare string or bytes (which would be read one character at a time), `None` or any non-collection, a mapping, a member that is not text, and an invalid idnumber (the first bad one in sorted order is named) | B1.4 | `test_config.py`: `test_default_configuration_adds_no_protected_idnumbers`, `test_several_configured_ids_are_kept_and_the_same_id_twice_counts_once`, `test_any_collection_of_idnumbers_is_stored_as_a_frozenset`, `test_the_configuration_cannot_be_changed_after_creation`, `test_changing_the_callers_collection_later_does_not_change_the_configuration`, `test_equal_configurations_are_equal_and_hash_alike_whatever_they_were_built_from`, `test_a_configured_idnumber_must_be_a_valid_idnumber`, `test_a_bad_idnumber_message_names_the_value_and_what_to_do`, `test_something_that_is_not_a_collection_of_idnumbers_is_refused`, `test_a_member_that_is_not_text_is_refused` |
 | `validate_course_document()` refuses a `config` that is not a `ValidationConfig` (a dict, a list, a string, the class itself) with a `ConfigError` that says what to pass, before the document is read; it never ignores it | B1.4 | `test_an_unsupported_config_type_is_refused_not_ignored` |
 | The library reads no environment variables; validation does not change the document it is given | CLAUDE.md §2.3 | `test_the_library_reads_no_environment_variables`, `test_the_document_is_not_changed_by_validation` |
 | The idnumber rules run only when the schema finds no error anywhere in the document (an unrelated schema error holds them back too, and so does a document that is not an object). The report then adds `cross_rules_not_checked`, whose text names no rule so that it stays true as more rules are implemented | n/a | `test_any_schema_error_holds_back_the_idnumber_rules`, `test_a_document_that_is_not_an_object_is_an_error` (also checks the notice), `test_the_course_level_notice_names_no_rule` (a valid document has no such notice: `test_held_rules_are_reported_as_not_checked_never_skipped_silently`) |
-| Rules that are not implemented are listed as "not checked" in every report, so that "no errors" is not read as "fully checked" (a design choice, not a PRD rule). A report for a parsed document lists nine (see the next section). A report for a package lists eight, because it checked the body files | n/a | `test_held_rules_are_reported_as_not_checked_never_skipped_silently`, `test_a_document_with_weekly_structure_problems_is_not_judged_here`, `test_example_package_has_no_errors` |
+| Rules that are not implemented are listed as "not checked" in every report, so that "no errors" is not read as "fully checked" (a design choice, not a PRD rule). A report for a parsed document lists ten (see the next section). A report for a package lists nine, because it checked the body files | n/a | `test_held_rules_are_reported_as_not_checked_never_skipped_silently`, `test_a_document_with_weekly_structure_problems_is_not_judged_here`, `test_example_package_has_no_errors` |
 | A package folder is read through a `PackageSource`; `DirectorySource` never reads outside the folder: a path with `..`, an absolute path or a link that leaves the folder is refused, a link that stays inside is followed. A refused file is never read | B1.1 | `test_source_reads_an_existing_file`, `test_source_tells_a_missing_file_from_a_folder`, `test_source_refuses_paths_that_leave_the_package`, `test_source_refuses_a_link_that_leaves_the_package`, `test_source_follows_a_link_that_stays_inside_the_package` (the two link tests run on the Linux CI) |
 | `validate_package()` reads `course.yaml` from the folder. A missing file, text that is not UTF-8, bad YAML (also an unquoted impossible date), and a file that is not an object are errors with a fix hint, never an exception; an unquoted real date fails the schema | B1.1 | `test_missing_course_yaml_is_an_error`, `test_course_yaml_that_cannot_be_read_is_an_error`, `test_an_unquoted_yaml_date_is_an_error`, `test_course_yaml_that_is_not_an_object_fails_the_schema` |
 | **Body files exist** (B1.1: the package is a folder with `course.yaml` plus the Markdown files; implied, not a numbered rule). Each `body` must name a file inside the package, in both modes. A missing file, a folder and a link leaving the folder are errors at the activity, in document order, after the idnumber errors. A shared body file and an activity without a body are not errors. Only existence is checked, never the content | B1.1 | `test_missing_body_file_is_an_error_at_the_activity`, `test_every_missing_body_file_is_reported_in_document_order`, `test_body_that_is_a_folder_is_an_error`, `test_body_that_is_a_link_leaving_the_package_is_an_error`, `test_a_body_file_may_be_shared_and_an_activity_may_have_no_body`, `test_duplicate_idnumbers_are_reported_before_missing_body_files`, `test_any_package_source_works_and_only_course_yaml_is_read` |
@@ -122,7 +124,7 @@ this library does not build.
 ### Documented but not automatically enforced
 
 Nothing in the repository enforces these yet. Each is listed as "not checked" in every report the
-validator returns (eight entries, plus the body files when they were not checked; the B1.3 row
+validator returns (eight B1 entries, `h5p_files_not_checked` (B7, below), plus the body files when they were not checked; the B1.3 row
 has two of them, and rule 4 has none because it is not a package field).
 The schema's `$comment` lists them too, and also lists the two parts that the validator now
 enforces (rule 6 within one package, configured protected idnumbers). Updating that comment
@@ -165,10 +167,10 @@ decisions in the earlier head and are no longer listed as open below:
 - Check names are lowercase and case-sensitive: `Word_Count:5` is an unknown name and fails CK-09.
   Section names stay case-insensitive.
 
-The vectors for these rules that concern the `Check` cell (the fifteen parser cells, including the
-empty pieces, the trailing `;` and the name case) are **not** in this pull request: they are
-delivered in a separate follow-up pull request, as the guide decided. This pull request has only the
-README heading and fence vectors.
+The vectors for these rules that concern the `Check` cell (the parser cells, including the empty
+pieces, the trailing `;` and the name case) are in
+`contracts/test-vectors/check-cells.v1.json`; see "B1 check cells (vectors and tests)" below. This
+section has only the README heading and fence vectors.
 
 | What is checked | PRD | Test(s) |
 |---|---|---|
@@ -177,7 +179,7 @@ README heading and fence vectors.
 | `covers` says what a case shows: rules 8 and 9 are never listed (a result that lists the three parts cannot show them); the word count is listed exactly when the report has a word count; an expected error lists rule 7, an HTML case rule 5, a report from a file rule 4; rules 1 to 7 and the word count are each covered by at least one submission case | B1.5 | `test_case_has_the_required_shape_and_consistent_expected_values` (every case), `test_every_rule_a_vector_can_show_is_covered_by_a_vector` |
 | The five PRD examples are the five required vectors: same text, word counts and reason codes; example 4 quotes the same report file | B1.5 | `test_prd_examples_are_the_five_required_vectors` |
 | The PRD has the B1.3 check formats (`;`, spaces around a check and its argument ignored, the name before the first `:`, a cell with only `—` means no machine check, `readme_sections` with no comma or semicolon in a name, the README as `README.md` at the repository root, ATX headings with up to three leading spaces and a space or tab after the `#`, a closing `#` sequence removed only after a space or tab, trailing spaces and tabs removed, the whole heading text matched, fences of at least three backticks or three tildes with up to three leading spaces, a closing fence with the same character and at least the length, an unclosed fence running to the end of the file, Setext headings are not headings, `word_count:<n>` as one or more ASCII digits with a value of at least 1, `http_ok:demo_url` only, lowercase case-sensitive check names, an unknown name, a known check with an argument that breaks a defined format, an empty list, name or field, and a trailing `;` fail CK-09) and says what it does not define (only `command:<name>`, the `repo_file:<path>` argument, the criterion keys and other table-parsing details); the finer Markdown details are no longer listed as undefined; C3.5 says `word_count` reads the report and its list of checks is the list the tests use for `unknown_check` | B1.3, C3.5 | `test_prd_b13_has_the_check_formats_and_names_what_it_does_not_define`, `test_prd_c35_says_word_count_reads_the_report`, `test_the_c35_names_in_the_tests_are_the_names_in_the_prd` |
-| The README cases (a file in `files`, a `check`, and a result of `pass`, `fail` with the missing names, or `invalid` with the unknown check) have the exact shape and a result that fits the check; together they cover the README file rule (`README.rst` is the other file name, because `readme.md` is the same file as `README.md` on a case-insensitive file system), the heading rules (a whole-text match, a closing `#` sequence only after a space or tab, a tab, trailing spaces and tabs, up to three leading spaces for a heading and for a fence, a closing fence of the same character and at least the length, tilde and unclosed fences, a single backtick that is not a fence) and the name rule, and each result kind. The unknown check must be a whole check name, not part of a longer one, and not a known C3.5 check name. They are data for the future marking-table parser: no test reads a README or finds a heading | B1.3 | `test_readme_case_has_the_required_shape_and_a_consistent_result`, `test_readme_cases_cover_the_file_the_headings_and_the_name_rule`, `test_the_readme_check_catches_what_it_exists_for` (one negative control for each mistake it lists, including a check name that only contains the unknown name, and `readme_sections:Setup;word_count:5` with the unknown check `word_count`, which must be rejected) |
+| The README cases (a file in `files`, a `check`, and a result of `pass`, `fail` with the missing names, or `invalid` with the unknown check) have the exact shape and a result that fits the check; together they cover the README file rule (`README.rst` is the other file name, because `readme.md` is the same file as `README.md` on a case-insensitive file system), the heading rules (a whole-text match, a closing `#` sequence only after a space or tab, a tab, trailing spaces and tabs, up to three leading spaces for a heading and for a fence, a closing fence of the same character and at least the length, tilde and unclosed fences, a single backtick and a pair of tildes that are not a fence) and the name rule, and each result kind. The unknown check must be a whole check name, not part of a longer one, and not a known C3.5 check name. They are data for the future marking-table parser: no test reads a README or finds a heading | B1.3 | `test_readme_case_has_the_required_shape_and_a_consistent_result`, `test_readme_cases_cover_the_file_the_headings_and_the_name_rule`, `test_the_readme_check_catches_what_it_exists_for` (one negative control for each mistake it lists, including a check name that only contains the unknown name, and `readme_sections:Setup;word_count:5` with the unknown check `word_count`, which must be rejected) |
 | B1.5 has nine numbered rules, both reason codes, the rule 7 clarifications (labels before `Report:`, a second `Report:` line is part of the report, one error does not stop the other criteria from being graded), the "should" rule for task text and the unverified HTML note; every `covers` entry of a vector names a rule that exists; the PRD names the vectors file | B1.5 | `test_prd_b15_has_nine_numbered_rules_and_both_reason_codes`, `test_every_covers_entry_names_a_rule_the_prd_has`, `test_the_prd_mentions_the_vectors_file` |
 | The open points are written down, not decided: B1.5 says "Not defined in v1", this section lists each open decision with who decides it, and no vector covers one (no carriage return, empty label value, HTML entity or link, or trailing whitespace; URLs only on `example.org`) | B1.5 | `test_prd_b15_says_what_v1_does_not_define`, `test_traceability_lists_the_open_decisions_and_who_decides_them`, `test_case_does_not_decide_an_open_point` (every case), `test_the_open_point_check_catches_what_it_exists_for` (one negative control for each kind of open point listed) |
 
@@ -188,6 +190,27 @@ pass these vectors, and B8.4 (PR #31) must use the same vectors. The held rules
 is unverified until the lab check on Moodle 4.5 and 5.3. Every other expected result is
 `derived`: the rules are the guide's, but each example and its result still need a reviewer's
 confirmation. The "should" rule for task text (B1.5 rule 9) is guidance and is not validated.
+
+#### B1 check cells (vectors and tests)
+
+Files: the PRD text (B1.3 "Check formats"), `contracts/test-vectors/check-cells.v1.json` and
+`libs/contracts/tests/test_check_cell_vectors_v1.py`. The rules were decided by the guide on PR #87
+(2026-11-15). No schema, example package, validator or library code changes. The tests check the
+data and the text only: the marking-table parser (Module 2, CK-09) does not exist yet and must pass
+these vectors; there is no test-only parser.
+
+| What is checked | PRD | Test(s) |
+|---|---|---|
+| The vectors file is LF JSON with a version and the twenty-three cases (five valid, two with no machine check, sixteen invalid), with unique ids; each case has the exact shape and closed vocabularies (status, result kind, rule, `covers`); the expected result fits the cell (the names of a `checks` result are the cell's check names in order, an argument is null exactly when the check has no colon, has no space at its ends and follows its B1.3 format; a `none` result is only a blank cell or the em dash; an `invalid` result is rule `CK-09` and names a whole check of the cell, not part of a name, or the empty name of an empty check) | B1.3 | `test_vectors_file_is_lf_json_with_a_version_and_unique_case_ids`, `test_case_has_the_required_shape_and_a_consistent_result` (every case), `test_the_valid_and_invalid_cases_are_the_agreed_twenty_three`, `test_the_empty_piece_cases_name_the_empty_check` |
+| The cases cover each B1.3 rule they claim (`;`, spaces ignored, name before the first `:`, a blank cell and the em dash alone, lowercase case-sensitive names, the `word_count` argument, `demo_url` as the only `http_ok` field, an unknown name, a known check with a bad argument, the empty pieces) and each result kind | B1.3 | `test_the_cases_cover_every_rule_they_claim_and_each_result_kind` |
+| The two cases for a leading and a doubled `;` are marked `extends-stated-rule`: B1.3 states the trailing `;`, and these apply the same reason (an empty check) to the other positions, so they need the guide's or M2's confirmation. No other case has that status | B1.3 | `test_only_the_two_unstated_positions_extend_a_stated_rule`, `test_the_shape_check_catches_what_it_exists_for` (the two status controls) |
+| No case decides an open point: no space before the colon, no cell that mixes the em dash with other checks, no whitespace-only cell, no argument for `repo_clone`, no `repo_file` or `command` check. The empty pieces and the name case are decided by the PRD text, which the tests read | B1.3 | `test_case_does_not_decide_an_open_point` (every case), `test_the_open_point_check_catches_what_it_exists_for` (one negative control for each), `test_the_prd_states_the_rules_the_decided_cases_rely_on` |
+| The shape check and the duplicate-id check catch the mistakes they exist for (a missing key, an unknown status, rule or result kind, a name that is not in the cell, checks in the wrong order, an argument with a space at its end or for a check with no colon, a `none` result for a cell that is not blank or the em dash, a blank cell read as an empty check, a cell of only spaces, a wrong rule, a check that is not in the cell or only part of a name, and each decided failure read as a valid check: a trailing `;`, an empty list, name or field, a capital letter in a name, `word_count:0`) | B1.3 | `test_the_shape_check_catches_what_it_exists_for` (one negative control for each), `test_the_duplicate_id_check_catches_a_repeated_id` |
+| The PRD names the vectors file next to the check formats; the open decisions are listed with who decides each | B1.3 | `test_the_prd_names_the_vectors_file_next_to_the_check_formats`, `test_traceability_lists_the_check_cell_open_decisions` |
+
+**Not enforced (no parser exists).** That a parser gives these results is not tested: the parser is
+not written. Every expected result is `derived` (or `extends-stated-rule` for two cases): the rules
+are the guide's, but each cell and its result still need M2's confirmation.
 
 #### Open decisions (B1 submission content)
 
@@ -202,7 +225,12 @@ covers them. The two rows marked "decided no" were answered by the guide on PR #
 | An assignment whose `submission` has only `onlinetext` or only `file` | The guide | Only the condition in rule 4 is stated |
 | The argument format of `repo_file:<path>` and criterion keys (`docs/design/grading.md` §4.3b). How a check's name is split from its argument is decided: the text before the first `:` | The guide, with Shraddha's input (M2) | Not defined here |
 | Whether the B1.3 bullet is enough for the marking-table parser | Shraddha (M2) | The bullet as written |
-| The parser test vectors for the B1.3 check cells (the fifteen cells of the guide's comment of 2026-11-15, including Shraddha's cases for the empty pieces, the trailing `;` and the name case decided on 2026-11-16) | The guide decided: a separate follow-up pull request, as Shraddha proposed | None in this pull request: delivered in the follow-up pull request |
+| The parser test vectors for the B1.3 check cells (the guide's comments of 2026-11-15 and 2026-11-16: the cells and Shraddha's cases for the empty pieces, the trailing `;` and the name case) | The guide decided: a separate follow-up pull request, as Shraddha proposed | Added in `contracts/test-vectors/check-cells.v1.json` (twenty-three cases; see "B1 check cells" above); they cover what B1.3 states |
+| README fence and heading details that B1.3 does not state, raised in review and moved to this follow-up by the guide: a closing fence with text after it; a tab before a `#` or a fence (B1.3 counts spaces only); a backtick fence line that has another backtick later on the same line (such as ```` ```code``` text ````: CommonMark says it is not a fence, B1.3 as written makes it an opening fence that hides every later heading). The case of two tildes (`~~old~~ note`) is stated by B1.3 and has a vector | The guide; a sentence in B1.3 or "not defined" settles each (Shraddha and Harshitha raised the backtick case) | Not defined here; no vector covers them |
+| A leading `;` and a doubled `;` (Harshitha's point; the guide moved it to the follow-up): B1.3 states only the trailing `;`, so the two cases apply the same reason (an empty check) to other positions and are marked `extends-stated-rule` | The guide, or Shraddha (M2) if the guide delegates; one sentence in B1.3 would settle it. **Shraddha (M2) confirmed both fail** (review comment on #110, 2026-11-17), so only the guide's agreement is left | Two vector cases, marked; they bind a parser only after confirmation |
+| Which check is reported when one cell has more than one failing piece (for example `word_count:0;repo_clon`): B1.3 says each failing check fails CK-09, not which one a parser reports. M2's reference parser reports the first failing check in cell order (Shraddha, review comment on #110, 2026-11-17; raised again by Harshitha's approval) | The guide, with Shraddha (M2) | Not defined; no vector has more than one failing piece |
+| Parser vectors not covered because B1.3 does not state the rule: a space before the colon (`word_count :200`); a cell that mixes the em dash with other checks (`—;word_count:5`: B1.3 defines only a cell that contains only `—`; M2's reference parser treats such a `—` as an unknown name); a `Check` cell of only spaces (a blank cell and an empty check are different); an argument for `repo_clone`; the arguments of `repo_file` and `command` | The guide, with Shraddha (M2) | Not defined here; no vector covers them |
+| The names of the result kinds in the check-cell vectors (`checks`, `none`, `invalid` with rule `CK-09` and the failing check's name, or the empty name of an empty check): the file's own labels, derived by the contract owner | Shraddha (M2), who owns the parser; the guide approves | As written in the vectors file **Confirmed by Shraddha (M2)** on #110 (2026-11-17): CK-09 will return these labels |
 | Whether the vector layout fits the extractor, whether `field_missing` and `field_repeated` match the grading result vocabulary, and which extra cases to add | Harshitha (M3) | The layout as written; the cases in the file |
 | A test-only reference extractor so that the vectors run now | The guide: decided no on PR #87 (2026-11-15); the extractor is Harshitha's in Release 4 and must pass the vectors | None: tests check data and text only |
 | A decision record (`docs/decisions/`) for Q6 and Q9 | The guide: decided no on PR #87 (2026-11-15) | None: the decisions are on PR #61 and PR #87 and in the PRD text |
@@ -216,6 +244,11 @@ Left out because the PRD does not establish the mapping:
   not to individual requirements.
 - **FR-S-02, FR-S-04, FR-S-07, FR-S-08, FR-C-01, FR-G-01.** They touch B1 but need code that does
   not exist yet, and the PRD does not say that schema tests count towards them.
+- **Matching sections by number on reverse import and round trip** (B1.1, decision record
+  `docs/decisions/0007-b1-optional-section-idnumber.md`; the guide's answer on issue #65). The PRD
+  states it; nothing enforces it here, because it needs the reverse importer (FR-S-08, Release 2) and
+  the course-model comparison (FR-C-05, Release 1). FR-C-05 compares by section number (the row for
+  it is in Module 2's pull request #46), and CK-07 does not apply to a section without an `idnumber`.
 - **C1.7 "a package containing a protected idnumber is rejected with a clear message".** The
   validator reports the two default idnumbers with a clear message (tested above); the Course
   Studio screen and CLI that show it do not exist yet.
@@ -261,6 +294,73 @@ Test names are in `test_moodle_ws_v1.py`.
 Open: when the lab Moodle sites are available (all ten checks in `moodle-ws.v1.md` §5 wait for
 them; B4 cannot be frozen until they pass), and the parameter name for feedback comments on
 `mod_assign_save_grade` (not in the PRD; lab check 1). Q1, Q24 and Q37 are decided (PR #27).
+
+## B7 H5P practice output contract (v1), Release 0 foundation, DRAFT
+
+Files: `contracts/h5p-practice.v1.md` (normative text), `contracts/h5p-practice.v1.schema.json`,
+`contracts/examples/h5p-practice.v1/content-types.json` (the B7 example), the B1 example package
+`contracts/examples/course-package.v1/h5p-practice.yaml` with its bodies in
+`contracts/examples/course-package.v1/h5p-practice/` (no `.h5p` file), the `file` field in
+`contracts/course-package.v1.schema.json`, the decision record
+`docs/decisions/0005-h5p-content-types.md` (the lab check, PRD App-C item 5), and the tests
+`test_h5p_practice_v1.py` and `test_course_package_v1.py` in `libs/contracts/tests/`. B7 has no
+requirement ID of its own in the
+PRD (it is a contract, PRD B.0). It is used by FR-S-12 and FR-V-14 (Release 5, stretch) and by
+FR-C-03 CK-11 (Release 1). No row in the table at the top maps to it.
+
+**Status: draft and not approved.** The H5P library versions were verified in the lab on 2026-11-11
+(the guide's lab check, reported on this pull request; PRD App-C item 5) and are pinned in the B7
+schema. Whether the open decisions below block the freeze is the guide's decision. The B1 section
+above is on main; the B1 `file` field added with B7 is covered in the first table below.
+
+### Enforced by the B1 schema; tests in `test_course_package_v1.py`
+
+| Rule | PRD | Test(s) |
+|---|---|---|
+| An `h5p` activity must have `graded: false` and `file` | B7, Issue #44 answer 2 | `test_missing_required_field_is_rejected`, `test_wrong_type_or_value_is_rejected`, `test_h5p_missing_field_is_named_and_only_that_field` |
+| `file` is a relative path ending in lowercase `.h5p`; URLs, absolute paths, `..`, backslashes, other or upper-case extensions and an empty name are rejected | B7, C-08 | `test_h5p_file_that_is_not_a_relative_h5p_path_is_rejected` |
+| `file` is not checked on other activity types (it is an unknown field there) | Issue #44 answer 2 | `test_valid_variation_is_accepted` |
+| An `h5p` activity cannot take a protected idnumber | B1.4 | `test_h5p_with_a_protected_idnumber_is_rejected` |
+
+### Enforced by the B7 schema; tests in `test_h5p_practice_v1.py`
+
+Rows that say "example only" check the example package, not packages in general.
+
+| Rule | PRD | Test(s) |
+|---|---|---|
+| The content-type schema is valid and its example validates; bad lists are rejected: invented names, other capitals, the old PRD phrase or a machine name as a name, a name listed twice, a missing name, `machine_name` or `version`, a wrong or lower-case machine name, a wrong version, a `v` prefix, a version that is a number, the Drag the Words and Drag and Drop versions or libraries swapped, a wrong schema name, an empty list. Each of the five types alone is valid, and unknown fields are accepted | B.0 rule 1, B7 | `test_schema_is_valid_and_example_validates`, `test_invalid_content_type_list_is_rejected` (22 cases), `test_a_list_with_one_pinned_type_is_valid`, `test_missing_root_field_is_rejected`, `test_unknown_fields_are_accepted` |
+| The schema allows exactly the five names, requires `name`, `machine_name` and `version`, and pins each name to the library and exact version of the guide's lab check (written out in the test as `PINNED`); the names are words PRD B7 uses; the example lists exactly the five pinned entries; the contract text says interactive video is for lab demonstrations only (a rule of the text, not a schema field) | B7, App-C item 5 | `test_schema_pins_exactly_the_guides_table`, `test_example_lists_exactly_the_pinned_entries` |
+| The contract text table and the decision record hold the same five pairs as the test, so a swapped version in any of the four places fails; the text, the schema and this file point to the decision record | App-C item 5 | `test_contract_text_and_decision_record_agree_with_the_pins`, `test_text_schema_and_traceability_point_to_the_decision_record` |
+| The schema and example define no key `cue`, `cues` or `ref` (cues belong to B6), and the text says B7 defines no second format | B6.2 | `test_no_cue_key_is_defined_and_cues_are_left_to_b6` |
+| The text no longer marks a content type "to verify in the lab" and no longer lists the two decisions the lab check settled; it keeps the other open decisions marked, says each practice item uses one type, that ordering is done with Drag and Drop, that a later type is an optional entry and that a version change needs a `/contract-change`, and says practice is optional and never graded | B7 | `test_text_pins_the_types_and_keeps_only_the_open_decisions_still_open` |
+| `file` is defined in the `h5p` branch of the B1 schema only | Issue #44 answer 2 | `test_file_is_defined_in_the_h5p_branch_only` |
+| Example only: the package validates against B1; its week has one Page and one Assignment; its ordinary practice item is ungraded, names a lowercase `.h5p` path that does not exist, and comes right after the guide Page | B1, B7 | `test_example_package_validates_against_b1`, `test_example_week_is_standard_with_an_optional_practice_item` |
+| Example layout for the shared example validator (PR #68): the B7 folder `examples/h5p-practice.v1/` holds only valid B7 documents, and the example B1 package is a top-level file in `examples/course-package.v1/` with its bodies in a subfolder, so the B1 example is untouched | B.0 rule 1, EXT-09 | `test_b7_example_folder_holds_only_b7_documents`, `test_example_package_sits_in_the_b1_example_folder` |
+| No `.h5p` file exists anywhere in the repository | Issue #44 answer 7 | `test_no_h5p_file_is_kept_in_the_repository` |
+
+### Documented but not automatically enforced
+
+| Rule | PRD | Where the PRD places it |
+|---|---|---|
+| An ordinary practice entry comes right after the week's guide Page, and a week has one Page and one Assignment, in a package in general | B7, B1.2 rule 1 | Needs validator code; B1.2 rule 1 is itself not enforced yet |
+| Where a video checkpoint goes | B7 | Open decision; PRD B7 says "after the video" |
+| A practice (H5P) activity has no grade item | B7 | CK-11 (FR-C-03, Release 1), on the course model (B2) |
+| Media referenced by a full fixed URL instead of a relative path | C-08 | CK-12 (FR-C-03, Release 1) |
+| The file named by `file` exists, is valid, and uses one of the pinned libraries at its pinned version | B7 | Held rule `h5p_files_not_checked`, listed in every report; no check exists (`test_h5p_files_are_listed_as_not_checked_and_never_looked_for`) |
+| Interactive video only in lab demonstrations | B7 | A rule of the contract text, named in the same held rule; no check exists |
+| AI-drafted items are approved by a mentor before they reach learners | C-09, FR-S-12 | A process rule of Studio, not a data rule |
+| `cues.json` entries are valid | B6.2, FR-V-14 | The B6 cues schema does not exist yet. Student 4 proposes `type: "h5p"` with `ref` = the practice item's `idnumber`; this is provisional, quoted in B7 section 6, and not enforced here |
+
+### Open decisions and not mapped
+
+Closed by the guide's lab check of 2026-11-11 (App-C item 5; `docs/decisions/0005-h5p-content-types.md`):
+the H5P library versions, and whether "drag-the-words or drag-and-drop / ordering" is one type (it is
+two entries). Open: the `ref` kinds and the cue fields (Student 4, in the B6 cues schema, still to
+come; her `h5p` + `idnumber` encoding is only a proposal); several practice items in one week and
+video checkpoint placement (the guide has not decided; B7 makes no rule); and whether a data field
+should mark interactive video as lab-only (a question for reviewers). Not mapped: a
+row, demo step and Bloom level for FR-S-12 and FR-V-14, because the PRD does not say schema tests
+count towards them. This pull request adds M2 to the B7 "Used by" row in PRD B.0 (guide, Issue #44).
 
 ## B8.1 template course backup (test data), Release 0 foundation
 
@@ -349,8 +449,9 @@ requirement, so it has no FR ID and no row in the table at the top. It is the da
 (caption word error rate, Release 3), App-C 7 (the error-rate target from a first baseline run)
 and App-C 8 (licence or consent for every B8.5 video).
 
-**Status: PENDING.** No lecture is recorded, no consent line is written and no transcript is
-typed. The tests show that the committed placeholders are well formed and that the PENDING status
+**Status: PENDING.** Five local recording files were identified in earlier work (their SHA-256
+values are in the inventory), but no consent line is written, no duration is recorded, no
+transcript is typed or reviewed, and none is accepted as B8.5 evidence. The tests show that the committed placeholders are well formed and that the PENDING status
 is true. They do **not** show that B8.5 or App-C 8 is met.
 
 ### Enforced by the test and covered by automated tests
