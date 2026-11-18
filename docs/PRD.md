@@ -456,6 +456,9 @@ HTML table in the Moodle assignment description; the grading assistant parses it
     field (`http_ok:`) and a trailing `;` fail the same way (CK-09). The `command:<name>` check
     and its configuration, the argument format of `repo_file:<path>`, the criterion keys, and the
     other parsing details of a marking table are not defined here.
+  - Shared test cases for a `Check` cell, with the result a parser must give, are in
+    `contracts/test-vectors/check-cells.v1.json`. They cover what this section states and decide
+    none of the points above that it leaves open.
 - The HTML rendering keeps the `data-marking-table="v1"` attribute so the table can be parsed back.
 
 ### B1.4 Protected activities and output modes
