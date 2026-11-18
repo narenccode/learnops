@@ -30,6 +30,30 @@ SCHEMA_HINT = (
     "Change this value in course.yaml so that it matches the course package schema "
     "(contracts/course-package.v1.schema.json)."
 )
+
+# A `pattern` in the B1 schema that fails: (message, hint). The JSON Schema library would print
+# the regular expression itself, hundreds of characters for a path (UI-05), so each pattern gets
+# words that say what the value must be. contracts.schema maps each pattern to its text.
+B1_PATH_NOT_RELATIVE = (
+    "{where}: '{value}' is not a path relative to the package folder.",
+    "Use a path such as weeks/01-guide.md: forward slashes, no leading slash, no '.' or '..' "
+    "part, no empty part, no space, no ?, #, % or backslash, and no URL scheme such as https: "
+    "(PRD B1.1, C-08).",
+)
+B1_IDNUMBER_INVALID = (
+    "{where}: '{value}' is not a valid idnumber.",
+    "Use lowercase letters and digits separated by single hyphens, for example wk-01-guide "
+    "(PRD B1.2 rule 6).",
+)
+B1_H5P_FILE_NOT_H5P = (
+    "{where}: '{value}' does not name a .h5p file.",
+    "Use a relative path that ends in a file name with the lowercase extension .h5p, for "
+    "example practice/wk-01.h5p (PRD B7).",
+)
+B1_DATE_NOT_ISO = (
+    "{where}: '{value}' is not a date in the form YYYY-MM-DD.",
+    "Write the date as YYYY-MM-DD, for example 2026-01-05, or leave it null.",
+)
 PROTECTED_DEFAULT = (
     "{where}: '{value}' is a protected idnumber and cannot be used in a package."
 )
