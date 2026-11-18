@@ -11,3 +11,4 @@ pydantic==2.12.5                   # MIT. Models for the B3 launch result
 python-multipart==0.0.20           # Apache-2.0. Reads the launch form Moodle posts
 cryptography==44.0.1               # Apache-2.0 OR BSD-3-Clause. Builds the public keyset (/lti/jwks)
 uvicorn==0.35.0                    # BSD-3-Clause. Runs the gateway
+idna==3.20                         # BSD-3-Clause. Comes in through anyio/httpx; pinned because it makes jsonschema check idn-hostname (libs/contracts/README.md)

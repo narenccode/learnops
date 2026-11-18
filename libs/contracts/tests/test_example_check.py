@@ -31,11 +31,13 @@ from .example_helpers import (
 REQUIREMENTS = Path(__file__).resolve().parents[3] / "requirements-dev.txt"
 DRAFT = "https://json-schema.org/draft/2020-12/schema"
 # The README lists exactly these formats as checked and as not checked, for the pinned
-# jsonschema and no optional format packages. If an upgrade changes this, update both.
+# jsonschema and the pinned packages that enable formats (idna: idn-hostname). If an upgrade
+# changes this, update both.
 CHECKED_FORMATS = {
     "date",
     "email",
     "idn-email",
+    "idn-hostname",
     "ipv4",
     "ipv6",
     "regex",
@@ -46,7 +48,6 @@ UNCHECKED_FORMATS = {
     "date-time",
     "duration",
     "hostname",
-    "idn-hostname",
     "iri",
     "iri-reference",
     "json-pointer",

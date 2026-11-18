@@ -134,9 +134,11 @@ raised" is not "everything is checked": read the limits below.
     pass with a broken `$ref` that a later example would hit. `unresolvable_reference` means "an
     example reached a reference that cannot be resolved", not "the schema has no dangling
     reference".
-  - **Formats.** With the pinned `jsonschema` and no optional format packages, these formats are
-    checked: `date`, `email`, `idn-email`, `ipv4`, `ipv6`, `regex`, `time`, `uuid`. These are
-    **not** checked, so any string passes: `date-time`, `duration`, `hostname`, `idn-hostname`,
+  - **Formats.** With the pinned `jsonschema` and the pinned `idna` (in `requirements.txt` because
+    the LTI gateway's dependencies bring it in; it enables `idn-hostname`), these formats are
+    checked: `date`, `email`, `idn-email`, `idn-hostname`, `ipv4`, `ipv6`, `regex`, `time`,
+    `uuid`. No contract schema uses `idn-hostname`. These are **not** checked, so any string
+    passes: `date-time`, `duration`, `hostname`,
     `iri`, `iri-reference`, `json-pointer`, `relative-json-pointer`, `uri`, `uri-reference`,
     `uri-template`. For example `completed_at` in `lesson-manifest.v1` is a `date-time`, so a wrong
     value in a B6 example is not caught. Checking more formats means adding a pinned package
