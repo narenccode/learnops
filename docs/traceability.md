@@ -449,8 +449,9 @@ requirement, so it has no FR ID and no row in the table at the top. It is the da
 (caption word error rate, Release 3), App-C 7 (the error-rate target from a first baseline run)
 and App-C 8 (licence or consent for every B8.5 video).
 
-**Status: PENDING.** No lecture is recorded, no consent line is written and no transcript is
-typed. The tests show that the committed placeholders are well formed and that the PENDING status
+**Status: PENDING.** Five local recording files were identified in earlier work (their SHA-256
+values are in the inventory), but no consent line is written, no duration is recorded, no
+transcript is typed or reviewed, and none is accepted as B8.5 evidence. The tests show that the committed placeholders are well formed and that the PENDING status
 is true. They do **not** show that B8.5 or App-C 8 is met.
 
 ### Enforced by the test and covered by automated tests
