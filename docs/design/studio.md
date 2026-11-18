@@ -103,7 +103,7 @@ Downloads of `.mbz` go through the web service (it reads from the same adapter),
 |---|---|---|---|
 | B1 Course package | Provided (owner) | `course.yaml` (`schema`, `course.shortname/fullname/slug/total_points/mode`, `sections[].number/title/idnumber/unlock.after/unlock.start_date`, `activities[].type/idnumber/title/body/points/submission/completion`), course pattern rules B1.2, marking table B1.3, protected items and modes B1.4 | none (after Release 0: additive only, via `/contract-change`) |
 | B2 Course model | Used (through the checker rule library, as the PRD allows) | The model produced from a package or `.mbz`, and the rule results (CK-01…CK-13); the checker diff (FR-C-05) for the round-trip test | none |
-| B3 LTI 1.3 launch | Used | Claims `sub`, `roles`, `context`, `deployment_id`; role mapping (Instructor → Mentor, Administrator → Administrator, Learner refused); session bound to (`sub`, context id); `shared.course_link` | none |
+| B3 LTI 1.3 launch | Used | Claims `iss`, `sub`, `roles`, `context`, `deployment_id`; role mapping (Instructor → Mentor, Administrator → Administrator, Learner refused); session bound to (`iss`, `sub`, context id) and expiring after 2 h idle (B3 §6, PRD B3); `shared.course_link`, keyed by `iss` plus context id (B3 §7). `sub` is unique only within `iss` (B3 §4), so Studio always stores the two together | none |
 | B5 Model and speech interface | Used, R5 only | `model.run(task, inputs, output_schema)` | none |
 | B6 Media paths | Used (slugs only) | Slug rules: lowercase ASCII, hyphens, immutable | none |
 | B7 H5P practice output | Provided (owner), R5 | `.h5p` file plus `course.yaml` entry (`type: h5p`, `idnumber`, `graded: false`) | none |
@@ -117,17 +117,17 @@ Tables in schema `studio`. PRD §C1.5 names three tables and their main fields; 
 | Table | Columns (Proposal beyond the PRD's named fields) | Keys |
 |---|---|---|
 | `studio.package` | `id`, `course_link_id` (→ `shared.course_link`), `slug`, `current_version_id`, `created_at` | PK `id`; unique (`course_link_id`, `slug`) |
-| `studio.package_version` | `id`, `package_id`, `version_no`, `content_hash`, `author_sub` (LTI `sub`), `created_at`, `storage_path` (relative) | PK `id`; unique (`package_id`, `version_no`); FK `package_id` |
-| `studio.build` | `id`, `package_version_id`, `mode` (`full`\|`sections-only`), `state` (`queued`\|`running`\|`generated`\|`failed`), `mbz_path` (relative), `result` (JSON: messages, failed element), `restore_state` (`pending`\|`passed`\|`failed`), `restore_result` (JSON: per Moodle version, outcome and the harness message), `requested_by_sub`, `created_at`, `finished_at` | PK `id`; FK `package_version_id` |
+| `studio.package_version` | `id`, `package_id`, `version_no`, `content_hash`, `author_iss`, `author_sub` (LTI `iss` and `sub`: `sub` alone is unique only within `iss`), `created_at`, `storage_path` (relative) | PK `id`; unique (`package_id`, `version_no`); FK `package_id` |
+| `studio.build` | `id`, `package_version_id`, `mode` (`full`\|`sections-only`), `state` (`queued`\|`running`\|`generated`\|`failed`), `mbz_path` (relative), `result` (JSON: messages, failed element), `restore_state` (`pending`\|`passed`\|`failed`), `restore_result` (JSON: per Moodle version, outcome and the harness message), `requested_by_iss`, `requested_by_sub`, `created_at`, `finished_at` | PK `id`; FK `package_version_id` |
 
 - **A build is good only when it restores (module rule 1; PRD §C1.5, §C1.8).** The worker sets `state = generated` when the `.mbz` is written; that is not success. The harness restores every build on fresh Moodle 4.5 and 5.3 and its result sets `restore_state`: `passed` only when both versions restore, `failed` when either does not. A build with `restore_state = failed` is a **failed build**: the build page shows it as failed with the harness message (C1.8 "restore problems … linked to the build"), and it never becomes the "last good version" that FR-S-09 and C1.8 keep. Until the harness has reported (`pending`), the build page says "not yet restore-tested". How the harness reports the result to Studio is Open (§12 item 40). A failed restore is still downloadable from the build history for diagnosis, labelled as failed (Proposal).
 - Audit entries for state-changing operations go to `shared.audit_log` (OPS-06). That table is owned by the `shared` schema, not this module.
 - **Migrations:** versioned and reversible (OPS-07, root rule). Each migration has an `up` and a `down`; `down` drops only what that migration created. A migration test applies up, down, up on an empty database.
 - **Relative vs absolute:** `storage_path` and `mbz_path` are paths relative to a configured storage root. Package media references are relative paths or slugs, never full URLs (C-08). CK-12 (checker) flags full URLs; Studio's validation rejects them through the shared rule library.
 - **Identity:** `idnumber`s and slugs are stored in the package and never derived from titles (EXT-06, module rule 6). Mechanism (Proposal): the editor shows `idnumber` and `slug` as read-only once a package version is saved, and renaming a title changes only the title. The validator also compares each new package version with the previous one and reports an error when an existing activity's `idnumber`, or the course `slug`, has changed or been reused for a different activity (B1.2 rule 6).
-- **Dependency on `shared.course_link`:** `studio.package.course_link_id` refers to a table in the `shared` schema whose columns the PRD does not define (B3 only says the LTI context id is stored there). The exact key is Open (§12 item 33).
+- **Dependency on `shared.course_link`:** `studio.package.course_link_id` refers to a table in the `shared` schema. Its key is now decided: **`iss` plus context id** (PRD B3; B3 §7, merged in #83). Its columns are owned by B4 (Student 3) and are recorded in B4's records (#72 or a decision record), not here (§12 item 33).
 - **Backup and restore (OPS-08):** the module README documents backing up and restoring the `studio` schema and the package/`.mbz` storage (folder or bucket) together, because a package version row without its stored file is unusable. The procedure is written when the first storage code exists.
-- **Personal data:** only the LTI `sub` is stored for authorship. No names or emails are stored by Studio (Proposal; see §9).
+- **Personal data:** only the LTI `iss` and `sub` are stored for authorship (both are needed, because `sub` is unique only within `iss`). No names or emails are stored by Studio (Proposal; see §9).
 
 ## 6. Interfaces
 
@@ -206,7 +206,7 @@ In both options the slice keeps nothing that has to be linked to a Moodle course
 
 **Prerequisites (each outside this module):**
 
-1. #83 (B3 launch contract, `contracts/lti-launch.v1`) merged.
+1. #83 (B3 launch contract, `contracts/lti-launch.v1`) merged. **Met:** merged on 2026-11-18.
 2. ADR 0001 Stage 1 (library and pins) and Stage 2 (security design) approved, and `libs/lti` built with a FastAPI router (login, launch, JWKS) and a session check that returns the normalised B3 result.
 3. #61 (B8.2 sample course) and #87 (B1 submission-format rules) merged, so the demo shows those rules. **Met:** both are on `main`.
 4. HTTPS on the `tools` VM (the B3 state cookie is `SameSite=None; Secure`).
@@ -309,7 +309,7 @@ So "no errors" is never shown as "fully checked" (FR-S-03, §C1.8; §10 row "Che
 **Security (additions to §9 for this slice).**
 - SEC-01, SEC-02: only through `libs/lti`; the route reads the role from the server-side session, never from the request.
 - SEC-05: the limits of §6 (`STUDIO_MAX_UPLOAD_MB`, `STUDIO_MAX_UNZIPPED_MB`, `STUDIO_MAX_ZIP_ENTRIES`) apply. Zip structure checked by content; entries outside the target folder, absolute paths and links rejected; the temporary folder is outside any web root and removed in a `finally` block, also on error.
-- SEC-06: Option A stores nothing; Option B stores the zip until processed and the result with the requesting `sub` and context id (add to `docs/data-map.md` with the implementing PR). Logs carry request id, `sub`, context id, outcome and counts of errors; never `name`, `email` (B3 §10.1), file names inside the package or file contents.
+- SEC-06: Option A stores nothing; Option B stores the zip until processed and the result with the requesting `iss`, `sub` and context id (add to `docs/data-map.md` with the implementing PR). Logs carry request id, `iss`, `sub`, context id, outcome and counts of errors; never `name`, `email` (B3 §10.1), file names inside the package or file contents.
 - SEC-09: CSRF token on `POST /api/validate` (Option A) or `POST /api/validations` (Option B); cookie flags as set by `libs/lti`.
 
 **Heavy work (OPS-10; Needs guide, §12 item 36).** OPS-10 says heavy work runs in worker containers fed by a job queue, never inside web request handlers. Two options; **the guide decides, and no code starts before that** (implementation gate above):
@@ -318,7 +318,7 @@ So "no errors" is never shown as "fully checked" (FR-S-03, §C1.8; §10 row "Che
 |---|---|---|
 | Meets OPS-10 as written? | **No**, unless the guide rules that validating one size-limited package is not "heavy work". A child process inside the request is still work inside the request handler | **Yes** |
 | Flow | `POST /api/validate` unzips and runs `validate_package` in a short-lived child process (standard-library `multiprocessing`; a thread cannot be stopped from outside) and returns the result. At `STUDIO_VALIDATE_TIMEOUT_SECONDS` (Proposal: 10) the child is ended, the temporary folder removed and the time-limit message returned | `POST /api/validations` checks the upload limits, stores the zip through the storage adapter (§3), inserts a queued row and returns a validation id. The worker of §3 claims it, unzips, validates, writes the result and deletes the zip. `GET /api/validations/{id}` returns status and, when done, the result payload (UI-04 progress) |
-| Data | None | A `studio.validation` table (id, state, requesting `sub`, context id, result JSON, timestamps) with a reversible migration (OPS-07); the uploaded zip until processed (SEC-05: outside any web root); result retention Needs guide (§12 item 16) |
+| Data | None | A `studio.validation` table (id, state, requesting `iss`, `sub` and context id, result JSON, timestamps) with a reversible migration (OPS-07); the uploaded zip until processed (SEC-05: outside any web root); result retention Needs guide (§12 item 16) |
 | Extra cost | None | The queue mechanism (§12 item 12) and the worker container must exist first; §13 row 5 style migration |
 
 Both options return the same result payload and show the same page. The upload limits (SEC-05) are checked before any unzip in both.
@@ -424,11 +424,11 @@ Use `libs/` implementations before adding anything here (for example LTI, contra
 | ID | Applies? | How it is met |
 |---|---|---|
 | SEC-01 LTI launch validation | Yes | Entirely through `libs/lti`; Studio implements none of it. |
-| SEC-02 Authorisation per request | Yes | Middleware reads role and context from the server-side session; every route checks it against `shared.course_link` (FR-S-10). |
+| SEC-02 Authorisation per request | Yes | Middleware reads role and context from the server-side session, which `libs/lti` binds to (`iss`, `sub`, context id) and expires after 2 h idle (B3 §6); every route checks it against `shared.course_link`, keyed by `iss` plus context id (FR-S-10; B3 §7). A request for another course context is refused for a mentor (B3 §8). |
 | SEC-03 Service-account token | Open | Studio's own features need no Moodle token in R2. B3 maps the LTI context to the Moodle course through web services, and the PRD does not say which module does that (§12 item 27). PRD §B.0 lists B4 as used by M2 and M3, not M1, so Studio does not take on B4 usage unless the guide and the B3/B4 owners decide so. This document changes no contract. |
 | SEC-04 Sandbox | No | Studio runs no learner code. |
 | SEC-05 Uploads | Yes | Zip package and `.mbz` uploads: size limit; type checked by content (zip structure), not only extension; stored outside any web root; unzip with path-traversal protection (reject entries outside the target folder) and limits on total unzipped size and file count (zip-bomb protection). The virus-free assumption is documented in the README. |
-| SEC-06 Personal data | Yes | Only LTI `sub` stored for authorship (Proposal). Test data only (C-07). |
+| SEC-06 Personal data | Yes | Only LTI `iss` and `sub` stored for authorship (Proposal). Test data only (C-07). |
 | SEC-07 Data to hosted AI | R5 only | R2 sends nothing to an AI provider. R5 will be documented here before coding. |
 | SEC-08 Dependency scan | Yes | CI scan; no critical vulnerabilities at release. |
 | SEC-09 CSRF and cookies | Yes | CSRF protection on state-changing routes; secure, same-site session cookies (via `libs/lti`/framework). |
@@ -445,7 +445,7 @@ Other handling:
 |---|---|---|---|---|
 | Package versions (course text, structure) | `studio.package_version` + storage root | nowhere in R2 | Open (retention not specified by the PRD) | Version history, FR-S-09 |
 | Generated `.mbz` | storage root, `studio.build.mbz_path` | downloaded by mentor/admin | Open | Download of any previous version, FR-S-09 |
-| Author LTI `sub` | `studio.package_version`, `shared.audit_log` | nowhere | Open | Audit, OPS-06 |
+| Author LTI `iss` and `sub` | `studio.package_version`, `studio.build`, `shared.audit_log` | nowhere | Open | Audit, OPS-06 |
 
 ## 10. Error handling
 
@@ -549,11 +549,11 @@ Items marked **Needs guide** need the guide's decision. "Needs the lab" refers t
 | 30 | **Upload limits:** the PRD gives no size limits for packages or `.mbz` files. The defaults in §6 (50 MB upload, 200 MB unzipped, 5000 entries) are my proposal. What sizes do real course backups reach? | Partly (size of a restored B8.1/B8.2 backup) | **Needs guide**; measure with B8.1/B8.2 first. |
 | 31 | **Front-end tooling:** Vite as the build tool (A10 names none) and a plain text area plus preview as the "Markdown editor" (FR-S-01). Acceptable, or must an editor library be used? | No | **Needs guide**. |
 | 32 | **Database driver licence:** psycopg is LGPL-3.0-only (allowed as an unmodified library); asyncpg is Apache-2.0. Which one? | No | **Needs guide** if LGPL is not wanted. |
-| 33 | **`shared.course_link` columns:** the PRD does not define them, and `studio.package` refers to it (§5). | No | Agree the key with the B3 owner (Student 2). |
+| 33 | **`shared.course_link` columns:** `studio.package` refers to it (§5). **Key decided:** `iss` plus context id (PRD B3; B3 §7, #83). The columns are owned by B4 (Student 3) and recorded in B4's records (#72 or a decision record). | No | Key closed. Columns: take them from B4's record when it lands, and agree with the B4 owner (Student 3) before the §5 migration (§13 row 5). |
 | 34 | **Backup and restore procedure (OPS-08)** for the `studio` schema and the package/`.mbz` storage is described only in outline (§5). | No | Write it in the module README with the first storage PR. |
 | 35 | **Pulling the validation slice (§6.1) forward from Release 2.** PRD §D1 already allows "Work on later releases may start in parallel"; root `CLAUDE.md` §1 still asks for the guide's word for work outside the current release, and §6a asks for this document to be `Approved`. The decision needed is about this slice only, not the principle. | No | **Needs guide.** |
 | 36 | **OPS-10 for validation: the §6.1 slice and validation on every save (FR-S-03).** Both validate one size-limited package. Option A (in the request, child process, time limit) does not meet OPS-10 as written; it is possible only if the guide rules that validating one size-limited package is not "heavy work". Option B (queued for the Studio worker) meets OPS-10 but needs a `studio.validation` table (or a validation state on the package version for FR-S-03), the queue mechanism (item 12) and the worker first; the editor then shows "validating…" and the result when ready (UI-04). The same answer applies to both, so the design has one rule for validation. | No | **Needs guide.** Raised by the peer reviewer on PR #123; widened to FR-S-03 by the first-pass design review. Implementation blocked until decided. |
-| 37 | **B3 session key.** §4 and SEC-02 say the session is bound to (`sub`, context id); #83 changes this to (`iss`, `sub`, context id). | No | When #83 merges, update §4, §5, §9 SEC-02 and §6.1 to the accepted key (`iss`, `sub`, context id). |
+| 37 | **B3 session key.** **Closed:** #83 merged, and PRD B3 and B3 §6 bind the session to (`iss`, `sub`, context id). §4, §5 (stored identities `author_iss`/`author_sub`, `requested_by_iss`/`requested_by_sub`), §6.1 and §9 SEC-02, SEC-06 and the data map now use it. | No | Done. |
 | 38 | **Front-end for a one-page slice.** The fixed stack says React + TypeScript static build (A10), which brings the Vite question (§12 item 31) forward. | No | **Needs guide** together with item 31. |
 | 39 | **Administrator access to queued validations (Option B).** Proposal in §6.1: owner-only in the same LTI context, with no wider Administrator access, because the slice stores no course data. Does the guide want Administrators to read every validation instead, in line with FR-S-10's approach for stored packages? | No | **Needs guide.** Raised by the peer reviewer on PR #123. |
 | 40 | **How the harness reports a restore result to Studio** (module rule 1, §5 `restore_state`). The harness is Module 2's code. Options: the harness calls a Studio CLI command or API route with the build id and the result per Moodle version, or it writes to a table in the `shared` schema that Studio reads. | Partly (a real restore run) | Agree with the Module 2 owner (Student 2); **Needs guide** if it needs a `shared` table. |
