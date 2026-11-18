@@ -37,6 +37,8 @@ def main(argv: list[str] | None = None) -> int:
         for error in run.errors:
             print(f"  - {error}", file=sys.stderr)
         return 1
+    for warning in run.warnings:
+        print(f"Warning: {warning}", file=sys.stderr)
     if args.check:
         print(f"OK: {len(run.lectures)} lecture(s) valid in mode {run.mode}.")
         return 0
@@ -44,10 +46,10 @@ def main(argv: list[str] | None = None) -> int:
     pairs = [(x.lecture_id, x.reference_text, x.hypothesis_text) for x in run.lectures]
     try:
         result = evaluate(pairs, run.normaliser)
+        report = render_report(run, result)  # .wer raises for an empty reference
     except ValueError as exc:
         print(f"Cannot compute: {exc}", file=sys.stderr)
         return 1
-    report = render_report(run, result)
     if args.output and not args.dry_run:
         try:
             with args.output.open("x", encoding="utf-8") as handle:

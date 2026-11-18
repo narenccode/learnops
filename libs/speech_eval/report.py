@@ -25,6 +25,11 @@ def _pct(value: float) -> str:
     return f"{value * 100:.2f}%"
 
 
+def _cell(value: object) -> str:
+    """A table cell: run and approval values come from the run description, so escape them."""
+    return str(value).replace("|", "\\|").replace("\r", " ").replace("\n", " ")
+
+
 def render_report(run: EvalRun, result: RunResult) -> str:
     pooled = result.pooled
     lines = [
@@ -43,9 +48,12 @@ def render_report(run: EvalRun, result: RunResult) -> str:
             f"- B8.5 dataset status read from the repository: {run.dataset_status}"
         )
         lines += ["", "## Run", "", "| Field | Value |", "|---|---|"]
-        lines += [f"| {k} | {v} |" for k, v in run.run.items()]
+        lines += [f"| {_cell(k)} | {_cell(v)} |" for k, v in run.run.items()]
         lines += ["", "## Approvals cited", "", "| Gate | Reference |", "|---|---|"]
-        lines += [f"| {k} | {v} |" for k, v in run.approvals.items()]
+        lines += [f"| {_cell(k)} | {_cell(v)} |" for k, v in run.approvals.items()]
+    if run.warnings:
+        lines += ["", "## Warnings", ""]
+        lines += [f"- {_cell(w)}" for w in run.warnings]
     lines += [
         "",
         "## Per lecture",

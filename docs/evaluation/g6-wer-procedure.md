@@ -13,7 +13,7 @@ Tool: `libs/speech_eval/` (software only; no provider is called, no model is run
 | Caption word error rate on Indian-English lectures (B8.5), "measured and reported; target fixed in Release 0" | PRD §A (G-6) | Target **not set** |
 | "Caption word error rate measured on B8.5 and reported against the Release 0 target" | PRD §C4.7 | **PENDING** |
 | "Caption word-error-rate target (G-6) from a first baseline run", result recorded in `docs/decisions/` | PRD App-C 7 | **PENDING** |
-| Data: at least five Indian-English lectures with reference transcripts, consent or licence | PRD §B8.5, decision 0004 | Set is **PENDING**: no recording, consent or transcript yet; dataset README says do not use it for any measurement |
+| Data: at least five Indian-English lectures with reference transcripts, consent or licence | PRD §B8.5, decision 0004 | Set is **PENDING**: five local recording files are identified and hashed (PR #99, durations not yet on `main`), but no consent line, reviewed transcript or confirmed provenance exists; the dataset README says do not use it for any measurement |
 | Transcription only through the speech interface (B5.4) | PRD C-10, `CLAUDE.md` rule 6 | Interface not in `main` yet |
 | Transcript typing rules (case, punctuation, fillers, numbers) | B8.5 README | **Not fixed**: decided with the first baseline run |
 | WER method, normalisation, pooled WER, confidence interval | T8 ADR 0002 section 7 | **Proposed only**; ADR is PROPOSED, pending guide confirmation |
@@ -39,9 +39,14 @@ App-C 7 baseline work described above. The owner should confirm.
    `libs` on `PYTHONPATH`).
 2. Practise on made-up text with `"mode": "synthetic-test"`. This tests the tool only.
 3. For the real run, set `"mode": "official"` and fill `run` and `approvals` (each approval is a
-   reference to the decision or comment that grants it). The tool refuses unless the dataset
-   status is COMPLETE, a normaliser is approved, and every field is filled and not PENDING. The
-   tool cannot verify the cited approvals; the reviewer does.
+   reference to the decision or comment that grants it: `#NNN`, a `docs/decisions/NNNN-name.md`
+   path or a GitHub issue or pull request address; `run.date` is a real YYYY-MM-DD date). The tool
+   refuses unless the dataset status is COMPLETE, a normaliser is approved, every field is filled
+   and not PENDING, and the run uses **at least five lectures that are in the B8.5 inventory**,
+   each with the reference transcript the inventory lists, a consent entry and transcript review
+   `checked`. The temporary exceptions in decision 0004 (four lectures, no 1800 s total) are for
+   interim work and do not lower this. The tool cannot verify the cited approvals themselves; the
+   reviewer does.
 4. Write the report with `--output report.md` (it never overwrites). `--dry-run` prints without
    writing. Undo: delete the report file.
 5. Copy the report into the decision record for App-C 7 using
@@ -50,7 +55,9 @@ App-C 7 baseline work described above. The owner should confirm.
 ## 4. What the tool does and does not do
 
 Does: word-level edit distance; per-lecture and pooled WER (total errors / total reference words);
-refuses placeholders, empty files, non-UTF-8, URLs, absolute or `..` paths, media files, duplicate
+reads a B5.4 JSON transcript in order of `start` (segments may arrive out of order); scores an
+empty hypothesis (`segments: []`) as all deletions, WER 100%, with a visible warning (it never
+drops the lecture); refuses placeholders, an empty reference, empty files, non-UTF-8, URLs, absolute or `..` paths, media files, duplicate
 or malformed lecture ids; labels every report as synthetic or official; keeps target and
 acceptance at PENDING.
 

@@ -15,6 +15,7 @@ import pytest
 from speech_eval import edit_counts, evaluate, load_run, render_report
 from speech_eval.__main__ import main
 from speech_eval.inputs import OFFICIAL_NORMALISERS, dataset_status
+from speech_eval.wer import NORMALISERS
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -202,11 +203,16 @@ def test_non_utf8_and_bad_json_are_refused(tmp_path: Path) -> None:
     }
     path = make_run(tmp_path, lectures=[lecture])
     (tmp_path / "ref" / "lecture-01.txt").write_text("fine words", "utf-8")
-    assert any("segments[].text" in e for e in load_run(path).errors)
+    assert any("segments[] with start and text" in e for e in load_run(path).errors)
 
 
 def test_b54_json_hypothesis_is_read(tmp_path: Path) -> None:
-    segments = {"segments": [{"text": "synthetic one"}, {"text": "too three"}]}
+    segments = {
+        "segments": [
+            {"start": 0.0, "end": 1.0, "text": "synthetic one"},
+            {"start": 1.0, "end": 2.0, "text": "too three"},
+        ]
+    }
     (tmp_path / "hyp").mkdir()
     (tmp_path / "hyp" / "lecture-01.json").write_text(json.dumps(segments), "utf-8")
     lecture = {
@@ -281,6 +287,7 @@ def full_official(tmp_path: Path) -> Path:
 
 
 def test_the_repository_dataset_is_still_pending() -> None:
+    # Fails on purpose the day B8.5 becomes COMPLETE: then re-check the official-run gates.
     assert dataset_status(REPO_ROOT) == "PENDING"
 
 
@@ -305,30 +312,257 @@ def test_official_mode_needs_run_details_and_approvals(tmp_path: Path) -> None:
     assert "approvals.audio_use_permitted is missing or PENDING" in joined
 
 
-def test_official_mode_passes_gates_only_with_everything(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    # Simulate the future state with a fake repository root and an approved normaliser.
+def official_repo(
+    tmp_path: Path,
+    count: int = 5,
+    consent: str = "`0004` speaker-01",
+    review: str = "checked",
+) -> tuple[Path, Path, dict[str, object]]:
+    """A fake repository with a COMPLETE B8.5 inventory, and an official run description."""
     root = tmp_path / "repo"
-    readme = root / "testdata" / "b8-5-lecture-videos"
-    readme.mkdir(parents=True)
-    (readme / "README.md").write_text("**Status: COMPLETE.**\n", "utf-8")
+    data = root / "testdata" / "b8-5-lecture-videos"
+    (root / "hyp").mkdir(parents=True)
+    rows, lectures = [], []
+    for n in range(1, count + 1):
+        lid = f"lecture-{n:02d}"
+        folder = data / "lectures" / lid
+        folder.mkdir(parents=True)
+        (folder / "transcript.en.txt").write_text("reference words here\n", "utf-8")
+        (root / "hyp" / f"{lid}.txt").write_text("reference word here\n", "utf-8")
+        transcript = f"b8-5-lecture-videos/lectures/{lid}/transcript.en.txt"
+        rows.append(
+            f"| {lid} | T | S | 60 | f | abc | `{transcript}` | `{transcript}` "
+            f"| {consent} | {review} |"
+        )
+        lectures.append(
+            {
+                "id": lid,
+                "reference": f"testdata/{transcript}",
+                "hypothesis": f"hyp/{lid}.txt",
+            }
+        )
+    header = (
+        "| ID | Title | Speaker | Duration | File | SHA | Outline | Transcript "
+        "| Consent | Review |"
+    )
+    rule = "|---|---|---|---|---|---|---|---|---|---|"
+    (data / "README.md").write_text(
+        "**Status: COMPLETE.**\n\n" + "\n".join([header, rule, *rows]) + "\n",
+        "utf-8",
+    )
+    doc: dict[str, object] = {
+        "format_version": 1,
+        "mode": "official",
+        "normaliser": "unnormalised-whitespace",
+        "lectures": lectures,
+        "run": {
+            "engine": "e",
+            "model": "m",
+            "engine_version": "1",
+            "hardware": "h",
+            "decoding_settings": "d",
+            "date": "2026-11-20",
+            "operator": "o",
+        },
+        "approvals": {
+            "normalisation_rules": "docs/decisions/0011-normalisation.md",
+            "evaluation_method": "#98",
+            "speech_engine_confirmed": "#98",
+            "audio_use_permitted": "https://github.com/o/r/issues/1#issuecomment-2",
+        },
+    }
+    return root, root / "run.json", doc
+
+
+def official_errors(
+    root: Path, path: Path, doc: dict[str, object], monkeypatch: pytest.MonkeyPatch
+) -> list[str]:
     monkeypatch.setattr(
         "speech_eval.inputs.OFFICIAL_NORMALISERS",
         frozenset({"unnormalised-whitespace"}),
     )
-    work = tmp_path / "work"
-    work.mkdir()
-    run = load_run(full_official(work), repo_root=root)
-    assert run.errors == []
+    path.write_text(json.dumps(doc), "utf-8")
+    return load_run(path, repo_root=root).errors
+
+
+def first_lecture(doc: dict[str, object]) -> dict[str, str]:
+    lectures = doc["lectures"]
+    assert isinstance(lectures, list)
+    first: dict[str, str] = lectures[0]
+    return first
+
+
+def test_official_mode_passes_gates_only_with_everything(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Simulate the future state: a COMPLETE inventory of five checked lectures and an approved
+    # normaliser. Every other test below removes exactly one of these conditions.
+    root, path, doc = official_repo(tmp_path)
+    assert official_errors(root, path, doc, monkeypatch) == []
+    run = load_run(path, repo_root=root)
     result = evaluate(
         [(x.lecture_id, x.reference_text, x.hypothesis_text) for x in run.lectures]
     )
     report = render_report(run, result)
     assert "OFFICIAL RUN" in report
-    assert (
-        "Acceptance result (C4.7): **PENDING**" in report
-    )  # the tool never decides acceptance
+    assert "Acceptance result (C4.7): **PENDING**" in report  # the tool never decides
+
+
+def test_official_mode_refuses_fewer_than_five_lectures(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    for count in (1, 4):
+        root, path, doc = official_repo(tmp_path / f"c{count}", count=count)
+        errors = official_errors(root, path, doc, monkeypatch)
+        assert any("at least 5 lectures" in e for e in errors), errors
+
+
+def test_official_mode_refuses_ids_outside_the_inventory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, path, doc = official_repo(tmp_path)
+    first_lecture(doc)["id"] = "lecture-09"
+    errors = official_errors(root, path, doc, monkeypatch)
+    assert any("lecture-09 is not in the B8.5 inventory" in e for e in errors), errors
+
+
+def test_official_mode_refuses_a_reference_that_is_not_the_inventory_transcript(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, path, doc = official_repo(tmp_path)
+    (root / "my-reference.txt").write_text("some other words\n", "utf-8")
+    first_lecture(doc)["reference"] = "my-reference.txt"
+    errors = official_errors(root, path, doc, monkeypatch)
+    assert any("reference must be the transcript" in e for e in errors), errors
+
+
+@pytest.mark.parametrize(
+    ("consent", "review", "message"),
+    [
+        ("PENDING", "checked", "no consent entry"),
+        ("`0004` speaker-01", "pending", "transcript review is not 'checked'"),
+    ],
+)
+def test_official_mode_needs_consent_and_checked_transcripts(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    consent: str,
+    review: str,
+    message: str,
+) -> None:
+    root, path, doc = official_repo(tmp_path, consent=consent, review=review)
+    errors = official_errors(root, path, doc, monkeypatch)
+    assert any(message in e for e in errors), errors
+
+
+@pytest.mark.parametrize(
+    "value", ["ok", "x", "see the chat", "#", "docs/decisions/x.md"]
+)
+def test_official_approvals_must_look_like_references(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, value: str
+) -> None:
+    root, path, doc = official_repo(tmp_path)
+    approvals = doc["approvals"]
+    assert isinstance(approvals, dict)
+    approvals["evaluation_method"] = value
+    errors = official_errors(root, path, doc, monkeypatch)
+    assert any("approvals.evaluation_method must be a reference" in e for e in errors)
+
+
+@pytest.mark.parametrize("value", ["x", "2026-13-45", "2026-1-1", "20/11/2026"])
+def test_official_run_date_must_be_a_real_iso_date(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, value: str
+) -> None:
+    root, path, doc = official_repo(tmp_path)
+    run = doc["run"]
+    assert isinstance(run, dict)
+    run["date"] = value
+    errors = official_errors(root, path, doc, monkeypatch)
+    assert any("run.date must be a real date" in e for e in errors), errors
+
+
+def test_report_escapes_table_cells(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, path, doc = official_repo(tmp_path)
+    run = doc["run"]
+    assert isinstance(run, dict)
+    run["operator"] = "a|b\nc"
+    assert official_errors(root, path, doc, monkeypatch) == []
+    loaded = load_run(path, repo_root=root)
+    result = evaluate(
+        [(x.lecture_id, x.reference_text, x.hypothesis_text) for x in loaded.lectures]
+    )
+    assert "| operator | a\\|b c |" in render_report(loaded, result)
+
+
+# --- B5.4 transcripts: order and emptiness --------------------------------------------------
+
+
+def hypothesis_json(tmp_path: Path, document: object) -> Path:
+    (tmp_path / "hyp").mkdir(exist_ok=True)
+    (tmp_path / "hyp" / "lecture-01.json").write_text(json.dumps(document), "utf-8")
+    lecture = {
+        "id": "lecture-01",
+        "reference": "ref/lecture-01.txt",
+        "hypothesis": "hyp/lecture-01.json",
+    }
+    return make_run(tmp_path, lectures=[lecture])
+
+
+def test_out_of_order_segments_are_sorted_by_start(tmp_path: Path) -> None:
+    # PRD B5.4: segments may arrive out of order; a consumer sorts them by start.
+    segments = [
+        {"start": 2.0, "end": 3.0, "text": "too three"},
+        {"start": 0.0, "end": 2.0, "text": "synthetic one"},
+    ]
+    run = load_run(hypothesis_json(tmp_path, {"segments": segments}))
+    assert run.errors == []
+    assert run.lectures[0].hypothesis_text == "synthetic one too three"
+    (tmp_path / "ref" / "lecture-01.txt").write_text("synthetic one too three", "utf-8")
+    run = load_run(tmp_path / "run.json")
+    result = evaluate(
+        [(x.lecture_id, x.reference_text, x.hypothesis_text) for x in run.lectures]
+    )
+    assert result.pooled.wer == 0.0
+
+
+@pytest.mark.parametrize(
+    "document",
+    [
+        {"segments": [{"start": "0", "text": "a"}]},
+        {"segments": [{"start": True, "text": "a"}]},
+        {"segments": [{"text": "a"}]},
+        {"segments": [{"start": 0, "text": 5}]},
+    ],
+)
+def test_segments_need_numeric_start_and_string_text(
+    tmp_path: Path, document: object
+) -> None:
+    run = load_run(hypothesis_json(tmp_path, document))
+    assert any("lecture-01 hypothesis" in e for e in run.errors), run.errors
+
+
+@pytest.mark.parametrize(
+    "document", [{"segments": []}, {"segments": [{"start": 0, "text": ""}]}]
+)
+def test_an_empty_hypothesis_is_all_deletions_with_a_warning(
+    tmp_path: Path, document: object
+) -> None:
+    run = load_run(hypothesis_json(tmp_path, document))
+    assert run.errors == []
+    assert any("scored as all deletions" in w for w in run.warnings)
+    result = evaluate(
+        [(x.lecture_id, x.reference_text, x.hypothesis_text) for x in run.lectures]
+    )
+    assert result.pooled.deletions == 4 and result.pooled.wer == 1.0
+    assert "## Warnings" in render_report(run, result)
+
+
+def test_an_empty_reference_is_still_refused(tmp_path: Path) -> None:
+    path = hypothesis_json(tmp_path, {"segments": []})
+    (tmp_path / "ref" / "lecture-01.txt").write_text("  \n", "utf-8")
+    assert any("reference: file is empty" in e for e in load_run(path).errors)
 
 
 # --- CLI ------------------------------------------------------------------------------------
@@ -360,3 +594,20 @@ def test_cli_refuses_invalid_input(
     path = make_run(tmp_path, mode="official")
     assert main(["--manifest", str(path)]) == 1
     assert "Inputs are not valid" in capsys.readouterr().err
+
+
+def test_cli_prints_a_message_not_a_traceback_when_a_normaliser_empties_the_reference(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setitem(NORMALISERS, "strip-all", lambda text: [])
+    path = make_run(tmp_path, normaliser="strip-all")
+    assert main(["--manifest", str(path), "--dry-run"]) == 1
+    assert "Cannot compute" in capsys.readouterr().err
+
+
+def test_cli_shows_the_empty_hypothesis_warning(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    path = hypothesis_json(tmp_path, {"segments": []})
+    assert main(["--manifest", str(path), "--check"]) == 0
+    assert "Warning:" in capsys.readouterr().err
