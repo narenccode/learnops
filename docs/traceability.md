@@ -793,3 +793,28 @@ Test names are in `test_lesson_files_v1.py`. "Validator" means `lesson_files.py`
 | A `url` is on the player's allow-list | B6.2, FR-X-12 | The player (R6) |
 | Slides or cues in ascending order of `t`; chapters, slides or cues have a minimum count | B6.2 | Not decided by the guide, so nothing is required (`test_slides_and_cues_need_no_particular_order`, `test_empty_chapter_list_is_accepted_by_the_schema`) |
 | Release 3 writes the three files (`cues.json` may be empty); Release 5 adds `h5p` cues; a lesson with no cues may omit the file | B6.2, EXT-08, FR-V-14 | Documented in PRD B6.2; the pipeline (R3, R5) implements it |
+
+## G-6 caption WER evaluation preparation, Release 0 foundation
+
+Files: `libs/speech_eval/` (WER arithmetic, input validation, report, CLI),
+`libs/speech_eval/tests/test_speech_eval.py`, `docs/evaluation/g6-wer-procedure.md`,
+`docs/evaluation/g6-wer-report-template.md`. Requirements: PRD G-6, §C4.7 (third box), App-C 7.
+
+**Status: PENDING.** The official G-6 evaluation has **not** been run. The B8.5 set is PENDING,
+the normalisation rules and the WER target are not decided, and ADR 0002 (T8) is not approved.
+
+| Rule | Source | Test(s) |
+|---|---|---|
+| WER by word edit distance (S, D, I counts); pooled WER is total errors over total reference words | ADR 0002 section 7.3 (proposed) | `test_substitutions_deletions_insertions`, `test_pooled_wer_is_not_the_mean_of_lecture_wers` |
+| Inputs refused: URLs, absolute, `..` or backslash paths, media files, placeholders, empty or non-UTF-8 files, bad ids | B8.5 README, C-08, decision 0004 | `test_bad_paths_are_refused`, `test_placeholder_and_empty_files_are_refused` |
+| An `official` run is refused unless the B8.5 status is COMPLETE, a normaliser is approved and every run detail and approval is filled; approvals must be references and the date a real date | B8.5 README, App-C 7 | `test_official_mode_is_refused_today`, `test_official_mode_needs_run_details_and_approvals`, `test_official_approvals_must_look_like_references`, `test_official_run_date_must_be_a_real_iso_date` |
+| An `official` run needs at least five lectures, from the B8.5 inventory, with the inventory's reference transcript, a consent entry and review `checked` (peer review of #103) | PRD B8.5, decision 0004 | `test_official_mode_passes_gates_only_with_everything`, `test_official_mode_refuses_fewer_than_five_lectures`, `test_official_mode_refuses_ids_outside_the_inventory`, `test_official_mode_refuses_a_reference_that_is_not_the_inventory_transcript`, `test_official_mode_needs_consent_and_checked_transcripts` |
+| B5.4 JSON transcripts are read in order of `start`; an empty hypothesis is all deletions with a warning; an empty reference is refused | PRD B5.4 | `test_out_of_order_segments_are_sorted_by_start`, `test_segments_need_numeric_start_and_string_text`, `test_an_empty_hypothesis_is_all_deletions_with_a_warning`, `test_an_empty_reference_is_still_refused`, `test_cli_shows_the_empty_hypothesis_warning` |
+| The report escapes pipe characters and newlines in table cells; the CLI prints a message, not a traceback, when no reference words remain | UI-05 | `test_report_escapes_table_cells`, `test_cli_prints_a_message_not_a_traceback_when_a_normaliser_empties_the_reference` |
+| Reports say synthetic or official, and keep target and acceptance PENDING | G-6, App-C 7 | `test_a_valid_synthetic_run_loads_and_reports` |
+
+### Not verified
+
+- Any speech model's accuracy; the synthetic tests use made-up text only.
+- That an approval cited in an official run exists (a reviewer checks it).
+- Text normalisation, confidence intervals, timing accuracy and speed: not decided, not built.
