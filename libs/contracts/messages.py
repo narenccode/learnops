@@ -11,7 +11,8 @@ DOCUMENT_NAME = "course.yaml"
 
 
 def where(location: Location) -> str:
-    """A readable place in course.yaml, e.g. `sections[1].activities[0].idnumber`."""
+    """A readable place in a document, e.g. `sections[1].activities[0].idnumber`. The whole
+    document is named `course.yaml`, which fits B1 only: B2 callers name it themselves."""
     if not location:
         return DOCUMENT_NAME
     text = ""
@@ -23,12 +24,17 @@ def where(location: Location) -> str:
     return text
 
 
-# --- schema (B1.1) --------------------------------------------------------------------------
+# --- schema (B1.1; the two MODEL_ strings are for the B2 course model) --------------------------------------------------------------------------
 
 SCHEMA_ERROR = "{where}: {detail}"
 SCHEMA_HINT = (
     "Change this value in course.yaml so that it matches the course package schema "
     "(contracts/course-package.v1.schema.json)."
+)
+MODEL_NAME = "the course model"
+MODEL_SCHEMA_HINT = (
+    "Change this value in the course model so that it matches the course model schema "
+    "(contracts/course-model.v1.schema.json)."
 )
 PROTECTED_DEFAULT = (
     "{where}: '{value}' is a protected idnumber and cannot be used in a package."
@@ -52,6 +58,74 @@ PROTECTED_IDNUMBER = (
     "{where}: '{idnumber}' is a protected idnumber and cannot be used in a package."
 )
 PROTECTED_IDNUMBER_HINT = PROTECTED_DEFAULT_HINT
+
+# --- unlock rules (B1.2 rule 2) --------------------------------------------------------------
+
+UNLOCK_AFTER_MISSING_FULL = (
+    "{where}: this week does not depend on the previous week's task. Every week after the "
+    "first must unlock after the previous week's task is submitted."
+)
+UNLOCK_AFTER_MISSING_FULL_HINT = (
+    "Set unlock.after to the idnumber of the previous week's task. A start_date can be added "
+    "as well, but it cannot replace unlock.after (PRD B1.2 rule 2)."
+)
+UNLOCK_AFTER_MISSING_SECTIONS_ONLY = (
+    "{where}: this section is not restricted. In sections-only mode every listed section "
+    "needs unlock.after, because it is merged into a template course."
+)
+UNLOCK_AFTER_MISSING_SECTIONS_ONLY_HINT = (
+    "Set unlock.after to the idnumber of the activity that must be complete first. It may be "
+    "an activity of the template course that is not in this package."
+)
+UNLOCK_AFTER_NOT_PREVIOUS_TASK = "{where}: '{idnumber}' is not a task (assignment) of the previous week ({previous})."
+UNLOCK_AFTER_NOT_PREVIOUS_TASK_HINT = (
+    "Set unlock.after to the idnumber of the assignment in the previous week's section "
+    "(PRD B1.2 rule 2)."
+)
+
+UNLOCK_AFTER_ON_FIRST_SECTION = (
+    "{where}: '{idnumber}' cannot be named here. The first week has no earlier task, so "
+    "unlock.after must be null."
+)
+UNLOCK_AFTER_ON_FIRST_SECTION_HINT = (
+    "Set unlock.after to null in the first week. Use start_date alone if it should open on a "
+    "date (PRD B1.2 rule 2)."
+)
+UNLOCK_AFTER_FORWARD_REFERENCE = (
+    "{where}: '{idnumber}' is an activity of this week or of a later week in this package. A "
+    "week can only wait for something that comes before it."
+)
+UNLOCK_AFTER_FORWARD_REFERENCE_HINT = (
+    "Set unlock.after to an activity of the template course or of an earlier week of this "
+    "package."
+)
+UNLOCK_PREVIOUS_TASK_COUNT = (
+    "{where}: this week has {count} assignments, and the next week unlocks after its task. "
+    "Each week needs exactly one assignment."
+)
+UNLOCK_PREVIOUS_TASK_COUNT_HINT = (
+    "Keep exactly one assignment in this week, so that the next week can name it in "
+    "unlock.after (PRD B1.2 rule 2)."
+)
+
+# --- site time zone (B2) ---------------------------------------------------------------------
+
+TIMEZONE_UNKNOWN = (
+    "{where}: {value!r} is not a time zone name that this system knows. Package dates are "
+    "converted to 00:00 in this zone."
+)
+SITE_TIMEZONE_MISSING = (
+    "SITE_TIMEZONE is not set. A model built from a course package needs the site time zone to "
+    "turn unlock dates into 00:00 in that zone."
+)
+SITE_TIMEZONE_INVALID = (
+    "SITE_TIMEZONE is {value!r}, which is not a time zone name that this system knows."
+)
+SITE_TIMEZONE_HINT = (
+    "Set SITE_TIMEZONE to an IANA name such as Asia/Kolkata (the lab value in .env.example) or "
+    "UTC, not an offset such as UTC+5:30. There is no default. Where the system has no time "
+    "zone database (Windows), install the pinned tzdata package from requirements.txt."
+)
 
 # --- reading a package folder (B1.1) -------------------------------------------------------
 
@@ -186,11 +260,6 @@ HELD_RULES: tuple[tuple[str, str, str], ...] = (
         "week_structure_not_checked",
         "B1.2 rule 1",
         "Not checked: exactly one guide Page and one task Assignment in each week.",
-    ),
-    (
-        "unlock_chain_not_checked",
-        "B1.2 rule 2",
-        "Not checked: week N unlocks when the task of week N-1 is submitted.",
     ),
     (
         "points_total_not_checked",
