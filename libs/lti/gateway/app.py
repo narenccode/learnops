@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import secrets
 import time
 from collections.abc import Callable, Mapping
 from typing import Any
@@ -37,6 +38,8 @@ from lti.gateway.verifier import LaunchRefused, LaunchResult, LaunchVerifier
 
 # __Host- makes the browser insist on Secure, Path=/ and no Domain (B3 §6; ADR 0001 §8.2).
 SESSION_COOKIE = "__Host-learnops-session"
+STATE_COOKIE = "__Host-lti-state"
+STATE_COOKIE_SECONDS = 600  # a login must finish within ten minutes
 
 log = logging.getLogger("lti.gateway")
 
@@ -104,10 +107,21 @@ def create_app(
         if verifier is None:
             return _error(503, "not_set_up", messages.NOT_SET_UP)
         try:
-            auth_url = verifier.login_redirect(params, config.launch_url(tool))
+            redirect = verifier.login_redirect(params, config.launch_url(tool))
         except LaunchRefused as refused:
             return _refuse(refused, tool)
-        return RedirectResponse(auth_url, status_code=302)
+        response = RedirectResponse(redirect.url, status_code=302)
+        # ADR 0001 §8.1: SameSite=None so the cross-site launch POST from Moodle carries it.
+        response.set_cookie(
+            STATE_COOKIE,
+            redirect.state,
+            max_age=STATE_COOKIE_SECONDS,
+            path="/",
+            secure=True,
+            httponly=True,
+            samesite="none",
+        )
+        return response
 
     @app.post("/lti/launch/{tool_name}")
     async def launch(tool_name: str, request: Request) -> Response:
@@ -123,6 +137,10 @@ def create_app(
         id_token, state = form.get("id_token"), form.get("state")
         if not isinstance(id_token, str) or not isinstance(state, str):
             return _refuse(LaunchRefused("auth", "form_incomplete"), tool)
+        # The launch must come back to the browser that started the login (login CSRF).
+        cookie_state = request.cookies.get(STATE_COOKIE, "")
+        if not cookie_state or not secrets.compare_digest(cookie_state, state):
+            return _refuse(LaunchRefused("auth", "state_cookie_mismatch"), tool)
         try:
             result = _validated(verifier.launch(id_token, state))
         except LaunchRefused as refused:
@@ -151,6 +169,7 @@ def create_app(
             httponly=True,
             samesite="lax",
         )
+        _forget_state(response)
         return response
 
     @app.get("/lti/session")
@@ -217,7 +236,16 @@ def _validated(raw: Mapping[str, Any]) -> LaunchResult:
 def _refuse(refused: LaunchRefused, tool: Tool) -> JSONResponse:
     _log("launch_refused", tool=tool.value, reason=refused.reason)
     status, message = _REFUSALS[refused.kind]
-    return _error(status, f"launch_{refused.kind}", message)
+    response = _error(status, f"launch_{refused.kind}", message)
+    _forget_state(response)
+    return response
+
+
+def _forget_state(response: Response) -> None:
+    """The state cookie lives for one launch attempt only (ADR 0001 §8.1)."""
+    response.delete_cookie(
+        STATE_COOKIE, path="/", secure=True, httponly=True, samesite="none"
+    )
 
 
 def app_from_env(env: Mapping[str, str] | None = None) -> FastAPI:

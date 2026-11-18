@@ -13,21 +13,12 @@ from typing import Any, Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field
 
-# B3 §3.1. `fullmatch` with an ASCII-only class also refuses a final newline.
+from lti.shared import LaunchRefused, LoginRedirect
+
+__all__ = ["LaunchRefused", "LaunchResult", "LaunchVerifier", "LoginRedirect"]
+
+# B3 §3.1. Pydantic's regex engine has no multi-line `$`, so a final newline is refused too.
 CONTEXT_ID_PATTERN = r"^[1-9][0-9]*$"
-
-
-class LaunchRefused(Exception):
-    """A launch is refused; no result and no session exist.
-
-    `kind` picks the message the user sees: "auth", "context" or "role" (B3 §8). `reason` is an
-    internal code for the log only (B3 §10.1), for example "role_learner" or "nonce_invalid".
-    """
-
-    def __init__(self, kind: Literal["auth", "context", "role"], reason: str) -> None:
-        super().__init__(reason)
-        self.kind = kind
-        self.reason = reason
 
 
 class LaunchContext(BaseModel):
@@ -68,9 +59,11 @@ class LaunchResult(BaseModel):
 
 
 class LaunchVerifier(Protocol):
-    """Implemented by the launch validation in `libs/lti` (Peer 1)."""
+    """Implemented by `lti.launch.LaunchValidator` (Peer 1)."""
 
-    def login_redirect(self, params: Mapping[str, str], redirect_uri: str) -> str:
+    def login_redirect(
+        self, params: Mapping[str, str], redirect_uri: str
+    ) -> LoginRedirect:
         """Check an OIDC login request from Moodle; return Moodle's auth URL with a fresh state
         and nonce. `redirect_uri` is the gateway's launch URL for the selected tool."""
         ...

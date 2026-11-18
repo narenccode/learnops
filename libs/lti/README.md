@@ -38,6 +38,9 @@ Each activity's launch URL picks the tool: `/lti/launch/video` or `/lti/launch/g
 - The session is bound to `(iss, sub, context.id)` and ends after two hours idle (B3 §6). The
   cookie `__Host-learnops-session` is `Secure; HttpOnly; SameSite=Lax; Path=/`. A new launch ends
   the earlier session.
+- Login sets the OIDC state cookie `__Host-lti-state` (`Secure; HttpOnly; SameSite=None`,
+  ten minutes; ADR 0001 §8.1). A launch whose form `state` does not match it is refused before
+  the verifier runs, and the cookie is deleted after every launch attempt.
 - `/lti/session` refuses a request for the other tool, and a mentor's request for another
   course (PRD SEC-02, A5).
 - The raw ID token, nonce and state never reach a tool or a log; `name` and `email` are never
