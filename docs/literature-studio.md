@@ -4,14 +4,16 @@
 **Requirement:** `docs/GETTING-STARTED.md` (Student 1, "Literature survey for **your** module": at least 6
 sources, each opened and verified) and PRD §C1.12 "Bloom mapping" (Survey, L2: Moodle backup format, IMS
 Common Cartridge limits, course-as-code).
-**Status:** Draft. **7 sources recorded, plus 1 obsolete page kept for comparison (S4).** Owner
-verification of each source is still to do (column "Owner verification" below).
+**Status:** Complete for Release 0. **7 sources recorded, plus 1 obsolete page kept for comparison (S4).**
+All 8 sources opened and verified by the owner on 2026-11-19 (column "Owner verification" below). The
+gaps listed at the end are still open.
 
 This file follows `docs/literature-video.md`: `docs/GETTING-STARTED.md` allows a survey in
 `docs/design/<module>.md` §12 or in `docs/literature-<module>.md`, and this file uses the second option.
 AI tools can invent citations (root `CLAUDE.md` §6a, rule 5), so every source here was opened at its URL
-on 2026-11-18 and only what the page said that day is recorded. The owner opens each source again before
-this survey is marked complete.
+on 2026-11-18 and only what the page said that day is recorded. A second check of every claim against the
+live pages on 2026-11-19 corrected three over-strong wordings (S4, S7, S8), and the owner then opened and
+verified each source.
 
 **How to read an entry.**
 
@@ -29,14 +31,14 @@ that a design decision depends on is still checked on the lab site (PRD Appendix
 
 | ID | Source | Type | Topic (§C1.12) | Opened | Owner verification |
 |---|---|---|---|---|---|
-| S1 | MoodleDocs 4.5, *Course backup* | Official user documentation | Backup format | 2026-11-18 | To do |
-| S2 | MoodleDocs 4.4, *Backup and restore FAQ* | Official user documentation | Backup format | 2026-11-18 | To do |
-| S3 | MoodleDocs 4.5, *Course restore* | Official user documentation | Backup format | 2026-11-18 | To do |
-| S4 | MoodleDocs (dev), *Backup 2.0 general architecture* | Developer documentation, **marked obsolete** | Backup format | 2026-11-18 | To do |
-| S5 | Moodle Developer Resources, *Backup API* | Current developer documentation | Backup format | 2026-11-18 | To do |
-| S6 | MoodleDocs 4.5, *IMS Common Cartridge import and export* | Official user documentation | Common Cartridge limits | 2026-11-18 | To do |
-| S7 | 1EdTech, *Common Cartridge®* standard page | Standards body page | Common Cartridge limits | 2026-11-18 | To do |
-| S8 | Open edX docs (Ulmo), *What is the OLX Course Structure?* and *Getting Started with OLX* | Official platform documentation | Course-as-code | 2026-11-18 | To do |
+| S1 | MoodleDocs 4.5, *Course backup* | Official user documentation | Backup format | 2026-11-18 | Done (2026-11-19) |
+| S2 | MoodleDocs 4.4, *Backup and restore FAQ* | Official user documentation | Backup format | 2026-11-18 | Done (2026-11-19) |
+| S3 | MoodleDocs 4.5, *Course restore* | Official user documentation | Backup format | 2026-11-18 | Done (2026-11-19) |
+| S4 | MoodleDocs (dev), *Backup 2.0 general architecture* | Developer documentation, **marked obsolete** | Backup format | 2026-11-18 | Done (2026-11-19) |
+| S5 | Moodle Developer Resources, *Backup API* | Current developer documentation | Backup format | 2026-11-18 | Done (2026-11-19) |
+| S6 | MoodleDocs 4.5, *IMS Common Cartridge import and export* | Official user documentation | Common Cartridge limits | 2026-11-18 | Done (2026-11-19) |
+| S7 | 1EdTech, *Common Cartridge®* standard page | Standards body page | Common Cartridge limits | 2026-11-18 | Done (2026-11-19) |
+| S8 | Open edX docs (Ulmo), *What is the OLX Course Structure?* and *Getting Started with OLX* | Official platform documentation | Course-as-code | 2026-11-18 | Done (2026-11-19) |
 
 S4 is counted separately: it is kept only because no current page describes the file layout inside a
 backup, and its own banner says it is not reliable. Without S4 there are seven sources.
