@@ -2,4 +2,8 @@
 # One pinned version per package, with its licence. Development and CI packages are in
 # requirements-dev.txt.
 
+# LTI launch validation (libs/lti/launch.py)
+PyJWT==2.10.1                      # MIT. Verifies the RS256 ID token from Moodle and reads its keyset
+cryptography==44.0.1               # Apache-2.0 OR BSD-3-Clause. RSA for PyJWT (also used by the gateway keyset)
+
 tzdata==2026.6                     # Apache-2.0. Time-zone database for zoneinfo on systems that have none (Windows); not used where the system has one

@@ -790,3 +790,19 @@ Test names are in `test_lesson_files_v1.py`. "Validator" means `lesson_files.py`
 | A `url` is on the player's allow-list | B6.2, FR-X-12 | The player (R6) |
 | Slides or cues in ascending order of `t`; chapters, slides or cues have a minimum count | B6.2 | Not decided by the guide, so nothing is required (`test_slides_and_cues_need_no_particular_order`, `test_empty_chapter_list_is_accepted_by_the_schema`) |
 | Release 3 writes the three files (`cues.json` may be empty); Release 5 adds `h5p` cues; a lesson with no cues may omit the file | B6.2, EXT-08, FR-V-14 | Documented in PRD B6.2; the pipeline (R3, R5) implements it |
+
+## LTI login initiation and launch validation (`libs/lti/launch.py`)
+
+Tests in `libs/lti/tests/test_launch.py`, with real RS256 tokens signed by a test key (no
+network). Every accepted result is validated against `contracts/lti-launch.v1.schema.json`.
+The gateway endpoints (`/lti/login`, `/lti/launch/{tool}`) and the OIDC state cookie are in the
+gateway pull request; this module is what they call. Not yet run against the lab Moodle sites.
+
+| Rule | PRD / B3 | Test(s) |
+|---|---|---|
+| Login: exact registered issuer, client id, deployment, `login_hint`, target link; fresh random state and nonce stored on the server; Moodle auth URL with `form_post` and the redirect URI; several registered sites | SEC-01, B3 §7.1 | `test_login_redirects_to_moodle_with_a_fresh_state_and_nonce`, `test_bad_login_is_refused`, `test_several_registered_platforms_each_use_their_own_settings` |
+| Valid launch returns the B3 result, with no token, nonce or state in it | B3 §4, §10 | `test_valid_launch_returns_the_b3_result`, `test_result_carries_no_token_nonce_or_state` |
+| Signature (RS256 only), `exp`, `iss`, `aud`, `azp` for several audiences, version exactly `1.3.0`, deployment, required claims, context id form, target link | SEC-01, B3 §3, §3.1, §8 | `test_invalid_jwt_is_refused`, `test_signature_from_another_key_is_refused`, `test_algorithm_other_than_rs256_is_refused`, `test_expired_launch_is_refused`, `test_wrong_issuer_is_refused`, `test_wrong_audience_is_refused`, `test_several_audiences_need_our_azp`, `test_several_audiences_with_our_azp_are_accepted`, `test_version_must_be_exactly_1_3_0`, `test_invalid_deployment_is_refused`, `test_missing_required_claim_is_refused`, `test_missing_or_invalid_context_is_refused`, `test_target_link_uri_must_match_the_login` |
+| State and nonce are single-use; unknown or expired state, wrong or reused nonce and replayed launches refused; another message type, or a bad signature, uses up nothing | SEC-01, B3 §2, ADR 0001 §6.7 | `test_unknown_state_is_refused`, `test_state_expires_after_ten_minutes`, `test_wrong_nonce_is_refused`, `test_replayed_launch_is_refused`, `test_nonce_from_another_login_is_refused`, `test_other_message_type_is_refused_without_using_up_the_state`, `test_failed_signature_does_not_use_up_the_state` |
+| Role mapping and precedence; unlisted URIs ignored; Learner-only and no recognised role refused | B3 §5, A5, EXT-07 | `test_roles_map_to_the_b3_role`, `test_learner_and_unrecognised_roles_are_refused` |
+| `name`, `email`, `context.title` normalised once by the shared vectors; the white-space list is the contract's | B3 §3.2 | `test_white_space_list_is_the_contract_list`, `test_optional_claims_follow_the_shared_vectors` |
