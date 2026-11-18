@@ -160,8 +160,9 @@ then no Learner support is claimed.
 
 - A user sees only data for the course (LTI context) they launched from, except administrators
   (PRD A5). Every request is authorised from the session's role and course context (PRD SEC-02).
-- `shared.course_link` is keyed by **`iss` plus context id**. The columns are agreed between
-  Student 2 and Student 3 (B4 owner); this contract does not define them.
+- `shared.course_link` is keyed by **`iss` plus context id**. Its columns are owned by B4
+  (Student 3) and are agreed and recorded in B4's records (#72 or a decision record); this
+  contract does not define them.
 
 ### 7.1 `iss` must identify a registered platform
 
@@ -177,8 +178,9 @@ then no Learner support is claimed.
   registered issuer**. A course id from one registered platform is never resolved against another
   platform's client. There is **never a fallback** to another platform's B4 client, or to a default
   one: if no client is bound for the verified `iss`, the B4 call is refused.
-- Formal approval by the guide of the gateway as a consumer of B4 is still pending (ADR 0001,
-  OI-15). This section states the B3 rule; it does not claim that approval.
+- The guide has approved the gateway as a consumer of B4 (ADR 0001, OI-15). That approval
+  covers the gateway's use of B4 and the `(iss, context id)` key; it does not approve or freeze
+  B4's `shared.course_link` columns.
 
 ## 8. Refusal conditions
 

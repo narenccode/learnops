@@ -700,6 +700,20 @@ SYSTEM_ADMIN = "http://purl.imsglobal.org/vocab/lis/v2/system/person#Administrat
 UNLISTED = (
     "http://purl.imsglobal.org/vocab/lis/v2/membership#Mentor"  # not a B3 role URI
 )
+# Matching is exact on the listed URIs (guide decision): no short names, no sub-roles, no
+# aliases and no prefix, case or scheme matching. Each of these is therefore an unlisted URI.
+SHORT_INSTRUCTOR = "Instructor"
+TEACHING_ASSISTANT = (
+    "http://purl.imsglobal.org/vocab/lis/v2/membership/Instructor#TeachingAssistant"
+)
+INSTRUCTOR_LOOKALIKES = {
+    "short-name": SHORT_INSTRUCTOR,
+    "teaching-assistant-sub-role": TEACHING_ASSISTANT,
+    "lower-case-fragment": INSTRUCTOR.replace("#Instructor", "#instructor"),
+    "https-scheme": INSTRUCTOR.replace("http://", "https://"),
+    "trailing-space": INSTRUCTOR + " ",
+    "lti-1.1-urn": "urn:lti:role:ims/lis/Instructor",
+}
 
 REFUSED_NO_ROLE = "refused: no recognised role"
 REFUSED_LEARNER_ONLY = "refused: learner is the only recognised role"
@@ -765,6 +779,22 @@ ROLE_CASES: list[tuple[str, list[str], str]] = [
         [LEARNER, UNLISTED, SYSTEM_ADMIN, INSTRUCTOR, INSTITUTION_ADMIN],
         "administrator",
     ),
+    # exact matching: a look-alike of Instructor is unlisted, so it is ignored
+    *[
+        (f"{name}-only", [uri], REFUSED_NO_ROLE)
+        for name, uri in INSTRUCTOR_LOOKALIKES.items()
+    ],
+    *[
+        (f"{name}-plus-learner", [uri, LEARNER], REFUSED_LEARNER_ONLY)
+        for name, uri in INSTRUCTOR_LOOKALIKES.items()
+    ],
+    ("teaching-assistant-plus-instructor", [TEACHING_ASSISTANT, INSTRUCTOR], "mentor"),
+    (
+        "teaching-assistant-plus-institution-administrator",
+        [TEACHING_ASSISTANT, INSTITUTION_ADMIN],
+        "administrator",
+    ),
+    ("short-instructor-plus-instructor", [SHORT_INSTRUCTOR, INSTRUCTOR], "mentor"),
 ]
 
 
@@ -813,6 +843,18 @@ def test_role_cases_cover_every_oi_22_row_and_every_pair_of_recognised_roles() -
     assert frozenset([UNLISTED]) in covered
     assert frozenset([INSTRUCTOR, UNLISTED]) in covered
     assert frozenset([INSTITUTION_ADMIN, SYSTEM_ADMIN]) in covered
+
+
+def test_instructor_lookalikes_are_unlisted_and_named_nowhere_in_section_5() -> None:
+    """Exact matching (guide decision): none of these is a listed URI, so the contract table
+    must not name it, and each one alone resolves to no recognised role."""
+    table = _section_5_table()
+    for name, uri in INSTRUCTOR_LOOKALIKES.items():
+        assert uri != INSTRUCTOR and uri not in table, name
+        assert _resolve_role([uri]) == REFUSED_NO_ROLE, name
+    covered = {frozenset(roles) for _, roles, _ in ROLE_CASES}
+    for uri in INSTRUCTOR_LOOKALIKES.values():
+        assert frozenset([uri]) in covered and frozenset([uri, LEARNER]) in covered
 
 
 def test_resolved_roles_are_schema_values_and_refusals_never_are() -> None:

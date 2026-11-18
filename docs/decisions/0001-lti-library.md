@@ -53,7 +53,11 @@ The most important blockers for guide review are:
 |---|---|
 | Session identity is `(iss, sub, context id)` | §3.2, §7.2, contract §6 |
 | `shared.course_link` is keyed by `iss` plus context id | §13, contract §7 |
+| The gateway is approved as a consumer of B4 (OI-15). B4 owns the `shared.course_link` columns; this approval does not approve or freeze them | §13, contract §7.1 |
+| `context.id` stays a decimal string (positive integer, ASCII digits, no leading zero, no upper bound). B4 owns the form sent to Moodle and may pass the string unchanged; a value Moodle rejects fails closed at the B4 call | §13, contract §3.1 |
 | Unlisted role URIs, including system administrator roles, are ignored; a launch is refused only if no recognised role remains | §10.3, contract §5 |
+| Role URIs match exactly: the listed URIs only. The short name `Instructor`, the `TeachingAssistant` sub-role and any alias, prefix, case or scheme variant are unlisted, so they are ignored | §10.2, contract §5 |
+| `mod/lti:admin` is not granted to non-site-administrators on the lab sites (OI-16). What Moodle sends for each persona is still to be checked in the lab | §10.2 |
 | Role mapping: Instructor → `mentor`; institution Administrator → `administrator`; Learner refused by baseline tools (EXT-07); Administrator over Instructor; Instructor + Learner → `mentor` | §10.3, contract §5 |
 | Only `LtiResourceLinkRequest` is required in v1; Deep Linking is not | §6.5, contract §2 |
 | The schema describes the normalised launch result, not raw Moodle claims | §10.1, contract §1 |
@@ -729,7 +733,7 @@ The guide confirmed in [Issue #58](https://github.com/narenccode/learnops/issues
 | JSON Schema (Draft 2020-12) | `contracts/lti-launch.v1.schema.json` | Created in this change; listed in `contracts/CLAUDE.md` |
 | Valid examples | `contracts/examples/lti-launch.v1/` | Created in this change; valid examples only |
 
-The contract is a draft until the contract pull request is approved by every affected owner and the guide (PRD §B.0, OI-23). The schema describes the normalised launch result, not the raw Moodle claims.
+The contract is a draft until approved under PRD §B.0 rule 3. Before the Release 0 freeze, one owner of an affected module must approve the contract change. The guide approves the PRD text changed by this PR and reviews the complete contract set at the Release 0 gate. After the freeze, guide approval is also required for contract changes. The schema describes the normalised launch result, not the raw Moodle claims.
 
 The normalized output contains:
 
@@ -768,6 +772,23 @@ The guide supplied these role identifiers:
 - System administrator: `http://purl.imsglobal.org/vocab/lis/v2/system/person#Administrator`
 
 The guide's role URI observations are based on Moodle source; lab launch confirmation remains pending.
+
+**Matching is exact (guide decision).** Only the URIs listed above count, compared as received. The short name `Instructor`, the `TeachingAssistant` sub-role (`…/membership/Instructor#TeachingAssistant`) and any alias, prefix, case or scheme variant are unlisted URIs, so they are ignored (contract §5). There is no alias or prefix matching.
+
+**`mod/lti:admin` on the lab sites (OI-16, guide decision).** The capability `mod/lti:admin` must not be granted to anyone who is not a site administrator on the lab Moodle sites. The source observation in §10.3 (Moodle site administrators send the Instructor, institution administrator and system administrator URIs) remains **unverified** until the lab check below. The mapping does not depend on it: the institution administrator URI becomes `administrator`, and the system administrator URI is ignored.
+
+#### 10.2a Lab verification checklist (OI-16, Appendix B V7): **PENDING**
+
+**Not run.** No lab launch has been made for this checklist, and nothing in it is an observed result. Run it once on each lab site (Moodle 4.5 and 5.3) with test accounts only. Record only the role URIs from the `roles` claim; never record the ID token, the nonce, names, email addresses or any other claim. The results go in the release harness report (PRD E2), as Appendix B requires for V7.
+
+| Persona | Account setup | `roles` claim sent, Moodle 4.5 | `roles` claim sent, Moodle 5.3 | Result under contract §5 | Status |
+|---|---|---|---|---|---|
+| a. Site administrator | A Moodle site administrator | PENDING | PENDING | PENDING (the unverified source observation predicts `administrator`) | Pending |
+| b. Institution administrator | A user meant to act as an institution administrator; on the lab sites this account is not given `mod/lti:admin` unless it is a site administrator | PENDING | PENDING | PENDING | Pending |
+| c. Instructor | A user enrolled in the course with the teacher role | PENDING | PENDING | PENDING | Pending |
+| d. Learner | A user enrolled in the course with the student role | PENDING | PENDING | PENDING (a Learner-only launch is refused, EXT-07) | Pending |
+
+Also record, for each site: the Moodle version and build, the date, who ran the check, and that no account other than a site administrator holds `mod/lti:admin`.
 
 ### 10.3 Role mapping
 
@@ -827,7 +848,7 @@ The five browser roles in PRD FR-C-06 are not the LTI role URIs and must not be 
 - Each tool still declares its accepted roles (§3.2); baseline tools accept Mentor and Administrator. A per-tool declaration cannot let a Learner through while the gateway refuses Learner-only launches and the schema has no Learner value.
 - Learner must not become enabled globally.
 
-Any future change to the normalized result must follow PRD §B.0 and its compatibility rules: after Release 0, additive and optional changes only; a breaking change needs a `v2` file; and the schema, examples, PRD text and every affected module's tests change in one pull request, approved by every affected owner and the guide. Whether adding an enum value counts as additive is part of OI-25.
+Any future change to the normalized result must follow PRD §B.0 and its compatibility rules: after Release 0, additive and optional changes only; a breaking change needs a `v2` file; and the schema, examples, PRD text and every affected module's tests change in one pull request, with approvals required under PRD §B.0 rule 3. Whether adding an enum value counts as additive is part of OI-25.
 
 ---
 
@@ -934,13 +955,15 @@ The first successful launch should:
 
 The service-account visibility requirement remains a lab check.
 
-**Decided by the guide:** `shared.course_link` is keyed by issuer (`iss`) plus context ID. The final columns must still be agreed with Student 3 (B4 owner). B3 documents the key only and does not invent a schema or columns before that agreement (OI-15).
+**Decided by the guide:** `shared.course_link` is keyed by issuer (`iss`) plus context ID. B4 (Student 3) owns the columns and agrees them; B3 documents the key only and does not invent a schema or columns (OI-15).
+
+**`context.id` at the B4 boundary (guide decision).** B3 hands `context.id` to modules as a decimal string: a positive integer in ASCII digits with no leading zero, and no upper bound or maximum length (contract §3.1; the schema is unchanged). B4 owns the form sent to Moodle and may pass the decimal string unchanged. A value that Moodle rejects must fail closed at the B4 call. B3 sets no numeric-conversion rule.
 
 **B4 integration rule (confirmed by the B4 owner).** Harshitha, the B4 owner, has confirmed to the B3 owner that: `iss` must identify a registered platform; the platform configuration is resolved using the verified `iss`; B4 is called only through the client bound to the configuration that corresponds to the registered issuer; and there is never a fallback to another platform's configuration. No link to the confirmation is recorded here. The rule is written into the contract as §7.1.
 
 **Added by B3 in the same section, not part of that confirmation:** the issuer is compared exactly (no trimming, case folding or trailing-slash normalisation), unknown issuers are refused, and the `iss` of an unverified token is used only to locate the candidate registered-platform configuration for signature verification; it is trusted only after the signature verifies. These need the reviewers' agreement with the rest of the contract.
 
-**Formal approval by the guide** of the gateway as a consumer of B4, in B4 pull request #27, is **still pending (OI-15)**.
+**Approved by the guide (OI-15):** the gateway is approved as a consumer of B4 (guide decision, recorded 18 November 2026; source link to be added). The course-link identity key stays `(iss, context.id)`. **This approval does not approve or freeze the `shared.course_link` columns:** B4 owns them, and their approval is separate. B4 pull request #27 is merged; the columns are to be recorded in B4's follow-up #72, or in a decision record, once B4 agrees them. They are **not finalised**.
 
 ---
 
@@ -952,7 +975,7 @@ These modules consume the normalized launch contract and must enforce their decl
 
 ### 14.2 Grading and B4
 
-The launch supplies the course context. B4 resolves the Moodle course and maintains the shared course-link mapping. The B4 owner must confirm the `shared.course_link` fields and service-account visibility.
+The launch supplies the course context. B4 resolves the Moodle course and maintains the shared course-link mapping. The gateway is approved as a B4 consumer (OI-15, §13). The B4 owner still has to agree and record the `shared.course_link` columns, which B4 owns, and confirm service-account visibility (OI-17).
 
 ### 14.3 Video
 
@@ -1018,15 +1041,15 @@ The proposed overrides (§6.9) rely on undocumented per-step methods and protect
 | OI-12 | No FastAPI adapter was identified | LearnOps uses FastAPI | Guide: approve thin adapter and sync/thread-pool integration approach, including the four proposed `MessageLaunch` overrides and their safeguards (§6.9, §15.5) | High |
 | OI-13 | Trusted-proxy configuration is not established by current setup documentation | Untrusted forwarded headers can undermine secure-request detection | Guide: confirm trusted proxy configuration and ownership | **Blocking deployment security** |
 | OI-14 | Lab HTTPS certificate is pending | HTTPS is mandatory in the lab | Guide: confirm certificate provision and lab readiness | **Blocking lab acceptance** |
-| OI-15 | `shared.course_link` columns are not yet agreed | B3 and B4 need a consistent course identity and record | B4 owner: confirm columns and issuer/context identity. **Update:** the B4 owner has confirmed the registered-issuer and B4-client binding rule (§13, contract §7.1); the columns, and the guide's formal approval of the gateway as a B4 consumer in PR #27, are **still pending** | High |
-| OI-16 | Moodle role URI observations still need lab confirmation | Source review is not a substitute for a real Moodle launch | Guide/B3: verify actual launch claims in lab | High |
+| OI-15 | `shared.course_link` columns are not yet agreed | B3 and B4 need a consistent course identity and record | B4 owner: confirm columns and issuer/context identity. **Update:** the B4 owner has confirmed the registered-issuer and B4-client binding rule (§13, contract §7.1). **Approved by the guide:** the gateway as a B4 consumer, with the identity key `(iss, context.id)` (§13). **Still pending:** the `shared.course_link` columns, which B4 owns; that approval is separate and not given. B4 #27 is merged; the columns are to be recorded in #72 or a decision record once B4 agrees them | High; consumer approved, columns pending (B4) |
+| OI-16 | Moodle role URI observations still need lab confirmation | Source review is not a substitute for a real Moodle launch | Guide/B3: verify actual launch claims in lab. **Decided by the guide:** `mod/lti:admin` is not granted to non-site-administrators on the lab sites; the mapping stays (institution administrator → `administrator`; system administrator URI ignored). **Still pending:** the lab check of what Moodle sends for the four personas (§10.2a, Appendix B V7); the source observation stays unverified until then | High; lab check pending |
 | OI-17 | Service-account course visibility remains unverified | B4 course lookup depends on visibility | Guide/B4: verify with lab test | High |
 | OI-18 | Upload-resume identity must be confirmed with Video | Upload records must survive session expiry and relaunch | Video owner: confirm `(iss, sub, context id)` identity | High |
 | OI-19 | Per-tool accepted-role declarations need downstream agreement | Learner must not become enabled globally | Module owners/guide: confirm each tool's accepted roles | High |
 | OI-20 | CSRF mechanism must be explicit in the FastAPI/session design | SEC-09 requires CSRF protection on state-changing requests | **Awaiting guide approval.** Guide/B3: approve mechanism compatible with new-window launch | **Blocking security design** |
 | OI-21 | PRD session identity and guide clarification differed in specificity | PRD B3 said `(sub, context id)`; guide says `(iss, sub, context id)` | **Decided by the guide:** `(iss, sub, context id)` ([12 Nov, Q1](https://github.com/narenccode/learnops/issues/58#issuecomment-6826722256); the closing paragraph after point 6 of the [8 Nov comment](https://github.com/narenccode/learnops/issues/58#issuecomment-6721370757) gave the reason: Moodle's `sub` and course ids repeat across sites). PRD B3 amended in this change | Decided; PRD amended (pending contract PR approval) |
 | OI-22 | PRD §A5 "a launch with any role not listed is refused with a clear message" conflicted with the guide's reading that "refuse unlisted roles" means "refuse when no listed role is present" ([8 Nov, point 3](https://github.com/narenccode/learnops/issues/58#issuecomment-6721370757)) | The two readings differed for Instructor + unknown role and for institution administrator + system administrator URI (§10.3) | **Decided by the guide:** unlisted role URIs are ignored; refuse only if no recognised role remains ([12 Nov, Q2](https://github.com/narenccode/learnops/issues/58#issuecomment-6826722256)). PRD §A5 amended in this change | Decided; PRD amended (pending contract PR approval) |
-| OI-23 | B3 contract format is confirmed (Markdown, JSON Schema, examples; [8 Nov, point 1](https://github.com/narenccode/learnops/issues/58#issuecomment-6721370757)); schema and example locations were not in the contract inventory | The normalized contract must have its schema and valid examples at agreed locations before contract approval | **Structure and paths decided by the guide ([12 Nov, Q3](https://github.com/narenccode/learnops/issues/58#issuecomment-6826722256)) and implemented in this draft:** `contracts/lti-launch.v1.md`, `contracts/lti-launch.v1.schema.json`, `contracts/examples/lti-launch.v1/` (Markdown documentation, JSON Schema, valid examples), and the B3 row in `contracts/CLAUDE.md`. **Still pending:** formal approval of the actual contract, schema, examples and PRD changes through the contract PR, by every affected owner and the guide (PRD §B.0). The PR has not been approved | **Blocking contract approval** (structure decided; content awaiting PR approval) |
+| OI-23 | B3 contract format is confirmed (Markdown, JSON Schema, examples; [8 Nov, point 1](https://github.com/narenccode/learnops/issues/58#issuecomment-6721370757)); schema and example locations were not in the contract inventory | The normalized contract must have its schema and valid examples at agreed locations before contract approval | **Structure and paths decided by the guide ([12 Nov, Q3](https://github.com/narenccode/learnops/issues/58#issuecomment-6826722256)) and implemented in this draft:** `contracts/lti-launch.v1.md`, `contracts/lti-launch.v1.schema.json`, `contracts/examples/lti-launch.v1/` (Markdown documentation, JSON Schema, valid examples), and the B3 row in `contracts/CLAUDE.md`. **Still pending:** formal approval of the actual contract, schema and examples by one owner of an affected module under PRD §B.0 rule 3. The guide's approval of the PRD changes and Release 0 gate review remain outstanding. The PR has not been approved. | **Blocking contract approval** (structure decided; content awaiting PR approval) |
 | OI-24 | The candidate's cache storage requires a third cookie, `lti1p3-session-id`, that the guide's cookie policy does not cover (§8.7) | It must be sent on Moodle's cross-site launch POST, which (by documented browser behaviour) needs `SameSite=None; Secure` | **Awaiting guide approval.** Guide: whether and how to handle the cookie, its attributes (`SameSite=None; Secure; HttpOnly` proposed), its lifetime, and deletion after launch | **Blocking security design** |
 | OI-25 | The v1 schema constrains `role` to `mentor` or `administrator`, so Release 6 Learner support would need a guide-approved approach, such as an approved enum extension or a new contract version (§10.1, contract §9) | The original EXT-07 wording said Learner launches could be enabled without changing the gateway (historical; EXT-07 is amended in this change to make that conditional on OI-25); widening an enum is not obviously "additive, optional" under PRD B.0 | **Open.** Guide: decide whether `learner` is admitted now, added later as an additive change, or handled in a `v2` file, and when (contract §9). Until then the v1 enum is not widened and no Release 6 Learner support is claimed | High |
 | OI-26 | Which artefact is pinned (release `2.0.2` or a Git commit), its full SHA, and the `jwcrypto` licence evidence are unverified (§4.1, §5.2) | Stage 1 approval needs a pinned, evidenced dependency record | B3 to verify (Appendix B); guide to review the `jwcrypto` LGPL disclosure under PRD C-11. **Update, 17 Nov 2026:** full SHAs recorded, the security-relevant source files are unchanged between tag `2.0.2` and the reviewed commit, and PyPI metadata agrees on the `jwcrypto` licence (§4.1, §5.2, Appendix C); the artefact choice, the download comparison, the Python 3.12 tree and licence files, and the advisory scan with version floors are still open | **Blocking Stage 1 approval** |
@@ -1049,7 +1072,7 @@ The proposed overrides (§6.9) rely on undocumented per-step methods and protect
 - OI-21 and OI-22: decided by the guide; PRD B3 and A5 amended in this change. They no longer block, once the contract PR is approved.
 
 **Before contract approval**
-- OI-23: the contract structure and paths are decided and implemented in this draft. The contract, schema, examples and PRD changes still need formal approval through the contract PR (PRD §B.0) by every affected owner and the guide; that approval has not happened.
+- OI-23: The contract, schema and examples still need approval through the contract PR by one owner of an affected module under PRD §B.0 rule 3. The guide must approve the PRD changes and review the complete contract set at the Release 0 gate. These approvals have not yet happened.
 - OI-25: open; how and when `learner` could be added to the `role` enum (the guide sets the timing).
 
 **Before Stage 1 approval**
@@ -1057,8 +1080,9 @@ The proposed overrides (§6.9) rely on undocumented per-step methods and protect
 
 **Before lab and downstream acceptance**
 - OI-12: FastAPI adapter approach.
-- OI-14 and OI-16: lab certificate and Moodle role-claim confirmation.
-- OI-15 and OI-17: B4 course-link agreement and service-account visibility.
+- OI-14 and OI-16: lab certificate, and the four-persona Moodle role-claim check (§10.2a); the `mod/lti:admin` restriction is decided.
+- OI-15: the gateway is approved as a B4 consumer; the `shared.course_link` columns, which B4 owns, are still to be agreed and recorded (#72 or a decision record).
+- OI-17: service-account course visibility.
 - OI-18: Video upload-resume identity.
 - OI-19: per-tool accepted-role declarations.
 
@@ -1117,7 +1141,7 @@ No `libs/lti` code is written until Stage 2 is approved. Once it is, the impleme
 Before B4, Video, Studio, Checker, or Grading relies on the LTI boundary:
 
 - The normalized contract must be reviewed through the required `/contract-change` process if it changes a frozen contract.
-- B4 must confirm `shared.course_link` identity and columns.
+- B4 must agree and record the `shared.course_link` columns, which it owns. The identity key `(iss, context.id)` is decided and the gateway is approved as a B4 consumer (OI-15).
 - Video must confirm upload-resume identity.
 - Each tool must declare accepted roles.
 - User-facing messages must follow the centralized UI requirements.
@@ -1209,13 +1233,17 @@ Before this ADR is marked Approved, every external source cited in it must be op
 - [x] Guide answers OI-22: unlisted role URIs are ignored; refuse only if no recognised role remains (decision recorded in §3.2; PRD §A5 amended in this change).
 - [x] Guide decides OI-21: session identity `(iss, sub, context id)` (PRD B3 amended in this change).
 - [x] B3 contract structure and paths decided by the guide and implemented in this draft (OI-23): Markdown contract, schema, valid examples, and the `contracts/CLAUDE.md` row.
-- [ ] Affected owners and the guide formally approve the actual contract, schema, examples and PRD changes through the contract PR (PRD §B.0). Not yet approved.
+- [ ] One owner of an affected module formally approves the contract, schema and examples through the contract PR (PRD §B.0 rule 3).
+- [ ] The guide formally approves the PRD changes in the contract PR.
+- [ ] The guide reviews the complete contract set at the Release 0 gate.
 - [ ] Guide decides OI-25 (open): how and when `learner` could be admitted to the `role` enum for Release 6. Until then no Release 6 Learner support without a contract change is claimed.
 - [ ] B3 verifies OI-26: pinned artefact, full SHA, and `jwcrypto` licence evidence; guide reviews the `jwcrypto` LGPL disclosure.
 - [ ] Guide approves Stage 1 (library choice and pinned dependency and licence record).
 - [ ] Guide approves Stage 2 (security design), including storage ownership and migrations, the CSRF mechanism, and the `lti1p3-session-id` cookie.
-- [ ] Moodle role URIs are confirmed through a lab launch.
-- [ ] B4 confirms `shared.course_link` identity and columns.
+- [x] Guide decides OI-16's lab rule: `mod/lti:admin` is not granted to non-site-administrators on the lab sites.
+- [ ] Moodle role URIs are confirmed through a lab launch: the four-persona checklist (§10.2a) is run on Moodle 4.5 and 5.3 and recorded in the release harness report.
+- [x] Guide approves the gateway as a B4 consumer, with the identity key `(iss, context.id)` (OI-15).
+- [ ] B4 agrees and records the `shared.course_link` columns, which it owns (#72 or a decision record).
 - [ ] B4 confirms service-account course visibility.
 - [ ] Video confirms upload-resume identity.
 - [ ] Each module confirms its accepted roles.
@@ -1273,7 +1301,7 @@ This plan lives here, not in `docs/testing`. It lists what must be checked, by w
 | V4 | The extension points in §6.9 exist in the pinned version | Run the startup compatibility checks (LTI-30) | Test report |
 | V5 | Security acceptance tests LTI-01 to LTI-32 (§12) | Automated tests in `tests/`, written failing first | Test report; `docs/traceability.md` |
 | V6 | The normalised result and the examples meet the schema | Validate every file in `contracts/examples/lti-launch.v1/` against the schema; negative cases live in tests or a vectors file, never in the examples folder | CI (contract validation) |
-| V7 | Moodle role URIs actually sent (OI-16), including what site administrators send | A real launch from each lab Moodle (4.5 and 5.3) with Instructor, Learner, institution administrator and site-administrator accounts, claims inspected in the lab only | **Release harness report (PRD E2)** |
+| V7 | Moodle role URIs actually sent (OI-16), including what site administrators send | A real launch from each lab Moodle (4.5 and 5.3) with Instructor, Learner, institution administrator and site-administrator accounts, claims inspected in the lab only, using the checklist in §10.2a; also confirm that no account other than a site administrator holds `mod/lti:admin` | **Release harness report (PRD E2)** |
 | V8 | Launch works on Moodle 4.5 and 5.3, new-window launch, cookies and CSRF behave as designed | Harness run on fresh 4.5 and 5.3 sites | **Release harness report (PRD E2)** |
 | V9 | `context.id` equals the Moodle course id, and service-account course visibility (OI-17) | Lab launch plus a B4 course lookup | Release harness report (PRD E2) |
 | V10 | Lab HTTPS certificate and trusted-proxy configuration (OI-13, OI-14) | Launch over HTTPS through the lab proxy; test an untrusted forwarded header (LTI-18) | Release harness report (PRD E2) |
