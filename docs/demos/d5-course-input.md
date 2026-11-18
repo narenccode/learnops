@@ -49,9 +49,10 @@ changes one thing in each copy, and validates it:
 | 4 | An unknown build mode | `schema_enum` (B1.1) |
 | 5 | Media named by a full URL, not a relative path | `schema_pattern` (C-08) |
 
-Each must print `REJECTED as expected`. Messages longer than 240 characters are shortened on screen and
-say so. Case 5's message is the raw path pattern until #131 (plain-words messages, UI-05) is merged;
-after that it reads "… is not a path relative to the package folder."
+Each must print `REJECTED as expected`, with the place, the rule, a message and a fix hint in plain words.
+For case 5 the message reads "… is not a path relative to the package folder." (plain-words messages for
+schema patterns, #131, UI-05). A message longer than 240 characters would be shortened on screen and say
+so; none of the five is that long.
 
 ### Step 3 — contract examples
 
