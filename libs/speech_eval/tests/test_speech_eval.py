@@ -14,7 +14,7 @@ import pytest
 
 from speech_eval import edit_counts, evaluate, load_run, render_report
 from speech_eval.__main__ import main
-from speech_eval.inputs import OFFICIAL_NORMALISERS, dataset_status
+from speech_eval.inputs import OFFICIAL_NORMALISERS, dataset_inventory, dataset_status
 from speech_eval.wer import NORMALISERS
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -346,9 +346,14 @@ def official_repo(
         "| Consent | Review |"
     )
     rule = "|---|---|---|---|---|---|---|---|---|---|"
+    # The real layout: the set README holds the Status line and no lecture rows; the inventory
+    # table is in testdata/README.md.
     (data / "README.md").write_text(
-        "**Status: COMPLETE.**\n\n" + "\n".join([header, rule, *rows]) + "\n",
+        "**Status: COMPLETE.**\n\nThe inventory is the table in testdata/README.md.\n",
         "utf-8",
+    )
+    (root / "testdata" / "README.md").write_text(
+        "# Test data\n\n" + "\n".join([header, rule, *rows]) + "\n", "utf-8"
     )
     doc: dict[str, object] = {
         "format_version": 1,
@@ -390,6 +395,29 @@ def first_lecture(doc: dict[str, object]) -> dict[str, str]:
     assert isinstance(lectures, list)
     first: dict[str, str] = lectures[0]
     return first
+
+
+def test_the_real_repository_inventory_is_parsed() -> None:
+    # Regression test: the inventory table is in testdata/README.md, not in the set README.
+    inventory = dataset_inventory(REPO_ROOT)
+    assert inventory is not None
+    assert sorted(inventory) == [f"lecture-{n:02d}" for n in range(1, 6)]
+    for lecture_id, row in inventory.items():
+        folder = f"b8-5-lecture-videos/lectures/{lecture_id}"
+        assert row["transcript"] == f"{folder}/transcript.en.txt"
+        assert set(row) == {"transcript", "consent", "review"}
+        assert row["consent"] and row["review"]  # PENDING today; never empty
+    assert (REPO_ROOT / "testdata" / inventory["lecture-01"]["transcript"]).is_file()
+
+
+def test_the_fixture_has_the_real_two_file_layout(tmp_path: Path) -> None:
+    root, _, _ = official_repo(tmp_path)
+    assert (
+        dataset_inventory(root) is not None and len(dataset_inventory(root) or {}) == 5
+    )
+    set_readme = root / "testdata" / "b8-5-lecture-videos" / "README.md"
+    assert "| lecture-" not in set_readme.read_text("utf-8")
+    assert dataset_status(root) == "COMPLETE"
 
 
 def test_official_mode_passes_gates_only_with_everything(
@@ -534,6 +562,8 @@ def test_out_of_order_segments_are_sorted_by_start(tmp_path: Path) -> None:
         {"segments": [{"start": True, "text": "a"}]},
         {"segments": [{"text": "a"}]},
         {"segments": [{"start": 0, "text": 5}]},
+        {"segments": [{"start": float("nan"), "text": "a"}]},
+        {"segments": [{"start": float("inf"), "text": "a"}]},
     ],
 )
 def test_segments_need_numeric_start_and_string_text(

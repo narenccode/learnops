@@ -13,7 +13,7 @@ Tool: `libs/speech_eval/` (software only; no provider is called, no model is run
 | Caption word error rate on Indian-English lectures (B8.5), "measured and reported; target fixed in Release 0" | PRD §A (G-6) | Target **not set** |
 | "Caption word error rate measured on B8.5 and reported against the Release 0 target" | PRD §C4.7 | **PENDING** |
 | "Caption word-error-rate target (G-6) from a first baseline run", result recorded in `docs/decisions/` | PRD App-C 7 | **PENDING** |
-| Data: at least five Indian-English lectures with reference transcripts, consent or licence | PRD §B8.5, decision 0004 | Set is **PENDING**: five local recording files are identified and hashed (PR #99, durations not yet on `main`), but no consent line, reviewed transcript or confirmed provenance exists; the dataset README says do not use it for any measurement |
+| Data: at least five Indian-English lectures with reference transcripts, consent or licence | PRD §B8.5, decision 0004 | Set is **PENDING**: five local files are hashed (PR #99), but no consent line, reviewed transcript or confirmed provenance exists |
 | Transcription only through the speech interface (B5.4) | PRD C-10, `CLAUDE.md` rule 6 | Interface not in `main` yet |
 | Transcript typing rules (case, punctuation, fillers, numbers) | B8.5 README | **Not fixed**: decided with the first baseline run |
 | WER method, normalisation, pooled WER, confidence interval | T8 ADR 0002 section 7 | **Proposed only**; ADR is PROPOSED, pending guide confirmation |

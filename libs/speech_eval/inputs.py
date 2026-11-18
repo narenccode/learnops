@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import datetime
 import json
+import math
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -72,7 +73,10 @@ APPROVAL_REFERENCE = re.compile(
     r"|https://github\.com/[\w.-]+/[\w.-]+/(issues|pull)/\d+(#[\w-]+)?)$"
 )
 TESTDATA = Path("testdata")
+# Two files, as in the repository: the set README holds the Status line; the inventory table
+# (one row per lecture) is in testdata/README.md.
 DATASET_README = TESTDATA / "b8-5-lecture-videos" / "README.md"
+INVENTORY_README = TESTDATA / "README.md"
 _STATUS_LINE = re.compile(r"^\*\*Status:\s*([A-Z]+)\b", re.MULTILINE)
 _LECTURE_ROW = re.compile(r"^\|\s*(lecture-\d{2})\s*\|")
 
@@ -117,11 +121,12 @@ def dataset_status(repo_root: Path) -> str | None:
 def dataset_inventory(repo_root: Path) -> dict[str, dict[str, str]] | None:
     """The B8.5 inventory table: lecture id -> transcript path, consent and transcript review.
 
-    Columns follow testdata/README.md: ID, Title, Speaker, Duration, Recording, SHA-256, Outline,
-    Transcript, Consent, Transcript review. None when the README cannot be read.
+    Read from testdata/README.md (INVENTORY_README). Columns: ID, Title, Speaker, Duration,
+    Recording, SHA-256, Outline, Transcript, Consent, Transcript review. None when the file
+    cannot be read.
     """
     try:
-        text = (repo_root / DATASET_README).read_text("utf-8")
+        text = (repo_root / INVENTORY_README).read_text("utf-8")
     except OSError:
         return None
     rows: dict[str, dict[str, str]] = {}
@@ -171,8 +176,11 @@ def _json_text(raw: str) -> str | None:
         pairs = [(seg["start"], seg["text"]) for seg in segments]
     except (ValueError, KeyError, TypeError):
         raise ValueError("JSON must have segments[] with start and text (PRD B5.4)")
-    if any(isinstance(t, bool) or not isinstance(t, (int, float)) for t, _ in pairs):
-        raise ValueError("segments[].start must be numbers (PRD B5.4)")
+    if any(
+        isinstance(t, bool) or not isinstance(t, (int, float)) or not math.isfinite(t)
+        for t, _ in pairs
+    ):
+        raise ValueError("segments[].start must be finite numbers (PRD B5.4)")
     if any(not isinstance(text, str) for _, text in pairs):
         raise ValueError("segments[].text must be strings (PRD B5.4)")
     pairs.sort(key=lambda pair: pair[0])  # stable: equal starts keep file order
