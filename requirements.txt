@@ -1,4 +1,6 @@
-# Runtime dependencies. One pinned version per package, licence in a comment (CLAUDE.md §2.10).
-# The Video lesson-processor demo's web dependencies (fastapi, uvicorn, httpx) are in
-# requirements-video-demo.txt, not here: see the comment in that file.
-jsonschema==4.26.0    # MIT. modules/video/demo/lesson_processor/processor.py validates lesson.json against contracts/lesson-manifest.v1.schema.json (same pin as requirements-dev.txt)
+# Runtime dependencies (installed by .github/workflows/ci.yml, root CLAUDE.md §2.10).
+# One pinned version per package, with its licence. Development and CI packages are in
+# requirements-dev.txt.
+
+tzdata==2026.6                     # Apache-2.0. Time-zone database for zoneinfo on systems that have none (Windows); not used where the system has one
+jsonschema==4.26.0              # MIT. modules/video/demo/lesson_processor/processor.py validates lesson.json against contracts/lesson-manifest.v1.schema.json (same pin as requirements-dev.txt)

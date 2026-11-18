@@ -45,8 +45,8 @@ attempts, unexpected names and Range requests; it does not make the route safe t
 - **No authentication or authorisation.** Anyone who can reach the port can upload, list and read
   every finished lesson (`/media`). Run it on localhost only. No per-user or per-course access.
 - **No Moodle or LTI integration** (no launch, no course context, no learner or mentor roles).
-- **No resumable (tus) upload.** One request carries the whole file; no 90 MB chunks, no resume.
-- **No persistent background queue.** A thread in the web process does the work; job state is in
+- **No resumable (tus) upload (module rule 4 of `modules/video/CLAUDE.md` is not met).** One request carries the whole file; no 90 MB chunks, no resume.
+- **No persistent background queue (module rule 5 and OPS-10 are not met).** A thread in the web process does the work; job state is in
   memory and is lost on restart.
 - **No production deployment configuration.** No Dockerfile, Compose file, worker container,
   storage adapter or TLS. ffmpeg is installed by hand (Windows steps above) and in the CI job.

@@ -3,7 +3,7 @@
 **Module:** studio
 **Owner:** @Akshita21-09 · **Peer reviewer:** @shraddha0103
 **Release(s):** Release 2 (core), Release 5 (stretch)
-**Status:** Draft
+**Status:** In review
 
 `Status` values: `Draft` → `In review` (peer reviewing) → `Approved`. **Only the guide sets
 `Approved`**, in a pull request the guide merges. Feature code for this module starts only when the
@@ -27,15 +27,15 @@ Requirement wording is copied from PRD §C1.3. The "approach" and "components" c
 
 | Requirement | Release | Approach in one line | Main components |
 |---|---|---|---|
-| FR-S-01: Create and edit a course package through a web editor (forms for structure; Markdown editor for bodies). | R2 | React editor: outline and item forms for structure, Markdown textarea for bodies; saves through the API as a new package version. | Front end, web API, package library |
+| FR-S-01: Create and edit a course package through a web editor (forms for structure; Markdown editor for bodies). | R2 | React editor: outline and item forms for structure, Markdown textarea for bodies; saves through the API as a new package version. The outline supports drag to reorder within the course pattern (PRD §C1.4; rules in "Reordering in the outline" below). | Front end, web API, package library |
 | FR-S-02: Import and export a course package as a zip (so it can live in Git). | R2 | Package is a folder (B1.1); import unpacks and validates a zip, export zips the folder deterministically (sorted entries). | Package library, web API, CLI |
-| FR-S-03: Validate against B1 and the checker rule library (shared with M2) on every save; show errors and warnings per item. | R2 | Schema validation (B1) plus a call to the shared checker rule library; results returned as per-item errors and warnings. No rules are re-implemented here. | Validator adapter, web API, validation panel |
+| FR-S-03: Validate against B1 and the checker rule library (shared with M2) on every save; show errors and warnings per item. | R2 | Schema validation (B1) plus a call to the shared checker rule library; results returned as per-item errors and warnings. No rules are re-implemented here. Where the validation runs (in the save request or in the worker) is the OPS-10 decision of §12 item 36, which covers validation on save as well as the §6.1 slice. | Validator adapter, web API, validation panel |
 | FR-S-04: Render the marking table (B1.3) to HTML with `data-marking-table="v1"`. | R2 | Parse the `<!-- marking-table v1 -->` block, check that points sum to the assignment points, render an HTML table keeping the attribute. A parser for the reverse direction lives in the same module. | Marking-table module |
 | FR-S-05: Learner-view preview per week (HTML render of Page and Assignment as Moodle would show them, approximately). | R2 | Server-side Markdown → sanitised HTML, shown in a preview tab with neutral styling. Approximate by definition. | Renderer, front end preview tab |
 | FR-S-06: Generate a Moodle backup (`.mbz`) in `full` mode. | R2 | Build worker writes the Moodle 4.5 backup structure for page, assign, url, label (h5pactivity is also listed in PRD §C1.5; when it is built is Open, §12) with completion, availability, grade items and marking workflow, then zips it. It writes no final-project or course-feedback activity, no course completion criteria and no badge (B1.4, root rule 8); what `full` mode does about these is Open (§12). | Backup generator, build worker |
 | FR-S-07: Generate a Moodle backup in `sections-only` mode that never contains protected items (B1.4). | R2 | Same generator with a section filter; protected idnumbers and the protected section are refused at validation and again as a post-build assertion on the generated tree. The assertion also checks that the backup contains no course completion criteria and no badge. | Backup generator, validator |
-| FR-S-08: Reverse import: `.mbz` → course package (pages, assignments, marking tables, unlock rules, idnumbers). | R2 | Unpack `.mbz`, read backup XML for the supported activity types, write a B1 package; unsupported items are reported, not dropped silently (Open, see §12). | Reverse importer, CLI, web API |
-| FR-S-09: Keep every generated `.mbz` with a version number and the package hash; allow download of any previous version. | R2 | `studio.build` rows link a package version (with its hash) to a stored `.mbz`; download route serves any build. A failed build never replaces the last good one. | Data model, storage adapter, web API |
+| FR-S-08: Reverse import: `.mbz` → course package (pages, assignments, marking tables, unlock rules, idnumbers). | R2 | Unpack `.mbz`, read backup XML for the supported activity types, write a B1 package; unsupported items are reported, not dropped silently (Open, see §12). Moodle stores no `idnumber` for a section, so reverse import leaves a section's `idnumber` out and keeps its `number` (PRD B1.2 after #101 merges; issue #65). | Reverse importer, CLI, web API |
+| FR-S-09: Keep every generated `.mbz` with a version number and the package hash; allow download of any previous version. | R2 | `studio.build` rows link a package version (with its hash) to a stored `.mbz`; download route serves any build. A failed build, including one that fails the harness restore (module rule 1, §5), never replaces the last good one. | Data model, storage adapter, web API |
 | FR-S-10: Mentor sees and edits only packages linked to courses where they are Instructor (A5). | R2 | Every route checks the LTI session role and context against `shared.course_link`; administrators may access all courses. | Auth middleware, web API |
 | FR-S-11: CLI: `studio validate`, `studio build --mode full\|sections-only`, `studio import-mbz`, each with `--dry-run`/`--check`. | R2 | Thin CLI over the same library the web service uses; exit codes 0/1/2 (OPS-05). | CLI |
 | FR-S-12: *(Stretch)* Practice step: AI drafts (via B5) of checkpoint questions, drag-and-drop/ordering and one branching scenario; review cards (question, correct answer, distractors, explanation; keep / edit / regenerate / drop); preview with an open-source H5P player; approved items packed as ungraded H5P (B7). | R5 | **Not designed in detail now.** Starts only after Releases 1–4 meet their exit criteria and after the guide's go (PRD §C5, `modules/studio/CLAUDE.md`). Behind the `STUDIO_PRACTICE_ENABLED` feature flag (EXT-05, default off). Direction only: AI calls through `libs/model_interface`, review cards in the editor, output as ungraded `.h5p` plus a `course.yaml` entry. A separate design addendum is required before any code. | Future: practice drafter, review UI, H5P packer |
@@ -43,6 +43,13 @@ Requirement wording is copied from PRD §C1.3. The "approach" and "components" c
 Deferrals: none inside Release 2. FR-S-12 is deferred to Release 5 by the PRD, not by me.
 
 Release 2 also includes extending the harness to build → check → restore (PRD §D1). That harness is Module 2's code; Studio supplies the build step and fixtures (see §11).
+
+**Reordering in the outline (PRD §C1.4 "drag to reorder within rules"; Proposal, §12 item 41).**
+- **What a move changes.** B1 has no ordering field: the order of `sections` and of each section's `activities` is the order (PRD B1.1; B7). Dragging changes only that list position. It never changes an `idnumber`, a slug, a title or a body (EXT-06, module rule 6).
+- **Allowed moves.** An activity within its week; a whole week. Moving an activity to another week is allowed and then validated like any other edit. A keyboard alternative (move up, move down) gives the same moves (UI-03).
+- **"Within rules".** The editor refuses only a move that can never be valid: a week moved to the protected section's number (B1.4). Every other rule a new order may break is reported by the validation on save (FR-S-03), never silently fixed: one guide Page and one task Assignment per week (B1.2 rule 1), the unlock chain (B1.2 rule 2), a practice item right after the guide Page (B7). Errors block building (§C1.8), so once those rules exist, a wrong order cannot reach a backup.
+- **Depends on §12 item 26 (raised by the peer reviewer on #127).** Today no code checks B1.2 rules 1 and 2: `libs/contracts` lists them as `week_structure_not_checked` and `unlock_chain_not_checked`, and the checker catalogue has no rule for them. Until item 26 is decided and those rules exist, a reorder that breaks them is **not** reported, and the editor must say so: the validation panel shows these two rules as "not checked", never as passed. The B7 position (practice right after the guide Page) is not checked either, and no `not_checked` code names it yet (B7 §8), so the reorder help text says so in words.
+- **Section numbers and the unlock chain after a week moves.** Open (§12 item 41): whether section `number`s follow the new order, and whether the editor may rewrite `unlock.after` to match it. Proposal: numbers are reassigned in the new order from the first week's number, and the editor *offers* a one-click "update the unlock chain to the new order" that the mentor confirms; nothing is rewritten without that confirmation.
 
 ## 3. Architecture
 
@@ -89,16 +96,18 @@ Downloads of `.mbz` go through the web service (it reads from the same adapter),
 
 **Queue mechanism (Proposal, Needs guide):** the PRD requires "a job queue" but names none. Smallest option inside the fixed stack: a `studio.build` row with a `state` column that the worker claims using PostgreSQL row locking, so no new broker or technology is added.
 
+**Deployment and documentation (PRD OPS-01, OPS-09).** The Studio web service and the build worker are two services in the repository's Docker Compose file, so one `docker compose up` on the tools host starts both with the other LearnOps services (OPS-01). The module README gives the install, configure, run, check and undo steps (OPS-09); it is started with the module skeleton (§13 row 1) and completed in §13 row 17.
+
 ## 4. Contracts
 
 | Contract | Provided / used | Fields or functions I rely on | Change needed? |
 |---|---|---|---|
 | B1 Course package | Provided (owner) | `course.yaml` (`schema`, `course.shortname/fullname/slug/total_points/mode`, `sections[].number/title/idnumber/unlock.after/unlock.start_date`, `activities[].type/idnumber/title/body/points/submission/completion`), course pattern rules B1.2, marking table B1.3, protected items and modes B1.4 | none (after Release 0: additive only, via `/contract-change`) |
 | B2 Course model | Used (through the checker rule library, as the PRD allows) | The model produced from a package or `.mbz`, and the rule results (CK-01…CK-13); the checker diff (FR-C-05) for the round-trip test | none |
-| B3 LTI 1.3 launch | Used | Claims `sub`, `roles`, `context`, `deployment_id`; role mapping (Instructor → Mentor, Administrator → Administrator, Learner refused); session bound to (`sub`, context id); `shared.course_link` | none |
+| B3 LTI 1.3 launch | Used | Claims `iss`, `sub`, `roles`, `context`, `deployment_id`; role mapping (Instructor → Mentor, Administrator → Administrator, Learner refused); session bound to (`iss`, `sub`, context id) and expiring after 2 h idle (B3 §6, PRD B3); `shared.course_link`, keyed by `iss` plus context id (B3 §7). `sub` is unique only within `iss` (B3 §4), so Studio always stores the two together | none |
 | B5 Model and speech interface | Used, R5 only | `model.run(task, inputs, output_schema)` | none |
 | B6 Media paths | Used (slugs only) | Slug rules: lowercase ASCII, hyphens, immutable | none |
-| B7 H5P practice output | Provided (owner), R5 | `.h5p` file plus `course.yaml` entry (`type: h5p`, `idnumber`, `graded: false`) | none |
+| B7 H5P practice output | Provided (owner), R5 | `.h5p` file plus `course.yaml` entry (`type: h5p`, `idnumber`, `graded: false`, and the required `file`: a relative path ending in `.h5p`, added to B1 by #54) | none |
 
 No contract change is proposed. Two points need a contract owner's reading, listed in §12 (Open): where B1.3's allowed `Check` values are validated, and whether B1 can express "unsupported item found during reverse import".
 
@@ -109,16 +118,18 @@ Tables in schema `studio`. PRD §C1.5 names three tables and their main fields; 
 | Table | Columns (Proposal beyond the PRD's named fields) | Keys |
 |---|---|---|
 | `studio.package` | `id`, `course_link_id` (→ `shared.course_link`), `slug`, `current_version_id`, `created_at` | PK `id`; unique (`course_link_id`, `slug`) |
-| `studio.package_version` | `id`, `package_id`, `version_no`, `content_hash`, `author_sub` (LTI `sub`), `created_at`, `storage_path` (relative) | PK `id`; unique (`package_id`, `version_no`); FK `package_id` |
-| `studio.build` | `id`, `package_version_id`, `mode` (`full`\|`sections-only`), `state` (`queued`\|`running`\|`succeeded`\|`failed`), `mbz_path` (relative), `result` (JSON: messages, failed element), `requested_by_sub`, `created_at`, `finished_at` | PK `id`; FK `package_version_id` |
+| `studio.package_version` | `id`, `package_id`, `version_no`, `content_hash`, `author_iss`, `author_sub` (LTI `iss` and `sub`: `sub` alone is unique only within `iss`), `created_at`, `storage_path` (relative) | PK `id`; unique (`package_id`, `version_no`); FK `package_id` |
+| `studio.build` | `id`, `package_version_id`, `mode` (`full`\|`sections-only`), `state` (`queued`\|`running`\|`generated`\|`failed`), `mbz_path` (relative), `result` (JSON: messages, failed element), `restore_state` (`pending`\|`passed`\|`failed`), `restore_result` (JSON: per Moodle version, outcome and the harness message), `requested_by_iss`, `requested_by_sub`, `created_at`, `finished_at` | PK `id`; FK `package_version_id` |
 
+- **A build is good only when it restores (module rule 1; PRD §C1.5, §C1.8).** The worker sets `state = generated` when the `.mbz` is written; that is not success. The harness restores every build on fresh Moodle 4.5 and 5.3 and its result sets `restore_state`: `passed` only when both versions restore, `failed` when either does not. A build with `restore_state = failed` is a **failed build**: the build page shows it as failed with the harness message (C1.8 "restore problems … linked to the build"), and it never becomes the "last good version" that FR-S-09 and C1.8 keep. Until the harness has reported (`pending`), the build page says "not yet restore-tested". How the harness reports the result to Studio is a Proposal in §12 item 40. A failed restore is still downloadable from the build history for diagnosis, labelled as failed (Proposal).
+- **"Last good version" while a build is pending (Proposal; raised by the peer reviewer on #127).** The last good version is the newest build of the package with `restore_state = passed`. A `pending` build is never the last good version: while it waits, the previous passed build stays the last good one, and the new build can be downloaded only labelled "not yet restore-tested". If a package has no passed build yet, the build page says so and offers no "last good" download. **Which builds are restore-tested:** PRD §C1.5 says every build is restored automatically in CI or the harness, so every mentor build is queued for the harness, not only fixtures and CI builds. If the lab harness cannot keep up, builds stay `pending` and the last good version does not move; that capacity question is §12 item 40.
 - Audit entries for state-changing operations go to `shared.audit_log` (OPS-06). That table is owned by the `shared` schema, not this module.
 - **Migrations:** versioned and reversible (OPS-07, root rule). Each migration has an `up` and a `down`; `down` drops only what that migration created. A migration test applies up, down, up on an empty database.
 - **Relative vs absolute:** `storage_path` and `mbz_path` are paths relative to a configured storage root. Package media references are relative paths or slugs, never full URLs (C-08). CK-12 (checker) flags full URLs; Studio's validation rejects them through the shared rule library.
 - **Identity:** `idnumber`s and slugs are stored in the package and never derived from titles (EXT-06, module rule 6). Mechanism (Proposal): the editor shows `idnumber` and `slug` as read-only once a package version is saved, and renaming a title changes only the title. The validator also compares each new package version with the previous one and reports an error when an existing activity's `idnumber`, or the course `slug`, has changed or been reused for a different activity (B1.2 rule 6).
-- **Dependency on `shared.course_link`:** `studio.package.course_link_id` refers to a table in the `shared` schema whose columns the PRD does not define (B3 only says the LTI context id is stored there). The exact key is Open (§12 item 33).
+- **Dependency on `shared.course_link`:** `studio.package.course_link_id` refers to a table in the `shared` schema. Its key is now decided: **`iss` plus context id** (PRD B3; B3 §7, merged in #83). Its columns are owned by B4 (Student 3) and are recorded in B4's records (#72 or a decision record), not here (§12 item 33).
 - **Backup and restore (OPS-08):** the module README documents backing up and restoring the `studio` schema and the package/`.mbz` storage (folder or bucket) together, because a package version row without its stored file is unusable. The procedure is written when the first storage code exists.
-- **Personal data:** only the LTI `sub` is stored for authorship. No names or emails are stored by Studio (Proposal; see §9).
+- **Personal data:** only the LTI `iss` and `sub` are stored for authorship (both are needed, because `sub` is unique only within `iss`). No names or emails are stored by Studio (Proposal; see §9).
 
 ## 6. Interfaces
 
@@ -131,7 +142,7 @@ Tables in schema `studio`. PRD §C1.5 names three tables and their main fields; 
 | `GET /api/packages` | packages linked to the launch course | Mentor (own courses), Administrator (all) |
 | `POST /api/packages` | create package, or import a zip (FR-S-02) | Mentor, Administrator |
 | `GET /api/packages/{id}` | current package content | Mentor (own), Administrator |
-| `PUT /api/packages/{id}` | save a new version; returns validation result (FR-S-03) | Mentor (own), Administrator |
+| `PUT /api/packages/{id}` | save a new version and validate it (FR-S-03). Saving is light: it stores the version. Whether the validation result comes back in the same response or is queued for the worker and read from a status route (UI-04) is the OPS-10 decision of §12 item 36 | Mentor (own), Administrator |
 | `GET /api/packages/{id}/export` | zip download (FR-S-02) | Mentor (own), Administrator |
 | `GET /api/packages/{id}/preview/{section}` | rendered learner view (FR-S-05) | Mentor (own), Administrator |
 | `POST /api/packages/{id}/builds` | request a build with `mode`; returns a build id (FR-S-06, 07) | Mentor (own), Administrator |
@@ -197,9 +208,9 @@ In both options the slice keeps nothing that has to be linked to a Moodle course
 
 **Prerequisites (each outside this module):**
 
-1. #83 (B3 launch contract, `contracts/lti-launch.v1`) merged.
+1. #83 (B3 launch contract, `contracts/lti-launch.v1`) merged. **Met:** merged on 2026-11-18.
 2. ADR 0001 Stage 1 (library and pins) and Stage 2 (security design) approved, and `libs/lti` built with a FastAPI router (login, launch, JWKS) and a session check that returns the normalised B3 result.
-3. #61 (B8.2 sample course) and #87 (B1 submission-format rules) merged, so the demo shows those rules.
+3. #61 (B8.2 sample course) and #87 (B1 submission-format rules) merged, so the demo shows those rules. **Met:** both are on `main`.
 4. HTTPS on the `tools` VM (the B3 state cookie is `SameSite=None; Secure`).
 5. This document `Approved`.
 
@@ -248,7 +259,7 @@ The flow diagram above shows Option A; in Option B the "safe unzip" and `validat
 | `checker.run` | Always `false` in this slice |
 | `checker.notice` | Always "Checker rules (CK-01…CK-13) were not run in this version." |
 
-*Example 1, valid package (B8.2 sample course).* The codes and texts are those `libs/contracts` on `main` returns today; the list of `not_checked` codes changes as `libs/contracts` implements more rules (for example when #87 merges), and the tests read it from `libs/contracts`, not from this document.
+*Example 1, valid package (B8.2 sample course).* The codes and texts are those `libs/contracts` on `main` returns today; the list of `not_checked` codes changes as `libs/contracts` implements more rules (re-checked on `main` on 2026-11-18 after #54, #101 and #110 merged: B8.2 gives no errors and nine `not_checked` codes, the ninth being `h5p_files_not_checked` from #54), and the tests read it from `libs/contracts`, not from this document, so the number is never fixed in a test.
 
 ```json
 {
@@ -269,7 +280,7 @@ The flow diagram above shows Option A; in Option B the "safe unzip" and `validat
 }
 ```
 
-(Shortened: the real `not_checked` list also carries `unlock_chain_not_checked`, `unlock_completion_not_checked`, `idnumber_reuse_not_checked`, `marking_table_not_checked`, `check_vocabulary_not_checked` and `protected_section_not_checked`; `fix_hint` is the text from `libs/contracts`.)
+(Shortened: the real `not_checked` list also carries `unlock_chain_not_checked`, `unlock_completion_not_checked`, `idnumber_reuse_not_checked`, `marking_table_not_checked`, `check_vocabulary_not_checked`, `protected_section_not_checked` and `h5p_files_not_checked`; `fix_hint` is the text from `libs/contracts`.)
 
 *Example 2, invalid package (one duplicate idnumber).*
 
@@ -300,7 +311,7 @@ So "no errors" is never shown as "fully checked" (FR-S-03, §C1.8; §10 row "Che
 **Security (additions to §9 for this slice).**
 - SEC-01, SEC-02: only through `libs/lti`; the route reads the role from the server-side session, never from the request.
 - SEC-05: the limits of §6 (`STUDIO_MAX_UPLOAD_MB`, `STUDIO_MAX_UNZIPPED_MB`, `STUDIO_MAX_ZIP_ENTRIES`) apply. Zip structure checked by content; entries outside the target folder, absolute paths and links rejected; the temporary folder is outside any web root and removed in a `finally` block, also on error.
-- SEC-06: Option A stores nothing; Option B stores the zip until processed and the result with the requesting `sub` and context id (add to `docs/data-map.md` with the implementing PR). Logs carry request id, `sub`, context id, outcome and counts of errors; never `name`, `email` (B3 §10.1), file names inside the package or file contents.
+- SEC-06: Option A stores nothing; Option B stores the zip until processed and the result with the requesting `iss`, `sub` and context id (add to `docs/data-map.md` with the implementing PR). Logs carry request id, `iss`, `sub`, context id, outcome and counts of errors; never `name`, `email` (B3 §10.1), file names inside the package or file contents.
 - SEC-09: CSRF token on `POST /api/validate` (Option A) or `POST /api/validations` (Option B); cookie flags as set by `libs/lti`.
 
 **Heavy work (OPS-10; Needs guide, §12 item 36).** OPS-10 says heavy work runs in worker containers fed by a job queue, never inside web request handlers. Two options; **the guide decides, and no code starts before that** (implementation gate above):
@@ -309,7 +320,7 @@ So "no errors" is never shown as "fully checked" (FR-S-03, §C1.8; §10 row "Che
 |---|---|---|
 | Meets OPS-10 as written? | **No**, unless the guide rules that validating one size-limited package is not "heavy work". A child process inside the request is still work inside the request handler | **Yes** |
 | Flow | `POST /api/validate` unzips and runs `validate_package` in a short-lived child process (standard-library `multiprocessing`; a thread cannot be stopped from outside) and returns the result. At `STUDIO_VALIDATE_TIMEOUT_SECONDS` (Proposal: 10) the child is ended, the temporary folder removed and the time-limit message returned | `POST /api/validations` checks the upload limits, stores the zip through the storage adapter (§3), inserts a queued row and returns a validation id. The worker of §3 claims it, unzips, validates, writes the result and deletes the zip. `GET /api/validations/{id}` returns status and, when done, the result payload (UI-04 progress) |
-| Data | None | A `studio.validation` table (id, state, requesting `sub`, context id, result JSON, timestamps) with a reversible migration (OPS-07); the uploaded zip until processed (SEC-05: outside any web root); result retention Needs guide (§12 item 16) |
+| Data | None | A `studio.validation` table (id, state, requesting `iss`, `sub` and context id, result JSON, timestamps) with a reversible migration (OPS-07); the uploaded zip until processed (SEC-05: outside any web root); result retention Needs guide (§12 item 16) |
 | Extra cost | None | The queue mechanism (§12 item 12) and the worker container must exist first; §13 row 5 style migration |
 
 Both options return the same result payload and show the same page. The upload limits (SEC-05) are checked before any unzip in both.
@@ -380,7 +391,7 @@ Both options return the same result payload and show the same page. The upload l
 
 ## 8. Libraries and licences
 
-**How these were checked (2026-10-25).** Versions and licences below come from the package registries' own metadata (PyPI JSON for Python packages, the npm registry for JavaScript packages), read on that date. The "Pinned version" is the latest release listed there; it is a **proposed pin**, to be written into the lock file in the first pull request that adds each library. Licence text in the packages themselves, transitive dependencies, vulnerability scans (SEC-08) and compatibility with Python 3.12 were **not** checked. For the Python packages whose metadata loaded, the minimum Python version listed is at most 3.11, which does not prove they work on 3.12. For Pydantic and lxml the Python requirement could not be read. Anything marked **Verify** is still unconfirmed. None of these libraries has been added to the repository.
+**How these were checked (2026-10-25).** Versions and licences below come from the package registries' own metadata (PyPI JSON for Python packages, the npm registry for JavaScript packages), read on that date. The "Pinned version" is the latest release listed there; it is a **proposed pin**, to be written into the lock file in the first pull request that adds each library. Licence text in the packages themselves, transitive dependencies, vulnerability scans (SEC-08) and compatibility with Python 3.12 were **not** checked. For the Python packages whose metadata loaded, the minimum Python version listed is at most 3.11, which does not prove they work on 3.12. For Pydantic and lxml the Python requirement could not be read. Anything marked **Verify** is still unconfirmed. None of these libraries has been added to the repository. **When one is added** (root `CLAUDE.md` rule 10): runtime libraries go in the root `requirements.txt` (not on `main` yet; the first Studio PR that needs one creates it), development and CI tools in `requirements-dev.txt`, one pinned version each with its licence as a comment. That PR re-reads the version, the licence file, the transitive dependencies and Python 3.12 support on that day, and runs the dependency scan (SEC-08); the versions in this table may be out of date by then.
 
 | Library | Pinned version (proposed) | Licence (registry metadata) | Why needed | Alternative |
 |---|---|---|---|---|
@@ -415,11 +426,11 @@ Use `libs/` implementations before adding anything here (for example LTI, contra
 | ID | Applies? | How it is met |
 |---|---|---|
 | SEC-01 LTI launch validation | Yes | Entirely through `libs/lti`; Studio implements none of it. |
-| SEC-02 Authorisation per request | Yes | Middleware reads role and context from the server-side session; every route checks it against `shared.course_link` (FR-S-10). |
+| SEC-02 Authorisation per request | Yes | Middleware reads role and context from the server-side session, which `libs/lti` binds to (`iss`, `sub`, context id) and expires after 2 h idle (B3 §6); every route checks it against `shared.course_link`, keyed by `iss` plus context id (FR-S-10; B3 §7). A request for another course context is refused for a mentor (B3 §8). |
 | SEC-03 Service-account token | Open | Studio's own features need no Moodle token in R2. B3 maps the LTI context to the Moodle course through web services, and the PRD does not say which module does that (§12 item 27). PRD §B.0 lists B4 as used by M2 and M3, not M1, so Studio does not take on B4 usage unless the guide and the B3/B4 owners decide so. This document changes no contract. |
 | SEC-04 Sandbox | No | Studio runs no learner code. |
 | SEC-05 Uploads | Yes | Zip package and `.mbz` uploads: size limit; type checked by content (zip structure), not only extension; stored outside any web root; unzip with path-traversal protection (reject entries outside the target folder) and limits on total unzipped size and file count (zip-bomb protection). The virus-free assumption is documented in the README. |
-| SEC-06 Personal data | Yes | Only LTI `sub` stored for authorship (Proposal). Test data only (C-07). |
+| SEC-06 Personal data | Yes | Only LTI `iss` and `sub` stored for authorship (Proposal). Test data only (C-07). |
 | SEC-07 Data to hosted AI | R5 only | R2 sends nothing to an AI provider. R5 will be documented here before coding. |
 | SEC-08 Dependency scan | Yes | CI scan; no critical vulnerabilities at release. |
 | SEC-09 CSRF and cookies | Yes | CSRF protection on state-changing routes; secure, same-site session cookies (via `libs/lti`/framework). |
@@ -436,7 +447,7 @@ Other handling:
 |---|---|---|---|---|
 | Package versions (course text, structure) | `studio.package_version` + storage root | nowhere in R2 | Open (retention not specified by the PRD) | Version history, FR-S-09 |
 | Generated `.mbz` | storage root, `studio.build.mbz_path` | downloaded by mentor/admin | Open | Download of any previous version, FR-S-09 |
-| Author LTI `sub` | `studio.package_version`, `shared.audit_log` | nowhere | Open | Audit, OPS-06 |
+| Author LTI `iss` and `sub` | `studio.package_version`, `studio.build`, `shared.audit_log` | nowhere | Open | Audit, OPS-06 |
 
 ## 10. Error handling
 
@@ -448,6 +459,7 @@ Messages say what happened and what to do next (UI-05). All strings live in one 
 | Validation **warning** | Allows building; shown per item | Mentor decides whether to fix. |
 | Protected `idnumber` in a package | Rejected in both modes with a clear message (B1.4, module rule 2) | Remove or rename the item; protected items belong to the template course. |
 | Build failure | Shows which element failed; keeps the previous good version (C1.8) | Fix the item and rebuild. |
+| Build generated but restore failed in the harness | The build is a **failed build** (module rule 1): shown as failed with the harness message for each Moodle version; never the "last good version" (§5) | Fix the package and rebuild; the administrator sends the harness message if it is unclear. |
 | Restore problem reported by the harness | Linked to the build (C1.8) | Mentor/admin sees the harness message on the build page. |
 | Unparseable `.mbz` in reverse import | Clear message naming the file and element | Re-export from Moodle or send the file to the administrator. |
 | Unsupported item in `.mbz` | Reported in the import result and left out of the package (Open) | Add it in Moodle after restore, or ask the guide whether the type should be supported. |
@@ -463,10 +475,10 @@ Messages say what happened and what to do next (UI-05). All strings live in one 
 
 | Level | What is tested | Test data | Requirement IDs |
 |---|---|---|---|
-| Unit | Package read/write; `idnumber`/slug handling; calls into the shared rule library (not the rules themselves); marking-table render and parse (including bad sums); unlock-rule conversion to Moodle availability JSON; backup XML writers; protected-item refusal; generated backup contains no completion criteria or badge; reverse-import parsers; role/context checks | Small fixtures made for tests; B8.2 | FR-S-01…11 |
+| Unit | Package read/write; `idnumber`/slug handling; calls into the shared rule library (not the rules themselves); marking-table render and parse (including bad sums); unlock-rule conversion to Moodle availability JSON; backup XML writers; protected-item refusal; generated backup contains no completion criteria or badge; reverse-import parsers; role/context checks; a reorder changes only list positions (every `idnumber`, slug, title and body unchanged), a week cannot be moved to the protected section's number, and a reorder is never fixed silently; until §12 item 26 gives B1.2 rules 1–2 a rule, the test checks that `week_structure_not_checked` and `unlock_chain_not_checked` are shown as "not checked" after a reorder (the tests that a breaking reorder is *reported* are written when the rules exist, not before); the build state rule (`generated` is not success; `restore_state = failed` makes a failed build that never becomes the last good version) | Small fixtures made for tests; B8.2 | FR-S-01…11 |
 | Contract | `course.yaml` examples and generated/imported packages validate against the B1 schema; invalid data is rejected with a clear error | `contracts/examples/`, B8.2 | FR-S-02, FR-S-03, FR-S-08 |
-| Integration (harness) | build (full) → restore on fresh 4.5 and 5.3 → checker; sections-only merge into B8.1 → protected items unchanged; full round trip (module rule 8): package → `.mbz` → restore on Moodle → Moodle backup of the restored course → package → checker diff shows no structural differences; worker run with `STUDIO_STORAGE_BACKEND` set for a separate-host setup, if the guide approves the `s3` backend (§12 item 29) | B8.1, B8.2 | FR-S-06, 07, 08 |
-| End-to-end | Mentor flows in a browser: edit, see validation error, preview, build, download; wrong-role and wrong-course access denied; phone / laptop / half-width profiles | B8.2, fixed test accounts from Module 2 | FR-S-01, 03, 05, 09, 10 |
+| Integration (harness) | build (full) → restore on fresh 4.5 and 5.3 → checker; sections-only merge into B8.1 → protected items unchanged; full round trip (module rule 8): package → `.mbz` → restore on Moodle → Moodle backup of the restored course → package → checker diff shows no structural differences; worker run with `STUDIO_STORAGE_BACKEND` set for a separate-host setup, if the guide approves the `s3` backend (§12 item 29); a build that fails restore on either version ends with `restore_state = failed`, is shown as failed and does not replace the last good build (module rule 1) | B8.1, B8.2 | FR-S-06, 07, 08, 09 |
+| End-to-end | Mentor flows in a browser: edit, reorder by drag and by keyboard (move up / move down), see validation error, preview, build, download; wrong-role and wrong-course access denied; phone / laptop / half-width profiles | B8.2, fixed test accounts from Module 2 | FR-S-01, 03, 05, 09, 10 |
 | CLI | `validate`, `build`, `import-mbz` with `--dry-run` (nothing written), `--check`, exit codes 0/1/2, documented undo | B8.2 | FR-S-11 |
 | Migration | up/down/up on an empty database | none | OPS-07 |
 
@@ -497,6 +509,14 @@ Traceability: every requirement above is added to `docs/traceability.md` in the 
 
 Items marked **Needs guide** need the guide's decision. "Needs the lab" refers to PRD Appendix C items that require the lab Moodle sites.
 
+**Which decisions are needed when (Proposal), so this document can be approved with later items still open:**
+- **Before any Release 2 feature code** (they shape the data model, the worker or the validation path): items 10 (where the checker rule library lives), 12 (queue mechanism), 25 (`full` mode and protected completion criteria and badge), 27 (course binding), 36 (OPS-10 for validation), 40 (harness restore result).
+- **Before the §6.1 slice only:** items 35, 36, 38, 39.
+- **Before the pull request that needs them** (§13 shows which): items 13, 14, 16, 17, 18, 19, 20, 21, 26, 28, 29, 30, 31, 32, 33, 41.
+- **Before Release 5:** items 7 and 23.
+- **Lab results, not decisions:** items 1 to 6 and 8 (Appendix C), recorded in `docs/decisions/` (§13 row 4).
+- **Owner tasks or agreements with other module owners, not guide decisions:** items 9, 11, 15, 22, 24, 34, 37.
+
 | # | Risk or question | Needs the lab? | Plan or owner |
 |---|---|---|---|
 | 1 | **Undocumented Moodle backup format changes** between 4.5 and 5.3 (PRD App-D). A 4.5-format backup must restore on 5.3. | Yes | Restore on both versions in every build (E2). Owner, with Module 2's harness. |
@@ -507,11 +527,11 @@ Items marked **Needs guide** need the guide's decision. "Needs the lab" refers t
 | 6 | **App-C #5:** exact H5P content-type versions on both Moodle versions (R5 only). | Yes | Verify in Release 0; revisit before R5. |
 | 7 | **App-C #9:** Moodle 5.3's own AI features may overlap with FR-S-12 (R5). | Yes | Record overlap; adjust R5 scope. **Needs guide**. |
 | 8 | **App-C #1 and #6:** B4 function check and LTI library choice. Studio uses LTI; B4 only if course binding needs it. | Yes (#1) | Follow Release 0 results. |
-| 9 | **Dependency on Release 0/1 deliverables:** the repository has no frozen B1 schema, `libs/` code or checker rule library yet. FR-S-03 cannot be built or tested without them. | No | Track as blockers in §13; do not start feature code until they exist. |
+| 9 | **Dependency on Release 0/1 deliverables:** the B1 schema and the `libs/contracts` validators are on `main` (course, folder and body-file rules; B1.3 and B1.5 formats from #87), but B1 is not frozen until the Release 0 gate, and the checker rule library (Module 2, Release 1) does not exist yet. The full FR-S-03 cannot be built or tested without it. | No | Track as blockers in §13; do not start feature code until they exist. |
 | 10 | Where does the shared rule library live and what is its API? `modules/studio/CLAUDE.md` says "`libs/`/`modules/checker`". | No | **Needs guide** and Module 2 owner. |
 | 11 | Who validates B1.3 `Check` values (allowed values are defined in PRD §C3.5; unknown names are CK-09)? Studio should not re-implement that rule. | No | Confirm with Module 2/3 owners that CK-09 covers it. |
 | 12 | Job queue mechanism (PostgreSQL rows vs a broker). | No | **Needs guide**; recorded as a decision (§7). |
-| 13 | The value of `protected_section` (B1.4 says configurable but gives no default), and how a section number "collides". | No | Confirm with the B1 owner and guide. |
+| 13 | The value of `protected_section` (B1.4 says configurable but gives no default), and how a section number "collides". | No | For the B8.1 template the guide confirmed section 3 (PR #61, answer A2, 2026-11-16), and B8.2 uses sections 4 to 7. B1.4 still gives no default, so Studio reads it from `STUDIO_PROTECTED_SECTION` and never hard-codes 3. How a collision is reported: confirm with the guide. |
 | 14 | Reverse import of items Studio does not generate (quizzes, workshops, question banks): report-and-skip vs refuse. PRD is silent. | No | **Needs guide**. |
 | 15 | Round-trip equivalence (module rule 8) depends on the checker diff (FR-C-05) covering all fields Studio writes. | No | Agree the compared fields with Module 2. |
 | 16 | Retention of package versions and `.mbz` files; PRD gives none for Studio. | No | **Needs guide** (also needed for the data map). |
@@ -531,13 +551,15 @@ Items marked **Needs guide** need the guide's decision. "Needs the lab" refers t
 | 30 | **Upload limits:** the PRD gives no size limits for packages or `.mbz` files. The defaults in §6 (50 MB upload, 200 MB unzipped, 5000 entries) are my proposal. What sizes do real course backups reach? | Partly (size of a restored B8.1/B8.2 backup) | **Needs guide**; measure with B8.1/B8.2 first. |
 | 31 | **Front-end tooling:** Vite as the build tool (A10 names none) and a plain text area plus preview as the "Markdown editor" (FR-S-01). Acceptable, or must an editor library be used? | No | **Needs guide**. |
 | 32 | **Database driver licence:** psycopg is LGPL-3.0-only (allowed as an unmodified library); asyncpg is Apache-2.0. Which one? | No | **Needs guide** if LGPL is not wanted. |
-| 33 | **`shared.course_link` columns:** the PRD does not define them, and `studio.package` refers to it (§5). | No | Agree the key with the B3 owner (Student 2). |
+| 33 | **`shared.course_link` columns:** `studio.package` refers to it (§5). **Key decided:** `iss` plus context id (PRD B3; B3 §7, #83). The columns are owned by B4 (Student 3) and recorded in B4's records (#72 or a decision record). | No | Key closed. Columns: take them from B4's record when it lands, and agree with the B4 owner (Student 3) before the §5 migration (§13 row 5). |
 | 34 | **Backup and restore procedure (OPS-08)** for the `studio` schema and the package/`.mbz` storage is described only in outline (§5). | No | Write it in the module README with the first storage PR. |
 | 35 | **Pulling the validation slice (§6.1) forward from Release 2.** PRD §D1 already allows "Work on later releases may start in parallel"; root `CLAUDE.md` §1 still asks for the guide's word for work outside the current release, and §6a asks for this document to be `Approved`. The decision needed is about this slice only, not the principle. | No | **Needs guide.** |
-| 36 | **OPS-10 for the validation slice (§6.1).** Option A (in the request, child process, time limit) does not meet OPS-10 as written; it is possible only if the guide rules that validating one size-limited package is not "heavy work". Option B (queued for the Studio worker) meets OPS-10 but needs a `studio.validation` table, the queue mechanism (item 12) and the worker first. | No | **Needs guide.** Raised by the peer reviewer on PR #123. Implementation blocked until decided. |
-| 37 | **B3 session key.** §4 and SEC-02 say the session is bound to (`sub`, context id); #83 changes this to (`iss`, `sub`, context id). | No | When #83 merges, update §4, §5, §9 SEC-02 and §6.1 to the accepted key (`iss`, `sub`, context id). |
+| 36 | **OPS-10 for validation: the §6.1 slice and validation on every save (FR-S-03).** Both validate one size-limited package. Option A (in the request, child process, time limit) does not meet OPS-10 as written; it is possible only if the guide rules that validating one size-limited package is not "heavy work". Option B (queued for the Studio worker) meets OPS-10 but needs a `studio.validation` table (or a validation state on the package version for FR-S-03), the queue mechanism (item 12) and the worker first; the editor then shows "validating…" and the result when ready (UI-04). The same answer applies to both, so the design has one rule for validation. | No | **Needs guide.** Raised by the peer reviewer on PR #123; widened to FR-S-03 by the first-pass design review. Implementation blocked until decided. |
+| 37 | **B3 session key.** **Closed:** #83 merged, and PRD B3 and B3 §6 bind the session to (`iss`, `sub`, context id). §4, §5 (stored identities `author_iss`/`author_sub`, `requested_by_iss`/`requested_by_sub`), §6.1 and §9 SEC-02, SEC-06 and the data map now use it. | No | Done. |
 | 38 | **Front-end for a one-page slice.** The fixed stack says React + TypeScript static build (A10), which brings the Vite question (§12 item 31) forward. | No | **Needs guide** together with item 31. |
 | 39 | **Administrator access to queued validations (Option B).** Proposal in §6.1: owner-only in the same LTI context, with no wider Administrator access, because the slice stores no course data. Does the guide want Administrators to read every validation instead, in line with FR-S-10's approach for stored packages? | No | **Needs guide.** Raised by the peer reviewer on PR #123. |
+| 40 | **How the harness reports a restore result to Studio** (module rule 1, §5 `restore_state`). The harness is Module 2's code. **Proposal (Module 2 owner's preference, review of #127):** the harness writes one JSON report per Moodle version (build id, Moodle version, outcome, message), and Studio records it through its own CLI command or API route. No `shared` table is needed, and the harness stays free of Studio's database. Still open: whether the lab harness can restore every mentor build (PRD §C1.5 says every build is restored), and if not, how long a build may stay `pending` (§5). | Partly (a real restore run) | Agreed direction with the Module 2 owner (Student 2); **Needs guide** for the capacity question. |
+| 41 | **Reordering weeks in the outline** (§2 "Reordering in the outline"): do section `number`s follow the new order, may an activity move to another week, and may the editor rewrite `unlock.after` (only after the mentor confirms)? **Depends on item 26:** a reorder can be checked against B1.2 rules 1 and 2 only once those rules exist. | No | **Needs guide.** Proposal in §2. |
 
 ## 13. Work breakdown
 
@@ -545,9 +567,9 @@ One requirement (or one tightly related group) per pull request. Feature work st
 
 | Order | Pull request | Requirements | Depends on | Notes |
 |---|---|---|---|---|
-| 1 | Studio module skeleton: package layout, config loading, `/health`, logging, CI wiring | OPS-02, OPS-03, OPS-04 | Approved design | Skeleton only, no feature behaviour |
-| 2 | B1 schema, examples and validators (owner of the contract) | B1 (contract) | — | **Release 0** foundation. Touches `contracts/` (outside `modules/studio`): say so in the PR. Contracts freeze at the end of Release 0. |
-| 3 | B8.1 template course and B8.2 sample course | B8.1, B8.2 | 2 | **Release 0** test data (owner: Student 1) |
+| 1 | Studio module skeleton: package layout, config loading, `/health`, logging, CI wiring, the web and worker services in Docker Compose, a first README | OPS-01, OPS-02, OPS-03, OPS-04, OPS-09 | Approved design | Skeleton only, no feature behaviour |
+| 2 | B1 schema, examples and validators (owner of the contract) | B1 (contract) | — | **Release 0** foundation. **Mostly done:** schema, examples and the course, folder and body-file validators are on `main` (#49, #87, #94). Open: #101 (optional section `idnumber`), #110 (check-cell vectors), #54 (the B7 `file` field). Contracts freeze at the end of Release 0. |
+| 3 | B8.1 template course and B8.2 sample course | B8.1, B8.2 | 2 | **Release 0** test data (owner: Student 1). **B8.2 done** (#61 merged). **B8.1:** README and runbook on `main` (#57, #95); the `.mbz`, its SHA-256 and the release asset still need the Moodle 5.3 lab session |
 | 4 | Record the backup-format and restore findings (§12 items 1–5) | App-C #2, #3, #10 | Lab VMs | **Release 0**; decision records in `docs/decisions/` |
 | 5 | `studio` schema migration (`package`, `package_version`, `build`), reversible | Supports FR-S-02, FR-S-09 | Approved design | Migration up/down/up test (OPS-07) |
 | 6a | *(Pulled forward, only with the guide's go)* Validation slice launched from Moodle (§6.1): LTI wiring, role check, the validation route(s) for the option the guide picks, one-page front end | FR-S-02 (part), FR-S-03 (part), FR-S-10 (part) | 1, 2, `libs/lti` (Release 1, PRD §D1), #83, #61, #87; §12 items 35, 36, 38; **blocked until the guide approves the pull-forward, decides item 36, and this document is `Approved`** | Option A: no table, no migration. Option B: adds `studio.validation` and its migration, and depends on the worker and queue (§12 item 12). May be split into two PRs (back end, front end) to stay under 800 lines |
@@ -555,11 +577,11 @@ One requirement (or one tightly related group) per pull request. Feature work st
 | 7 | Package read/write and zip import/export | FR-S-02 | 2, 5, 6 | |
 | 8 | Validation on save (B1 plus checker rule library) and the validation panel API | FR-S-03 | 2, 7, shared rule library (R1); §12 items 10, 26 | Blocked if the library is missing |
 | 9 | Marking-table renderer and parser | FR-S-04 | 2 | |
-| 10 | `.mbz` generator, `full` mode, and build worker | FR-S-06 | 4, 5, 7, 8, 9; §12 items 25, 28, 29 | Worker and storage adapter; the `s3` backend only if approved (§12 item 29) |
+| 10 | `.mbz` generator, `full` mode, and build worker | FR-S-06 | 4, 5, 7, 8, 9; §12 items 25, 28, 29, 40 | Worker and storage adapter; the `s3` backend only if approved (§12 item 29); `restore_state` and the failed-build rule (§5, module rule 1) |
 | 11 | `sections-only` mode with protected-item refusal (idnumbers, section, completion criteria, badge) | FR-S-07 | 10 | |
 | 12 | Build history and downloads | FR-S-09 | 10 | |
 | 13 | Reverse import | FR-S-08 | 4, 10, checker diff (R1); §12 items 14, 28 | |
-| 14 | Web editor (outline, forms, Markdown editor) and preview | FR-S-01, FR-S-05 | 6, 7, 8, 9 | Phone, laptop and half-width profiles (UI-02); UI-03 accessibility |
+| 14 | Web editor (outline with drag to reorder and keyboard move up / move down, forms, Markdown editor) and preview | FR-S-01, FR-S-05 | 6, 7, 8, 9; §12 item 41 | Phone, laptop and half-width profiles (UI-02); UI-03 accessibility; PRD §C1.4 reordering rules (§2) |
 | 15 | CLI: `validate`, `build`, `import-mbz` with `--dry-run`/`--check` and documented undo | FR-S-11 | 7, 8, 10, 13; §12 item 20 | |
 | 16 | Harness extension: build → check → restore on 4.5 and 5.3; timed-load measurement | Release 2 exit criteria | 10, 11, 13, harness (R1) | Harness code is Module 2's; coordinate, and say so in the PR |
 | 17 | README, `.env.example`, `docs/data-map.md`, `docs/traceability.md`, release notes | PRD §D2 items 5–6 | all | Also updated in every earlier PR as needed |

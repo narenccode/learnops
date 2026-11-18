@@ -36,7 +36,7 @@ B7 does **not** cover:
 | 2 | B1 gets a `file` field on `h5p` activities: a relative path ending in `.h5p`, same rule as `body`. Same pull request. | Section 4, B1 schema |
 | 3 | No ordering field. The list order is the order; B7 says the `h5p` entry comes right after the guide Page. Applied to ordinary optional practice only; video checkpoints stay open (sections 4 and 6). | Section 4 |
 | 4 | B7 is `h5p-practice.v1.md` plus a small schema and an example listing the allowed content types, like B4. | Sections 3 and 8 |
-| 5 | H5P library versions were provisional, marked "to verify in the lab". The guide's lab check of 2026-11-11 verified them on both lab sites. They are pinned in section 3 and recorded in `docs/decisions/0005-h5p-content-types.md`. | Section 3 |
+| 5 | H5P library versions were provisional, marked "to verify in the lab". The guide's lab check of 2026-11-11 verified them on both lab sites. They are pinned in section 3 and recorded in `docs/decisions/0008-h5p-content-types.md`. | Section 3 |
 | 6 | Do not define a second format. `cues.json` belongs to B6. Which `ref` kinds it allows is for Student 4 to say. | Section 6 |
 | 7 | No real `.h5p` file in the repository. The example is a `course.yaml` that points to a path. This rule is written here because `.gitignore` does not block `.h5p`. | Section 5 |
 
@@ -59,7 +59,7 @@ once, and pins each one to its library (`machine_name`) and exact `version`. Its
 - **Pinned for Release 0 (guide, PR #54, 2026-11-11).** These are the versions that Moodle's own
   scheduled task downloaded from h5p.org on 2026-11-11. h5p.org may publish newer ones, so B7 pins
   these exact versions for the Release 0 tests, and a change is made only through a
-  `/contract-change`. The result is recorded in `docs/decisions/0005-h5p-content-types.md` (PRD
+  `/contract-change`. The result is recorded in `docs/decisions/0008-h5p-content-types.md` (PRD
   App-C item 5).
 - **Two entries, and one type per practice item.** "drag-the-words" and "drag-and-drop" are two
   separate H5P libraries, so they are two entries. Each practice item uses one of them, and in

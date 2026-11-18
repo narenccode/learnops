@@ -1,0 +1,63 @@
+{
+  "$comment": "Shared test vectors for B3 contract section 3.2 (contracts/lti-launch.v1.md): how the optional claims name, email and context.title become fields of the normalised launch result. Every vector applies to all three claims. 'input' is the incoming claim: {\"absent\": true} when the claim is not in the token, otherwise {\"value\": ...}. 'expected' is 'absent' (the result has name or email null, and has no context.title) or 'preserved' (the result carries the input string exactly as received, with no trimming). 'rule' names the row of the section 3.2 table: absent, null, empty, white-space-only, not-a-string, other-string. 'white_space' lists the Unicode 15.0.0 White_Space code points (PropList.txt), the only characters a white-space-only string may contain. It is NOT Python's str.isspace(), which also accepts U+001C to U+001F. The normalisation is done once, by libs/lti, when it reads the claims; libs/lti does not exist yet and must pass these vectors when it is added. Test data only.",
+  "unicode_version": "15.0.0",
+  "white_space": [
+    "0009", "000A", "000B", "000C", "000D", "0020", "0085", "00A0", "1680",
+    "2000", "2001", "2002", "2003", "2004", "2005", "2006", "2007", "2008", "2009", "200A",
+    "2028", "2029", "202F", "205F", "3000"
+  ],
+  "vectors": [
+    { "id": "claim-absent", "input": { "absent": true }, "expected": "absent", "rule": "absent" },
+    { "id": "claim-null", "input": { "value": null }, "expected": "absent", "rule": "null" },
+    { "id": "empty-string", "input": { "value": "" }, "expected": "absent", "rule": "empty" },
+
+    { "id": "space", "input": { "value": " " }, "expected": "absent", "rule": "white-space-only" },
+    { "id": "several-spaces", "input": { "value": "   " }, "expected": "absent", "rule": "white-space-only" },
+    { "id": "ascii-controls-that-are-white-space", "input": { "value": "\t\n\u000b\f\r" }, "expected": "absent", "rule": "white-space-only" },
+    { "id": "crlf", "input": { "value": "\r\n" }, "expected": "absent", "rule": "white-space-only" },
+    { "id": "next-line", "input": { "value": "\u0085" }, "expected": "absent", "rule": "white-space-only" },
+    { "id": "no-break-space", "input": { "value": "\u00a0" }, "expected": "absent", "rule": "white-space-only" },
+    { "id": "ogham-space-mark", "input": { "value": "\u1680" }, "expected": "absent", "rule": "white-space-only" },
+    { "id": "en-quad-to-hair-space", "input": { "value": "\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a" }, "expected": "absent", "rule": "white-space-only" },
+    { "id": "line-and-paragraph-separator", "input": { "value": "\u2028\u2029" }, "expected": "absent", "rule": "white-space-only" },
+    { "id": "narrow-no-break-space", "input": { "value": "\u202f" }, "expected": "absent", "rule": "white-space-only" },
+    { "id": "medium-mathematical-space", "input": { "value": "\u205f" }, "expected": "absent", "rule": "white-space-only" },
+    { "id": "ideographic-space", "input": { "value": "\u3000" }, "expected": "absent", "rule": "white-space-only" },
+    { "id": "mixed-white-space", "input": { "value": " \t\u00a0\u3000\n" }, "expected": "absent", "rule": "white-space-only" },
+
+    { "id": "integer", "input": { "value": 123 }, "expected": "absent", "rule": "not-a-string" },
+    { "id": "zero", "input": { "value": 0 }, "expected": "absent", "rule": "not-a-string" },
+    { "id": "decimal", "input": { "value": 1.5 }, "expected": "absent", "rule": "not-a-string" },
+    { "id": "true", "input": { "value": true }, "expected": "absent", "rule": "not-a-string" },
+    { "id": "false", "input": { "value": false }, "expected": "absent", "rule": "not-a-string" },
+    { "id": "empty-array", "input": { "value": [] }, "expected": "absent", "rule": "not-a-string" },
+    { "id": "array-of-string", "input": { "value": ["Ada Lovelace"] }, "expected": "absent", "rule": "not-a-string" },
+    { "id": "empty-object", "input": { "value": {} }, "expected": "absent", "rule": "not-a-string" },
+    { "id": "object", "input": { "value": { "given": "Ada" } }, "expected": "absent", "rule": "not-a-string" },
+
+    { "id": "plain-name", "input": { "value": "Ada Lovelace" }, "expected": "preserved", "rule": "other-string" },
+    { "id": "one-character", "input": { "value": "a" }, "expected": "preserved", "rule": "other-string" },
+    { "id": "email-address", "input": { "value": "mentor@example.org" }, "expected": "preserved", "rule": "other-string" },
+    { "id": "course-title", "input": { "value": "Build an AI Assistant" }, "expected": "preserved", "rule": "other-string" },
+    { "id": "non-ascii-letters", "input": { "value": "Zo\u00eb \u00d1\u00fa\u00f1ez" }, "expected": "preserved", "rule": "other-string" },
+    { "id": "cjk", "input": { "value": "\u674e\u96f7" }, "expected": "preserved", "rule": "other-string" },
+    { "id": "combining-mark", "input": { "value": "e\u0301" }, "expected": "preserved", "rule": "other-string" },
+    { "id": "leading-and-trailing-spaces", "input": { "value": "  Ada  " }, "expected": "preserved", "rule": "other-string" },
+    { "id": "padded-email", "input": { "value": " mentor@example.org " }, "expected": "preserved", "rule": "other-string" },
+    { "id": "leading-no-break-space", "input": { "value": "\u00a0Ada" }, "expected": "preserved", "rule": "other-string" },
+    { "id": "trailing-newline", "input": { "value": "Week 1\n" }, "expected": "preserved", "rule": "other-string" },
+    { "id": "ideographic-space-around", "input": { "value": "\u3000\u674e\u96f7\u3000" }, "expected": "preserved", "rule": "other-string" },
+    { "id": "inner-tab", "input": { "value": "Ada\tLovelace" }, "expected": "preserved", "rule": "other-string" },
+
+    { "id": "zero-width-space", "input": { "value": "\u200b" }, "expected": "preserved", "rule": "other-string" },
+    { "id": "byte-order-mark", "input": { "value": "\ufeff" }, "expected": "preserved", "rule": "other-string" },
+    { "id": "mongolian-vowel-separator", "input": { "value": "\u180e" }, "expected": "preserved", "rule": "other-string" },
+    { "id": "word-joiner", "input": { "value": "\u2060" }, "expected": "preserved", "rule": "other-string" },
+    { "id": "file-separator-isspace-only", "input": { "value": "\u001c" }, "expected": "preserved", "rule": "other-string" },
+    { "id": "group-separator-isspace-only", "input": { "value": "\u001d" }, "expected": "preserved", "rule": "other-string" },
+    { "id": "record-separator-isspace-only", "input": { "value": "\u001e" }, "expected": "preserved", "rule": "other-string" },
+    { "id": "unit-separator-isspace-only", "input": { "value": "\u001f" }, "expected": "preserved", "rule": "other-string" },
+    { "id": "isspace-only-separators-between-spaces", "input": { "value": " \u001c\u001d\u001e\u001f " }, "expected": "preserved", "rule": "other-string" },
+    { "id": "white-space-around-zero-width-space", "input": { "value": " \u200b " }, "expected": "preserved", "rule": "other-string" }
+  ]
+}
