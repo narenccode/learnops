@@ -31,6 +31,7 @@ from .helpers import (
     link_or_skip,
     not_checked_codes,
     only,
+    to_sections_only,
     write_course,
 )
 
@@ -178,7 +179,11 @@ def test_a_package_without_section_idnumbers_is_valid(
 ) -> None:
     # A section idnumber is optional (issue #65). Without it the package must not fail with a
     # KeyError or a duplicate: the course-level rules skip a section that has none.
-    example_doc["course"]["mode"] = mode
+    if mode == "sections-only":
+        # sections-only needs unlock.after on every section
+        to_sections_only(example_doc)
+    else:
+        example_doc["course"]["mode"] = mode
     for section in example_doc["sections"]:
         del section["idnumber"]
     write_course(package_dir, example_doc)
@@ -204,7 +209,8 @@ def test_the_second_example_is_a_valid_package(package_dir: Path) -> None:
 def test_missing_body_file_is_an_error_at_the_activity(
     package_dir: Path, example_doc: Doc, mode: str
 ) -> None:
-    example_doc["course"]["mode"] = mode
+    if mode == "sections-only":
+        to_sections_only(example_doc)
     write_course(package_dir, example_doc)
     (package_dir / "weeks" / "02-guide.md").unlink()
     issue = only(validate_package(DirectorySource(package_dir)).errors)

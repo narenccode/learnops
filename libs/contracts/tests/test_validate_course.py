@@ -3,7 +3,7 @@
 Covered here: the schema stage, idnumbers unique within one package (B1.2 rule 6, first half)
 and the protected idnumbers a site adds to the two defaults (B1.4, passed in as configuration).
 NOT covered, on purpose, because ownership or details are still undecided (see
-HELD_RULE_CODES): one Page and one Assignment per week, the unlock chain, the points total,
+HELD_RULE_CODES): one Page and one Assignment per week, the points total,
 completion on unlock activities, an idnumber never reused across package versions (B1.2 rule 6,
 second half), the marking table, the Check vocabulary and protected_section. The validator must
 report those as "not checked", and so must the body files for a parsed document, which cannot
@@ -33,6 +33,7 @@ from .helpers import (
     error_codes,
     not_checked_codes,
     only,
+    to_sections_only,
 )
 
 # --- the example, and the rules that are held back ------------------------------------------
@@ -318,6 +319,10 @@ def test_duplicate_idnumber_is_an_error_at_the_later_use(
     first_at: tuple[str | int, ...],
 ) -> None:
     set_at(example_doc, edit_at, value)
+    if edit_at == W1T:
+        # Week 2 keeps unlocking after week 1's task under its new idnumber, so that only the
+        # duplicate is wrong (the unlock rules are tested in test_validate_unlock.py).
+        example_doc["sections"][1]["unlock"]["after"] = value
     issue = only(validate_course_document(example_doc).errors)
     assert issue.code == "duplicate_idnumber"
     assert issue.rule == "B1.2 rule 6"
@@ -336,6 +341,9 @@ def test_an_idnumber_used_three_times_is_reported_for_each_extra_use(
 ) -> None:
     for place in (WEEK1_TASK, WEEK2_GUIDE):
         set_at(example_doc, place + ("idnumber",), "wk-01-guide")
+    example_doc["sections"][1]["unlock"]["after"] = (
+        "wk-01-guide"  # follows the task's rename
+    )
     report = validate_course_document(example_doc)
     assert error_codes(report) == ["duplicate_idnumber", "duplicate_idnumber"]
     assert [i.location for i in report.errors] == [
@@ -368,7 +376,7 @@ def test_similar_idnumbers_are_not_duplicates(example_doc: Doc) -> None:
 def test_duplicate_idnumbers_are_an_error_in_sections_only_mode_too(
     example_doc: Doc,
 ) -> None:
-    example_doc["course"]["mode"] = "sections-only"
+    to_sections_only(example_doc)
     set_at(example_doc, WEEK2 + ("idnumber",), "wk-01")
     issue = only(validate_course_document(example_doc).errors)
     assert issue.code == "duplicate_idnumber"
@@ -400,7 +408,11 @@ def test_sections_without_idnumber_are_valid_and_are_not_duplicates_of_each_othe
 ) -> None:
     # Two sections that both lack an idnumber must not look like one idnumber used twice
     # (CK-06, duplicate_idnumber): an absent idnumber is simply not reported.
-    example_doc["course"]["mode"] = mode
+    if mode == "sections-only":
+        # sections-only needs unlock.after on every section
+        to_sections_only(example_doc)
+    else:
+        example_doc["course"]["mode"] = mode
     for section in example_doc["sections"]:
         del section["idnumber"]
     report = validate_course_document(example_doc)
@@ -460,7 +472,8 @@ CONFIG = ValidationConfig(protected_idnumbers=frozenset({"capstone-gate"}))
 def test_configured_protected_idnumber_is_rejected_in_both_modes(
     example_doc: Doc, mode: str, place: tuple[str | int, ...]
 ) -> None:
-    example_doc["course"]["mode"] = mode
+    if mode == "sections-only":
+        to_sections_only(example_doc)
     set_at(example_doc, place, "capstone-gate")
     issue = only(validate_course_document(example_doc, config=CONFIG).errors)
     assert issue.code == "protected_idnumber"
