@@ -3,3 +3,11 @@
 # requirements-dev.txt.
 
 tzdata==2026.6                     # Apache-2.0. Time-zone database for zoneinfo on systems that have none (Windows); not used where the system has one
+
+# LTI gateway (libs/lti/gateway). FastAPI is the fixed stack (PRD §A10).
+fastapi==0.116.1                   # MIT
+starlette==0.47.2                  # BSD-3-Clause. Pinned to the version fastapi 0.116.1 was tested with
+pydantic==2.12.5                   # MIT. Models for the B3 launch result
+python-multipart==0.0.20           # Apache-2.0. Reads the launch form Moodle posts
+cryptography==44.0.1               # Apache-2.0 OR BSD-3-Clause. Builds the public keyset (/lti/jwks)
+uvicorn==0.35.0                    # BSD-3-Clause. Runs the gateway

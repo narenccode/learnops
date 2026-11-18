@@ -695,6 +695,21 @@ Wording only. These changes carry no new tests, because no code implements the r
 | PRD EXT-07, FR-X-01, A5 player row | Learner wording is under review (ADR 0001 OI-25); see those PRD rows and the ADR for the current state | None (not implemented) |
 | PRD B.0 rule 3 | One sentence added: a consuming module adds its tests when its code that reads the contract exists; before that, the shared contract tests cover the change | Not applicable (process rule) |
 
+## LTI gateway: configuration, sessions and tool routing (B3 consumer)
+
+Files: `libs/lti/gateway/`, tests in `libs/lti/gateway/tests/test_gateway.py`. Launch validation
+(SEC-01) is not part of this change; a fake verifier stands in for it in the tests. SEC-01 and
+SEC-02 are only partly met until the verifier and each tool's own authorisation exist.
+
+| Rule | PRD | Test(s) |
+|---|---|---|
+| Health endpoint; settings read from the environment, a missing one named; destinations are HTTPS (HTTP only on localhost) | C-06, UI-05 | `test_health_responds`, `test_missing_settings_are_named`, `test_destination_must_be_https`, `test_http_is_allowed_on_localhost_only` |
+| Public keyset with the public key only; unreadable key fails at start-up | B3, ADR 0001 | `test_jwks_is_empty_without_a_key`, `test_jwks_publishes_only_the_public_key`, `test_unreadable_key_fails_at_start_up` |
+| Video and Grading launches go to their configured destination; secure session cookie, raw token never sent | B3 §6, §10 | `test_valid_launch_routes_to_its_tool` |
+| Unknown tool refused before verification; the browser cannot choose the destination; login only for a configured launch URL | B3 §2 | `test_unknown_tool_is_refused_before_verification`, `test_browser_cannot_choose_the_destination`, `test_login_uses_the_launch_url_of_the_target_tool`, `test_login_for_an_unknown_target_is_refused` |
+| Refused or contract-breaking launches create no session; no verifier means no session | B3 §8, §11, SEC-01, EXT-07 | `test_refused_launch_creates_no_session`, `test_result_that_breaks_the_contract_is_refused`, `test_launch_without_verifier_is_not_accepted`, `test_missing_form_fields_are_refused` |
+| Session bound to `(iss, sub, context id)`, two hours idle, missing or invalid session refused; other tool and, for a mentor, other course refused; administrator any course; a new launch ends the old session | B3 §6, §7, SEC-02, A5 | `test_session_returns_the_launch_without_any_token`, `test_missing_or_invalid_session_is_refused`, `test_session_ends_after_two_hours_idle`, `test_session_is_refused_for_the_other_tool`, `test_mentor_is_refused_another_course`, `test_administrator_may_use_any_course`, `test_new_launch_replaces_the_earlier_session` |
+
 ## B5 model and speech interface contract (v1), Release 0 foundation
 
 Files: `contracts/model-interface.v1.schema.json`, `contracts/examples/model-interface.v1.*.json`
