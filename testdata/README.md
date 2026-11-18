@@ -27,8 +27,13 @@ A Moodle course backup with the protected items (PRD B1.4), course completion an
 
 - **Where:** `b8-5-lecture-videos/` (folder layout, recording and hashing steps, and the
   completion checklist in its README). The inventory table below is the only list of lectures.
-- **Status:** PENDING. No lecture has been recorded, no consent has been given and no transcript
-  has been typed. The set is **not complete** and must not be used for any measurement yet.
+- **Status:** PENDING. Five local recording files were identified in earlier work (PR #99
+  recorded their SHA-256 values in the inventory below). The files are not in Git and are not
+  re-verified here. None is accepted as B8.5 evidence yet: whether they are official B8.5
+  lectures is not confirmed, no speaker consent line is written in decision 0004, no duration is
+  recorded in the inventory, and no reference transcript has been typed or reviewed. The set is
+  **not complete** and must not be used for any measurement yet. The temporary exceptions in
+  decision 0004 (four lectures, no 1800 s total) do not make it complete.
 - **Method (guide decision, recorded in `docs/decisions/0004-b8-5-lecture-videos.md`):**
   - at least **5** short technical lectures in **Indian English**, together approximately
     **30 minutes** of recording; the acceptance threshold is a total of at least **1800 s**;

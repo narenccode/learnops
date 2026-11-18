@@ -636,6 +636,24 @@
       "expected": {
         "result": "pass"
       }
+    },
+    {
+      "id": "readme-fence-needs-three-tildes",
+      "title": "A line that starts with two tildes (strikethrough) is not a fence, so it hides no heading: a fence needs at least three tildes",
+      "status": "derived",
+      "covers": [
+        "B1.3-readme-headings"
+      ],
+      "check": "readme_sections:Setup",
+      "files": [
+        {
+          "name": "README.md",
+          "text": "~~old~~ note\n\n# Setup"
+        }
+      ],
+      "expected": {
+        "result": "pass"
+      }
     }
   ]
 }

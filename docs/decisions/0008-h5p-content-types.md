@@ -1,7 +1,11 @@
-# 0005: B7 H5P content types and versions (lab check)
+# 0008: B7 H5P content types and versions (lab check)
 
 **Status: recorded.** The lab check was reported by the guide on 2026-11-11. B7 itself is still a
 draft contract (`contracts/h5p-practice.v1.md`).
+
+**Number:** 0008. This record was merged with #54 as `0005-h5p-content-types.md`, but #96 had already
+merged its own `0005` (App-C item 4), so it was renamed to the next free number (0006 is #96's second
+record and 0007 is #101's). The content is unchanged.
 
 This record closes PRD App-C item 5, "Exact H5P content-type versions available on both Moodle
 versions".
