@@ -1,12 +1,79 @@
 # Media Paths
 
-Shared Python library for validating LearnOps media paths and building media URLs.
+Shared Python library for generating and validating LearnOps media paths and building media URLs.
 
 ## Requirements
 
-- EXT-09: the shared `media_paths` library, including the B6.4 media signing interface (`none`
-  baseline implementation)
+- EXT-09: the shared `media_paths` library, including the B6.1 media path templates and the B6.4
+  media signing interface (`none` baseline implementation)
 - C-08: media is stored as relative paths
+
+## Path generation
+
+- `course_lesson_path(course_slug, module_number, module_slug, lesson_number, lesson_slug, template=DEFAULT_COURSE_LESSON_TEMPLATE)`
+- `live_class_path(course_slug, cohort, number, topic_slug, template=DEFAULT_LIVE_CLASS_TEMPLATE)`
+
+Default templates (PRD B6.1):
+
+```text
+courses/{course_slug}/{module_nn}-{module_slug}/{lesson_nn}-{lesson_slug}/
+courses/{course_slug}/live-{cohort}/{nn}-{topic_slug}/
+```
+
+A custom template may use only the placeholders of the default template of its own path type,
+by plain name. `{module_nn}`, `{lesson_nn}` and `{nn}` are filled from `module_number`,
+`lesson_number` and `number`, zero-padded to two digits. Slugs and `cohort` are lowercase ASCII
+letters and digits separated by single hyphens (`2026-01` is a valid cohort); numbers are an `int`
+from 1 to 99 (`bool`, `float` and `str` are rejected). A wrong type raises `TypeError`; a wrong
+value raises `ValueError`.
+
+### Loading a custom template
+
+A custom template (for example `MEDIA_PATH_TEMPLATE`) is checked **once, when it is loaded**.
+Load it with `check_course_lesson_template(text)` or `check_live_class_template(text)`, pass the
+result as `template=`, and add a file name with `posixpath.join`, checking the result:
+
+```python
+import os
+import posixpath
+
+from media_paths import check_course_lesson_template, course_lesson_path, validate_relative_path
+
+template = check_course_lesson_template(os.environ["MEDIA_PATH_TEMPLATE"])  # at start-up
+folder = course_lesson_path("python", 1, "basics", 2, "intro", template=template)
+path = posixpath.join(folder, "720p.mp4")  # not folder + "/" + "720p.mp4"
+assert validate_relative_path(path)
+```
+
+The defaults end with `/`; a custom template need not (no rule on this has been decided).
+`posixpath.join` handles both. `folder + "/" + "720p.mp4"` gives `.../intro//720p.mp4` for the
+defaults (an empty segment, rejected by `validate_relative_path`); `folder + "720p.mp4"` gives
+`.../intro720p.mp4` for a custom folder without a trailing `/`.
+
+The path functions accept only a loaded `CourseLessonTemplate` / `LiveClassTemplate`; a plain
+string raises `TypeError`. A template is rejected with a `ValueError` that names the problem if it:
+
+- leaves out a placeholder that identifies the item (lessons: `{course_slug}`, `{module_slug}`,
+  `{lesson_slug}`; live classes: `{course_slug}`, `{cohort}`, `{topic_slug}`), so two items
+  could share one folder. Number placeholders are optional;
+- puts two of those in one path segment, such as `{course_slug}{module_slug}/` (guide decision:
+  `ab` + `c` and `a` + `bc` would share a folder). A number may share it (`{module_nn}-{module_slug}`);
+- uses any other placeholder (`{}`, `{0}`, `{name.attr}`, `{name[0]}`), has a format spec or
+  conversion (`{module_nn:>3}`) or unbalanced braces (use `{{` or `}}`), or produces a path that
+  is not a safe relative path (see Validation below).
+
+**Custom templates can collide.** Nothing checks the two templates against each other, so the
+library does **not** prevent a lesson and a live class from getting the same folder (decided for v1:
+documented limit, no cross-check; revisit after Release 0). The defaults cannot collide (a lesson's
+module segment starts with two digits, a live-class segment with `live-`), but custom templates can,
+in either direction. Keep the two types apart yourself.
+
+- Custom lesson template `courses/{course_slug}/{module_slug}/{lesson_slug}/`, `module_slug` =
+  `live-batch-01`, `lesson_slug` = `01-recap`: `courses/python/live-batch-01/01-recap/`, the
+  default live-class folder for cohort `batch-01`, number 1, topic `recap`.
+- Custom live-class template `courses/{course_slug}/{cohort}/{nn}-{topic_slug}/`, `cohort` =
+  `01-basics`, number 2, topic `intro`: `courses/python/01-basics/02-intro/`, the default lesson
+  folder for module 1 `basics`, lesson 2 `intro`.
 
 ## Media signing (PRD B6.4)
 

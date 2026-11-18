@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:learnops:contract:chapters:v1",
+  "title": "LearnOps chapters (B6.2, v1)",
+  "description": "The chapters.json file in a lesson folder (PRD B6.2): a bare JSON array of {start, end, title}. start and end are numbers of seconds from the beginning of the main track; fractional seconds are allowed. Gaps between chapters are allowed.",
+  "$comment": "Unknown fields are allowed on purpose: after Release 0 contracts change only by adding optional fields and readers ignore unknown fields (PRD B.0, EXT-02). NOT expressible in JSON Schema, so NOT enforced by this file: that end is greater than start in the same entry (JSON Schema cannot compare two properties of one object); that the entries are in ascending order of start; that chapters do not overlap (an entry starts at or after the end of the one before); that every time is at most the manifest's duration_s (that value is in another file, so this is a consumer-level rule). These are checked by libs/contracts/lesson_files.py.",
+  "type": "array",
+  "items": {
+    "$ref": "#/$defs/chapter"
+  },
+  "$defs": {
+    "chapter": {
+      "type": "object",
+      "required": [
+        "start",
+        "end",
+        "title"
+      ],
+      "properties": {
+        "start": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Seconds from the beginning of the main track, at least 0. Fractional seconds are allowed. Start of the chapter."
+        },
+        "end": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Seconds from the beginning of the main track, at least 0. Fractional seconds are allowed. End of the chapter; greater than start (validator rule)."
+        },
+        "title": {
+          "type": "string",
+          "pattern": "\\S",
+          "description": "The chapter title. Not empty and not only whitespace (at least one character other than whitespace). The mentor can edit it (FR-V-05)."
+        }
+      }
+    }
+  }
+}

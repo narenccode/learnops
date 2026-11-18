@@ -1,0 +1,9 @@
+{
+  "provider": "fake",
+  "model": "example-fake-model",
+  "input_tokens": 0,
+  "output_tokens": 0,
+  "latency_ms": 0,
+  "cost_estimate": 0.0,
+  "prompt_version": "grade_draft/v1"
+}
