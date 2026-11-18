@@ -1,5 +1,8 @@
 # Release 0 freeze-readiness checklist (T20 preparation)
 
+> **Update 2026-11-18 (the facts below are stale where they conflict):** PR #96 was **merged** on 2026-11-16 (approved by Harshithamanjunatha, Shraddha and Akshita21-09) and is the carrier of decisions `0005`/`0006` and `verify_bbb.py`. PR #97 was **closed as superseded by #96**: its ADR, README and run record are identical to `main`, its older `verify_bbb.py` is replaced by #96's, and its traceability section is already on `main`. The `0005` numbering collision therefore no longer exists. App-C 4 is **still NOT VERIFIED**: no lab observation exists, so nothing here is a PASS.
+> **Update 2026-11-18:** PR #99 recorded SHA-256 values and `ffprobe` durations for five recordings in the B8.5 inventory; PR #125 recorded the guide-approved temporary exceptions in decision 0004 (four lectures, no 1800 s total, for interim demonstration and testing only); PR #126 corrected the status wording. B8.5 stays **PENDING**: file names, speakers, consent lines, transcripts and review are not recorded, so no licence or consent evidence exists yet.
+
 **Verdict: NOT READY. Release 0 is NOT frozen, and this document does not freeze it.** The guide
 performs the adoption test and the tag (PRD §D2 items 7 and 8; `.claude/commands/release-check.md`).
 **Audit date:** 2026-11-16. First pass at `origin/main` `3abbc02`; second pass (corrections) merged

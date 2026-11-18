@@ -167,3 +167,5 @@ truthful. It does not show that B8.5 or App-C 8 is met.
 - That the files are the official set (G-8).
 - Transcript accuracy and review (G-4).
 - The guide's approval of the 1800 s exception and of retention/storage questions (G-5, G-6).
+
+> **Update 2026-11-18:** PR #99 recorded SHA-256 values and `ffprobe` durations for five recordings in the B8.5 inventory; PR #125 recorded the guide-approved temporary exceptions in decision 0004 (four lectures, no 1800 s total, for interim demonstration and testing only); PR #126 corrected the status wording. B8.5 stays **PENDING**: file names, speakers, consent lines, transcripts and review are not recorded, so no licence or consent evidence exists yet.

@@ -1,5 +1,7 @@
 # App-C 4: acceptance evidence map
 
+> **Update 2026-11-18 (the facts below are stale where they conflict):** PR #96 was **merged** on 2026-11-16 (approved by Harshithamanjunatha, Shraddha and Akshita21-09) and is the carrier of decisions `0005`/`0006` and `verify_bbb.py`. PR #97 was **closed as superseded by #96**: its ADR, README and run record are identical to `main`, its older `verify_bbb.py` is replaced by #96's, and its traceability section is already on `main`. The `0005` numbering collision therefore no longer exists. App-C 4 is **still NOT VERIFIED**: no lab observation exists, so nothing here is a PASS.
+
 **Status: NOT VERIFIED. App-C 4 is NOT complete and nothing here is a PASS.**
 **Audit date:** 2026-11-16. First pass at `origin/main` `3abbc02`; second pass merged with `ecb4389`.
 Open-PR facts below were queried on 2026-11-16 and change quickly.
