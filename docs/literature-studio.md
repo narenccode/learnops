@@ -136,7 +136,7 @@ writing" (Moodle 2.0). **Nothing here is used as a fact about Moodle 4.5 or 5.3.
 - The backup is a directory: `moodle_backup.xml` at the root (versions, a summary of contents, the full
   settings: the "map" of the backup), `files.xml` with a `files/` directory, a `course/` directory,
   `sections/` with one directory per section, and `activities/` with one directory per activity (each with
-  `module.xml` and an XML file named after the activity type). `inforef.xml` files record what each part
+  `module.xml` and an `<activityname>.xml` file, as the page writes it). `inforef.xml` files record what each part
   uses, so a restore can be selective.
 
 **Relevance to Studio.** This is the only opened source that describes the layout the generator (FR-S-06)
@@ -202,8 +202,9 @@ publication date shown (footer © 2026).
 - Common Cartridge and Thin Common Cartridge **1.4** have reached Candidate Final status; 1.4 adds, among
   other things, LTI line items for grades and QTI 3.0 packages. Versions 1.3 and Thin 1.2 and 1.3 are listed
   under specification documents.
-- *Thin* Common Cartridge exchanges only a list of LTI links (for example a digital textbook); the platform
-  imports just the manifest.
+- *Thin* Common Cartridge is a standard way to exchange a collection of links that together make up, for
+  example, a digital textbook; the links carry access to learning tools and metadata, and the platform
+  imports only the manifest, a list of LTI links.
 
 **Audit observation.** The standard is at 1.3/1.4 while Moodle imports only 1.0 and 1.1 (S6), so even a
 newer cartridge would not reach Moodle intact.
@@ -225,15 +226,16 @@ Both pages show a review date of 2025-11-06.
 - A course is one `course/` directory. `course.xml` can hold a whole course, but Studio exports split it
   into files by container and component, in directories named after the XML tag (`html`, `problem`,
   `video` …), plus `policies`, `static` and other platform directories.
-- Courses are exported from Studio as a `.tar.gz`; the extracted files can be kept with source control
-  such as GitHub.
+- Courses are exported from Studio as a `.tar.gz`, which can be extracted with local tools or a source
+  control system such as GitHub (the page's wording; it does not say more about keeping courses in Git).
 - The page documents how Studio *currently* exports; other structures that import today are not guaranteed
   to keep working.
 
 **UNKNOWN.** How a course team reviews or merges OLX changes; any measurement of authoring time.
 
 **Relevance to Studio.** A working precedent for course-as-code on another platform: text files in a
-directory, exchanged with the platform as an archive, kept in Git. It matches the B1 package idea (a folder
+directory, exchanged with the platform as an archive, and editable outside the platform's own editor. It
+matches the B1 package idea (a folder
 of `course.yaml` plus Markdown, zip import and export: FR-S-02). Its warning that the platform's own export
 format may change is the same risk as design §12 item 1, and supports restore-testing every Studio build
 (module rule 1).
@@ -257,8 +259,9 @@ format may change is the same risk as design §12 item 1, and supports restore-t
    App-C item 2 merge test. To check on 5.3 and to raise with the guide on Issue #55.
 5. **Restore routes exist for the harness.** Merge into an existing course and a CLI restore script are
    documented (S3); whether they suit the harness is App-C item 3 (Module 2).
-6. **Course-as-code works elsewhere.** Open edX OLX keeps courses as text in Git and exchanges archives
-   with the platform (S8), which supports the B1 package approach.
+6. **Course-as-code works elsewhere.** Open edX OLX keeps a course as text files that can be built
+   outside its editor and exchanged with the platform as an archive (S8), which supports the B1 package
+   approach. S8 does not describe a Git workflow; that is still a gap (below).
 
 ## Gaps (not yet covered)
 
