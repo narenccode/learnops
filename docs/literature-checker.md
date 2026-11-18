@@ -139,4 +139,4 @@ All URLs below were opened and checked on **19 November 2026**.
 13. 1EdTech Consortium. (2019). *1EdTech Security Framework 1.0* (issued 15 May 2019). https://www.imsglobal.org/spec/security/v1p0/
 14. Microsoft. (n.d.). *Authentication* (Playwright for Python documentation). https://playwright.dev/python/docs/auth
 15. Microsoft. (n.d.). *Locators* (Playwright for Python documentation). https://playwright.dev/python/docs/locators
-16. Microsoft. (n.d.). *Introduction and test runners* (Playwright for Python documentation). https://playwright.dev/python/docs/intro
+16. Microsoft. (n.d.). *Pytest Plugin Reference* (Playwright for Python documentation). https://playwright.dev/python/docs/test-runners
