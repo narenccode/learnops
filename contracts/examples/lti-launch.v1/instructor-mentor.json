@@ -1,0 +1,16 @@
+{
+  "iss": "https://moodle.example.org",
+  "sub": "user-1001",
+  "deployment_id": "deployment-1",
+  "message_type": "LtiResourceLinkRequest",
+  "role": "mentor",
+  "context": {
+    "id": "42",
+    "title": "Demo course: Build an AI Assistant"
+  },
+  "resource_link": {
+    "id": "link-7"
+  },
+  "name": "Test Mentor",
+  "email": "test.mentor@example.org"
+}
