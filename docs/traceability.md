@@ -276,7 +276,7 @@ Files: `contracts/h5p-practice.v1.md` (normative text), `contracts/h5p-practice.
 `contracts/examples/course-package.v1/h5p-practice.yaml` with its bodies in
 `contracts/examples/course-package.v1/h5p-practice/` (no `.h5p` file), the `file` field in
 `contracts/course-package.v1.schema.json`, the decision record
-`docs/decisions/0005-h5p-content-types.md` (the lab check, PRD App-C item 5), and the tests
+`docs/decisions/0008-h5p-content-types.md` (the lab check, PRD App-C item 5), and the tests
 `test_h5p_practice_v1.py` and `test_course_package_v1.py` in `libs/contracts/tests/`. B7 has no
 requirement ID of its own in the
 PRD (it is a contract, PRD B.0). It is used by FR-S-12 and FR-V-14 (Release 5, stretch) and by
@@ -327,7 +327,7 @@ Rows that say "example only" check the example package, not packages in general.
 
 ### Open decisions and not mapped
 
-Closed by the guide's lab check of 2026-11-11 (App-C item 5; `docs/decisions/0005-h5p-content-types.md`):
+Closed by the guide's lab check of 2026-11-11 (App-C item 5; `docs/decisions/0008-h5p-content-types.md`):
 the H5P library versions, and whether "drag-the-words or drag-and-drop / ordering" is one type (it is
 two entries). Open: the `ref` kinds and the cue fields (Student 4, in the B6 cues schema, still to
 come; her `h5p` + `idnumber` encoding is only a proposal); several practice items in one week and
