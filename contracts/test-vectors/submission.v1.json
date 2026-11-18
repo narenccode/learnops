@@ -1,0 +1,659 @@
+{
+  "$comment": "Shared test vectors for the B1 submission-content rules (PRD B1.3 check formats and B1.5). Each case gives a learner's submission (online text and uploaded files) and the parts a reader must find. Pure data: no code. 'status' is 'derived' when the rules are decided by the guide (PR #61, 2026-11-11 and 2026-11-13) but this concrete example and its expected result were derived by the contract owner and still need review, and 'unverified-until-lab' when the expected result depends on how Moodle delivers editor HTML and must be checked on Moodle 4.5 and 5.3 before it is relied on. Behaviour that B1.5 lists as 'Not defined in v1' is not covered by any case. 'readme_cases' has fixtures for the B1.3 readme_sections rules: 'files' is what the repository holds (the README is only README.md at the root), 'check' is the Check cell, and a result is 'pass', 'fail' with the names of the missing sections, or 'invalid' with the unknown check name. 'covers' lists the B1.5 rules whose result the case shows; rules 8 (which check reads which part) and 9 (guidance for task text) cannot be shown in these part-level results and are never listed. All URLs use example.org.",
+  "version": 1,
+  "cases": [
+    {
+      "id": "all-labels",
+      "title": "All three labels in plain online text",
+      "status": "derived",
+      "covers": [
+        "B1.5-1",
+        "B1.5-2",
+        "B1.5-3",
+        "B1.3-word_count"
+      ],
+      "input": {
+        "onlinetext": "Repository: https://example.org/alice/demo-assistant\nDemo: https://example.org/alice/demo\nReport: I built a small assistant. It worked after I fixed the prompt.",
+        "onlinetext_format": "plain",
+        "files": []
+      },
+      "expected": {
+        "repository": {
+          "value": "https://example.org/alice/demo-assistant"
+        },
+        "demo": {
+          "value": "https://example.org/alice/demo"
+        },
+        "report": {
+          "value": "I built a small assistant. It worked after I fixed the prompt.",
+          "source": "onlinetext",
+          "words": 12
+        }
+      }
+    },
+    {
+      "id": "labels-in-html",
+      "title": "Labels in editor HTML (expected result unverified until the lab check)",
+      "status": "unverified-until-lab",
+      "covers": [
+        "B1.5-5",
+        "B1.5-1",
+        "B1.5-3",
+        "B1.3-word_count"
+      ],
+      "input": {
+        "onlinetext": "<p>Repository: https://example.org/alice/demo-assistant</p><p>Demo: https://example.org/alice/demo</p><p>Report: I built a small assistant.<br>It worked after I fixed the prompt.</p>",
+        "onlinetext_format": "html",
+        "files": []
+      },
+      "expected": {
+        "repository": {
+          "value": "https://example.org/alice/demo-assistant"
+        },
+        "demo": {
+          "value": "https://example.org/alice/demo"
+        },
+        "report": {
+          "value": "I built a small assistant.\nIt worked after I fixed the prompt.",
+          "source": "onlinetext",
+          "words": 12
+        }
+      }
+    },
+    {
+      "id": "missing-demo",
+      "title": "No Demo label: the check that reads it is an error",
+      "status": "derived",
+      "covers": [
+        "B1.5-7",
+        "B1.3-word_count"
+      ],
+      "input": {
+        "onlinetext": "Repository: https://example.org/bob/demo-assistant\nReport: Short note.",
+        "onlinetext_format": "plain",
+        "files": []
+      },
+      "expected": {
+        "repository": {
+          "value": "https://example.org/bob/demo-assistant"
+        },
+        "demo": {
+          "error": "field_missing"
+        },
+        "report": {
+          "value": "Short note.",
+          "source": "onlinetext",
+          "words": 2
+        }
+      }
+    },
+    {
+      "id": "report-as-file",
+      "title": "No Report section: report.md is the report and is counted as it is",
+      "status": "derived",
+      "covers": [
+        "B1.5-4",
+        "B1.3-word_count"
+      ],
+      "input": {
+        "onlinetext": "Repository: https://example.org/carol/demo-assistant\nDemo: https://example.org/carol/demo",
+        "onlinetext_format": "plain",
+        "files": [
+          {
+            "name": "report.md",
+            "text": "# Reflection\n\nI built an assistant and it answered badly at first."
+          }
+        ]
+      },
+      "expected": {
+        "repository": {
+          "value": "https://example.org/carol/demo-assistant"
+        },
+        "demo": {
+          "value": "https://example.org/carol/demo"
+        },
+        "report": {
+          "value": "# Reflection\n\nI built an assistant and it answered badly at first.",
+          "source": "report.md",
+          "words": 12
+        }
+      }
+    },
+    {
+      "id": "report-contains-demo-label",
+      "title": "A line that starts with Demo: after Report: is part of the report",
+      "status": "derived",
+      "covers": [
+        "B1.5-3",
+        "B1.5-7",
+        "B1.3-word_count"
+      ],
+      "input": {
+        "onlinetext": "Repository: https://example.org/dave/demo-assistant\nDemo: https://example.org/dave/demo\nReport: The next line starts with the word Demo, and it is part of this report.\nDemo: https://example.org/dave/other",
+        "onlinetext_format": "plain",
+        "files": []
+      },
+      "expected": {
+        "repository": {
+          "value": "https://example.org/dave/demo-assistant"
+        },
+        "demo": {
+          "value": "https://example.org/dave/demo"
+        },
+        "report": {
+          "value": "The next line starts with the word Demo, and it is part of this report.\nDemo: https://example.org/dave/other",
+          "source": "onlinetext",
+          "words": 17
+        }
+      }
+    },
+    {
+      "id": "repeated-label",
+      "title": "A label that appears twice before the report is an error, not first-wins",
+      "status": "derived",
+      "covers": [
+        "B1.5-7",
+        "B1.3-word_count"
+      ],
+      "input": {
+        "onlinetext": "Repository: https://example.org/frank/demo-assistant\nDemo: https://example.org/frank/one\nDemo: https://example.org/frank/two\nReport: Two demo links.",
+        "onlinetext_format": "plain",
+        "files": []
+      },
+      "expected": {
+        "repository": {
+          "value": "https://example.org/frank/demo-assistant"
+        },
+        "demo": {
+          "error": "field_repeated"
+        },
+        "report": {
+          "value": "Two demo links.",
+          "source": "onlinetext",
+          "words": 3
+        }
+      }
+    },
+    {
+      "id": "labels-case-and-spacing",
+      "title": "Labels in any case, with spaces before them; values are trimmed at both ends",
+      "status": "derived",
+      "covers": [
+        "B1.5-1",
+        "B1.5-2",
+        "B1.5-3",
+        "B1.3-word_count"
+      ],
+      "input": {
+        "onlinetext": "  repository:   https://example.org/erin/demo-assistant   \nDEMO: https://example.org/erin/demo\n  rEpOrT:Short reflection on the week.",
+        "onlinetext_format": "plain",
+        "files": []
+      },
+      "expected": {
+        "repository": {
+          "value": "https://example.org/erin/demo-assistant"
+        },
+        "demo": {
+          "value": "https://example.org/erin/demo"
+        },
+        "report": {
+          "value": "Short reflection on the week.",
+          "source": "onlinetext",
+          "words": 5
+        }
+      }
+    },
+    {
+      "id": "missing-repository-and-report",
+      "title": "No Repository label and no report at all: both checks that read them are errors",
+      "status": "derived",
+      "covers": [
+        "B1.5-7"
+      ],
+      "input": {
+        "onlinetext": "Demo: https://example.org/gina/demo",
+        "onlinetext_format": "plain",
+        "files": []
+      },
+      "expected": {
+        "repository": {
+          "error": "field_missing"
+        },
+        "demo": {
+          "value": "https://example.org/gina/demo"
+        },
+        "report": {
+          "error": "field_missing"
+        }
+      }
+    },
+    {
+      "id": "report-as-txt",
+      "title": "No Report section and no report.md: report.txt is the report",
+      "status": "derived",
+      "covers": [
+        "B1.5-4",
+        "B1.3-word_count"
+      ],
+      "input": {
+        "onlinetext": "Repository: https://example.org/hugo/demo-assistant\nDemo: https://example.org/hugo/demo",
+        "onlinetext_format": "plain",
+        "files": [
+          {
+            "name": "report.txt",
+            "text": "I wrote this in plain text. It has no headings."
+          }
+        ]
+      },
+      "expected": {
+        "repository": {
+          "value": "https://example.org/hugo/demo-assistant"
+        },
+        "demo": {
+          "value": "https://example.org/hugo/demo"
+        },
+        "report": {
+          "value": "I wrote this in plain text. It has no headings.",
+          "source": "report.txt",
+          "words": 10
+        }
+      }
+    },
+    {
+      "id": "report-md-before-txt",
+      "title": "Both report files exist: report.md is the report and report.txt is ignored",
+      "status": "derived",
+      "covers": [
+        "B1.5-4",
+        "B1.3-word_count"
+      ],
+      "input": {
+        "onlinetext": "Repository: https://example.org/iris/demo-assistant\nDemo: https://example.org/iris/demo",
+        "onlinetext_format": "plain",
+        "files": [
+          {
+            "name": "report.md",
+            "text": "# Notes\n\nThe markdown file wins."
+          },
+          {
+            "name": "report.txt",
+            "text": "The text file is ignored."
+          }
+        ]
+      },
+      "expected": {
+        "repository": {
+          "value": "https://example.org/iris/demo-assistant"
+        },
+        "demo": {
+          "value": "https://example.org/iris/demo"
+        },
+        "report": {
+          "value": "# Notes\n\nThe markdown file wins.",
+          "source": "report.md",
+          "words": 6
+        }
+      }
+    },
+    {
+      "id": "misspelled-and-inline-labels",
+      "title": "A misspelled label and a label that is not at the start of a line are not labels",
+      "status": "derived",
+      "covers": [
+        "B1.5-1",
+        "B1.5-6",
+        "B1.5-7",
+        "B1.3-word_count"
+      ],
+      "input": {
+        "onlinetext": "Repositry: https://example.org/hana/demo-assistant\nMy demo link - Demo: https://example.org/hana/demo\nReport: Both labels above are wrong.",
+        "onlinetext_format": "plain",
+        "files": []
+      },
+      "expected": {
+        "repository": {
+          "error": "field_missing"
+        },
+        "demo": {
+          "error": "field_missing"
+        },
+        "report": {
+          "value": "Both labels above are wrong.",
+          "source": "onlinetext",
+          "words": 5
+        }
+      }
+    },
+    {
+      "id": "demo-after-report",
+      "title": "Report: first, Demo: last: the Demo: line is part of the report, so there is no Demo label",
+      "status": "derived",
+      "covers": [
+        "B1.5-3",
+        "B1.5-7",
+        "B1.3-word_count"
+      ],
+      "input": {
+        "onlinetext": "Report: Notes come first.\nDemo: https://example.org/jon/demo",
+        "onlinetext_format": "plain",
+        "files": []
+      },
+      "expected": {
+        "repository": {
+          "error": "field_missing"
+        },
+        "demo": {
+          "error": "field_missing"
+        },
+        "report": {
+          "value": "Notes come first.\nDemo: https://example.org/jon/demo",
+          "source": "onlinetext",
+          "words": 5
+        }
+      }
+    },
+    {
+      "id": "second-report-line",
+      "title": "A second Report: line is part of the report, not a repeated label",
+      "status": "derived",
+      "covers": [
+        "B1.5-3",
+        "B1.5-7",
+        "B1.3-word_count"
+      ],
+      "input": {
+        "onlinetext": "Repository: https://example.org/kai/demo-assistant\nDemo: https://example.org/kai/demo\nReport: First part.\nReport: Second part.",
+        "onlinetext_format": "plain",
+        "files": []
+      },
+      "expected": {
+        "repository": {
+          "value": "https://example.org/kai/demo-assistant"
+        },
+        "demo": {
+          "value": "https://example.org/kai/demo"
+        },
+        "report": {
+          "value": "First part.\nReport: Second part.",
+          "source": "onlinetext",
+          "words": 5
+        }
+      }
+    }
+  ],
+  "readme_cases": [
+    {
+      "id": "readme-headings-any-case",
+      "title": "ATX headings of any level match the listed names, ignoring case",
+      "status": "derived",
+      "covers": [
+        "B1.3-readme-headings"
+      ],
+      "check": "readme_sections:Setup,Usage",
+      "files": [
+        {
+          "name": "README.md",
+          "text": "# My project\n\n## setup\n\nRun the installer.\n\n### Usage\n\nStart it."
+        }
+      ],
+      "expected": {
+        "result": "pass"
+      }
+    },
+    {
+      "id": "readme-setext-and-fenced-are-not-headings",
+      "title": "A Setext heading and a # line inside a fenced code block are not headings",
+      "status": "derived",
+      "covers": [
+        "B1.3-readme-headings"
+      ],
+      "check": "readme_sections:Overview,Setup,Usage,Install",
+      "files": [
+        {
+          "name": "README.md",
+          "text": "# Overview\n\nSetup\n=====\n\nUsage\n-----\n\n```text\n# Install\n```"
+        }
+      ],
+      "expected": {
+        "result": "fail",
+        "missing": [
+          "Setup",
+          "Usage",
+          "Install"
+        ]
+      }
+    },
+    {
+      "id": "readme-only-root-readme-md",
+      "title": "Only README.md at the repository root is read, not a README in a subfolder or with another name",
+      "status": "derived",
+      "covers": [
+        "B1.3-readme-file"
+      ],
+      "check": "readme_sections:Setup,Usage,Install",
+      "files": [
+        {
+          "name": "README.md",
+          "text": "# Setup"
+        },
+        {
+          "name": "docs/README.md",
+          "text": "# Usage"
+        },
+        {
+          "name": "README.rst",
+          "text": "# Install"
+        }
+      ],
+      "expected": {
+        "result": "fail",
+        "missing": [
+          "Usage",
+          "Install"
+        ]
+      }
+    },
+    {
+      "id": "readme-name-with-semicolon",
+      "title": "A semicolon in a section name splits the check, and the second part is an unknown check",
+      "status": "derived",
+      "covers": [
+        "B1.3-readme-name-chars"
+      ],
+      "check": "readme_sections:Setup;Usage",
+      "files": [
+        {
+          "name": "README.md",
+          "text": "# Setup\n\n# Usage"
+        }
+      ],
+      "expected": {
+        "result": "invalid",
+        "unknown_check": "Usage"
+      }
+    },
+    {
+      "id": "readme-heading-must-match-whole-text",
+      "title": "A section name is matched against the whole heading text: Setup instructions does not satisfy Setup",
+      "status": "derived",
+      "covers": [
+        "B1.3-readme-headings"
+      ],
+      "check": "readme_sections:Setup,Usage",
+      "files": [
+        {
+          "name": "README.md",
+          "text": "## Setup instructions\n\n## Usage"
+        }
+      ],
+      "expected": {
+        "result": "fail",
+        "missing": [
+          "Setup"
+        ]
+      }
+    },
+    {
+      "id": "readme-closing-hashes-tab-and-trailing-spaces",
+      "title": "A closing # sequence after a space is removed, trailing spaces and tabs are removed, and a tab may follow the opening #",
+      "status": "derived",
+      "covers": [
+        "B1.3-readme-headings"
+      ],
+      "check": "readme_sections:Setup,Usage,Install",
+      "files": [
+        {
+          "name": "README.md",
+          "text": "## Setup ##\n\n#\tUsage\t\n\n### Install \t  "
+        }
+      ],
+      "expected": {
+        "result": "pass"
+      }
+    },
+    {
+      "id": "readme-tilde-and-unclosed-fences",
+      "title": "A tilde fence and a fence that is never closed both hide the # lines inside them",
+      "status": "derived",
+      "covers": [
+        "B1.3-readme-headings"
+      ],
+      "check": "readme_sections:Overview,Install,Deploy",
+      "files": [
+        {
+          "name": "README.md",
+          "text": "# Overview\n\n~~~\n# Install\n~~~\n\n```\n# Deploy"
+        }
+      ],
+      "expected": {
+        "result": "fail",
+        "missing": [
+          "Install",
+          "Deploy"
+        ]
+      }
+    },
+    {
+      "id": "readme-closing-hashes-must-follow-a-space",
+      "title": "A closing # sequence is removed only after a space or tab: ## Setup ## is Setup, but ## C# is C#, not C",
+      "status": "derived",
+      "covers": [
+        "B1.3-readme-headings"
+      ],
+      "check": "readme_sections:C#,Setup,C",
+      "files": [
+        {
+          "name": "README.md",
+          "text": "## C#\n\n## Setup ##"
+        }
+      ],
+      "expected": {
+        "result": "fail",
+        "missing": [
+          "C"
+        ]
+      }
+    },
+    {
+      "id": "readme-heading-indentation-up-to-three-spaces",
+      "title": "A heading may have up to three leading spaces; four or more spaces are not a heading",
+      "status": "derived",
+      "covers": [
+        "B1.3-readme-headings"
+      ],
+      "check": "readme_sections:Setup,Usage",
+      "files": [
+        {
+          "name": "README.md",
+          "text": "   # Setup\n\n    # Usage"
+        }
+      ],
+      "expected": {
+        "result": "fail",
+        "missing": [
+          "Usage"
+        ]
+      }
+    },
+    {
+      "id": "readme-fence-indentation-up-to-three-spaces",
+      "title": "A fence line may have up to three leading spaces and hides the # lines inside it; four or more spaces are not a fence",
+      "status": "derived",
+      "covers": [
+        "B1.3-readme-headings"
+      ],
+      "check": "readme_sections:Hidden,Shown",
+      "files": [
+        {
+          "name": "README.md",
+          "text": "   ~~~\n# Hidden\n~~~\n    ```\n# Shown"
+        }
+      ],
+      "expected": {
+        "result": "fail",
+        "missing": [
+          "Hidden"
+        ]
+      }
+    },
+    {
+      "id": "readme-closing-fence-same-character-and-length",
+      "title": "A closing fence needs the same character as the opening fence and at least its length: a shorter fence or another character does not close it",
+      "status": "derived",
+      "covers": [
+        "B1.3-readme-headings"
+      ],
+      "check": "readme_sections:Shown,Hidden,AlsoHidden,StillHidden",
+      "files": [
+        {
+          "name": "README.md",
+          "text": "~~~~\n# Hidden\n```\n# AlsoHidden\n~~~\n# StillHidden\n~~~~\n# Shown"
+        }
+      ],
+      "expected": {
+        "result": "fail",
+        "missing": [
+          "Hidden",
+          "AlsoHidden",
+          "StillHidden"
+        ]
+      }
+    },
+    {
+      "id": "readme-fence-needs-three-characters",
+      "title": "A line that starts with one backtick is not a fence, so it hides no heading: a fence needs at least three backticks or at least three tildes",
+      "status": "derived",
+      "covers": [
+        "B1.3-readme-headings"
+      ],
+      "check": "readme_sections:Setup",
+      "files": [
+        {
+          "name": "README.md",
+          "text": "`npm install` first\n\n# Setup"
+        }
+      ],
+      "expected": {
+        "result": "pass"
+      }
+    },
+    {
+      "id": "readme-fence-needs-three-tildes",
+      "title": "A line that starts with two tildes (strikethrough) is not a fence, so it hides no heading: a fence needs at least three tildes",
+      "status": "derived",
+      "covers": [
+        "B1.3-readme-headings"
+      ],
+      "check": "readme_sections:Setup",
+      "files": [
+        {
+          "name": "README.md",
+          "text": "~~old~~ note\n\n# Setup"
+        }
+      ],
+      "expected": {
+        "result": "pass"
+      }
+    }
+  ]
+}

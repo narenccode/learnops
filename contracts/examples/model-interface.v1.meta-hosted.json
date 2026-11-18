@@ -1,0 +1,9 @@
+{
+  "provider": "hosted",
+  "model": "example-hosted-model",
+  "input_tokens": 812,
+  "output_tokens": 171,
+  "latency_ms": 1480,
+  "cost_estimate": 0.0042,
+  "prompt_version": "grade_draft/v1"
+}
