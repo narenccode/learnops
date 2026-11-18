@@ -1,0 +1,374 @@
+{
+  "$comment": "Shared test vectors for the B1.3 `Check` cell of a marking table (PRD B1.3 check formats, C3.5). Each case gives one `Check` cell and the result a parser must give. Pure data: no code. Results: 'checks' (the checks of the cell in order, each with its name and its argument, or null when the check has no ':'), 'none' (a blank cell or a cell with only the em dash: no machine check) and 'invalid' (the cell fails validation, CK-09; 'check' is the name of the check that fails, and is the empty string when the failing piece is an empty check). Covered, because B1.3 states it: ';' between checks, spaces around each check and around its argument ignored, the name is the text before the first ':', a blank cell and a cell with only the em dash mean no machine check, check names are lowercase and case-sensitive, `word_count:<n>` is one or more ASCII digits with a value of at least 1, `http_ok:<field>` has only `demo_url` in v1, an empty section list, an empty section name, an empty field and a trailing ';' fail, and an unknown name or a known check whose argument breaks a defined format fails validation. Behaviour that B1.3 does not state is not covered by any case (see the open decisions in docs/traceability.md): among others, a cell that mixes the em dash with other checks, and which check is reported when one cell has more than one failing piece (no case has more than one). 'status' is 'derived': the rules are the guide's (PR #87), but each concrete cell and result was derived by the contract owner and still needs M2's confirmation; the names of the result kinds are this file's own labels. 'extends-stated-rule' marks the two cases for a leading and a doubled ';': B1.3 states the trailing one, and these apply the same reason (an empty check) to the other positions, so they need the guide's or M2's confirmation before they bind a parser. 'covers' lists the B1.3 rules the case shows.",
+  "version": 1,
+  "cases": [
+    {
+      "id": "single-check-with-argument",
+      "title": "One check: the name is the text before the first colon, the rest is the argument",
+      "status": "derived",
+      "covers": [
+        "B1.3-name-and-argument"
+      ],
+      "cell": "http_ok:demo_url",
+      "expected": {
+        "result": "checks",
+        "checks": [
+          {
+            "name": "http_ok",
+            "argument": "demo_url"
+          }
+        ]
+      }
+    },
+    {
+      "id": "check-without-argument",
+      "title": "A check with no colon is a name with no argument",
+      "status": "derived",
+      "covers": [
+        "B1.3-name-and-argument"
+      ],
+      "cell": "repo_clone",
+      "expected": {
+        "result": "checks",
+        "checks": [
+          {
+            "name": "repo_clone",
+            "argument": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "spaces-around-the-argument",
+      "title": "Spaces around the argument are ignored",
+      "status": "derived",
+      "covers": [
+        "B1.3-spaces-ignored",
+        "B1.3-word_count-argument"
+      ],
+      "cell": "word_count:  200 ",
+      "expected": {
+        "result": "checks",
+        "checks": [
+          {
+            "name": "word_count",
+            "argument": "200"
+          }
+        ]
+      }
+    },
+    {
+      "id": "readme-sections-with-spaces",
+      "title": "The argument is the text after the first colon with the spaces at both ends removed",
+      "status": "derived",
+      "covers": [
+        "B1.3-spaces-ignored",
+        "B1.3-name-and-argument"
+      ],
+      "cell": "readme_sections: Setup , Usage ",
+      "expected": {
+        "result": "checks",
+        "checks": [
+          {
+            "name": "readme_sections",
+            "argument": "Setup , Usage"
+          }
+        ]
+      }
+    },
+    {
+      "id": "several-checks-with-spaces",
+      "title": "Checks are separated by a semicolon and spaces around each check are ignored",
+      "status": "derived",
+      "covers": [
+        "B1.3-separator",
+        "B1.3-spaces-ignored",
+        "B1.3-name-and-argument"
+      ],
+      "cell": "http_ok:demo_url;  word_count:200 ;repo_clone",
+      "expected": {
+        "result": "checks",
+        "checks": [
+          {
+            "name": "http_ok",
+            "argument": "demo_url"
+          },
+          {
+            "name": "word_count",
+            "argument": "200"
+          },
+          {
+            "name": "repo_clone",
+            "argument": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "em-dash-only",
+      "title": "A cell with only the em dash means no machine check",
+      "status": "derived",
+      "covers": [
+        "B1.3-no-machine-check"
+      ],
+      "cell": "—",
+      "expected": {
+        "result": "none"
+      }
+    },
+    {
+      "id": "word-count-zero",
+      "title": "word_count needs a value of at least 1",
+      "status": "derived",
+      "covers": [
+        "B1.3-word_count-argument",
+        "B1.3-bad-argument-fails"
+      ],
+      "cell": "word_count:0",
+      "expected": {
+        "result": "invalid",
+        "rule": "CK-09",
+        "check": "word_count"
+      }
+    },
+    {
+      "id": "word-count-plus-sign",
+      "title": "word_count takes no sign",
+      "status": "derived",
+      "covers": [
+        "B1.3-word_count-argument",
+        "B1.3-bad-argument-fails"
+      ],
+      "cell": "word_count:+5",
+      "expected": {
+        "result": "invalid",
+        "rule": "CK-09",
+        "check": "word_count"
+      }
+    },
+    {
+      "id": "word-count-underscore",
+      "title": "word_count takes no underscore",
+      "status": "derived",
+      "covers": [
+        "B1.3-word_count-argument",
+        "B1.3-bad-argument-fails"
+      ],
+      "cell": "word_count:1_0",
+      "expected": {
+        "result": "invalid",
+        "rule": "CK-09",
+        "check": "word_count"
+      }
+    },
+    {
+      "id": "word-count-not-a-number",
+      "title": "word_count takes digits only",
+      "status": "derived",
+      "covers": [
+        "B1.3-word_count-argument",
+        "B1.3-bad-argument-fails"
+      ],
+      "cell": "word_count:abc",
+      "expected": {
+        "result": "invalid",
+        "rule": "CK-09",
+        "check": "word_count"
+      }
+    },
+    {
+      "id": "word-count-empty-argument",
+      "title": "word_count needs one or more digits, so an empty argument fails",
+      "status": "derived",
+      "covers": [
+        "B1.3-word_count-argument",
+        "B1.3-bad-argument-fails"
+      ],
+      "cell": "word_count:",
+      "expected": {
+        "result": "invalid",
+        "rule": "CK-09",
+        "check": "word_count"
+      }
+    },
+    {
+      "id": "word-count-space-inside",
+      "title": "word_count takes no space inside the argument (only the spaces at both ends are ignored)",
+      "status": "derived",
+      "covers": [
+        "B1.3-word_count-argument",
+        "B1.3-spaces-ignored",
+        "B1.3-bad-argument-fails"
+      ],
+      "cell": "word_count:5 0",
+      "expected": {
+        "result": "invalid",
+        "rule": "CK-09",
+        "check": "word_count"
+      }
+    },
+    {
+      "id": "word-count-non-ascii-digits",
+      "title": "word_count takes ASCII digits only: Arabic-Indic digits fail",
+      "status": "derived",
+      "covers": [
+        "B1.3-word_count-argument",
+        "B1.3-bad-argument-fails"
+      ],
+      "cell": "word_count:١٢",
+      "expected": {
+        "result": "invalid",
+        "rule": "CK-09",
+        "check": "word_count"
+      }
+    },
+    {
+      "id": "http-ok-other-field",
+      "title": "demo_url is the only http_ok field in v1",
+      "status": "derived",
+      "covers": [
+        "B1.3-http_ok-field",
+        "B1.3-bad-argument-fails"
+      ],
+      "cell": "http_ok:repo_url",
+      "expected": {
+        "result": "invalid",
+        "rule": "CK-09",
+        "check": "http_ok"
+      }
+    },
+    {
+      "id": "unknown-check-name",
+      "title": "An unknown check name fails validation",
+      "status": "derived",
+      "covers": [
+        "B1.3-unknown-name"
+      ],
+      "cell": "repo_clon",
+      "expected": {
+        "result": "invalid",
+        "rule": "CK-09",
+        "check": "repo_clon"
+      }
+    },
+    {
+      "id": "blank-cell",
+      "title": "A blank Check cell is valid and means no machine check, like the em dash alone, and unlike an empty check",
+      "status": "derived",
+      "covers": [
+        "B1.3-check-optional",
+        "B1.3-no-machine-check"
+      ],
+      "cell": "",
+      "expected": {
+        "result": "none"
+      }
+    },
+    {
+      "id": "trailing-semicolon",
+      "title": "A trailing semicolon leaves an empty check, which fails",
+      "status": "derived",
+      "covers": [
+        "B1.3-separator",
+        "B1.3-empty-pieces-fail"
+      ],
+      "cell": "http_ok:demo_url;",
+      "expected": {
+        "result": "invalid",
+        "rule": "CK-09",
+        "check": ""
+      }
+    },
+    {
+      "id": "leading-semicolon",
+      "title": "A leading semicolon leaves an empty check first: the same reason as a trailing one, in another position",
+      "status": "extends-stated-rule",
+      "covers": [
+        "B1.3-separator",
+        "B1.3-empty-pieces-fail"
+      ],
+      "cell": ";word_count:200",
+      "expected": {
+        "result": "invalid",
+        "rule": "CK-09",
+        "check": ""
+      }
+    },
+    {
+      "id": "doubled-semicolon",
+      "title": "A doubled semicolon leaves an empty check between two checks: the same reason as a trailing one, in another position",
+      "status": "extends-stated-rule",
+      "covers": [
+        "B1.3-separator",
+        "B1.3-empty-pieces-fail"
+      ],
+      "cell": "word_count:200;;repo_clone",
+      "expected": {
+        "result": "invalid",
+        "rule": "CK-09",
+        "check": ""
+      }
+    },
+    {
+      "id": "empty-readme-sections-list",
+      "title": "readme_sections needs at least one section name, so an empty list fails",
+      "status": "derived",
+      "covers": [
+        "B1.3-empty-pieces-fail",
+        "B1.3-bad-argument-fails"
+      ],
+      "cell": "readme_sections:",
+      "expected": {
+        "result": "invalid",
+        "rule": "CK-09",
+        "check": "readme_sections"
+      }
+    },
+    {
+      "id": "empty-readme-sections-name",
+      "title": "An empty section name in the list fails",
+      "status": "derived",
+      "covers": [
+        "B1.3-empty-pieces-fail",
+        "B1.3-bad-argument-fails"
+      ],
+      "cell": "readme_sections:a,,b",
+      "expected": {
+        "result": "invalid",
+        "rule": "CK-09",
+        "check": "readme_sections"
+      }
+    },
+    {
+      "id": "empty-http-ok-field",
+      "title": "http_ok needs a field, so an empty one fails",
+      "status": "derived",
+      "covers": [
+        "B1.3-empty-pieces-fail",
+        "B1.3-http_ok-field",
+        "B1.3-bad-argument-fails"
+      ],
+      "cell": "http_ok:",
+      "expected": {
+        "result": "invalid",
+        "rule": "CK-09",
+        "check": "http_ok"
+      }
+    },
+    {
+      "id": "uppercase-check-name",
+      "title": "Check names are lowercase and case-sensitive, so Word_Count is an unknown name",
+      "status": "derived",
+      "covers": [
+        "B1.3-name-case-sensitive",
+        "B1.3-unknown-name"
+      ],
+      "cell": "Word_Count:5",
+      "expected": {
+        "result": "invalid",
+        "rule": "CK-09",
+        "check": "Word_Count"
+      }
+    }
+  ]
+}

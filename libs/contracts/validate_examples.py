@@ -87,6 +87,15 @@ def discover(contracts_dir: Path) -> list[ContractCase]:
     return cases
 
 
+def misnamed_schemas(contracts_dir: Path) -> list[Path]:
+    """The `*.schema.json` files that do not follow `<name>.v<N>.schema.json`."""
+    return [
+        path
+        for path in sorted(contracts_dir.glob(SCHEMA_GLOB))
+        if not SCHEMA_NAME.match(path.name)
+    ]
+
+
 def validate_all(contracts_dir: Path) -> ExampleReport:
     """Check every schema and example in `contracts_dir`. Never raises for bad content."""
     root = contracts_dir.parent
@@ -104,6 +113,16 @@ def validate_all(contracts_dir: Path) -> ExampleReport:
                 "no_schemas",
                 messages.EX_NO_SCHEMAS.format(folder=rel(contracts_dir)),
                 messages.EX_NO_SCHEMAS_HINT,
+            )
+        )
+
+    for path in misnamed_schemas(contracts_dir):
+        problems.append(
+            Problem(
+                "misnamed_schema",
+                messages.EX_MISNAMED_SCHEMA.format(name=path.name),
+                messages.EX_MISNAMED_SCHEMA_HINT,
+                schema=rel(path),
             )
         )
 

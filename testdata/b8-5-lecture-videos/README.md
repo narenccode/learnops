@@ -7,9 +7,13 @@ pipeline (PRD G-6, App-C 7). The method is the guide's
 decision in `docs/decisions/0004-b8-5-lecture-videos.md`. The inventory, one row per lecture, is
 the B8.5 table in `testdata/README.md`.
 
-**Status: PENDING.** No lecture has been recorded, no consent has been given and no transcript
-has been typed. Every file under `lectures/` is a placeholder. Do not use this set for any
-measurement.
+**Status: PENDING.** Five local recording files were identified in earlier work (PR #99
+recorded their SHA-256 values in the inventory). The files are not in Git and are not
+re-verified here. None is accepted as B8.5 evidence yet: whether they are official B8.5
+lectures is not confirmed, no speaker consent line is written in decision 0004, no duration is
+recorded in the inventory, and no reference transcript has been typed or reviewed. Every file
+under `lectures/` is a placeholder. Do not use this set for any measurement. The temporary
+exceptions in decision 0004 (four lectures, no 1800 s total) do not make it complete.
 
 ## Folder layout
 

@@ -104,7 +104,7 @@ Lesson-folder files [§B6.2]: `720p.mp4` (main track, H.264/AAC, 1280×720; requ
 - **Required manifest fields:** B6.3 gives an example, not a list of required fields.
 - **`source`:** the PRD names only `kind: "upload"` with `uploaded_by` as an LTI `sub`; the value and `uploaded_by` for BigBlueButton intake are not named.
 - **Main track:** in the baseline every lesson has a `main` track, because `720p.mp4` is required [§B6.2]. Whether a lesson with only `camera` and `screen` tracks (F-1 upload, FR-X-16; F-2 import, FR-X-17) is a valid v1 manifest is not stated, and C6.6 says F-1/F-2 make no change to B6.3.
-- **Scope of B6 schemas:** B.0 rule 1 needs a JSON Schema per contract. B6.3 needs one; whether the file shapes in B6.2 (`chapters.json`, `slides.json`, `cues.json`, `transcript.en.json`) get their own schemas, and how B6.1 and B6.4 (a Python interface in `libs/media_paths`) are checked.
+- **Scope of B6 schemas:** B.0 rule 1 needs a JSON Schema per contract. B6.3 needs one; the file shapes in B6.2 `chapters.json`, `slides.json` and `cues.json` have their own schemas (`contracts/chapters.v1.schema.json`, `slides.v1.schema.json`, `cues.v1.schema.json`, decided by the guide and drafted in the B6.2 pull request; the `transcript.en.json` shape is B5.4's); how B6.1 and B6.4 (a Python interface in `libs/media_paths`) are checked.
 
 A draft B6.3 schema exists on the unmerged branch `feat/b6-lesson-manifest-contract`; its choices on these points are proposals for the contract reviewers, not agreed decisions.
 
