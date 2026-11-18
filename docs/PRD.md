@@ -622,6 +622,8 @@ information is lost.
 
 - **Draft rule:** grades written by LearnOps stay invisible to learners until the mentor releases them in Moodle (marking workflow). Only mentor-approved drafts are written.
 
+**Grade-write safety and Moodle-version limitation (B4 R3).** Before sending a grade write, LearnOps checks the current grade workflow state and refuses the write without sending anything if the grade is already locked (`readyforrelease` or `released`). The write uses `readyforrelease`, never `released`, and LearnOps reads the stored grade and workflow state back before reporting the result. If the post-write state is `released`, the result is `NOT_VERIFIED`; it must not be reported as a verified draft write. A normal write that remains `readyforrelease` may be verified when the read-back matches. On Moodle 5.3, if a grade becomes locked after the pre-write check, Moodle retains the old grade and the read-back detects the mismatch, so the result is `NOT_VERIFIED`. **Moodle 4.5 is best-effort:** there is no atomic check-and-write operation, and if another grader changes the state to `readyforrelease` between LearnOps' pre-write check and its write, Moodle may allow LearnOps to overwrite that grade. The resulting `readyforrelease` state cannot be distinguished from a normal successful write by the available read-back, so this race may be reported as verified. This limitation is accepted for v1, is not claimed to be prevented or detected, and must be stated in release notes. LearnOps does not add a second pre-write read; grades are never released by the tool.
+
 ## B5. Model and speech interface (v1)
 
 ### B5.1 Language-model call
