@@ -32,7 +32,7 @@ from moodle_ws import (
     grade_in_range,
     parse_grade,
 )
-from moodle_ws.messages import WRITE_NEEDS_HELPER
+from moodle_ws.messages import PINNED_ZERO_REQUIRED, WRITE_NEEDS_HELPER
 
 from .conftest import VALID_WRITE
 from .fake_transport import FakeTransport
@@ -121,6 +121,55 @@ def test_r2_call_refuses_a_write_with_no_attempt_at_all(settings: SiteSettings) 
     with pytest.raises(GradeWriteNotAllowed):
         MoodleClient(settings, transport).call(SAVE, params)
     assert transport.calls == []
+
+
+# --- R15: applytoall=0 and addattempt=0, always (guide, PR #64, 2026-11-16) -------------------
+
+_NOT_ZERO = [1, -1, 2, True, False, "0", 0.0, None, "missing"]
+
+
+def _r15_refused(
+    settings: SiteSettings, monkeypatch: pytest.MonkeyPatch, name: str, value: object
+) -> None:
+    """Refused with the R15 reason on both paths, and nothing reaches the transport."""
+    params = {k: v for k, v in VALID_WRITE.items() if k != name}
+    if value != "missing":
+        params[name] = value
+    transport = FakeTransport()
+    client = MoodleClient(settings, transport)
+    with pytest.raises(GradeWriteNotAllowed) as direct:
+        client.call(SAVE, params)
+    assert str(direct.value) == PINNED_ZERO_REQUIRED
+    # The guarded sender itself, as write_draft_grade would call it after its own checks.
+    reasons: list[str] = []
+
+    def send_unchanged(
+        client: Any, checked: Mapping[str, Any], max_grade: object, send: Any
+    ) -> Any:
+        try:
+            send(params)
+        except GradeWriteNotAllowed as error:
+            reasons.append(str(error))
+        return None
+
+    monkeypatch.setattr(moodle_ws.grade_write, "_checked_write", send_unchanged)
+    client.write_draft_grade(VALID_WRITE, 100)
+    assert reasons == [PINNED_ZERO_REQUIRED]
+    assert transport.calls == []
+
+
+@pytest.mark.parametrize("value", _NOT_ZERO)
+def test_r15_applytoall_other_than_zero_is_refused_before_sending(
+    settings: SiteSettings, monkeypatch: pytest.MonkeyPatch, value: object
+) -> None:
+    _r15_refused(settings, monkeypatch, "applytoall", value)
+
+
+@pytest.mark.parametrize("value", _NOT_ZERO)
+def test_r15_addattempt_other_than_zero_is_refused_before_sending(
+    settings: SiteSettings, monkeypatch: pytest.MonkeyPatch, value: object
+) -> None:
+    _r15_refused(settings, monkeypatch, "addattempt", value)
 
 
 # --- R9: grades as exact numbers; plain non-negative numbers only -----------------------------

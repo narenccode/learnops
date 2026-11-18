@@ -45,6 +45,9 @@ _ALWAYS_REFUSED: Final = frozenset({SET_USER_FLAGS})
 WORKFLOW_PARAMETER: Final = "workflowstate"  # named by PRD App-C item 1
 ATTEMPT_PARAMETER: Final = "attemptnumber"  # PRD B4 parameter table
 GRADE_PARAMETER: Final = "grade"  # PRD B4 parameter table
+# B4 R15 (guide, PR #64, 2026-11-16): always sent, always 0. Either at 1 changes a learner's grade
+# (every group member, or a new attempt), so no other value is sent.
+PINNED_ZERO_PARAMETERS: Final = ("applytoall", "addattempt")
 READY_FOR_RELEASE: Final = "readyforrelease"
 RELEASED: Final = "released"
 MAX_DEPTH: Final = 32  # a local safety limit on nesting, not a Moodle rule
@@ -138,13 +141,19 @@ def is_explicit_attempt(value: object) -> bool:
 
 
 def _check_grade_write(function: str, params: dict[str, Any]) -> None:
-    """B4 R2 and R9, the part the client can check alone: an explicit attempt and a plain,
-    non-negative number as the grade. The maximum needs the assignment, so it is checked by the
-    guarded write, not here."""
+    """B4 R2, R9 and R15, the part the client can check alone: an explicit attempt, applytoall=0
+    and addattempt=0, and a plain, non-negative number as the grade. The maximum needs the
+    assignment, so it is checked by the guarded write, not here."""
     if function != SAVE_GRADE:
         return
     if not is_explicit_attempt(params.get(ATTEMPT_PARAMETER)):
         raise GradeWriteNotAllowed(messages.ATTEMPT_REQUIRED)
+    for name in PINNED_ZERO_PARAMETERS:
+        value = params.get(name)
+        if (
+            type(value) is not int or value != 0
+        ):  # missing, bool, text or any other number
+            raise GradeWriteNotAllowed(messages.PINNED_ZERO_REQUIRED)
     grade = parse_grade(params.get(GRADE_PARAMETER))
     if grade is None or grade < 0:
         raise GradeWriteNotAllowed(messages.GRADE_NOT_A_NUMBER)

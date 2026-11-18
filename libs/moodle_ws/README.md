@@ -33,6 +33,9 @@ their own. `call()` returns the transport's answer unchanged.
 - **A grade write without an explicit attempt or a plain grade** (B4 R2, R9). `attemptnumber` must be
   a whole number from 0, never `-1`; `grade` must be a plain non-negative number (`84.5` or
   `"84.5"`; not `True`, `"1e2"` or `"NaN"`). Otherwise `GradeWriteNotAllowed`.
+- **A grade write with `applytoall` or `addattempt` other than `0`** (B4 R15, guide on PR #64,
+  2026-11-16). Both are always sent as the whole number `0`; any other value, `True`/`False`, text or
+  a missing value raises `GradeWriteNotAllowed`.
 - **Parameters that are not plain data**, on every function. `params` must be a mapping of text,
   numbers, booleans, `None`, lists, tuples, sets and dicts, with text or integer keys, at most 32 levels
   deep. `bytes`, `bytearray`, generators, subclasses and other objects raise `InvalidParameters`. The
