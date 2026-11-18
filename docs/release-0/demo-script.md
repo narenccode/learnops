@@ -1,5 +1,7 @@
 # Release 0 demonstration script (T19, revision 2)
 
+> **Update 2026-11-18 (the facts below are stale where they conflict):** PR #96 was **merged** on 2026-11-16 (approved by Harshithamanjunatha, Shraddha and Akshita21-09) and is the carrier of decisions `0005`/`0006` and `verify_bbb.py`. PR #97 was **closed as superseded by #96**: its ADR, README and run record are identical to `main`, its older `verify_bbb.py` is replaced by #96's, and its traceability section is already on `main`. The `0005` numbering collision therefore no longer exists. App-C 4 is **still NOT VERIFIED**: no lab observation exists, so nothing here is a PASS.
+
 **Length:** about 12 minutes. **Needs:** Python 3.12 and a POSIX shell (Git Bash on Windows). No
 lab, no Moodle, no BigBlueButton, no AI or speech service, and no network after the install.
 **Checked against:** `origin/main` at `3abbc02`. Every "Actual" result below was produced by running

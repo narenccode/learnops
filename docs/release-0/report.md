@@ -1,5 +1,9 @@
 # Release 0 report chapter: Foundation (T19, revision 2)
 
+> **Update 2026-11-18 (the facts below are stale where they conflict):** PR #96 was **merged** on 2026-11-16 (approved by Harshithamanjunatha, Shraddha and Akshita21-09) and is the carrier of decisions `0005`/`0006` and `verify_bbb.py`. PR #97 was **closed as superseded by #96**: its ADR, README and run record are identical to `main`, its older `verify_bbb.py` is replaced by #96's, and its traceability section is already on `main`. The `0005` numbering collision therefore no longer exists. App-C 4 is **still NOT VERIFIED**: no lab observation exists, so nothing here is a PASS.
+> **Update 2026-11-18:** PR #99 recorded SHA-256 values and `ffprobe` durations for five recordings in the B8.5 inventory; PR #125 recorded the guide-approved temporary exceptions in decision 0004 (four lectures, no 1800 s total, for interim demonstration and testing only); PR #126 corrected the status wording. B8.5 stays **PENDING**: file names, speakers, consent lines, transcripts and review are not recorded, so no licence or consent evidence exists yet.
+> Also on 2026-11-18: PR #126 merged; draft PR #98 (speech ADR) received the guide questions; PR #129 (lesson processor demo) is open as a Draft awaiting the guide's decision.
+
 **Status:** Draft for review. **Audited against:** `origin/main` at `3abbc02` (2026-11-16), which
 did not move between revision 1 and this revision. GitHub state (PRs, issues, runs) was queried on
 the same day and changes quickly; re-check before relying on it.
