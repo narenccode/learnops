@@ -1,0 +1,1884 @@
+{
+  "segments": [
+    {
+      "start": 0.0,
+      "end": 14.0,
+      "text": "Good morning everyone. Today we are going to talk about caches, and why a small fast memory can make a slow system feel quick.",
+      "words": [
+        {
+          "start": 0.0,
+          "end": 0.58,
+          "word": "Good"
+        },
+        {
+          "start": 0.58,
+          "end": 1.17,
+          "word": "morning"
+        },
+        {
+          "start": 1.17,
+          "end": 1.75,
+          "word": "everyone."
+        },
+        {
+          "start": 1.75,
+          "end": 2.33,
+          "word": "Today"
+        },
+        {
+          "start": 2.33,
+          "end": 2.92,
+          "word": "we"
+        },
+        {
+          "start": 2.92,
+          "end": 3.5,
+          "word": "are"
+        },
+        {
+          "start": 3.5,
+          "end": 4.08,
+          "word": "going"
+        },
+        {
+          "start": 4.08,
+          "end": 4.67,
+          "word": "to"
+        },
+        {
+          "start": 4.67,
+          "end": 5.25,
+          "word": "talk"
+        },
+        {
+          "start": 5.25,
+          "end": 5.83,
+          "word": "about"
+        },
+        {
+          "start": 5.83,
+          "end": 6.42,
+          "word": "caches,"
+        },
+        {
+          "start": 6.42,
+          "end": 7.0,
+          "word": "and"
+        },
+        {
+          "start": 7.0,
+          "end": 7.58,
+          "word": "why"
+        },
+        {
+          "start": 7.58,
+          "end": 8.17,
+          "word": "a"
+        },
+        {
+          "start": 8.17,
+          "end": 8.75,
+          "word": "small"
+        },
+        {
+          "start": 8.75,
+          "end": 9.33,
+          "word": "fast"
+        },
+        {
+          "start": 9.33,
+          "end": 9.92,
+          "word": "memory"
+        },
+        {
+          "start": 9.92,
+          "end": 10.5,
+          "word": "can"
+        },
+        {
+          "start": 10.5,
+          "end": 11.08,
+          "word": "make"
+        },
+        {
+          "start": 11.08,
+          "end": 11.67,
+          "word": "a"
+        },
+        {
+          "start": 11.67,
+          "end": 12.25,
+          "word": "slow"
+        },
+        {
+          "start": 12.25,
+          "end": 12.83,
+          "word": "system"
+        },
+        {
+          "start": 12.83,
+          "end": 13.42,
+          "word": "feel"
+        },
+        {
+          "start": 13.42,
+          "end": 14.0,
+          "word": "quick."
+        }
+      ]
+    },
+    {
+      "start": 14.0,
+      "end": 30.0,
+      "text": "Let us start with a simple picture. A program asks for data. If the data is far away, on a disk or across a network, every request has to wait.",
+      "words": [
+        {
+          "start": 14.0,
+          "end": 14.53,
+          "word": "Let"
+        },
+        {
+          "start": 14.53,
+          "end": 15.07,
+          "word": "us"
+        },
+        {
+          "start": 15.07,
+          "end": 15.6,
+          "word": "start"
+        },
+        {
+          "start": 15.6,
+          "end": 16.13,
+          "word": "with"
+        },
+        {
+          "start": 16.13,
+          "end": 16.67,
+          "word": "a"
+        },
+        {
+          "start": 16.67,
+          "end": 17.2,
+          "word": "simple"
+        },
+        {
+          "start": 17.2,
+          "end": 17.73,
+          "word": "picture."
+        },
+        {
+          "start": 17.73,
+          "end": 18.27,
+          "word": "A"
+        },
+        {
+          "start": 18.27,
+          "end": 18.8,
+          "word": "program"
+        },
+        {
+          "start": 18.8,
+          "end": 19.33,
+          "word": "asks"
+        },
+        {
+          "start": 19.33,
+          "end": 19.87,
+          "word": "for"
+        },
+        {
+          "start": 19.87,
+          "end": 20.4,
+          "word": "data."
+        },
+        {
+          "start": 20.4,
+          "end": 20.93,
+          "word": "If"
+        },
+        {
+          "start": 20.93,
+          "end": 21.47,
+          "word": "the"
+        },
+        {
+          "start": 21.47,
+          "end": 22.0,
+          "word": "data"
+        },
+        {
+          "start": 22.0,
+          "end": 22.53,
+          "word": "is"
+        },
+        {
+          "start": 22.53,
+          "end": 23.07,
+          "word": "far"
+        },
+        {
+          "start": 23.07,
+          "end": 23.6,
+          "word": "away,"
+        },
+        {
+          "start": 23.6,
+          "end": 24.13,
+          "word": "on"
+        },
+        {
+          "start": 24.13,
+          "end": 24.67,
+          "word": "a"
+        },
+        {
+          "start": 24.67,
+          "end": 25.2,
+          "word": "disk"
+        },
+        {
+          "start": 25.2,
+          "end": 25.73,
+          "word": "or"
+        },
+        {
+          "start": 25.73,
+          "end": 26.27,
+          "word": "across"
+        },
+        {
+          "start": 26.27,
+          "end": 26.8,
+          "word": "a"
+        },
+        {
+          "start": 26.8,
+          "end": 27.33,
+          "word": "network,"
+        },
+        {
+          "start": 27.33,
+          "end": 27.87,
+          "word": "every"
+        },
+        {
+          "start": 27.87,
+          "end": 28.4,
+          "word": "request"
+        },
+        {
+          "start": 28.4,
+          "end": 28.93,
+          "word": "has"
+        },
+        {
+          "start": 28.93,
+          "end": 29.47,
+          "word": "to"
+        },
+        {
+          "start": 29.47,
+          "end": 30.0,
+          "word": "wait."
+        }
+      ]
+    },
+    {
+      "start": 30.0,
+      "end": 47.0,
+      "text": "A cache keeps a copy of recently used data close to the program. When the same data is asked for again, the copy is returned at once.",
+      "words": [
+        {
+          "start": 30.0,
+          "end": 30.63,
+          "word": "A"
+        },
+        {
+          "start": 30.63,
+          "end": 31.26,
+          "word": "cache"
+        },
+        {
+          "start": 31.26,
+          "end": 31.89,
+          "word": "keeps"
+        },
+        {
+          "start": 31.89,
+          "end": 32.52,
+          "word": "a"
+        },
+        {
+          "start": 32.52,
+          "end": 33.15,
+          "word": "copy"
+        },
+        {
+          "start": 33.15,
+          "end": 33.78,
+          "word": "of"
+        },
+        {
+          "start": 33.78,
+          "end": 34.41,
+          "word": "recently"
+        },
+        {
+          "start": 34.41,
+          "end": 35.04,
+          "word": "used"
+        },
+        {
+          "start": 35.04,
+          "end": 35.67,
+          "word": "data"
+        },
+        {
+          "start": 35.67,
+          "end": 36.3,
+          "word": "close"
+        },
+        {
+          "start": 36.3,
+          "end": 36.93,
+          "word": "to"
+        },
+        {
+          "start": 36.93,
+          "end": 37.56,
+          "word": "the"
+        },
+        {
+          "start": 37.56,
+          "end": 38.19,
+          "word": "program."
+        },
+        {
+          "start": 38.19,
+          "end": 38.81,
+          "word": "When"
+        },
+        {
+          "start": 38.81,
+          "end": 39.44,
+          "word": "the"
+        },
+        {
+          "start": 39.44,
+          "end": 40.07,
+          "word": "same"
+        },
+        {
+          "start": 40.07,
+          "end": 40.7,
+          "word": "data"
+        },
+        {
+          "start": 40.7,
+          "end": 41.33,
+          "word": "is"
+        },
+        {
+          "start": 41.33,
+          "end": 41.96,
+          "word": "asked"
+        },
+        {
+          "start": 41.96,
+          "end": 42.59,
+          "word": "for"
+        },
+        {
+          "start": 42.59,
+          "end": 43.22,
+          "word": "again,"
+        },
+        {
+          "start": 43.22,
+          "end": 43.85,
+          "word": "the"
+        },
+        {
+          "start": 43.85,
+          "end": 44.48,
+          "word": "copy"
+        },
+        {
+          "start": 44.48,
+          "end": 45.11,
+          "word": "is"
+        },
+        {
+          "start": 45.11,
+          "end": 45.74,
+          "word": "returned"
+        },
+        {
+          "start": 45.74,
+          "end": 46.37,
+          "word": "at"
+        },
+        {
+          "start": 46.37,
+          "end": 47.0,
+          "word": "once."
+        }
+      ]
+    },
+    {
+      "start": 47.0,
+      "end": 52.0,
+      "text": "",
+      "words": []
+    },
+    {
+      "start": 52.0,
+      "end": 70.0,
+      "text": "Now, why does this work at all? It works because programs are not random. They tend to use the same data again soon. We call this temporal locality.",
+      "words": [
+        {
+          "start": 52.0,
+          "end": 52.64,
+          "word": "Now,"
+        },
+        {
+          "start": 52.64,
+          "end": 53.29,
+          "word": "why"
+        },
+        {
+          "start": 53.29,
+          "end": 53.93,
+          "word": "does"
+        },
+        {
+          "start": 53.93,
+          "end": 54.57,
+          "word": "this"
+        },
+        {
+          "start": 54.57,
+          "end": 55.21,
+          "word": "work"
+        },
+        {
+          "start": 55.21,
+          "end": 55.86,
+          "word": "at"
+        },
+        {
+          "start": 55.86,
+          "end": 56.5,
+          "word": "all?"
+        },
+        {
+          "start": 56.5,
+          "end": 57.14,
+          "word": "It"
+        },
+        {
+          "start": 57.14,
+          "end": 57.79,
+          "word": "works"
+        },
+        {
+          "start": 57.79,
+          "end": 58.43,
+          "word": "because"
+        },
+        {
+          "start": 58.43,
+          "end": 59.07,
+          "word": "programs"
+        },
+        {
+          "start": 59.07,
+          "end": 59.71,
+          "word": "are"
+        },
+        {
+          "start": 59.71,
+          "end": 60.36,
+          "word": "not"
+        },
+        {
+          "start": 60.36,
+          "end": 61.0,
+          "word": "random."
+        },
+        {
+          "start": 61.0,
+          "end": 61.64,
+          "word": "They"
+        },
+        {
+          "start": 61.64,
+          "end": 62.29,
+          "word": "tend"
+        },
+        {
+          "start": 62.29,
+          "end": 62.93,
+          "word": "to"
+        },
+        {
+          "start": 62.93,
+          "end": 63.57,
+          "word": "use"
+        },
+        {
+          "start": 63.57,
+          "end": 64.21,
+          "word": "the"
+        },
+        {
+          "start": 64.21,
+          "end": 64.86,
+          "word": "same"
+        },
+        {
+          "start": 64.86,
+          "end": 65.5,
+          "word": "data"
+        },
+        {
+          "start": 65.5,
+          "end": 66.14,
+          "word": "again"
+        },
+        {
+          "start": 66.14,
+          "end": 66.79,
+          "word": "soon."
+        },
+        {
+          "start": 66.79,
+          "end": 67.43,
+          "word": "We"
+        },
+        {
+          "start": 67.43,
+          "end": 68.07,
+          "word": "call"
+        },
+        {
+          "start": 68.07,
+          "end": 68.71,
+          "word": "this"
+        },
+        {
+          "start": 68.71,
+          "end": 69.36,
+          "word": "temporal"
+        },
+        {
+          "start": 69.36,
+          "end": 70.0,
+          "word": "locality."
+        }
+      ]
+    },
+    {
+      "start": 70.0,
+      "end": 88.0,
+      "text": "They also tend to use data that sits next to data they just used. Reading one item of a list usually means reading the next one. That is spatial locality.",
+      "words": [
+        {
+          "start": 70.0,
+          "end": 70.6,
+          "word": "They"
+        },
+        {
+          "start": 70.6,
+          "end": 71.2,
+          "word": "also"
+        },
+        {
+          "start": 71.2,
+          "end": 71.8,
+          "word": "tend"
+        },
+        {
+          "start": 71.8,
+          "end": 72.4,
+          "word": "to"
+        },
+        {
+          "start": 72.4,
+          "end": 73.0,
+          "word": "use"
+        },
+        {
+          "start": 73.0,
+          "end": 73.6,
+          "word": "data"
+        },
+        {
+          "start": 73.6,
+          "end": 74.2,
+          "word": "that"
+        },
+        {
+          "start": 74.2,
+          "end": 74.8,
+          "word": "sits"
+        },
+        {
+          "start": 74.8,
+          "end": 75.4,
+          "word": "next"
+        },
+        {
+          "start": 75.4,
+          "end": 76.0,
+          "word": "to"
+        },
+        {
+          "start": 76.0,
+          "end": 76.6,
+          "word": "data"
+        },
+        {
+          "start": 76.6,
+          "end": 77.2,
+          "word": "they"
+        },
+        {
+          "start": 77.2,
+          "end": 77.8,
+          "word": "just"
+        },
+        {
+          "start": 77.8,
+          "end": 78.4,
+          "word": "used."
+        },
+        {
+          "start": 78.4,
+          "end": 79.0,
+          "word": "Reading"
+        },
+        {
+          "start": 79.0,
+          "end": 79.6,
+          "word": "one"
+        },
+        {
+          "start": 79.6,
+          "end": 80.2,
+          "word": "item"
+        },
+        {
+          "start": 80.2,
+          "end": 80.8,
+          "word": "of"
+        },
+        {
+          "start": 80.8,
+          "end": 81.4,
+          "word": "a"
+        },
+        {
+          "start": 81.4,
+          "end": 82.0,
+          "word": "list"
+        },
+        {
+          "start": 82.0,
+          "end": 82.6,
+          "word": "usually"
+        },
+        {
+          "start": 82.6,
+          "end": 83.2,
+          "word": "means"
+        },
+        {
+          "start": 83.2,
+          "end": 83.8,
+          "word": "reading"
+        },
+        {
+          "start": 83.8,
+          "end": 84.4,
+          "word": "the"
+        },
+        {
+          "start": 84.4,
+          "end": 85.0,
+          "word": "next"
+        },
+        {
+          "start": 85.0,
+          "end": 85.6,
+          "word": "one."
+        },
+        {
+          "start": 85.6,
+          "end": 86.2,
+          "word": "That"
+        },
+        {
+          "start": 86.2,
+          "end": 86.8,
+          "word": "is"
+        },
+        {
+          "start": 86.8,
+          "end": 87.4,
+          "word": "spatial"
+        },
+        {
+          "start": 87.4,
+          "end": 88.0,
+          "word": "locality."
+        }
+      ]
+    },
+    {
+      "start": 88.0,
+      "end": 104.0,
+      "text": "So, first idea of the day: caches work because of locality. If a program had no locality, a cache would only add cost.",
+      "words": [
+        {
+          "start": 88.0,
+          "end": 88.7,
+          "word": "So,"
+        },
+        {
+          "start": 88.7,
+          "end": 89.39,
+          "word": "first"
+        },
+        {
+          "start": 89.39,
+          "end": 90.09,
+          "word": "idea"
+        },
+        {
+          "start": 90.09,
+          "end": 90.78,
+          "word": "of"
+        },
+        {
+          "start": 90.78,
+          "end": 91.48,
+          "word": "the"
+        },
+        {
+          "start": 91.48,
+          "end": 92.17,
+          "word": "day:"
+        },
+        {
+          "start": 92.17,
+          "end": 92.87,
+          "word": "caches"
+        },
+        {
+          "start": 92.87,
+          "end": 93.57,
+          "word": "work"
+        },
+        {
+          "start": 93.57,
+          "end": 94.26,
+          "word": "because"
+        },
+        {
+          "start": 94.26,
+          "end": 94.96,
+          "word": "of"
+        },
+        {
+          "start": 94.96,
+          "end": 95.65,
+          "word": "locality."
+        },
+        {
+          "start": 95.65,
+          "end": 96.35,
+          "word": "If"
+        },
+        {
+          "start": 96.35,
+          "end": 97.04,
+          "word": "a"
+        },
+        {
+          "start": 97.04,
+          "end": 97.74,
+          "word": "program"
+        },
+        {
+          "start": 97.74,
+          "end": 98.43,
+          "word": "had"
+        },
+        {
+          "start": 98.43,
+          "end": 99.13,
+          "word": "no"
+        },
+        {
+          "start": 99.13,
+          "end": 99.83,
+          "word": "locality,"
+        },
+        {
+          "start": 99.83,
+          "end": 100.52,
+          "word": "a"
+        },
+        {
+          "start": 100.52,
+          "end": 101.22,
+          "word": "cache"
+        },
+        {
+          "start": 101.22,
+          "end": 101.91,
+          "word": "would"
+        },
+        {
+          "start": 101.91,
+          "end": 102.61,
+          "word": "only"
+        },
+        {
+          "start": 102.61,
+          "end": 103.3,
+          "word": "add"
+        },
+        {
+          "start": 103.3,
+          "end": 104.0,
+          "word": "cost."
+        }
+      ]
+    },
+    {
+      "start": 104.0,
+      "end": 122.0,
+      "text": "Second topic. The cache is small, so sooner or later it is full. Then we must decide which item to throw out. This is the eviction policy.",
+      "words": [
+        {
+          "start": 104.0,
+          "end": 104.67,
+          "word": "Second"
+        },
+        {
+          "start": 104.67,
+          "end": 105.33,
+          "word": "topic."
+        },
+        {
+          "start": 105.33,
+          "end": 106.0,
+          "word": "The"
+        },
+        {
+          "start": 106.0,
+          "end": 106.67,
+          "word": "cache"
+        },
+        {
+          "start": 106.67,
+          "end": 107.33,
+          "word": "is"
+        },
+        {
+          "start": 107.33,
+          "end": 108.0,
+          "word": "small,"
+        },
+        {
+          "start": 108.0,
+          "end": 108.67,
+          "word": "so"
+        },
+        {
+          "start": 108.67,
+          "end": 109.33,
+          "word": "sooner"
+        },
+        {
+          "start": 109.33,
+          "end": 110.0,
+          "word": "or"
+        },
+        {
+          "start": 110.0,
+          "end": 110.67,
+          "word": "later"
+        },
+        {
+          "start": 110.67,
+          "end": 111.33,
+          "word": "it"
+        },
+        {
+          "start": 111.33,
+          "end": 112.0,
+          "word": "is"
+        },
+        {
+          "start": 112.0,
+          "end": 112.67,
+          "word": "full."
+        },
+        {
+          "start": 112.67,
+          "end": 113.33,
+          "word": "Then"
+        },
+        {
+          "start": 113.33,
+          "end": 114.0,
+          "word": "we"
+        },
+        {
+          "start": 114.0,
+          "end": 114.67,
+          "word": "must"
+        },
+        {
+          "start": 114.67,
+          "end": 115.33,
+          "word": "decide"
+        },
+        {
+          "start": 115.33,
+          "end": 116.0,
+          "word": "which"
+        },
+        {
+          "start": 116.0,
+          "end": 116.67,
+          "word": "item"
+        },
+        {
+          "start": 116.67,
+          "end": 117.33,
+          "word": "to"
+        },
+        {
+          "start": 117.33,
+          "end": 118.0,
+          "word": "throw"
+        },
+        {
+          "start": 118.0,
+          "end": 118.67,
+          "word": "out."
+        },
+        {
+          "start": 118.67,
+          "end": 119.33,
+          "word": "This"
+        },
+        {
+          "start": 119.33,
+          "end": 120.0,
+          "word": "is"
+        },
+        {
+          "start": 120.0,
+          "end": 120.67,
+          "word": "the"
+        },
+        {
+          "start": 120.67,
+          "end": 121.33,
+          "word": "eviction"
+        },
+        {
+          "start": 121.33,
+          "end": 122.0,
+          "word": "policy."
+        }
+      ]
+    },
+    {
+      "start": 122.0,
+      "end": 140.0,
+      "text": "The most common policy is least recently used, LRU. We remove the item that has not been touched for the longest time. It is simple and it follows locality.",
+      "words": [
+        {
+          "start": 122.0,
+          "end": 122.62,
+          "word": "The"
+        },
+        {
+          "start": 122.62,
+          "end": 123.24,
+          "word": "most"
+        },
+        {
+          "start": 123.24,
+          "end": 123.86,
+          "word": "common"
+        },
+        {
+          "start": 123.86,
+          "end": 124.48,
+          "word": "policy"
+        },
+        {
+          "start": 124.48,
+          "end": 125.1,
+          "word": "is"
+        },
+        {
+          "start": 125.1,
+          "end": 125.72,
+          "word": "least"
+        },
+        {
+          "start": 125.72,
+          "end": 126.34,
+          "word": "recently"
+        },
+        {
+          "start": 126.34,
+          "end": 126.97,
+          "word": "used,"
+        },
+        {
+          "start": 126.97,
+          "end": 127.59,
+          "word": "LRU."
+        },
+        {
+          "start": 127.59,
+          "end": 128.21,
+          "word": "We"
+        },
+        {
+          "start": 128.21,
+          "end": 128.83,
+          "word": "remove"
+        },
+        {
+          "start": 128.83,
+          "end": 129.45,
+          "word": "the"
+        },
+        {
+          "start": 129.45,
+          "end": 130.07,
+          "word": "item"
+        },
+        {
+          "start": 130.07,
+          "end": 130.69,
+          "word": "that"
+        },
+        {
+          "start": 130.69,
+          "end": 131.31,
+          "word": "has"
+        },
+        {
+          "start": 131.31,
+          "end": 131.93,
+          "word": "not"
+        },
+        {
+          "start": 131.93,
+          "end": 132.55,
+          "word": "been"
+        },
+        {
+          "start": 132.55,
+          "end": 133.17,
+          "word": "touched"
+        },
+        {
+          "start": 133.17,
+          "end": 133.79,
+          "word": "for"
+        },
+        {
+          "start": 133.79,
+          "end": 134.41,
+          "word": "the"
+        },
+        {
+          "start": 134.41,
+          "end": 135.03,
+          "word": "longest"
+        },
+        {
+          "start": 135.03,
+          "end": 135.66,
+          "word": "time."
+        },
+        {
+          "start": 135.66,
+          "end": 136.28,
+          "word": "It"
+        },
+        {
+          "start": 136.28,
+          "end": 136.9,
+          "word": "is"
+        },
+        {
+          "start": 136.9,
+          "end": 137.52,
+          "word": "simple"
+        },
+        {
+          "start": 137.52,
+          "end": 138.14,
+          "word": "and"
+        },
+        {
+          "start": 138.14,
+          "end": 138.76,
+          "word": "it"
+        },
+        {
+          "start": 138.76,
+          "end": 139.38,
+          "word": "follows"
+        },
+        {
+          "start": 139.38,
+          "end": 140.0,
+          "word": "locality."
+        }
+      ]
+    },
+    {
+      "start": 140.0,
+      "end": 156.0,
+      "text": "Another policy is first in, first out. It is even simpler, but it can throw out an item that is still being used every second.",
+      "words": []
+    },
+    {
+      "start": 156.0,
+      "end": 174.0,
+      "text": "Third topic, and this is where most real bugs come from: keeping the copy correct. If the original data changes, the cached copy is now stale.",
+      "words": [
+        {
+          "start": 156.0,
+          "end": 156.69,
+          "word": "Third"
+        },
+        {
+          "start": 156.69,
+          "end": 157.38,
+          "word": "topic,"
+        },
+        {
+          "start": 157.38,
+          "end": 158.08,
+          "word": "and"
+        },
+        {
+          "start": 158.08,
+          "end": 158.77,
+          "word": "this"
+        },
+        {
+          "start": 158.77,
+          "end": 159.46,
+          "word": "is"
+        },
+        {
+          "start": 159.46,
+          "end": 160.15,
+          "word": "where"
+        },
+        {
+          "start": 160.15,
+          "end": 160.85,
+          "word": "most"
+        },
+        {
+          "start": 160.85,
+          "end": 161.54,
+          "word": "real"
+        },
+        {
+          "start": 161.54,
+          "end": 162.23,
+          "word": "bugs"
+        },
+        {
+          "start": 162.23,
+          "end": 162.92,
+          "word": "come"
+        },
+        {
+          "start": 162.92,
+          "end": 163.62,
+          "word": "from:"
+        },
+        {
+          "start": 163.62,
+          "end": 164.31,
+          "word": "keeping"
+        },
+        {
+          "start": 164.31,
+          "end": 165.0,
+          "word": "the"
+        },
+        {
+          "start": 165.0,
+          "end": 165.69,
+          "word": "copy"
+        },
+        {
+          "start": 165.69,
+          "end": 166.38,
+          "word": "correct."
+        },
+        {
+          "start": 166.38,
+          "end": 167.08,
+          "word": "If"
+        },
+        {
+          "start": 167.08,
+          "end": 167.77,
+          "word": "the"
+        },
+        {
+          "start": 167.77,
+          "end": 168.46,
+          "word": "original"
+        },
+        {
+          "start": 168.46,
+          "end": 169.15,
+          "word": "data"
+        },
+        {
+          "start": 169.15,
+          "end": 169.85,
+          "word": "changes,"
+        },
+        {
+          "start": 169.85,
+          "end": 170.54,
+          "word": "the"
+        },
+        {
+          "start": 170.54,
+          "end": 171.23,
+          "word": "cached"
+        },
+        {
+          "start": 171.23,
+          "end": 171.92,
+          "word": "copy"
+        },
+        {
+          "start": 171.92,
+          "end": 172.62,
+          "word": "is"
+        },
+        {
+          "start": 172.62,
+          "end": 173.31,
+          "word": "now"
+        },
+        {
+          "start": 173.31,
+          "end": 174.0,
+          "word": "stale."
+        }
+      ]
+    },
+    {
+      "start": 174.0,
+      "end": 192.0,
+      "text": "One answer is to give every cached item a time to live. After, say, sixty seconds the copy expires and the next request fetches fresh data.",
+      "words": [
+        {
+          "start": 174.0,
+          "end": 174.69,
+          "word": "One"
+        },
+        {
+          "start": 174.69,
+          "end": 175.38,
+          "word": "answer"
+        },
+        {
+          "start": 175.38,
+          "end": 176.08,
+          "word": "is"
+        },
+        {
+          "start": 176.08,
+          "end": 176.77,
+          "word": "to"
+        },
+        {
+          "start": 176.77,
+          "end": 177.46,
+          "word": "give"
+        },
+        {
+          "start": 177.46,
+          "end": 178.15,
+          "word": "every"
+        },
+        {
+          "start": 178.15,
+          "end": 178.85,
+          "word": "cached"
+        },
+        {
+          "start": 178.85,
+          "end": 179.54,
+          "word": "item"
+        },
+        {
+          "start": 179.54,
+          "end": 180.23,
+          "word": "a"
+        },
+        {
+          "start": 180.23,
+          "end": 180.92,
+          "word": "time"
+        },
+        {
+          "start": 180.92,
+          "end": 181.62,
+          "word": "to"
+        },
+        {
+          "start": 181.62,
+          "end": 182.31,
+          "word": "live."
+        },
+        {
+          "start": 182.31,
+          "end": 183.0,
+          "word": "After,"
+        },
+        {
+          "start": 183.0,
+          "end": 183.69,
+          "word": "say,"
+        },
+        {
+          "start": 183.69,
+          "end": 184.38,
+          "word": "sixty"
+        },
+        {
+          "start": 184.38,
+          "end": 185.08,
+          "word": "seconds"
+        },
+        {
+          "start": 185.08,
+          "end": 185.77,
+          "word": "the"
+        },
+        {
+          "start": 185.77,
+          "end": 186.46,
+          "word": "copy"
+        },
+        {
+          "start": 186.46,
+          "end": 187.15,
+          "word": "expires"
+        },
+        {
+          "start": 187.15,
+          "end": 187.85,
+          "word": "and"
+        },
+        {
+          "start": 187.85,
+          "end": 188.54,
+          "word": "the"
+        },
+        {
+          "start": 188.54,
+          "end": 189.23,
+          "word": "next"
+        },
+        {
+          "start": 189.23,
+          "end": 189.92,
+          "word": "request"
+        },
+        {
+          "start": 189.92,
+          "end": 190.62,
+          "word": "fetches"
+        },
+        {
+          "start": 190.62,
+          "end": 191.31,
+          "word": "fresh"
+        },
+        {
+          "start": 191.31,
+          "end": 192.0,
+          "word": "data."
+        }
+      ]
+    },
+    {
+      "start": 192.0,
+      "end": 210.0,
+      "text": "Another answer is to remove the cached copy whenever the original is written. This is called invalidation, and it is hard to get right across many machines.",
+      "words": [
+        {
+          "start": 192.0,
+          "end": 192.67,
+          "word": "Another"
+        },
+        {
+          "start": 192.67,
+          "end": 193.33,
+          "word": "answer"
+        },
+        {
+          "start": 193.33,
+          "end": 194.0,
+          "word": "is"
+        },
+        {
+          "start": 194.0,
+          "end": 194.67,
+          "word": "to"
+        },
+        {
+          "start": 194.67,
+          "end": 195.33,
+          "word": "remove"
+        },
+        {
+          "start": 195.33,
+          "end": 196.0,
+          "word": "the"
+        },
+        {
+          "start": 196.0,
+          "end": 196.67,
+          "word": "cached"
+        },
+        {
+          "start": 196.67,
+          "end": 197.33,
+          "word": "copy"
+        },
+        {
+          "start": 197.33,
+          "end": 198.0,
+          "word": "whenever"
+        },
+        {
+          "start": 198.0,
+          "end": 198.67,
+          "word": "the"
+        },
+        {
+          "start": 198.67,
+          "end": 199.33,
+          "word": "original"
+        },
+        {
+          "start": 199.33,
+          "end": 200.0,
+          "word": "is"
+        },
+        {
+          "start": 200.0,
+          "end": 200.67,
+          "word": "written."
+        },
+        {
+          "start": 200.67,
+          "end": 201.33,
+          "word": "This"
+        },
+        {
+          "start": 201.33,
+          "end": 202.0,
+          "word": "is"
+        },
+        {
+          "start": 202.0,
+          "end": 202.67,
+          "word": "called"
+        },
+        {
+          "start": 202.67,
+          "end": 203.33,
+          "word": "invalidation,"
+        },
+        {
+          "start": 203.33,
+          "end": 204.0,
+          "word": "and"
+        },
+        {
+          "start": 204.0,
+          "end": 204.67,
+          "word": "it"
+        },
+        {
+          "start": 204.67,
+          "end": 205.33,
+          "word": "is"
+        },
+        {
+          "start": 205.33,
+          "end": 206.0,
+          "word": "hard"
+        },
+        {
+          "start": 206.0,
+          "end": 206.67,
+          "word": "to"
+        },
+        {
+          "start": 206.67,
+          "end": 207.33,
+          "word": "get"
+        },
+        {
+          "start": 207.33,
+          "end": 208.0,
+          "word": "right"
+        },
+        {
+          "start": 208.0,
+          "end": 208.67,
+          "word": "across"
+        },
+        {
+          "start": 208.67,
+          "end": 209.33,
+          "word": "many"
+        },
+        {
+          "start": 209.33,
+          "end": 210.0,
+          "word": "machines."
+        }
+      ]
+    },
+    {
+      "start": 210.0,
+      "end": 226.0,
+      "text": "To sum up. Caches work because of locality. When the cache is full, an eviction policy such as LRU decides what goes. And stale data needs a time to live or invalidation.",
+      "words": [
+        {
+          "start": 210.0,
+          "end": 210.5,
+          "word": "To"
+        },
+        {
+          "start": 210.5,
+          "end": 211.0,
+          "word": "sum"
+        },
+        {
+          "start": 211.0,
+          "end": 211.5,
+          "word": "up."
+        },
+        {
+          "start": 211.5,
+          "end": 212.0,
+          "word": "Caches"
+        },
+        {
+          "start": 212.0,
+          "end": 212.5,
+          "word": "work"
+        },
+        {
+          "start": 212.5,
+          "end": 213.0,
+          "word": "because"
+        },
+        {
+          "start": 213.0,
+          "end": 213.5,
+          "word": "of"
+        },
+        {
+          "start": 213.5,
+          "end": 214.0,
+          "word": "locality."
+        },
+        {
+          "start": 214.0,
+          "end": 214.5,
+          "word": "When"
+        },
+        {
+          "start": 214.5,
+          "end": 215.0,
+          "word": "the"
+        },
+        {
+          "start": 215.0,
+          "end": 215.5,
+          "word": "cache"
+        },
+        {
+          "start": 215.5,
+          "end": 216.0,
+          "word": "is"
+        },
+        {
+          "start": 216.0,
+          "end": 216.5,
+          "word": "full,"
+        },
+        {
+          "start": 216.5,
+          "end": 217.0,
+          "word": "an"
+        },
+        {
+          "start": 217.0,
+          "end": 217.5,
+          "word": "eviction"
+        },
+        {
+          "start": 217.5,
+          "end": 218.0,
+          "word": "policy"
+        },
+        {
+          "start": 218.0,
+          "end": 218.5,
+          "word": "such"
+        },
+        {
+          "start": 218.5,
+          "end": 219.0,
+          "word": "as"
+        },
+        {
+          "start": 219.0,
+          "end": 219.5,
+          "word": "LRU"
+        },
+        {
+          "start": 219.5,
+          "end": 220.0,
+          "word": "decides"
+        },
+        {
+          "start": 220.0,
+          "end": 220.5,
+          "word": "what"
+        },
+        {
+          "start": 220.5,
+          "end": 221.0,
+          "word": "goes."
+        },
+        {
+          "start": 221.0,
+          "end": 221.5,
+          "word": "And"
+        },
+        {
+          "start": 221.5,
+          "end": 222.0,
+          "word": "stale"
+        },
+        {
+          "start": 222.0,
+          "end": 222.5,
+          "word": "data"
+        },
+        {
+          "start": 222.5,
+          "end": 223.0,
+          "word": "needs"
+        },
+        {
+          "start": 223.0,
+          "end": 223.5,
+          "word": "a"
+        },
+        {
+          "start": 223.5,
+          "end": 224.0,
+          "word": "time"
+        },
+        {
+          "start": 224.0,
+          "end": 224.5,
+          "word": "to"
+        },
+        {
+          "start": 224.5,
+          "end": 225.0,
+          "word": "live"
+        },
+        {
+          "start": 225.0,
+          "end": 225.5,
+          "word": "or"
+        },
+        {
+          "start": 225.5,
+          "end": 226.0,
+          "word": "invalidation."
+        }
+      ]
+    },
+    {
+      "start": 226.0,
+      "end": 236.0,
+      "text": "For the exercise this week, add a small LRU cache to the assistant you built and measure how many answers it serves from the cache.",
+      "words": [
+        {
+          "start": 226.0,
+          "end": 226.4,
+          "word": "For"
+        },
+        {
+          "start": 226.4,
+          "end": 226.8,
+          "word": "the"
+        },
+        {
+          "start": 226.8,
+          "end": 227.2,
+          "word": "exercise"
+        },
+        {
+          "start": 227.2,
+          "end": 227.6,
+          "word": "this"
+        },
+        {
+          "start": 227.6,
+          "end": 228.0,
+          "word": "week,"
+        },
+        {
+          "start": 228.0,
+          "end": 228.4,
+          "word": "add"
+        },
+        {
+          "start": 228.4,
+          "end": 228.8,
+          "word": "a"
+        },
+        {
+          "start": 228.8,
+          "end": 229.2,
+          "word": "small"
+        },
+        {
+          "start": 229.2,
+          "end": 229.6,
+          "word": "LRU"
+        },
+        {
+          "start": 229.6,
+          "end": 230.0,
+          "word": "cache"
+        },
+        {
+          "start": 230.0,
+          "end": 230.4,
+          "word": "to"
+        },
+        {
+          "start": 230.4,
+          "end": 230.8,
+          "word": "the"
+        },
+        {
+          "start": 230.8,
+          "end": 231.2,
+          "word": "assistant"
+        },
+        {
+          "start": 231.2,
+          "end": 231.6,
+          "word": "you"
+        },
+        {
+          "start": 231.6,
+          "end": 232.0,
+          "word": "built"
+        },
+        {
+          "start": 232.0,
+          "end": 232.4,
+          "word": "and"
+        },
+        {
+          "start": 232.4,
+          "end": 232.8,
+          "word": "measure"
+        },
+        {
+          "start": 232.8,
+          "end": 233.2,
+          "word": "how"
+        },
+        {
+          "start": 233.2,
+          "end": 233.6,
+          "word": "many"
+        },
+        {
+          "start": 233.6,
+          "end": 234.0,
+          "word": "answers"
+        },
+        {
+          "start": 234.0,
+          "end": 234.4,
+          "word": "it"
+        },
+        {
+          "start": 234.4,
+          "end": 234.8,
+          "word": "serves"
+        },
+        {
+          "start": 234.8,
+          "end": 235.2,
+          "word": "from"
+        },
+        {
+          "start": 235.2,
+          "end": 235.6,
+          "word": "the"
+        },
+        {
+          "start": 235.6,
+          "end": 236.0,
+          "word": "cache."
+        }
+      ]
+    }
+  ],
+  "meta": {
+    "provider": "fake",
+    "model": "hand-written-fixture",
+    "duration_s": 238.0,
+    "latency_ms": 0,
+    "cost_estimate": 0.0
+  }
+}

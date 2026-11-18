@@ -1,0 +1,73 @@
+# B8.6 review rubric and measures: PROVISIONAL, NOT FROZEN.
+#
+# Each definition says where it comes from (decision: prd | proposed | open). Nothing here is
+# decided by the guide. Design §11.4: "The set and its rubric are fixed before any comparison run."
+schema: learnops.testdata.b8-6.rubric/v1
+status: provisional
+frozen: false
+
+output_review:
+  applies_to: [chapters, summary, practice]
+  blind_to_provider: true
+  source: docs/design/grading.md §11.2, wrong-answer rate (Q48)
+  decision: proposed
+  levels:
+    - id: acceptable
+      meaning: Usable as it is.
+      counts_as_wrong: false
+    - id: acceptable_with_edits
+      meaning: Usable after the mentor edits it.
+      counts_as_wrong: false
+    - id: unusable_or_wrong
+      meaning: Unusable or factually wrong.
+      counts_as_wrong: true
+  task_guidance:
+    # Proposed by the author to make reviews comparable. Not in the PRD or the design document.
+    chapters:
+      decision: proposed
+      questions:
+        - Does each chapter title describe what is said in its time range?
+        - Do chapter boundaries fall where the topic changes in the transcript?
+        - Is any title factually wrong about the content?
+    summary:
+      decision: proposed
+      questions:
+        - Does the summary state the main points of the lecture?
+        - Does it state anything the lecture does not say, or say wrongly?
+        - Could a learner who missed the lecture tell what it covered?
+
+grade_draft_review:
+  rule: >-
+    A criterion draft is wrong if a code-side rule it should have failed was missed, or its score
+    differs from the mentor reference score by more than 1 point (criteria worth up to 4 points)
+    or 25 % of points_max (larger criteria), or a blinded mentor judges its evidence or feedback
+    unsupported or false.
+  source: docs/design/grading.md §11.2, wrong-answer rate (Q48)
+  decision: proposed
+
+measures:
+  - id: wrong_answer_rate
+    required_by: PRD FR-M-03
+    definition: >-
+      Share of outputs counted as wrong: output_review level unusable_or_wrong, or a wrong
+      criterion draft under grade_draft_review. Transport failures are reported as reliability,
+      not as wrong answers (design §11.2).
+    decision: proposed
+  - id: agreement
+    required_by: PRD FR-M-03
+    definition: >-
+      Grading drafts: draft total within one band of the mentor reference total (band proposed as
+      10 % of total points, design §11.2, Q44). Chapters, summaries and practice: not defined.
+    decision: open
+  - id: mentor_review_time
+    required_by: PRD FR-M-03
+    definition: >-
+      Time a blinded mentor spends reviewing one output, from the tool's logs. The timing
+      protocol (idle gaps, counterbalancing) is proposed only for grading (design §11.2, Q46).
+    decision: open
+  - id: cost_per_task
+    required_by: PRD FR-M-03
+    definition: >-
+      Sum of B5 meta cost_estimate (US dollars) per output; null (unknown) costs reported
+      separately, never as 0; retried calls not double counted (design §11.2).
+    decision: proposed
