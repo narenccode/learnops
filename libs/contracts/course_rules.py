@@ -22,16 +22,22 @@ Doc = dict[str, Any]
 
 @dataclass(frozen=True)
 class Item:
-    """A section or an activity: where its idnumber is, and the idnumber."""
+    """A section that has an idnumber, or an activity: where its idnumber is, and the idnumber."""
 
     location: Location
     idnumber: str
 
 
 def iter_items(doc: Doc) -> Iterator[Item]:
-    """Sections and their activities in document order, each section before its activities."""
+    """Sections and their activities in document order, each section before its activities.
+
+    A section idnumber is optional (PRD B1.1): Moodle stores none, and a section is matched by its
+    number. A section without one is skipped, never yielded with an empty or missing idnumber, so
+    two sections without one are not duplicates of each other. Activities always have one.
+    """
     for s_index, section in enumerate(doc["sections"]):
-        yield Item(("sections", s_index, "idnumber"), section["idnumber"])
+        if "idnumber" in section:
+            yield Item(("sections", s_index, "idnumber"), section["idnumber"])
         for a_index, activity in enumerate(section["activities"]):
             yield Item(
                 ("sections", s_index, "activities", a_index, "idnumber"),

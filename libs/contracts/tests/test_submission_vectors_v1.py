@@ -82,6 +82,7 @@ README_CASE_IDS = [
     "readme-fence-indentation-up-to-three-spaces",
     "readme-closing-fence-same-character-and-length",
     "readme-fence-needs-three-characters",
+    "readme-fence-needs-three-tildes",
 ]
 # The machine checks of PRD C3.5. A check that is named in a vector as the unknown one must not be
 # one of these: a known name is not unknown. A test keeps this set equal to the PRD list.
@@ -628,14 +629,25 @@ def test_prd_b13_has_the_check_formats_and_names_what_it_does_not_define() -> No
 
 def test_the_c35_names_in_the_tests_are_the_names_in_the_prd() -> None:
     # `unknown_check` in a vector is checked against this list, so it must not drift from C3.5.
+    # Only the list itself counts: from the end of the "Machine checks (...)" heading to the
+    # sentence "Unknown check names", with each parenthesised explanation removed first. A word
+    # in backticks inside an explanation (say `demo_url`) is not a check name, so a later
+    # additive edit to C3.5 cannot fail this test for the wrong reason.
     match = re.search(
-        r"\*\*Machine checks.*?(?=^\*\*Sandbox:\*\*)",
+        r"\*\*Machine checks[^\n]*?:\*\*(?P<list>.*?)Unknown check names",
         _prd(),
-        flags=re.DOTALL | re.MULTILINE,
+        flags=re.DOTALL,
     )
     assert match, "the C3.5 machine-check list was not found"
-    names = set(re.findall(r"`([a-z_]+)(?::<[^>]*>)?`", match.group(0)))
+    without_explanations = re.sub(r"\([^()]*\)", "", match.group("list"))
+    names = set(re.findall(r"`([a-z_]+)(?::<[^>]*>)?`", without_explanations))
     assert names == C35_CHECK_NAMES
+    # The same extraction ignores a backticked word inside an explanation (negative control).
+    probe = "`repo_clone` (the field `demo_url` is read), `word_count:<min>` (report) "
+    probe_names = set(
+        re.findall(r"`([a-z_]+)(?::<[^>]*>)?`", re.sub(r"\([^()]*\)", "", probe))
+    )
+    assert probe_names == {"repo_clone", "word_count"}
 
 
 def test_prd_c35_says_word_count_reads_the_report() -> None:
