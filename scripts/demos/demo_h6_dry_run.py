@@ -52,6 +52,7 @@ from demo_live_common import (  # noqa: E402
     connect,
     course_id_from,
     describe,
+    find_user,
     read_config,
 )
 from moodle_ws import (  # noqa: E402
@@ -73,7 +74,7 @@ DRY_RUN_PLAN = (
     "Would read course {course} on {site}, run the library's write checks for these learners, "
     "and stop every write before it is sent:"
 )
-DRY_RUN_LINE = "  Learner {letter} ({username}): {what}"
+DRY_RUN_LINE = "  Learner {letter} ({who}): {what}"
 COURSE_UNSET = "(set course_id in the --config file)"
 CASE_LINE = "Case {letter}: {what} -> {verdict}"
 CASE_LINE_OPEN = "Case {letter}: {what} -> library says: {verdict}"
@@ -111,8 +112,11 @@ ERR_NO_COURSE = (
     "Live mode needs the course id. Put course_id in the --config file (the id from the "
     "'Test course ready' post in #112)."
 )
-REASON_LEARNERS = "learners must map A, B, C or D to a username"
-NO_LEARNER = "learner {username!r} is not among the enrolled users"
+REASON_LEARNERS = "learners must map A, B, C or D to a username, a full name or an id"
+NO_LEARNER = (
+    "learner {name!r} was not found among the enrolled users. The site may hide usernames: "
+    "name the learner by full name or id in the --config file"
+)
 NO_ASSIGNMENT = "no assignment with marking workflow {workflow} was found"
 
 # How the library's outcomes read on screen.
@@ -194,14 +198,40 @@ def _verdict_text(verdict: object) -> str:
 
 def _read_site(
     client: MoodleClient, session: Session, course: int
-) -> tuple[list[Any], dict[str, int]]:
+) -> tuple[list[Any], list[Any]]:
     answer = client.call("mod_assign_get_assignments", {"courseids": [course]})
     session.recorder.note("mod_assign_get_assignments", answer)
     courses = _rows(answer.get("courses") if isinstance(answer, Mapping) else None)
     assignments = [a for c in courses for a in _rows(c.get("assignments"))]
     users = _rows(client.call("core_enrol_get_enrolled_users", {"courseid": course}))
     session.recorder.note("core_enrol_get_enrolled_users", users)
-    return assignments, {u.get("username"): u.get("id") for u in users}
+    return assignments, users
+
+
+def _who(letter: str, learners: Mapping[str, Any]) -> str:
+    """How a case names its learner on screen: the config value, or the two defaults."""
+    if letter in learners:
+        return str(learners[letter])
+    return f"learner-{letter.lower()}, or full name Learner {letter}"
+
+
+def _find_learner(
+    users: list[Any], letter: str, learners: Mapping[str, Any]
+) -> dict[str, Any] | None:
+    """The config value if there is one, else the username learner-x, then the full name."""
+    keys = (
+        [learners[letter]]
+        if letter in learners
+        else [
+            f"learner-{letter.lower()}",
+            f"Learner {letter}",
+        ]
+    )
+    for key in keys:
+        found = find_user(users, key)
+        if found is not None:
+            return found
+    return None
 
 
 def _pick(assignments: list[Any], workflow: bool) -> dict[str, Any] | None:
@@ -287,15 +317,15 @@ def run_cases(
     watch: _Watch,
     session: Session,
     course: int,
-    learners: Mapping[str, str],
+    learners: Mapping[str, Any],
 ) -> None:
     assignments, users = _read_site(client, session, course)
     for case in CASES:
-        username = learners.get(case.letter, f"learner-{case.letter.lower()}")
+        user = _find_learner(users, case.letter, learners)
         assignment = _pick(assignments, case.workflow)
         reason = None
-        if username not in users:
-            reason = NO_LEARNER.format(username=username)
+        if user is None:
+            reason = NO_LEARNER.format(name=_who(case.letter, learners))
         elif assignment is None:
             reason = NO_ASSIGNMENT.format(workflow="on" if case.workflow else "off")
         if reason is not None or assignment is None:
@@ -309,7 +339,7 @@ def run_cases(
             session.failures += 1
             continue
         buffered = Session(Recorder(), True, session.offline)
-        verdict = _run_case(client, watch, buffered, case, assignment, users[username])
+        verdict = _run_case(client, watch, buffered, case, assignment, user["id"])
         # The case line first, then its detail lines, as the screen should read.
         _case_lines(session, case, verdict)
         for line in buffered.recorder.lines:
@@ -341,13 +371,21 @@ def _error(text: str) -> int:
     return 2
 
 
-def _learners_from(config: Mapping[str, Any]) -> dict[str, str]:
+def _is_learner_key(value: object) -> bool:
+    """A username or full name (text), or an id (a whole number above zero, never a bool)."""
+    if isinstance(value, bool):
+        return False
+    if isinstance(value, int):
+        return value > 0
+    return isinstance(value, str) and bool(value.strip())
+
+
+def _learners_from(config: Mapping[str, Any]) -> dict[str, Any]:
     value = config.get("learners")
     if value is None:
         return {}
     ok = isinstance(value, dict) and all(
-        k in ("A", "B", "C", "D") and isinstance(v, str) and v.strip()
-        for k, v in value.items()
+        k in ("A", "B", "C", "D") and _is_learner_key(v) for k, v in value.items()
     )
     if not ok:
         raise DemoError(ERR_CONFIG.format(path="", reason=REASON_LEARNERS))
@@ -405,10 +443,11 @@ def _main(args: argparse.Namespace) -> int:
             )
         )
         for case in CASES:
-            username = learners.get(case.letter, f"learner-{case.letter.lower()}")
             print(
                 DRY_RUN_LINE.format(
-                    letter=case.letter, username=username, what=case.what
+                    letter=case.letter,
+                    who=_who(case.letter, learners),
+                    what=case.what,
                 )
             )
         return 0

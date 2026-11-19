@@ -49,6 +49,7 @@ from demo_live_common import (  # noqa: E402
     connect,
     course_id_from,
     describe,
+    display_name,
     read_config,
 )
 from moodle_ws import MoodleError  # noqa: E402
@@ -119,6 +120,10 @@ F_NO_LASTATTEMPT = (
     "mod/assign:viewownsubmissionsummary (R6), so the grading state cannot be read"
 )
 F_NO_GRADE_FIELD = "assignment {id} has no maximum grade field `grade`"
+F_NO_USERNAME = (
+    "the site does not return `username` for the learners (Moodle gives it only for the service "
+    "account itself): they are shown, and matched in Tier 3, by full name or id"
+)
 
 
 @dataclass
@@ -213,6 +218,8 @@ def _students(run: Run) -> list[dict[str, Any]]:
             total=len(users), students=len(students), others=len(users) - len(students)
         )
     )
+    if any(not s.get("username") for s in students):
+        run.finding(function, F_NO_USERNAME)  # said once, not once per learner
     run.ok(function, f"{len(users)} user(s)")
     return students
 
@@ -281,7 +288,7 @@ def _status_line(
     function = "mod_assign_get_submission_status"
     answer = run.call(function, {"assignid": assign, "userid": person["id"]})
     last = answer.get("lastattempt") if isinstance(answer, Mapping) else None
-    user = person.get("username", "?")
+    user = display_name(person)
     if not isinstance(last, Mapping):
         run.finding(function, F_NO_LASTATTEMPT.format(user=user, id=assign))
         last = {}

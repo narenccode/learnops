@@ -22,7 +22,7 @@ sys.path.insert(0, str(ROOT / "scripts" / "demos"))
 import demo_h4_live_read as demo  # noqa: E402
 from demo_fake_site import FAKE_TOKEN, FILE_TEXT, FakeSite  # noqa: E402
 from demo_live_common import Connection  # noqa: E402
-from fakes import DenyingSite, NoLastAttemptSite, connection_for  # noqa: E402
+from fakes import DenyingSite, NoLastAttemptSite, NoUsernameSite, connection_for  # noqa: E402
 
 SCRIPT = ROOT / "scripts" / "demos" / "demo_h4_live_read.py"
 SIX = [
@@ -132,6 +132,17 @@ def test_a_failing_step_is_shown_and_the_others_still_run(
     assert "STEP 3 FAILED" in out
     assert "Step 4." in out and "Step 6." in out  # the rest still ran
     assert "FAILED" in out.split("RESULTS", 1)[1]
+
+
+def test_hidden_usernames_are_shown_by_full_name_and_flagged_as_a_finding(
+    capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    with_site(monkeypatch, NoUsernameSite())
+    code, out, _ = run(["--offline"], capsys)
+    assert code == 0  # a finding, not a failure
+    assert "Assignment 1, Learner A:" in out and ", ?:" not in out
+    assert "FINDING" in out and "username" in out
+    assert out.count("FINDING") == 1  # said once, not once per learner
 
 
 # --- options -------------------------------------------------------------------------------------

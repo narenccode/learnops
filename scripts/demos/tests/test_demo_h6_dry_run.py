@@ -22,7 +22,7 @@ sys.path.insert(0, str(ROOT / "scripts" / "demos"))
 
 import demo_h6_dry_run as demo  # noqa: E402
 from demo_fake_site import FAKE_TOKEN  # noqa: E402
-from fakes import NoLastAttemptSite, install  # noqa: E402
+from fakes import NoLastAttemptSite, NoUsernameSite, install  # noqa: E402
 from moodle_ws import FunctionNotAllowed  # noqa: E402
 
 SCRIPT = ROOT / "scripts" / "demos" / "demo_h6_dry_run.py"
@@ -157,6 +157,46 @@ def test_a_missing_learner_is_not_run_and_exits_1(
     assert "Case A:" in out and "NOT RUN" in out and "nobody" in out
 
 
+# --- the site hides the learners' usernames (seen on the lab site) -------------------------------
+
+
+def test_learners_are_found_by_full_name_when_usernames_are_hidden(
+    capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    install(monkeypatch, demo, NoUsernameSite())
+    code, out, _ = run(["--offline"], capsys)
+    assert code == 0, out
+    assert "NOT RUN" not in out
+    assert "WOULD WRITE readyforrelease: allowed" in case_block(out, "A")
+    assert "REFUSED: locked (R3)" in case_block(out, "B")
+    assert "REFUSED: workflow off" in case_block(out, "D")
+
+
+def test_a_learner_can_be_named_by_id_in_the_config(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    install(monkeypatch, demo, NoUsernameSite())
+    config = tmp_path / "h6.yaml"
+    config.write_text(
+        "learners:\n  A: 101\n  B: 102\n  C: 103\n  D: 104\n", encoding="utf-8"
+    )
+    code, out, _ = run(["--offline", "--config", str(config)], capsys)
+    assert code == 0, out
+
+
+def test_a_username_that_the_site_hides_is_not_run_and_says_what_to_use(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    install(monkeypatch, demo, NoUsernameSite())
+    config = tmp_path / "h6.yaml"
+    config.write_text("learners:\n  A: learner_a\n", encoding="utf-8")
+    code, out, _ = run(["--offline", "--config", str(config)], capsys)
+    assert code == 1
+    assert "NOT RUN" in case_block(out, "A") and "full name or id" in case_block(
+        out, "A"
+    )
+
+
 # --- options -------------------------------------------------------------------------------------
 
 
@@ -183,6 +223,8 @@ def test_dry_run_lists_the_cases_and_makes_no_call(
     [
         "course_id: nope\n",
         "learners: {A: ''}\n",
+        "learners: {A: 0}\n",
+        "learners: {A: true}\n",
         "learners: [a, b]\n",
         "- not a mapping\n",
     ],

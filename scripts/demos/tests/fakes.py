@@ -39,6 +39,23 @@ class NoLastAttemptSite(FakeSite):
         return raw
 
 
+class NoUsernameSite(FakeSite):
+    """Moodle returns `username` only for the service account itself, not for the learners
+    (seen on the lab site, 19 Nov). The learners keep their full name and id."""
+
+    def post(self, url: str, body: bytes, timeout: float) -> bytes:
+        raw = super().post(url, body, timeout)
+        if parse_qs(body.decode("utf-8")).get("wsfunction") == [
+            "core_enrol_get_enrolled_users"
+        ]:
+            users = json.loads(raw)
+            for user in users:
+                if user["roles"][0]["shortname"] == "student":
+                    user.pop("username", None)
+            raw = json.dumps(users).encode("utf-8")
+        return raw
+
+
 class DenyingSite(FakeSite):
     """Moodle refuses the named functions, as it does for a missing capability."""
 

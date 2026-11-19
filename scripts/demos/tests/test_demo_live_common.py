@@ -21,6 +21,8 @@ from demo_live_common import (  # noqa: E402
     connect,
     course_id_from,
     describe,
+    display_name,
+    find_user,
     read_config,
 )
 from moodle_ws import MoodleError  # noqa: E402
@@ -156,3 +158,35 @@ def test_check_output_path_accepts_none_and_outside_paths_and_refuses_inside(
     check_output_path(tmp_path / "x.json")
     with pytest.raises(DemoError, match="inside the repository"):
         check_output_path(ROOT / "docs" / "x.json")
+
+
+# --- finding a user when the site hides usernames (lab, 19 Nov) -----------------------------------
+
+USERS = [
+    {"id": 1, "username": "alpha", "fullname": "Learner A"},
+    {
+        "id": 2,
+        "fullname": "Learner B",
+    },  # no username: Moodle returns it only for the account itself
+    {"id": 3, "fullname": "Twin"},
+    {"id": 4, "fullname": "Twin"},
+]
+
+
+def test_a_user_is_found_by_username_then_full_name_then_id() -> None:
+    assert find_user(USERS, "alpha") == USERS[0]
+    assert (
+        find_user(USERS, "Learner B") == USERS[1]
+    )  # no username to match, so the full name
+    assert find_user(USERS, 2) == USERS[1]
+
+
+@pytest.mark.parametrize("key", ["nobody", "Twin", 99, True, 0, ""])
+def test_an_unknown_or_ambiguous_or_invalid_key_finds_nobody(key: object) -> None:
+    assert find_user(USERS, key) is None  # two users share "Twin": never guess
+
+
+def test_a_user_is_shown_by_username_then_full_name_then_id() -> None:
+    assert display_name(USERS[0]) == "alpha"
+    assert display_name(USERS[1]) == "Learner B"
+    assert display_name({"id": 9}) == "user 9"

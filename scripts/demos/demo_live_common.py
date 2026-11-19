@@ -161,3 +161,27 @@ def check_output_path(out: Path | None) -> None:
     """Refuse an --out path inside the repository, before any work is done."""
     if out is not None and Path(out).resolve().is_relative_to(ROOT.resolve()):
         raise DemoError(OUTPUT_INSIDE_REPOSITORY.format(path=out))
+
+
+def find_user(users: list[Any], key: object) -> dict[str, Any] | None:
+    """One enrolled user, by username, then full name, then id (an int). Never guesses: an unknown
+    or ambiguous key finds nobody. Moodle returns `username` only for the service account itself
+    (lab site, 19 Nov), so the learners are normally found by full name or id."""
+    if isinstance(key, bool) or not isinstance(key, int | str):
+        return None
+    people = [u for u in users if isinstance(u, dict)]
+    if isinstance(key, int):
+        by_id = [u for u in people if u.get("id") == key]
+        return by_id[0] if len(by_id) == 1 else None
+    if not key.strip():
+        return None
+    for field in ("username", "fullname"):
+        found = [u for u in people if u.get(field) == key]
+        if found:
+            return found[0] if len(found) == 1 else None
+    return None
+
+
+def display_name(user: Mapping[str, Any]) -> str:
+    """How a user is shown: the username if the site gives it, else the full name, else the id."""
+    return str(user.get("username") or user.get("fullname") or f"user {user.get('id')}")
