@@ -27,7 +27,7 @@ Owner), so §4 gives a plain list of expected protected items and no separate fo
 | Delivery | Owner: GitHub release asset, tag `testdata-b8-1-v1`, fetched by a download script; `*.mbz` is already gitignored. The README and the release label the file "built on Moodle 5.3" (Owner, the 11-14 reply) |
 | Rebuilds | Owner (the 11-18 reply, P24): a rebuild is a new asset under a new tag, `testdata-b8-1-v2` (then v3, ...). v1 is kept; update the SHA-256 and this README to name the current asset. Never overwrite a tag. A wrong upload is deleted and replaced by a new version, never overwritten (P33) |
 | Backup file name | Proposal (Owner, 2026-11-12): `b8-1-template-course.v1.mbz` |
-| Download script | `download.py` in this folder. Owner (the 11-18 reply, P33): `--check` verifies the SHA-256 and writes nothing; `--dry-run` prints the source and target and writes nothing; a failed check removes the partial file; the undo is deleting the downloaded file. It is Python, not the `download.sh` proposed on 2026-11-12, because the project stack is Python and the lab PCs may run Windows. Until the SHA-256 is recorded in it, the script refuses to download (exit 2). Tests: `libs/contracts/tests/test_b8_1_files.py` |
+| Download script | `download.py` in this folder. Owner (the 11-18 reply, P33): `--check` is read-only: it verifies the SHA-256 of the `.mbz` already at the configured path and writes or deletes nothing; `--dry-run` prints the source and target and writes nothing; the plain run downloads to a `.part` file first, and if its SHA-256 verification fails, or the download fails or is stopped, the `.part` file is removed; the undo is deleting the downloaded `.mbz`. It is Python, not the `download.sh` proposed on 2026-11-12, because the project stack is Python and the lab PCs may run Windows. Until the SHA-256 is recorded in it, the script refuses to download (exit 2). Tests: `libs/contracts/tests/test_b8_1_files.py` |
 | SHA-256 of the `.mbz` | PENDING MOODLE LAB (record here and in `testdata/README.md` when the backup exists) |
 
 ## 2. Source and licence
@@ -117,8 +117,8 @@ finished template: PENDING MOODLE LAB.
 same table for each protected item, with these fields taken from Moodle's own screens: type, name,
 idnumber, section number, points, completion setting and visibility. The two tables must be equal. The
 B8.1 owner was to send this field list to Shraddha, so that the checker later compares the same fields:
-**sent** (reported by the B8.1 owner; no date or channel is recorded here). Her response and the alignment
-with the checker are **pending**; no confirmation from her is recorded. The earlier Draft proposal in
+**sent and answered**: Shraddha confirmed the fields in her review of #141 (2026-11-19); the one difference
+for the badge is recorded below. The earlier Draft proposal in
 `docs/design/studio.md` (compare `idnumber`s, count, badge and completion criteria) is not the confirmed
 method.
 
@@ -278,7 +278,7 @@ the clean-up rule in §7 (Owner, the 14:43, 09:36 and 11-14 replies).
 - [ ] Open the `.mbz` and check it for user data and for the badge (§7 step 4; §6, P35). If user data is present, stop and report on Issue #55.
 - [ ] Upload under tag `testdata-b8-1-v1`; put the SHA-256 in `download.py`, §1 and `testdata/README.md`; check that `download.py` and `download.py --check` give the same SHA-256.
 - [ ] Give the checker owner the `.mbz`, its SHA-256 and the §4 list.
-- [ ] Comparison field list (§4): sent to Shraddha, so that the checker later compares the same fields (Owner, the 14:43 reply). Her response and the alignment with the checker are pending; no confirmation from her is recorded.
+- [x] Comparison field list (§4): sent to Shraddha, so that the checker later compares the same fields (Owner, the 14:43 reply), and answered in her review of #141 (2026-11-19); the badge difference is recorded in §4.
 - [ ] Restore on 5.3 only (4.5 is not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only); the owner expects a 5.3 backup not to restore on 4.5: owner's report, §3, not verified), on the existing 5.3 lab site, into a new course each time, deleting each course by the clean-up rule in §7; record the Moodle version, the date and the outcome of each restore; make the sections-only backup (§7); run the merge test with the §4 tables.
 - [x] Record that Moodle 4.5 is not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only), and its cost (a rebuild on 4.5 if PRD C-03 later needs it), in the decision record (`docs/decisions/0009-b8-1-template-course.md`) and in §8.
 - [ ] Keep screenshots and logs local (not committed), check them for personal data, and add the App-C item 2 results to the same decision record (`docs/decisions/0009-b8-1-template-course.md`) as a short, text-only results table that names the local files, before the merge-test course is deleted (Owner, the 14:43 and 09:36 replies).
@@ -306,7 +306,7 @@ the clean-up rule in §7 (Owner, the 14:43, 09:36 and 11-14 replies).
 | Whether the §8 results table is also filled in, or the results go only in the decision record | Answered (the 11-18 reply, P33): both, with the same results |
 | How the decision record is held before its number is taken at merge, because the results must be in it before the merge-test course is deleted (§7) | Answered (the 11-18 reply, P34): the results table goes in `docs/decisions/0009-b8-1-template-course.md`, naming the local evidence files, before the merge-test course is deleted |
 | Whether 5.3 keeps an unawarded badge in a users-off backup | PENDING MOODLE LAB (lab step 8.5); what to do either way is settled in §6 (the 11-18 reply, P35) |
-| Comparison field list for Shraddha (an action, not a decision) | Owner's instruction (the 14:43 reply). Sent (reported by the B8.1 owner). Her response and the alignment with the checker: pending; no confirmation from her is recorded |
+| Comparison field list for Shraddha (an action, not a decision) | Owner's instruction (the 14:43 reply). Sent, and answered in Shraddha's review of #141 (2026-11-19): the checker's course model v1 holds the badge's name and award rule only, so issuer, description and active state are compared only in the lab tables (§4) |
 | Exact contents of the sections-only backup (which sections are in or out; which of the four PRD §B1.4 protected items are removed: final project assignment, course feedback activity, course completion criteria, course badge; whether the protected section 3 is in the copy or the backup; backup settings; content of generated sections); see §7 | Answered (the 11-18 reply, P15c, P30, P31): only generated sections 4 and 5, user data off; see §7 steps 1 to 4 |
 | Whether the course feedback activity is anonymous as a confirmed setting or a proposal (conflicting owner answers, §4) | Answered (the 11-18 reply, P28): owner-confirmed, anonymous |
 | Moodle 4.5 | Not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only). The owner expects a 5.3 template not to restore on 4.5 (owner's report, §3; not verified); if PRD C-03 later needs the template on 4.5, it is rebuilt once on 4.5 (Owner, the 11-14 reply) |

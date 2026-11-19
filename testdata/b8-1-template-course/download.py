@@ -1,8 +1,9 @@
 """Download the B8.1 template course backup (.mbz) from its GitHub release and check its SHA-256.
 
 The guide's answers on Issue #55 (2026-11-18, P24 and P33): the script has `--check` (verify the
-SHA-256, write nothing) and `--dry-run` (print the target, write nothing); a failed check removes
-the partial file; a rebuild is a new asset under a new tag, and a tag is never overwritten.
+SHA-256 of the file already here; read-only) and `--dry-run` (print the target, write nothing); a
+download whose SHA-256 check fails removes its partial file; a rebuild is a new asset under a new
+tag, and a tag is never overwritten.
 
 Run from the repository root:
 
