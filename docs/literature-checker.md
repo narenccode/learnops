@@ -5,7 +5,7 @@
 **Peer reviewer:** @Akshita21-09
 **Release:** Release 0 research supporting Release 1 implementation
 **Prepared:** 19 November 2026
-**Status:** Prepared for peer review
+**Status:** In review
 
 ## 1. Purpose and scope
 
