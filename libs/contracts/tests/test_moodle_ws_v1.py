@@ -433,7 +433,8 @@ def test_the_grade_value_source_is_only_a_pending_proposal(example: Doc) -> None
     assert proposed not in prd_functions()
     assert proposed not in prd_parameters(prd_b4())
     assert proposed not in rules_functions()
-    assert proposed not in prd_b4()
+    # The PRD names it once, in the sentence that points to rule R1 in #72; it is in no table.
+    assert prd_b4().count(proposed) == 1
     pending = plain(
         section(rules(), "### 6a. Pending decision: grade-value read-back", "## 7.")
     )
@@ -442,7 +443,14 @@ def test_the_grade_value_source_is_only_a_pending_proposal(example: Doc) -> None
     draft_rule = plain(section(rules(), "## 3. Draft rule", "## 4."))
     assert "is pending the guide's decision" in draft_rule
     assert "no grade write is reported as done" in draft_rule
-    assert "until it is decided, no write is reported as done" in plain(prd_b4())
+    # The guide decided it (rule R1 in #72); until that rule lands no grade write is reported done.
+    prd = plain(prd_b4())
+    assert (
+        "is read with `mod_assign_get_grades` (the guide's decision; rule R1 in #72"
+        in prd
+    )
+    assert "Until that rule lands, no grade write is reported as done." in prd
+    assert "pending the guide's decision" not in prd
 
 
 def test_course_lookup_does_not_rely_on_idnumber(example: Doc) -> None:
