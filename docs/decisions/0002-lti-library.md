@@ -1,4 +1,4 @@
-# ADR 0001: LTI 1.3 Launch Library Selection
+# ADR 0002: LTI 1.3 Launch Library Selection
 
 **Status:** Proposed — pending guide review and approval
 
