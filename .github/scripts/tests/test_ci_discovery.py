@@ -154,3 +154,32 @@ def test_guard_fails_when_a_required_test_is_renamed_or_missing(tmp_path: Path) 
 def test_guard_does_nothing_before_the_package_tests_exist(tmp_path: Path) -> None:
     # main has no test_validate_package.py until the package-folder PR lands.
     assert run_guard(tmp_path, [], tests_file=False) == 0
+
+
+REMOVED_LABEL_JOBS = [
+    ".github/workflows/guide-inbox.yml",
+    ".github/workflows/nudge.yml",
+    ".github/workflows/weekly-digest.yml",
+    ".github/workflows/ai-retry.yml",
+    ".github/scripts/inbox.py",
+    ".github/scripts/nudge.py",
+    ".github/scripts/digest.py",
+]
+
+REMOVED_SCRIPT_NAMES = ["inbox.py", "nudge.py", "digest.py", "awaiting-ai"]
+
+
+def test_label_jobs_are_gone() -> None:
+    root = Path(__file__).resolve().parents[3]
+    for path in REMOVED_LABEL_JOBS:
+        assert not (root / path).exists(), f"{path} still exists"
+
+
+def test_no_workflow_mentions_a_removed_script() -> None:
+    root = Path(__file__).resolve().parents[3]
+    for workflow in sorted((root / ".github" / "workflows").iterdir()):
+        if not workflow.is_file():
+            continue
+        text = workflow.read_text(encoding="utf-8")
+        for name in REMOVED_SCRIPT_NAMES:
+            assert name not in text, f"{workflow.name} mentions {name}"

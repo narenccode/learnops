@@ -1,15 +1,11 @@
 name: pr-review
 
-# Review on the guide's behalf. Rules run on every update; after ONE peer approval an AI review runs.
-# The result is one comment, one label and the commit status `guide-bot`. When that status is a
-# required check on `main`, a pull request cannot be merged before the bot has reviewed it.
-# The bot never approves, merges or closes anything.
-# Manual run: Actions -> pr-review -> Run workflow -> PR number (use it after an AI outage or a fix).
+# Advice on every pull request: rule checks and an AI read, posted as ONE comment that is updated in place.
+# It never sets a label or a status and never blocks a merge. CI (`checks`) and one approval are the gate.
+# Manual run: Actions -> pr-review -> Run workflow -> PR number.
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, edited]
-  pull_request_review:
-    types: [submitted, dismissed]
   workflow_dispatch:
     inputs:
       pr:
@@ -19,9 +15,8 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
+  pull-requests: read
   issues: write
-  statuses: write
 
 concurrency:
   group: pr-review-${{ github.event.pull_request.number || inputs.pr }}
