@@ -433,13 +433,15 @@ count towards them. This pull request adds M2 to the B7 "Used by" row in PRD B.0
 Files: `testdata/b8-1-template-course/README.md` (the requirements, the proposals and the open
 decisions, and a plain list of the expected protected items for the checker); the B8.1 entry in
 `testdata/README.md`. B8.1 is a test data set (PRD §B8, B1.4) and has no requirement ID of its own,
-so no row in the table at the top maps to it. This change is documentation only: no `.mbz`, no code
-and no test exist for B8.1 yet.
+so no row in the table at the top maps to it. No `.mbz` exists yet. The badge image and the download
+script exist and are tested (the two rows below that name tests).
 
 | What is documented | PRD | Test(s) |
 |---|---|---|
-| The template course backup holds the four protected items: the final project assignment (`final-project`), the course feedback activity (`course-feedback`), the course completion criteria and the course badge. The idnumbers are the PRD defaults and are configurable. The protected section number (3) is a proposal | B8.1, B1.4 | None yet: the `.mbz` does not exist |
+| The template course backup holds the four protected items: the final project assignment (`final-project`), the course feedback activity (`course-feedback`), the course completion criteria and the course badge. The idnumbers are the PRD defaults and are configurable. The protected section number (3) is owner-confirmed (#61 A2, 2026-11-16) and stays configurable | B8.1, B1.4 | None yet: the `.mbz` does not exist |
 | A plain list of the expected protected items (idnumber, type, section, count) for the checker, which builds its model from the `.mbz` | B8.1, B1.4 | None yet |
+| The course badge image is a plain square PNG made by the project (`make_badge.py`, standard library only, Apache-2.0), kept with its source in the B8.1 folder; `--check` confirms the committed `badge.png` matches the script (Owner, Issue #55, 2026-11-18, P9b) | B8.1, C-11 | `test_committed_badge_matches_its_generator`, `test_badge_is_a_square_rgb_png`, `test_badge_check_catches_another_image` (negative control), `test_badge_dry_run_writes_nothing`, `test_badge_writes_a_file_that_passes_check` |
+| The download script `download.py` verifies the SHA-256; `--check` and `--dry-run` write nothing; a failed check or download removes the partial file; it refuses to run until a SHA-256 is recorded; tag `testdata-b8-1-v1`, a rebuild gets a new tag (Owner, Issue #55, 2026-11-18, P24, P33) | B8.1, root `CLAUDE.md` rule 9 | `test_no_recorded_sha_refuses_and_writes_nothing`, `test_download_verifies_and_keeps_no_partial_file`, `test_wrong_sha_removes_the_partial_file`, `test_failed_download_removes_the_partial_file`, `test_ctrl_c_removes_the_partial_file`, `test_partial_downloads_are_gitignored`, `test_check_reports_a_changed_or_missing_file`, `test_dry_run_writes_nothing`, `test_release_names_follow_the_guides_rule` (all in `libs/contracts/tests/test_b8_1_files.py`) |
 | A sections-only backup is merged into the template and the protected items stay unchanged. The intended comparison writes down the same table for each protected item before and after the merge, with the fields type, name, idnumber, section number, points, completion setting and visibility, and the two tables must be equal (Owner, Issue #55, 2026-11-12); no check or test implements this yet. The Release 0 backup procedure is written as an untested draft | B1.4, C1.7, App-C item 2 | None yet: needs a Moodle site |
 | Moodle 5.3 is the owner-confirmed build and test version for Release 0 (Issue #55, 2026-11-14 reply, which replaces the 2026-11-12 decision to build on 4.5). Every restore and the sections-only merge are tested on 5.3 only, recording the Moodle version, the date and the outcome of each restore; the `.mbz` is labelled "built on Moodle 5.3". The owner reports that Moodle documents that a backup restores into the same or a newer version only, so the 5.3 template is expected not to restore on 4.5 (the owner's report: not verified here, and the PRD does not state it). Moodle 4.5 is **not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only)**, not recorded as passed; if PRD C-03 later needs the template on 4.5, it is rebuilt once on 4.5 | C-03 | None yet: not verified; needs Moodle lab testing on 5.3. Moodle 4.5: not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only) |
 | Deviation - C-03: the B8.1 template is built and tested on Moodle 5.3 only; 4.5 not tested, waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only). The B8.2 restore and merge tests have their own decision, made by the guide on 2026-11-16 (A5 on PR #61, recorded there with B8.2, not here); C-03 still applies to the harness (FR-C-08) | C-03 | None (a recorded deviation, not a test) |
@@ -448,8 +450,8 @@ and no test exist for B8.1 yet.
 
 These are pending and are not claimed by this change:
 
-- **The `.mbz` backup, its SHA-256, the release asset (tag `testdata-b8-1-v1`) and the download
-  script.** None of them exists yet.
+- **The `.mbz` backup, its SHA-256 and the release asset (tag `testdata-b8-1-v1`).** None of them
+  exists yet. The download script exists but refuses to run until the SHA-256 is recorded in it.
 - **Moodle 5.3 verification:** the restore, the protected items, the completion criteria, the badge
   and the sections-only merge (PRD C1.7, App-C item 2). The B8.1 owner's lab access is ready (in person, the
   owner's 2026-11-14 reply), but access is not a result and no lab verification result is recorded. **Moodle 4.5 is not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only)**
@@ -459,8 +461,9 @@ These are pending and are not claimed by this change:
   rebasing (Owner, Issue #55). The results are not written. The owner asks for a short, text-only
   results table in the same file that names the local evidence files; screenshots and logs stay
   local and are not committed.
-- **The open decisions** in the B8.1 README (§9) are pending guide confirmation. This entry does
-  not settle them.
+- **The open decisions** in the B8.1 README (§9) were answered by the guide on Issue #55
+  (2026-11-18) and are recorded there. What is left is lab work (PENDING MOODLE LAB), including
+  whether 5.3 keeps an unawarded badge in a users-off backup (P35).
 
 ## B8.2 sample course (test data), Release 0 foundation
 
@@ -790,3 +793,28 @@ Test names are in `test_lesson_files_v1.py`. "Validator" means `lesson_files.py`
 | A `url` is on the player's allow-list | B6.2, FR-X-12 | The player (R6) |
 | Slides or cues in ascending order of `t`; chapters, slides or cues have a minimum count | B6.2 | Not decided by the guide, so nothing is required (`test_slides_and_cues_need_no_particular_order`, `test_empty_chapter_list_is_accepted_by_the_schema`) |
 | Release 3 writes the three files (`cues.json` may be empty); Release 5 adds `h5p` cues; a lesson with no cues may omit the file | B6.2, EXT-08, FR-V-14 | Documented in PRD B6.2; the pipeline (R3, R5) implements it |
+
+## G-6 caption WER evaluation preparation, Release 0 foundation
+
+Files: `libs/speech_eval/` (WER arithmetic, input validation, report, CLI),
+`libs/speech_eval/tests/test_speech_eval.py`, `docs/evaluation/g6-wer-procedure.md`,
+`docs/evaluation/g6-wer-report-template.md`. Requirements: PRD G-6, §C4.7 (third box), App-C 7.
+
+**Status: PENDING.** The official G-6 evaluation has **not** been run. The B8.5 set is PENDING,
+the normalisation rules and the WER target are not decided, and ADR 0002 (T8) is not approved.
+
+| Rule | Source | Test(s) |
+|---|---|---|
+| WER by word edit distance (S, D, I counts); pooled WER is total errors over total reference words | ADR 0002 section 7.3 (proposed) | `test_substitutions_deletions_insertions`, `test_pooled_wer_is_not_the_mean_of_lecture_wers` |
+| Inputs refused: URLs, absolute, `..` or backslash paths, media files, placeholders, empty or non-UTF-8 files, bad ids | B8.5 README, C-08, decision 0004 | `test_bad_paths_are_refused`, `test_placeholder_and_empty_files_are_refused` |
+| An `official` run is refused unless the B8.5 status is COMPLETE, a normaliser is approved and every run detail and approval is filled; approvals must be references and the date a real date | B8.5 README, App-C 7 | `test_official_mode_is_refused_today`, `test_official_mode_needs_run_details_and_approvals`, `test_official_approvals_must_look_like_references`, `test_official_run_date_must_be_a_real_iso_date` |
+| An `official` run needs at least five lectures, from the B8.5 inventory, with the inventory's reference transcript, a consent entry and review `checked` (peer review of #103) | PRD B8.5, decision 0004 | `test_official_mode_passes_gates_only_with_everything`, `test_official_mode_refuses_fewer_than_five_lectures`, `test_official_mode_refuses_ids_outside_the_inventory`, `test_official_mode_refuses_a_reference_that_is_not_the_inventory_transcript`, `test_official_mode_needs_consent_and_checked_transcripts` |
+| B5.4 JSON transcripts are read in order of `start`; an empty hypothesis is all deletions with a warning; an empty reference is refused | PRD B5.4 | `test_out_of_order_segments_are_sorted_by_start`, `test_segments_need_numeric_start_and_string_text`, `test_an_empty_hypothesis_is_all_deletions_with_a_warning`, `test_an_empty_reference_is_still_refused`, `test_cli_shows_the_empty_hypothesis_warning` |
+| The report escapes pipe characters and newlines in table cells; the CLI prints a message, not a traceback, when no reference words remain | UI-05 | `test_report_escapes_table_cells`, `test_cli_prints_a_message_not_a_traceback_when_a_normaliser_empties_the_reference` |
+| Reports say synthetic or official, and keep target and acceptance PENDING | G-6, App-C 7 | `test_a_valid_synthetic_run_loads_and_reports` |
+
+### Not verified
+
+- Any speech model's accuracy; the synthetic tests use made-up text only.
+- That an approval cited in an official run exists (a reviewer checks it).
+- Text normalisation, confidence intervals, timing accuracy and speed: not decided, not built.
