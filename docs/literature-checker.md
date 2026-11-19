@@ -15,7 +15,7 @@ The sources comprise official Moodle documentation, the 1EdTech standards, offic
 
 ## 2. Review method
 
-Sources were located through targeted searches of official Moodle, 1EdTech and Playwright documentation sites and scholarly journal/publisher records. The directly accessible sources were opened and checked for their title, issuing body, publication/version information where available, and content relevant to M2. The MoodleDocs Course backup entry [3] was checked through MoodleDocs' indexed search result, but the review client could not directly fetch the versioned page (it returned a cache/access error). It is identified as supplementary user guidance rather than evidence for Moodle's internal backup schema. Reviewers should open [3] in a normal browser if they need to inspect that page directly.
+Sources were located through targeted searches of official Moodle, 1EdTech and Playwright documentation sites and scholarly journal/publisher records. All 16 references below were opened and checked for title, issuing body, publication/version information where available, and content relevant to M2. Moodle user documentation is used for user-facing backup, restriction and completion behaviour; the Moodle developer API pages are used for implementation-level architecture. Neither is treated as proof of LearnOps' own 4.5/5.3 lab configuration.
 
 The source versions are not all the same as the target lab versions: the Moodle developer API references are for 5.3, and the Moodle user guides are for 4.5. These sources explain documented behaviour; they do not prove compatibility across LearnOps' 4.5 and 5.3 lab instances. Compatibility must be established by the project tests specified in the PRD. Access date for the directly accessible web sources: **19 November 2026**.
 
@@ -85,7 +85,7 @@ The PRD's acceptance criteria provide the measurable evaluation method: detect a
 |---|---|---|---|
 | [1] Moodle Backup API | Official developer documentation, Moodle 5.3 | Backup plans, tasks/steps, XML structure and activity-specific backup contributions | FR-C-01; parser boundaries |
 | [2] Moodle Restore API | Official developer documentation, Moodle 5.3 | Restore plans, tasks/steps and plugin XML restoration | FR-C-08; restore verification |
-| [3] Moodle Course backup | Official user documentation, Moodle 4.5 | Backup selection, optional course/user data and `.mbz` output | Input variability and test fixtures; indexed page inspected, direct fetch unavailable |
+| [3] Moodle Course backup | Official user documentation, Moodle 4.5 | Backup selection, optional course/user data and `.mbz` output | Input variability and test fixtures |
 | [4] Quality Matters Higher Education Rubric | Practitioner course-design rubric, Seventh Edition / Version 2.0 | Eight General Standards and 44 Specific Review Standards for online/hybrid course design | Broader course-design context; not automated rule evidence |
 | [5] Moodle External Services | Official developer documentation, Moodle 5.3 | External API framework and site-specific live API documentation | B4 adapter and capability verification |
 | [6] McInnes et al. | Peer-reviewed scoping review, 2024 | 75 course-quality instruments and five quality domains | CK catalogue scope and limitations |
@@ -130,12 +130,12 @@ All URLs below were opened and checked on **19 November 2026**.
 
 1. Moodle. (n.d.). *Backup API* (Moodle 5.3 developer documentation). Moodle Developer Resources. https://moodledev.io/docs/5.3/apis/subsystems/backup
 2. Moodle. (n.d.). *Restore API* (Moodle 5.3 developer documentation). Moodle Developer Resources. https://moodledev.io/docs/5.3/apis/subsystems/backup/restore
-3. Moodle. (n.d.). *Course backup* (Moodle 4.5 user documentation). MoodleDocs. https://docs.moodle.org/405/en/General_backup_defaults
-4. Quality Matters. (n.d.). *Course Design Rubric Standards: Higher Education Rubric, Seventh Edition (Version 2.0).* https://www.qualitymatters.org/qa-resources/rubric-standards/higher-ed-rubric
+3. Moodle. (n.d.). *Course backup* (Moodle 4.5 user documentation). MoodleDocs. https://docs.moodle.org/405/en/Course_backup
+4. Quality Matters. (n.d.). *Course Design Rubric Standards: Higher Education Rubric (Seventh Edition, Version 2.0).* https://www.qualitymatters.org/qa-resources/rubric-standards/higher-ed-rubric
 5. Moodle. (n.d.). *External Services* (Moodle 5.3 developer documentation). Moodle Developer Resources. https://moodledev.io/docs/5.3/apis/subsystems/external
 6. McInnes, R., Hobson, J. E., Johnson, K. L., Cramp, J., Aitchison, C., & Baldock, K. L. (2024). Online course quality evaluation instruments: A scoping review. *Australasian Journal of Educational Technology, 40*(2), 55–75. https://doi.org/10.14742/ajet.8978
 7. Zimmerman, W., Altman, B., Simunich, B., Shattuck, K., & Burch, B. (2020). Evaluating online course quality: A study on implementation of course quality standards. *Online Learning, 24*(4), 147–163. https://doi.org/10.24059/olj.v24i4.2325
-8. Abid, A., Tufail, A. H., Ahmed Salem, O. M., Nawaz, N. A., Farooq, U., Abid, I., & Ishaq, K. (2024). An evaluation framework and comparative analysis of the widely used learning management systems. *PLOS ONE, 19*(12), e0311111. https://doi.org/10.1371/journal.pone.0311111
+8. Abid, A., Tufail, A. H., Salem, O. M. A., Nawaz, N. A., Farooq, U., Abid, I., & Ishaq, K. (2024). An evaluation framework and comparative analysis of the widely used learning management systems. *PLOS ONE, 19*(12), e0311111. https://doi.org/10.1371/journal.pone.0311111
 9. Moodle. (n.d.). *Availability API* (Moodle 5.3 developer documentation). Moodle Developer Resources. https://moodledev.io/docs/5.3/apis/subsystems/availability
 10. Moodle. (n.d.). *Restrict access settings* (Moodle 4.5 user documentation). MoodleDocs. https://docs.moodle.org/405/en/Conditional_activities_settings
 11. Moodle. (n.d.). *Activity completion* (Moodle 4.5 user documentation). MoodleDocs. https://docs.moodle.org/405/en/Activity_completion
