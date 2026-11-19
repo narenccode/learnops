@@ -371,7 +371,9 @@ Both options return the same result payload and show the same page. The upload l
 2. Copy the platform details Moodle shows for the tool (issuer, client ID, deployment ID, platform key and auth URLs) into the environment of the `tools` VM. Never into the repository (C-06).
 3. In the demo course: add the tool as an activity; ID number `demo-d5` (EXT-06).
 4. Check as the test teacher (page opens) and the test student (refused).
-5. **Undo:** delete the activity, delete the tool registration, stop the Studio service. Nothing in Moodle or in Studio's storage needs cleaning, because the slice stores nothing.
+5. **Undo:** delete the activity and the tool registration in Moodle; nothing else in Moodle needs cleaning, because the slice writes nothing to Moodle. What Studio's storage needs depends on the option chosen under §12 item 36 (§6.1):
+   - **Option A:** stop the Studio service. Nothing to clean: the request stores nothing, and its temporary folder is removed when the request ends.
+   - **Option B:** the slice stores data, so the undo removes it, in this order. (1) Stop new uploads: delete the activity first (above), so no new job is queued. (2) Let the worker finish or fail every queued job; it deletes each stored zip after processing, also after a failure (§11 test "Option B: worker"). (3) Check the upload folder (SEC-05, outside any web root) and delete any zip still there, for example from a job the worker never picked up. (4) Remove the validation rows and their results by rolling back the `studio.validation` migration (OPS-07), which drops the table. (5) Stop the Studio service and its worker. After the undo no row, result or zip is kept. While the slice stays in use, rows and results are kept only for the limited retention period (§12 item 16, Needs guide) and the stored zip only until the worker has processed it; the undo above does not wait for that period.
 
 **Moodle 4.5 (C-03).** The same registration and the same tests run on the 4.5 lab site before the slice counts as done. Until then the slice is "verified on 5.3 only".
 
