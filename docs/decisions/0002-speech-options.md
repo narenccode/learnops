@@ -43,7 +43,7 @@ does not: it is not on `origin/main`, on any remote branch, or in any local work
 | R1 | Lab speech-to-text is a **Whisper-family** model reached through the speech interface | PRD §A10, §B5.4 |
 | R2 | All speech-to-text goes through `libs/model_interface`; no direct provider SDK in a module | PRD C-10, `CLAUDE.md` rule 6 |
 | R3 | Provider is a configuration choice (`local` or `hosted`), behind an adapter | PRD EXT-04, B5.4 |
-| R4 | Output has segments and, per segment, `words: [{start, end, word}]`; times are seconds from the start of the original audio; empty `words` is valid | PRD B5.4; proposed B5 contract, open PR #25 (not merged) |
+| R4 | Output has segments and, per segment, `words: [{start, end, word}]`; times are seconds from the start of the original audio; empty `words` is valid | PRD B5.4; B5 contract, merged in PR #25 (`contracts/model-interface.v1.schema.json`) |
 | R5 | A 90-minute recording is ready (captions, transcript, chapters, slide index, manifest) at most 30 minutes after it becomes available. Transcription is only one step of that budget | PRD G-7, §C4.7 |
 | R6 | No module may require a local GPU; a hosted provider must be possible in production | PRD OPS-11 |
 | R7 | Transcription runs in worker containers from a job queue, never in a web request | PRD OPS-10 |
@@ -72,7 +72,7 @@ session, and the repository holds no endpoint address, credential or lab output.
 | Is the endpoint allowed to receive B8.5 audio, and does it keep it? | Open question 4 in `docs/data-map.md`, undecided | **PENDING GUIDE CONFIRMATION** |
 
 The lab verification of App-C 4 (BigBlueButton) is in the same position: recorded as PENDING with no
-lab access (T17, PR #96/#97). This record follows the same rule: no lab fact is claimed.
+lab access (T17: PR #96 is merged and records NOT VERIFIED; PR #97 was closed as superseded by #96). This record follows the same rule: no lab fact is claimed.
 
 ## 4. Options
 
@@ -167,8 +167,9 @@ matters for upload limits on a speech endpoint and for FR-V-15 retention.
 
 ### 5.5 Hosted option and OpenAI whisper-1
 
-OpenAI's documentation (read 2026-11-16 through search results, to be re-checked against the pages
-before merge):
+OpenAI's documentation. First read 2026-11-16 through search results; **re-checked on 2026-11-19
+against the text of the speech-to-text guide, the deprecations page and the transcription guide**
+(the statements below were confirmed; the community thread was not re-read):
 
 - `whisper-1` is **deprecated**; it, `gpt-4o-transcribe`, `gpt-4o-mini-transcribe` and
   `gpt-4o-transcribe-diarize` are announced for removal from the API on **2027-02-26**; the
@@ -322,7 +323,7 @@ All are **PENDING GUIDE CONFIRMATION** unless noted.
    evaluation, given C-12 ("only inside the lab virtual machines and the lab AI services")?
 8. Where does a 90-minute test recording come from, with consent? (Owner: Student 4.)
 9. Which `distil` or quantised variants, if any, may be evaluated? (Follows from question 5.)
-10. Is the B5 contract (open PR #25) the final shape for `words`, and does the guide want
+10. Is the B5 contract (merged in PR #25) the final shape for `words`, and does the guide want
     `words: []` accepted from providers without word times for G-6 purposes? (Owners: Student 3, guide.)
 
 ## 10. Trade-offs
@@ -351,25 +352,26 @@ All are **PENDING GUIDE CONFIRMATION** unless noted.
 - Docs follow-ups (not done here; no other file is changed by this record): `docs/data-map.md`
   question 4, `docs/design/video.md` §7 (add a line pointing to this record once the guide
   responds), and the App-C 7 baseline record.
-- This record does not alter the Video design document, PR #85 or PR #93.
+- This record does not alter the Video design document, PR #85 or PR #93 (both merged).
 
 ## 12. Evidence and sources
 
 PRD (§A10, §A11, §B5.4, §B6.2, §C4.3, §C4.7, App-C 7, C-07, C-10, C-12, EXT-04, OPS-10, OPS-11,
 SEC-07), `docs/design/video.md`, `docs/GETTING-STARTED.md`, `docs/data-map.md`,
 `docs/decisions/0004-b8-5-lecture-videos.md`, `testdata/b8-5-lecture-videos/README.md`,
-`.env.example`, and the unmerged B5 record on branch `grading/fr-m-01-b5-contract` (PR #25).
-No Video literature survey (`docs/literature-video.md` or `docs/design/video.md` §12 sources) is
-in the repository, so none was used.
+`.env.example`, and the B5 contract merged in PR #25 (the merged contract is the source, not the branch).
+The Video literature survey (`docs/literature-video.md`, verified entry S2 on Indian-accented English
+speech recognition, PR #100) was not used for this record, which relies on the project READMEs and the
+OpenAI pages below.
 
 Published sources, read 2026-11-16:
 [openai/whisper](https://github.com/openai/whisper),
 [faster-whisper](https://github.com/SYSTRAN/faster-whisper) (README benchmark),
 [whisper.cpp](https://github.com/ggml-org/whisper.cpp) (README, `examples/cli`, `examples/server`),
 [jiwer](https://github.com/jitsi/jiwer), and the four OpenAI pages in section 5.5.
-Release dates, licences and push dates come from the GitHub API. The OpenAI statements came
-through a web search summary, not a direct page read, and are to be re-checked against the pages
-before this PR is merged.
+Release dates, licences and push dates come from the GitHub API. The OpenAI statements were first
+taken from a web search summary and were re-checked against the page text on 2026-11-19; only the
+community thread (a user report, not a source of fact) was not re-read.
 
 ## 13. Guide decision
 
