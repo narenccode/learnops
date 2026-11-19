@@ -589,6 +589,6 @@ One requirement (or one tightly related group) per pull request. Feature work st
 
 ## 14. Review and approval
 
-- [ ] Owner: I understand and can explain every section.
+- [x] Owner: I understand and can explain every section. (Akshita, Student 1, 2026-11-19)
 - [ ] Peer reviewer: checked against the PRD chapter and the contracts; comments resolved.
 - [ ] Guide: approved (sets `Status: Approved`).
