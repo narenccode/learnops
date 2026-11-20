@@ -436,3 +436,35 @@ def test_next_step_never_pings():
     assert "@\u200bs3" in text
     assert "Enable auto-merge" in text
     assert re.search(r"@[A-Za-z]", text) is None
+
+
+REPO_CODEOWNERS = Path(__file__).resolve().parents[2] / "CODEOWNERS"
+CONTRACT_OWNERS = [
+    "akshita21-09",
+    "shraddha0103",
+    "harshithamanjunatha",
+    "vnaags",
+    "narenccode",
+]
+
+
+def repo_owners(path):
+    text = REPO_CODEOWNERS.read_text(encoding="utf-8")
+    return r.owners_of(r.parse_codeowners(text), path)
+
+
+def test_frozen_contract_schema_is_guide_only():
+    assert repo_owners("contracts/course-package.v1.schema.json") == ["narenccode"]
+
+
+def test_contracts_library_stays_shared():
+    assert repo_owners("libs/contracts/validate_examples.py") == CONTRACT_OWNERS
+
+
+def test_contract_notes_stay_shared():
+    assert repo_owners("contracts/CLAUDE.md") == CONTRACT_OWNERS
+
+
+def test_module_code_unchanged():
+    owners = [o.lower() for o in repo_owners("modules/studio/app.py")]
+    assert owners == ["akshita21-09", "shraddha0103", "narenccode"]
