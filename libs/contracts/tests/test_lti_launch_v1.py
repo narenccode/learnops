@@ -386,7 +386,7 @@ def _drop(path: tuple[str, ...]) -> Callable[[Doc], None]:
 # (case id, edit, JSON-pointer-like place of the error, schema keyword that must fail)
 INVALID_CASES: list[tuple[str, Callable[[Doc], None], tuple[str, ...], str]] = [
     # role: learner is not a v1 value (Learner-only launches are refused before a baseline
-    # session exists, PRD B3 and EXT-07; admitting it is open item OI-25 in ADR 0001)
+    # session exists, PRD B3 and EXT-07; admitting it is open item OI-25 in ADR 0011)
     ("role-learner", _set(("role",), "learner"), ("role",), "enum"),
     ("role-unsupported", _set(("role",), "teacher"), ("role",), "enum"),
     ("role-wrong-case", _set(("role",), "Mentor"), ("role",), "enum"),
@@ -738,7 +738,7 @@ def _resolve_role(role_uris: list[str]) -> str:
 
 
 # (case id, incoming role URIs, normalised role or the refusal). The source of each case is
-# ADR 0001 section 10.3 (OI-22 and the guide's rules 1 to 6) or the contract section 5 rules.
+# ADR 0011 section 10.3 (OI-22 and the guide's rules 1 to 6) or the contract section 5 rules.
 ROLE_CASES: list[tuple[str, list[str], str]] = [
     ("instructor", [INSTRUCTOR], "mentor"),
     ("institution-administrator", [INSTITUTION_ADMIN], "administrator"),
@@ -942,7 +942,7 @@ def _with_issuer(doc: Doc, iss: str) -> Doc:
 def test_two_platforms_with_the_same_user_and_course_numbers_do_not_collide(
     mentor_doc: Doc,
 ) -> None:
-    """Moodle's sub and course ids repeat across sites (ADR 0001 OI-21), so the same pair can
+    """Moodle's sub and course ids repeat across sites (ADR 0011 OI-21), so the same pair can
     come from two issuers. Without iss they would be one identity."""
     other = _with_issuer(mentor_doc, "https://moodle.other.example.org")
     assert _validator().is_valid(mentor_doc) and _validator().is_valid(other)
@@ -1021,7 +1021,7 @@ def test_contract_prd_and_adr_state_the_decided_identity_and_course_link_key() -
     contract = _flat(CONTRACT_PATH.read_text(encoding="utf-8"))
     prd = _flat(PRD_PATH.read_text(encoding="utf-8"))
     adr = _flat(
-        (ROOT / "docs" / "decisions" / "0001-lti-library.md").read_text("utf-8")
+        (ROOT / "docs" / "decisions" / "0011-lti-library.md").read_text("utf-8")
     )
     identity = "(`iss`, `sub`, context id)"
     assert identity in contract and identity in prd

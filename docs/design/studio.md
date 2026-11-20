@@ -209,7 +209,7 @@ In both options the slice keeps nothing that has to be linked to a Moodle course
 **Prerequisites (each outside this module):**
 
 1. #83 (B3 launch contract, `contracts/lti-launch.v1`) merged. **Met:** merged on 2026-11-18.
-2. ADR 0001 Stage 1 (library and pins) and Stage 2 (security design) approved, and `libs/lti` built with a FastAPI router (login, launch, JWKS) and a session check that returns the normalised B3 result.
+2. ADR 0011 Stage 1 (library and pins) and Stage 2 (security design) approved, and `libs/lti` built with a FastAPI router (login, launch, JWKS) and a session check that returns the normalised B3 result.
 3. #61 (B8.2 sample course) and #87 (B1 submission-format rules) merged, so the demo shows those rules. **Met:** both are on `main`.
 4. HTTPS on the `tools` VM (the B3 state cookie is `SameSite=None; Secure`).
 5. This document `Approved`.

@@ -9,7 +9,7 @@
 | Schema | `contracts/lti-launch.v1.schema.json` (JSON Schema Draft 2020-12) |
 | Examples | `contracts/examples/lti-launch.v1/` (valid examples only) |
 | Implemented by | `libs/lti` (not yet created; this document is the contract it must meet) |
-| Background | `docs/decisions/0001-lti-library.md` |
+| Background | `docs/decisions/0011-lti-library.md` |
 
 If this document conflicts with `docs/PRD.md`, the PRD wins (root `CLAUDE.md`).
 
@@ -143,7 +143,7 @@ Rules:
 5. An unlisted role never causes a refusal when a recognised role is also present.
 
 Because Learner is refused before a baseline session is created, `learner` is not a value of
-`role` in v1. Learner support for a later tool (the Release 6 player) is unresolved (ADR 0001,
+`role` in v1. Learner support for a later tool (the Release 6 player) is unresolved (ADR 0011,
 OI-25). It requires a guide-approved contract and gateway compatibility approach, which may be an
 approved extension of the v1 enum or a new contract version, made under PRD §B.0 (§9). Until
 then no Learner support is claimed.
@@ -178,7 +178,7 @@ then no Learner support is claimed.
   registered issuer**. A course id from one registered platform is never resolved against another
   platform's client. There is **never a fallback** to another platform's B4 client, or to a default
   one: if no client is bound for the verified `iss`, the B4 call is refused.
-- The guide has approved the gateway as a consumer of B4 (ADR 0001, OI-15). That approval
+- The guide has approved the gateway as a consumer of B4 (ADR 0011, OI-15). That approval
   covers the gateway's use of B4 and the `(iss, context id)` key; it does not approve or freeze
   B4's `shared.course_link` columns.
 

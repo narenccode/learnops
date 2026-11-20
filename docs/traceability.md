@@ -611,7 +611,7 @@ Files: `contracts/lti-launch.v1.md`, `contracts/lti-launch.v1.schema.json`,
 `contracts/examples/lti-launch.v1/` (`instructor-mentor.json`, `institution-administrator.json`,
 `mentor-minimal-with-unknown-field.json`: valid examples only), the optional-claim vectors
 `contracts/test-vectors/lti-launch-optional-claims.v1.json`, and
-`libs/contracts/tests/test_lti_launch_v1.py`. Decision record: `docs/decisions/0001-lti-library.md`.
+`libs/contracts/tests/test_lti_launch_v1.py`. Decision record: `docs/decisions/0011-lti-library.md`.
 B3 has no requirement ID of its own in the PRD (it is a contract, PRD B.0), so no row in the table
 at the top maps to it.
 
@@ -622,7 +622,7 @@ module tests exist, and none are planned here.
 
 SEC-01, SEC-02, SEC-06, SEC-09, EXT-07 and FR-X-01 are deliberately not in the table at the top.
 Nothing in this contract's tests implements them: the launch validation, session and refusal
-behaviour belong to `libs/lti`, which does not exist yet (ADR 0001, Stage 2 not approved). Each gets
+behaviour belong to `libs/lti`, which does not exist yet (ADR 0011, Stage 2 not approved). Each gets
 its row in the pull request that implements and tests it.
 
 ### Enforced by the JSON Schema and covered by automated tests
@@ -635,7 +635,7 @@ Structure only. Test names are in `test_lti_launch_v1.py`.
 | Every example validates; the examples folder holds valid examples only (JSON files, none invalid) | PRD B.0 rule 1, §11 | `test_examples_folder_has_the_required_examples`, `test_examples_folder_holds_json_files_only`, `test_every_example_is_valid` |
 | Required fields at every depth: `iss`, `sub`, `deployment_id`, `message_type`, `role`, `context`, `context.id`, `resource_link`, `resource_link.id` | §4 | `test_invalid_launch_result_is_rejected_at_the_right_place` (one `missing-…` case each), `test_every_required_field_has_a_missing_case` (fails if a required field has no case), `test_dropping_a_required_field_reports_exactly_that_field` (the one error names the dropped field) |
 | `message_type` is `LtiResourceLinkRequest` only | §2, §4 | `test_invalid_launch_result_is_rejected_at_the_right_place` (`wrong-message-type`) |
-| `role` is one of the values in the schema's enum (currently `mentor`, `administrator`; the value set is under review, ADR 0001 OI-25) | §4, §5 | `test_both_baseline_roles_are_accepted`, `test_invalid_launch_result_is_rejected_at_the_right_place` (`role-…` cases) |
+| `role` is one of the values in the schema's enum (currently `mentor`, `administrator`; the value set is under review, ADR 0011 OI-25) | §4, §5 | `test_both_baseline_roles_are_accepted`, `test_invalid_launch_result_is_rejected_at_the_right_place` (`role-…` cases) |
 | `context.id` is a positive integer written as a string in ASCII digits: zero, negative, non-numeric, leading-zero, whitespace-padded, non-ASCII-digit and newline-containing values are rejected; no upper bound | §3.1 | `test_positive_integer_context_ids_are_accepted`, `test_invalid_launch_result_is_rejected_at_the_right_place` (`context-id-…` cases, including the trailing newline), `test_contract_markdown_quotes_the_schema_context_id_pattern` (drift guard: the contract quotes the schema's pattern) |
 | Required strings are non-empty strings; `sub` and `context.id` are strings, not numbers | §4 | `test_invalid_launch_result_is_rejected_at_the_right_place` (`empty-…`, `numeric-…`, `…-not-an-object` cases) |
 | `name` and `email` may be `null` or absent; an empty string is rejected. `context.title` may be omitted; an empty string and `null` are rejected | §3.2, §4 | `test_optional_fields_may_be_absent_or_null`, `test_name_and_email_are_valid_when_null`, `test_name_and_email_are_valid_when_absent`, `test_context_title_is_valid_when_omitted`, `test_invalid_launch_result_is_rejected_at_the_right_place` (`empty-name`, `empty-email`, `empty-context-title`, `null-context-title`) |
@@ -672,20 +672,20 @@ added.
 ### Documented but not automatically enforced
 
 These rules are written in `contracts/lti-launch.v1.md`. No code enforces them today; where a
-shared test restates a rule, it is listed above. They belong to `libs/lti` (not yet created). ADR 0001 §12, LTI-01 to LTI-32, lists
+shared test restates a rule, it is listed above. They belong to `libs/lti` (not yet created). ADR 0011 §12, LTI-01 to LTI-32, lists
 *proposed* acceptance tests for the launch boundary: they are not approved (Stage 2 is not
 approved), none exists yet, and none is claimed as working.
 
 | Rule | Contract section | Where it belongs |
 |---|---|---|
 | Signature, the version claim `https://purl.imsglobal.org/spec/lti/claim/version` (exactly `"1.3.0"`), `exp`, `aud`, `azp`, `iss`, `deployment_id`, message type, single-use nonce and state checks | §3, §8, PRD SEC-01 | `libs/lti`. The contract and PRD wording for the version claim (full URI, exactly `"1.3.0"`, validation-only, never in the result) is checked by `test_contract_and_prd_document_lti_version_as_validation_only` |
-| `iss` must exactly match a registered platform (no normalisation); an unverified `iss` only locates the candidate configuration for signature verification; B4 is called only through the client bound to the configuration for the registered issuer, with no fallback to another platform's client | §7.1 | `libs/lti` and the B4 client. The B4 owner has confirmed the registered-issuer and client-binding part; the exact-match and untrusted-until-verified wording is B3's. The guide has approved the gateway as a B4 consumer, with the key `(iss, context.id)` (ADR 0001 OI-15); B4's `shared.course_link` columns are not part of that approval and are still to be agreed |
+| `iss` must exactly match a registered platform (no normalisation); an unverified `iss` only locates the candidate configuration for signature verification; B4 is called only through the client bound to the configuration for the registered issuer, with no fallback to another platform's client | §7.1 | `libs/lti` and the B4 client. The B4 owner has confirmed the registered-issuer and client-binding part; the exact-match and untrusted-until-verified wording is B3's. The guide has approved the gateway as a B4 consumer, with the key `(iss, context.id)` (ADR 0011 OI-15); B4's `shared.course_link` columns are not part of that approval and are still to be agreed |
 | Role-URI mapping and precedence; ignoring unlisted roles; refusal when no recognised role remains; refusal under EXT-07 | §5, §8, PRD A5, EXT-07 | `libs/lti`; each tool also refuses what it does not accept |
 | Running the §3.2 normalisation of `name`, `email` and `context.title`, once, at the boundary. The rule and its vectors are tested above; no code performs it yet | §3.2 | `libs/lti` (not yet created), to be tested against `contracts/test-vectors/lti-launch-optional-claims.v1.json` |
 | Session identity `(iss, sub, context id)`, two-hour idle expiry, course-context isolation | §6, §7, PRD SEC-02 | `libs/lti` and each module's authorisation |
 | `name` and `email` never written to logs | §10.1, PRD SEC-06 | Every module's logging; no test yet |
 | No raw ID token, nonce, state or key material reaches a module | §10 | `libs/lti` |
-| LTI library dependency record: pinned artefact, licences on Python 3.12 (including the LGPL `jwcrypto`), advisory scan and version floors | ADR 0001 Appendix B V1 to V3, PRD C-11, SEC-08 | Stage 1 of ADR 0001, not approved; open item OI-26. Partial evidence only, recorded in ADR 0001 §4.1, §5.2, §5.3, §6.2 and Appendix C. Nothing is installed or pinned; `requirements.txt` does not exist |
+| LTI library dependency record: pinned artefact, licences on Python 3.12 (including the LGPL `jwcrypto`), advisory scan and version floors | ADR 0011 Appendix B V1 to V3, PRD C-11, SEC-08 | Stage 1 of ADR 0011, not approved; open item OI-26. Partial evidence only, recorded in ADR 0011 §4.1, §5.2, §5.3, §6.2 and Appendix C. Nothing is installed or pinned; `requirements.txt` does not exist |
 
 ### Requirement text changed by this pull request
 
@@ -695,7 +695,7 @@ Wording only. These changes carry no new tests, because no code implements the r
 |---|---|---|
 | PRD A5, rules paragraph | Role URIs not listed in B3 are ignored; a launch is refused only if no recognised role remains | None yet (`libs/lti`) |
 | PRD B3 table | Claims split into inspected by the gateway and exposed to modules; `iss` added; session bound to `(iss, sub, context id)`; `shared.course_link` keyed by `iss` plus context id | The structure is covered by the schema tests above; the rest belongs to `libs/lti` |
-| PRD EXT-07, FR-X-01, A5 player row | Learner wording is under review (ADR 0001 OI-25); see those PRD rows and the ADR for the current state | None (not implemented) |
+| PRD EXT-07, FR-X-01, A5 player row | Learner wording is under review (ADR 0011 OI-25); see those PRD rows and the ADR for the current state | None (not implemented) |
 | PRD B.0 rule 3 | One sentence added: a consuming module adds its tests when its code that reads the contract exists; before that, the shared contract tests cover the change | Not applicable (process rule) |
 
 ## B5 model and speech interface contract (v1), Release 0 foundation

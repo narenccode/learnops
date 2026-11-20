@@ -217,7 +217,7 @@ First prompt to try in Claude Code: `/design-doc studio`
 
 ### Student 2 (`shraddha0103`): Course checker + integration lead
 1. **Contract B2: course model.** `contracts/course-model.v1.schema.json` plus examples.
-2. **Contract B3: LTI 1.3 launch.** `contracts/lti-launch.v1.md`, and a decision record `docs/decisions/0001-lti-library.md` comparing open-source LTI 1.3 Python libraries (maintenance, licence, features).
+2. **Contract B3: LTI 1.3 launch.** `contracts/lti-launch.v1.md`, and a decision record `docs/decisions/0011-lti-library.md` comparing open-source LTI 1.3 Python libraries (maintenance, licence, features).
 3. **The contract validation script** `libs/contracts/validate_examples.py`. The CI workflow already looks for it: it checks every example in `contracts/examples/` against its schema. Everyone's contract pull requests depend on this.
 4. **Detail the rule catalogue** CK-01…CK-13 (PRD §C2.3) in your design document, with the list of planted errors for the test set B8.3.
 5. As integration lead: at the end of week 1, run a **contract review session** with all four of you, and keep the list of decisions.

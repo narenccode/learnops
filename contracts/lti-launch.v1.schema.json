@@ -47,7 +47,7 @@
           "type": "string",
           "pattern": "^[1-9][0-9]*(?!\\n)$",
           "$comment": "A positive integer in ASCII digits: no sign, no leading zero, no padding, no other character. The (?!\\n) lookahead is deliberate: in Python's re, $ also matches before a final newline, so '42\\n' would pass a plain ^[1-9][0-9]*$. No upper bound is set on purpose. The pattern also rules out the empty string.",
-          "description": "LTI context id. Moodle supplies its course id here (ADR 0001 section 13), so it is a positive integer written as a string. Zero, negative, non-numeric, leading-zero, whitespace-padded, non-ASCII-digit and newline-containing values are rejected."
+          "description": "LTI context id. Moodle supplies its course id here (ADR 0011 section 13), so it is a positive integer written as a string. Zero, negative, non-numeric, leading-zero, whitespace-padded, non-ASCII-digit and newline-containing values are rejected."
         },
         "title": {
           "type": "string",
