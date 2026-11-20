@@ -1,0 +1,2 @@
+# A download in progress (download.py writes <asset>.part, then renames it). Never commit one.
+*.part

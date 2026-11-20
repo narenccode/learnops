@@ -1,0 +1,5 @@
+# Runtime dependencies (installed by .github/workflows/ci.yml, root CLAUDE.md §2.10).
+# One pinned version per package, with its licence. Development and CI packages are in
+# requirements-dev.txt.
+
+tzdata==2026.6                     # Apache-2.0. Time-zone database for zoneinfo on systems that have none (Windows); not used where the system has one

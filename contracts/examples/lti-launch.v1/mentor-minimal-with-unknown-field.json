@@ -1,0 +1,16 @@
+{
+  "iss": "https://moodle.example.org",
+  "sub": "user-1002",
+  "deployment_id": "deployment-1",
+  "message_type": "LtiResourceLinkRequest",
+  "role": "mentor",
+  "context": {
+    "id": "43"
+  },
+  "resource_link": {
+    "id": "link-9"
+  },
+  "name": null,
+  "email": null,
+  "future_optional_field": "readers ignore fields they do not know"
+}
