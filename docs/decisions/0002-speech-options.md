@@ -1,9 +1,10 @@
 # 0002. Speech-to-text options for the Video pipeline (T8)
 
 **Date:** 2026-11-16
-**Status:** PROPOSED. **PENDING GUIDE CONFIRMATION.** The guide has not approved anything in this
-record. No guide approval, comment or decision about speech engines exists in the repository, in the
-PRD or in the pull requests read for this record.
+**Status:** PROPOSED. **Section 8 was approved by the guide with two amendments** on 2026-11-19
+([comment on PR #98](https://github.com/narenccode/learnops/pull/98#issuecomment-6996765969)); the record is **not complete**: the non-secret lab facts and the
+FFmpeg build are not recorded yet (section 3 and section 9), so no engine is chosen here. The open
+questions that remain are listed in section 9.
 **Owner:** Student 4 (Video) · **Requirements:** FR-V-04, FR-M-02, G-6, G-7, App-C 7, C-10, EXT-04, OPS-10, OPS-11
 **Contracts touched:** none. This record changes no contract (PRD §B.0).
 
@@ -58,18 +59,22 @@ does not: it is not on `origin/main`, on any remote branch, or in any local work
 PRD §A11 says the lab has "a speech-to-text endpoint" provided by the guide. Nothing more is
 recorded. `.env.example` has only a placeholder (`SPEECH_LOCAL_URL=http://ai.lab.invalid:9000`, a
 reserved invalid host). No lab endpoint was contacted for this record: none is configured in this
-session, and the repository holds no endpoint address, credential or lab output.
+session, and the repository holds no endpoint address, credential or lab output. The guide said on
+2026-11-19 that the lab facts were already shared with the team and asked that the **non-secret** ones
+be recorded here (model and size, engine and version, hardware, request format and limits,
+authentication method, whether word timestamps are returned). **They are not recorded yet** because
+the shared material is not in the repository. Never record IP addresses, VM addresses or credentials.
 
 | Question | Answer | Status |
 |---|---|---|
-| Which speech model does the lab provide? | "Whisper-family" only (PRD §A10, §B5.4). The model name and size (tiny … large, turbo, distilled, English-only or multilingual) are not recorded anywhere | **PENDING GUIDE CONFIRMATION** |
-| Which engine serves it (openai/whisper, faster-whisper, whisper.cpp, another)? | Not recorded | **PENDING GUIDE CONFIRMATION** |
-| Model and engine version | Not recorded | **PENDING GUIDE CONFIRMATION** |
+| Which speech model does the lab provide? | "Whisper-family" only (PRD §A10, §B5.4). The model name and size (tiny … large, turbo, distilled, English-only or multilingual) are not recorded anywhere | **OPEN: not recorded yet (the guide shared the facts with the team and asked for the non-secret ones to be recorded)** |
+| Which engine serves it (openai/whisper, faster-whisper, whisper.cpp, another)? | Not recorded | **OPEN: not recorded yet (the guide shared the facts with the team and asked for the non-secret ones to be recorded)** |
+| Model and engine version | Not recorded | **OPEN: not recorded yet (the guide shared the facts with the team and asked for the non-secret ones to be recorded)** |
 | Does the endpoint return word-level timestamps? | Not recorded. B5.4 requires `words`; the proposed contract allows `words: []` | **PENDING** (needs one request to the endpoint; see section 9) |
-| Request format, size limit, timeout, audio format accepted, authentication | Not recorded | **PENDING GUIDE CONFIRMATION** |
-| Hardware behind the endpoint (GPU or CPU, memory), concurrency | Not recorded. PRD §A11 says nothing about a GPU | **PENDING GUIDE CONFIRMATION** |
+| Request format, size limit, timeout, audio format accepted, authentication | Not recorded | **OPEN: not recorded yet (the guide shared the facts with the team and asked for the non-secret ones to be recorded)** |
+| Hardware behind the endpoint (GPU or CPU, memory), concurrency | Not recorded. PRD §A11 says nothing about a GPU | **OPEN: not recorded yet (the guide shared the facts with the team and asked for the non-secret ones to be recorded)** |
 | Behaviour on a 90-minute recording | Not measured | **PENDING** (LearnOps result) |
-| Is the endpoint allowed to receive B8.5 audio, and does it keep it? | Open question 4 in `docs/data-map.md`, undecided | **PENDING GUIDE CONFIRMATION** |
+| Is the endpoint allowed to receive B8.5 audio, and does it keep it? | **Allowed** (guide, 2026-11-19): the endpoint is inside the lab and may receive the B8.5 **team** recordings for this evaluation only; no learner or faculty audio; the audio stays out of Git; the team deletes its local copies and records what the service keeps. What the service keeps is **not recorded yet** | Allowed; retention **PENDING** (lab facts) |
 
 The lab verification of App-C 4 (BigBlueButton) is in the same position: recorded as PENDING with no
 lab access (T17: PR #96 is merged and records NOT VERIFIED; PR #97 was closed as superseded by #96). This record follows the same rule: no lab fact is claimed.
@@ -225,9 +230,11 @@ result.**
 B8.5 lectures (at least five, at least 1800 s in total, Indian English, recorded by the team),
 reference transcripts typed by hand or corrected from a model **outside** the comparison and
 reviewed by Harshitha (decision 0004). Audio stays on the permitted machines or lab storage; it is
-never committed. For the 90-minute test, a longer recording is needed. Decision 0004 does not
-provide one: either concatenated B8.5 audio or a separately consented recording. That choice is
-open (section 9).
+never committed. **Decided (guide, 2026-11-19):** a 90-minute test is deferred; there is none in
+Release 0. When it is needed, use a team recording with a consent line, or concatenated B8.5 audio;
+Student 4 owns the source; no downloaded material. B8.5 is not yet complete: decision 0004 records
+two temporary exceptions (no 1800 s total; four lectures for interim work, PR #125), which do not
+change the five-lecture rule for an official run.
 
 ### 7.2 Systems compared
 
@@ -240,9 +247,12 @@ each at the same model size first, then at the size that fits the time budget.
 ### 7.3 WER procedure
 
 - Metric: word error rate = (substitutions + deletions + insertions) / words in the reference,
-  by word-level edit distance. Implementation: `jiwer` (GitHub metadata: Apache-2.0; the exact
-  version to be pinned and its licence re-checked before adding it, as `CLAUDE.md` rule 10 requires),
-  or a small own implementation if the licence check fails.
+  by word-level edit distance. Implementation: **`libs/speech_eval`** (merged in PR #103, commit `e1edd11`; our own code, Apache-2.0,
+  no third-party dependency, word-level edit distance; its CLI is `python -m speech_eval`). It has
+  only the test normaliser `unnormalised-whitespace`; the approved normalisation is decided with the
+  first baseline run (App-C 7). `jiwer` (GitHub metadata: Apache-2.0) is not used; it is a possible
+  cross-check only, and its version and licence would be re-checked before adding it
+  (`CLAUDE.md` rule 10).
 - **Pooled WER** = total errors over all lectures / total reference words (not the mean of
   per-lecture WERs). Also report per-lecture WER and the number of reference words for each.
 - With only about five lectures, report a 95% bootstrap interval resampling lectures, and say that
@@ -281,21 +291,41 @@ the range. Record whether the run completed, and whether text was dropped or rep
 comparing the start, middle and end of the transcript against the reference. This feeds G-7 but
 does not prove it: G-7 covers the whole pipeline.
 
-## 8. Proposed decision
+### 7.6 Scope, scoring tool and FFmpeg (recorded at the guide's request, 2026-11-19)
 
-**Proposed; PENDING GUIDE CONFIRMATION. Nothing here is approved.**
+- **Scoring tool:** `libs/speech_eval` (name), repository commit `e1edd11` (version, PR #103),
+  Apache-2.0 (licence), as in section 7.3.
+- **Accuracy-comparison scope (Release 0):** B8.5 team recordings only, once the set is complete
+  and consented; Whisper-family engines (distilled and quantised Whisper builds are inside the
+  family) run **on the lab VM only**, plus the lab endpoint; metrics are pooled and per-lecture WER
+  and the timing checks of section 7.4; no 90-minute test; no hosted provider; no B8.5 audio leaves
+  the lab.
+- **FFmpeg build and configuration:** **not recorded yet.** The guide asks for the lab image's
+  `ffmpeg -version` output (version and configuration line) before an LGPL build is relied on
+  (see `docs/design/video.md`, Q10). Record the version and configuration here and in the release
+  notes once sent.
+
+## 8. Decision (approved by the guide with two amendments, 2026-11-19)
+
+**Approved by the guide in [a comment on PR #98](https://github.com/narenccode/learnops/pull/98#issuecomment-6996765969), 2026-11-19, with the two amendments
+below.** The approval covers the six points of this section only; the open questions of section 9
+stay open, and no engine behind the lab endpoint is chosen.
 
 1. **Follow the PRD.** The lab speech engine stays Whisper-family, behind the speech interface
-   (R1–R3). This record does not propose leaving that.
+   (R1–R3). PRD A10 fixes the **lab** speech service as Whisper-family; it is not a product-wide
+   ban, and the interface stays engine-neutral (local, hosted, fake; OPS-11, EXT-04), so a
+   non-Whisper engine can be added later as a new provider with a PRD and stack change, not a
+   rewrite. There is no "Whisper-only" rule.
 2. **Do not choose the lab engine.** The lab endpoint is provided by the guide, and its model,
    engine and version are unknown (section 3). Choosing one would be silently picking an
-   unapproved engine, so the engine behind the lab endpoint is **PENDING GUIDE CONFIRMATION**. The
+   unapproved engine, so the engine behind the lab endpoint stays **open until the non-secret lab facts are recorded**. The
    guide is asked for the items in section 9.
 3. **Keep the adapter engine-neutral.** The `local` adapter talks to the endpoint through the
    speech interface and records `meta.model` as model name + engine + version + compute type, so
    that results from different engines stay distinguishable. No engine-specific code in modules.
-4. **Evaluation candidates, not a choice.** Self-hosted evaluation includes all three engines
-   (section 7.2). On the published evidence the screening order for CPU-only use is
+4. **Evaluation candidates, not a choice.** **Self-hosted evaluation on the lab VM only, with the
+   guide's approval for the engine**; no self-hosted engine outside the lab VM. It includes all
+   three engines (section 7.2). On the published evidence the screening order for CPU-only use is
    faster-whisper int8 then whisper.cpp; openai/whisper on CPU is the slowest published run and is
    the reference for accuracy. This order is a screen from published numbers on other hardware
    and audio, and it is **not** a LearnOps result or a recommendation to adopt.
@@ -304,33 +334,35 @@ does not prove it: G-7 covers the whole pipeline.
 6. **Fix the target later.** The G-6 WER target is set after the first baseline run on B8.5
    (App-C 7), not in this record.
 
-## 9. Open questions (for the guide unless stated)
+## 9. Questions and the guide's answers
 
-All are **PENDING GUIDE CONFIRMATION** unless noted.
+The guide answered on 2026-11-19 ([comment on PR #98](https://github.com/narenccode/learnops/pull/98#issuecomment-6996765969)). Q1 to Q3 are answered only in
+principle: the facts must still be recorded here.
 
-1. Which Whisper-family model (name, size, English-only or multilingual, distilled or not) does the
-   lab endpoint serve?
-2. Which engine and which version serves it, and on what hardware (GPU or CPU, memory, concurrency)?
-3. Does the endpoint return word-level timestamps? In what request and response format, with what
-   audio-length and file-size limit, timeout and authentication?
-4. May the lab endpoint receive B8.5 audio for the comparison, and does it keep it? (Data map,
-   question 4; consent statement "video stays in the lab".)
-5. Are non-Whisper local models and distilled Whisper variants permitted, or is the PRD wording
-   "Whisper-family" strict?
-6. Is a hosted provider permitted in production, which one, and what data may it receive (SEC-07)?
-   OpenAI `whisper-1` is excluded by section 5.5 unless the guide decides otherwise.
-7. May LearnOps run its own self-hosted engine (outside the lab endpoint) in a worker for the
-   evaluation, given C-12 ("only inside the lab virtual machines and the lab AI services")?
-8. Where does a 90-minute test recording come from, with consent? (Owner: Student 4.)
-9. Which `distil` or quantised variants, if any, may be evaluated? (Follows from question 5.)
-10. Is the B5 contract (merged in PR #25) the final shape for `words`, and does the guide want
-    `words: []` accepted from providers without word times for G-6 purposes? (Owners: Student 3, guide.)
+| # | Question | Guide's answer (2026-11-19) | State |
+|---|---|---|---|
+| 1 | Which Whisper-family model (name, size, English-only or multilingual, distilled or not) does the lab endpoint serve? | Already shared with the team. Record the non-secret facts here | **Open: not recorded yet** |
+| 2 | Which engine and version serves it, and on what hardware (GPU or CPU, memory, concurrency)? | Same | **Open: not recorded yet** |
+| 3 | Does the endpoint return word-level timestamps, with what request format, limits and authentication method? | Same; never the VM addresses, IPs or credentials | **Open: not recorded yet** |
+| 4 | May the lab endpoint receive B8.5 audio, and does it keep it? | Yes, for this evaluation only: team recordings only, no learner or faculty audio; the consent lines in decision 0004 cover the speakers; the audio stays out of Git; the team deletes its local copies and records what the service keeps; do not promise deletion on the guide's service | **Answered**; what the service keeps is not recorded |
+| 5 | Are non-Whisper local models and distilled Whisper variants permitted? | PRD A10 fixes the lab speech service as Whisper-family; not a product-wide ban; v1 lab comparison is Whisper-family; distilled and quantised Whisper builds are inside the family; no "Whisper-only" rule | **Answered** |
+| 6 | Is a hosted provider permitted in production? | Stays open, a separate decision; no OpenAI `whisper-1` default; no B8.5 audio to a hosted provider | **Answered; hosted provider open** |
+| 7 | May LearnOps run its own self-hosted engine for the evaluation, given C-12? | Allowed only on the lab VM, with the guide's approval for the engine and the team running it there; no self-hosted engine outside the lab VM | **Answered** (section 8(4) amended) |
+| 8 | Where does a 90-minute test recording come from? | Deferred; none in Release 0. Later: a team recording with a consent line or concatenated B8.5 audio; Student 4 owns the source; no downloaded material | **Answered** |
+| 9 | Which `distil` or quantised variants may be evaluated? | Inside the Whisper family | **Answered** |
+| 10 | Is the B5 contract (merged in PR #25) the final shape for `words`? | Keep B5.4 as written: `words: []` is valid, including when timing is absent; the transcript text remains and G-6 uses that text; the lab endpoint should return words if it can; the contract merged in #25 is final for v1 | **Answered** |
+
+**Still to record before this record is complete (guide, 2026-11-19):** the non-secret lab facts
+(Q1 to Q3: model and size, engine and version, hardware, request format and limits, authentication
+method, word timestamps); the endpoint's retention entry for the data map (what it keeps, deleted
+after the run); and the FFmpeg build and configuration (section 7.6). The scoring tool, version and
+licence and the accuracy-comparison scope are in section 7.6.
 
 ## 10. Trade-offs
 
 | Choice | Gains | Costs |
 |---|---|---|
-| Stay Whisper-family (PRD) | One model family, same word-timing method, no new decision | A non-Whisper model with better Indian-English accuracy cannot be tried without the guide |
+| Stay Whisper-family for the lab (PRD A10) | One model family, same word-timing method, no new decision | A non-Whisper model with better Indian-English accuracy can be added only later, as a new provider with a PRD and stack change |
 | Engine-neutral adapter | Engine swap is configuration (EXT-04); lab endpoint can change | Word and segment shapes differ per engine; adapter must normalise (especially whisper.cpp tokens) |
 | Evaluate three engines | Evidence instead of reputation | More work and more hardware time before Release 3 |
 | faster-whisper first on CPU (screen only) | Lowest published CPU time among the same-model runs, less memory than openai/whisper | Published by its own maintainers; older versions; no Indian-English result |
@@ -377,6 +409,7 @@ community thread (a user report, not a source of fact) was not re-read.
 
 | Item | Value |
 |---|---|
-| Guide decision | **PENDING GUIDE CONFIRMATION** |
-| Decided by / date | — |
-| Link to approval | none exists |
+| Guide decision | **Section 8 approved with two amendments** (8(1) as written, plus the PRD A10 clarification; 8(4) self-hosted evaluation on the lab VM only, with the guide's approval for the engine). The open questions of section 9 are answered where the table says so; the lab facts are still to be recorded |
+| Decided by / date | The guide (through the guide's assistant), 2026-11-19 |
+| Link to approval | [https://github.com/narenccode/learnops/pull/98#issuecomment-6996765969](https://github.com/narenccode/learnops/pull/98#issuecomment-6996765969) |
+| Record complete? | **No.** Open: the non-secret lab facts (Q1 to Q3), the endpoint's retention entry, the FFmpeg build and configuration. The status of this record changes once those are recorded |
