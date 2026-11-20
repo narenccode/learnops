@@ -261,8 +261,9 @@ acceptance result.
 
 ## 6. Provisional status
 
-T19's own acceptance criteria were not found (report section 0). This script meets only the
-provisional criteria P2 and P3.
+T19's own acceptance criteria were not found (report section 0). The guide's assistant said on
+2026-11-19 to use the provisional criteria P1 to P6 as the working criteria and not to claim to
+satisfy T19. This script meets only P2 and P3.
 
 ## 7. Validation record (local, 2026-11-20)
 

@@ -34,7 +34,7 @@ below are **provisional**, derived only from the PRD and the wording of the task
 | P5 | Release 0 contents and exit criteria assessed | PRD D1, D2 | Sections 2 and 3 |
 | P6 | Traceability work not duplicated | Task request | `traceability-needs.md` |
 
-**Owner action:** supply the real T19 text. Then this table is replaced by a criterion-by-criterion check.
+**Working criteria (the guide's assistant, 2026-11-19):** the original T19 text is not in the repository and the guide has no separate copy. P1 to P6 are therefore the **working acceptance criteria**, and this chapter **does not claim to satisfy T19**. If the original turns up, it replaces them and this table becomes a criterion-by-criterion check. The guide also accepted the report and demo as documentation, after a status refresh against `main` (this revision), not as a completion claim.
 
 ## 1. Classification used
 
