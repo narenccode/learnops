@@ -179,6 +179,7 @@ All commands accept `--dry-run`, `--check`, `--config <file>`. Exit codes: 0 = O
 | `STUDIO_MAX_ZIP_ENTRIES` | maximum files in an uploaded archive (SEC-05) | 5000 (Proposal, §12 item 30) | to add |
 | `STUDIO_PRACTICE_ENABLED` | feature flag for the practice step, FR-S-12 (EXT-05) | `false`; no effect before Release 5 | to add |
 | `STUDIO_VALIDATE_TIMEOUT_SECONDS` | time limit for one validation in the §6.1 slice (OPS-10, §12 item 36) | 10 (Proposal) | to add |
+| `STUDIO_VALIDATE_INTAKE_ENABLED` | §6.1 Option B only: `false` closes intake, so `POST /api/validations` answers 503 and stores nothing; reading existing results still works. Used first in the teardown (§6.1, registration undo) | `true` (Proposal) | to add |
 | LTI, session and secret variables | via `libs/lti` | owned by that library | by that library |
 | `MODEL_PROVIDER`, `MODEL_NAME` | R5 only, via `libs/model_interface` | B5.2 | by that library |
 
@@ -325,7 +326,7 @@ So "no errors" is never shown as "fully checked" (FR-S-03, §C1.8; §10 row "Che
 
 Both options return the same result payload and show the same page. The upload limits (SEC-05) are checked before any unzip in both.
 
-**Configuration added:** `STUDIO_VALIDATE_TIMEOUT_SECONDS` (Option A, or the worker-side limit in Option B; Proposal; listed in the §6 configuration table). The LTI variables belong to `libs/lti`. Nothing is added to `.env.example` by this document.
+**Configuration added:** `STUDIO_VALIDATE_TIMEOUT_SECONDS` (Option A, or the worker-side limit in Option B; Proposal) and, for Option B only, `STUDIO_VALIDATE_INTAKE_ENABLED` (Proposal; closes intake before a teardown); both are listed in the §6 configuration table. The LTI variables belong to `libs/lti`. Nothing is added to `.env.example` by this document.
 
 **Errors (additions to §10).**
 
@@ -357,6 +358,7 @@ Both options return the same result payload and show the same page. The upload l
 | Temporary folder after success, after error, after timeout | Removed |
 | Option B: `POST /api/validations` | Without session 401; without CSRF token 403; Learner launch refused; upload over a limit refused before anything is stored; valid upload returns a random id without validating in the request |
 | Option B: worker | Produces the same payload as Option A for the same zip; the stored zip is deleted after processing, also after a failure; migration up/down/up |
+| Option B: intake closed (`STUDIO_VALIDATE_INTAKE_ENABLED=false`) | `POST /api/validations` answers 503 with the plain message and creates no row and no stored zip; `GET` of an existing id still answers as before |
 | Option B: `GET /api/validations/{id}` by its owner | Status while queued or running; the result payload when done |
 | Option B: `GET` by another Mentor (different `sub`, same context) | 404, same message as for an unknown id |
 | Option B: `GET` by the same user from another LTI context, or another `iss` | 404 |
@@ -371,7 +373,17 @@ Both options return the same result payload and show the same page. The upload l
 2. Copy the platform details Moodle shows for the tool (issuer, client ID, deployment ID, platform key and auth URLs) into the environment of the `tools` VM. Never into the repository (C-06).
 3. In the demo course: add the tool as an activity; ID number `demo-d5` (EXT-06).
 4. Check as the test teacher (page opens) and the test student (refused).
-5. **Undo:** delete the activity, delete the tool registration, stop the Studio service. Nothing in Moodle or in Studio's storage needs cleaning, because the slice stores nothing.
+5. **Undo:** delete the activity and the tool registration in Moodle; nothing else in Moodle needs cleaning, because the slice writes nothing to Moodle. What Studio's storage needs depends on the option chosen under §12 item 36 (§6.1):
+   - **Option A:** stop the Studio service. Nothing to clean: the request stores nothing, and its temporary folder is removed when the request ends.
+   - **Option B:** the slice stores data, so the undo removes it. The order matters: nothing is deleted while a request or job can still create or read it.
+     1. **Close intake at Studio.** Set `STUDIO_VALIDATE_INTAKE_ENABLED=false` (§6 configuration) and restart the Studio web service. The restart lets requests already in flight finish (graceful shutdown); after it, `POST /api/validations` answers 503 with a plain message and stores nothing. Deleting the Moodle activity and registration (above) is still done, but it is not the barrier: an LTI session issued earlier stays valid until it expires (B3 §6).
+     2. **Drain the queue.** Let the worker finish or fail every queued job; it deletes each stored zip after processing, also after a failure (§6.1 test "Option B: worker").
+     3. **Verify that nothing is running** before any destructive step: a query on `studio.validation` returns no row in state `queued` or `running`, and the web-service log shows no accepted `POST /api/validations` after the restart in step 1. If either check fails, wait and check again; do not go on.
+     4. **Stop the worker**, then **stop the Studio web service**. From here no process can read or write the table or the upload folder.
+     5. **Delete stored data:** any zip still in the upload folder (SEC-05, outside any web root), then the validation rows and their results.
+     6. **Only if the teardown removes the feature:** roll back the `studio.validation` migration (OPS-07), which drops the table.
+
+     After the undo no row, result or zip is kept. While the slice stays in use, rows and results are kept only for the limited retention period (§12 item 16, Needs guide) and the stored zip only until the worker has processed it; the undo does not wait for that period.
 
 **Moodle 4.5 (C-03).** The same registration and the same tests run on the 4.5 lab site before the slice counts as done. Until then the slice is "verified on 5.3 only".
 
@@ -589,6 +601,6 @@ One requirement (or one tightly related group) per pull request. Feature work st
 
 ## 14. Review and approval
 
-- [ ] Owner: I understand and can explain every section.
+- [x] Owner: I understand and can explain every section. (Akshita, Student 1, 2026-11-19)
 - [ ] Peer reviewer: checked against the PRD chapter and the contracts; comments resolved.
 - [ ] Guide: approved (sets `Status: Approved`).
