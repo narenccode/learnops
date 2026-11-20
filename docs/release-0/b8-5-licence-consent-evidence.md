@@ -2,8 +2,11 @@
 
 **Status: PENDING. B8.5 is NOT complete. App-C 8 is NOT met.** This document records evidence and
 gaps. It does not grant, infer or approve anything.
-**Audit date:** 2026-11-16 (first pass at `3abbc02`; second pass, corrections below, merged with
-`origin/main` at `ecb4389`).
+**Audit date:** 2026-11-20, re-audited at `origin/main` `5f3a794`. The local file check in section 2
+was made on 2026-11-16 and was not repeated; everything about the repository was re-read on the
+audit date. **Scope note (PRD §D1, PRs #113 and #116):** App-C 8 is no longer a Release 0 item; it
+belongs to the first release that relies on it. The B8.5 set itself (test data B8 v1) is still in
+Release 0.
 **Covers:** the release task labelled T11 (licence and consent evidence) and T7 (official B8.5
 dataset evidence) in the project tracker.
 
@@ -86,7 +89,7 @@ than temporary pipeline-test clips (see gap G-8), or anything about licence.
 | G-2 | Speaker names are `PENDING` for all five lectures, so no recording can be linked to a speaker or a consent line | Speaker column filled by the recording team; name must match the consent line | **PENDING** |
 | G-3 | No record that speakers were told about the interim storage and the public name/consent line before consenting (decision 0004 requires it) | A statement in the PR or decision record by the person who obtained consent | **PENDING** |
 | G-4 | No outline or reference transcript exists (all ten files are placeholders); no Harshitha review | Reviewed transcripts, then `checked` | **PENDING** |
-| G-5 | Total duration 338 s is below the 1800 s threshold. The guide's temporary exception has **no approval reference** (date and where given) | The guide adds the reference to decision 0004; the exception is not a waiver | **PENDING GUIDE** |
+| G-5 | Total duration 338 s is below the 1800 s threshold. The guide approved a temporary exception; decision 0004 now cites the guide's confirmation on issue #121 (PR #125), but not the date of the earlier approval. A second temporary exception allows four lectures instead of five for interim demonstration and testing only | Both exceptions are temporary and are not waivers: the set is complete only with five recordings, and the 1800 s total is still the acceptance threshold | **Reference recorded** (date of the earlier approval not recorded); requirement still **not met** |
 | G-6 | Retention and deletion of recordings, extracted audio and drafts; lab-storage access; retention of names, consent lines and transcripts (and what happens on withdrawal) | Guide decisions recorded in `docs/decisions/` (data-map questions 1 to 3) | **PENDING GUIDE** |
 | G-7 | Recording file names are `PENDING` in the inventory; the recording-team member who holds each file is not recorded | File names (no folders, no URLs) entered by the owner | **PENDING** |
 | G-8 | Not confirmed that the five local files are the official B8.5 recordings and not temporary Video-pipeline test clips | Owner (Student 4) confirms in writing, in the PR or decision record | **PENDING OWNER** |
@@ -131,7 +134,7 @@ Only items required by the repository's requirements are listed.
 | # | Required item | Source | State |
 |---|---|---|---|
 | 1 | At least 5 recordings exist | Decision 0004 | Local files exist (5); owner confirmation of official status **PENDING** (G-8) |
-| 2 | Total at least 1800 s | Decision 0004 | **Not met (338 s)**; temporary exception, approval reference **PENDING** |
+| 2 | Total at least 1800 s | Decision 0004 | **Not met (338 s)**; temporary exception recorded in decision 0004 (guide, issue #121, PR #125) |
 | 3 | Duration of each measured with `ffprobe` and recorded | Decision 0004 | Measured in this audit; recorded only on the unmerged branch (G-9) |
 | 4 | SHA-256 of each recording | Set README | On `main`; verified 5 of 5 locally in this audit |
 | 5 | Recording file name in the inventory | Set README | **PENDING** (G-7) |
@@ -152,6 +155,7 @@ none are invented here.
 |---|---|
 | `python -m pytest -q libs/contracts/tests/test_b8_5_dataset.py` (worktree `learnops-r0-audit`, first pass at `3abbc02`) | `71 passed in 18.55s` |
 | Same command, second pass, branch merged with `origin/main` `ecb4389`, exit code 0 | `71 passed in 5.19s` |
+| Same command, third pass (2026-11-20), branch merged with `origin/main` `5f3a794` | `71 passed in 33.48s` |
 | SHA-256 and `ffprobe` check described in §2 (first pass) | 5 of 5 hash matches; durations 62/82/43/68/83 s; total 338 s |
 | Same local check repeated in the second pass (also searching `.m4v`, `.wav`, `.mp3`) | 5 of 5 distinct hash matches; identical durations; total 338 s; 0 copies inside any `learnops*` folder |
 | `git ls-files testdata/b8-5-lecture-videos` | Only `.gitignore`, `README.md` and `outline.md` / `transcript.en.txt` for lectures 01 to 05: no media tracked |
@@ -166,6 +170,6 @@ truthful. It does not show that B8.5 or App-C 8 is met.
 - That the recordings are Indian-English technical lectures spoken from an outline.
 - That the files are the official set (G-8).
 - Transcript accuracy and review (G-4).
-- The guide's approval of the 1800 s exception and of retention/storage questions (G-5, G-6).
+- The date of the guide's earlier approval of the 1800 s exception, and the guide's decisions on retention and storage (G-5, G-6).
+- A pull request that puts the five measured durations on `main`: commit `9c6d703` on `video/b8-5-dataset-evidence` is still not on `main` and no open PR carries it (G-9).
 
-> **Update 2026-11-18:** PR #99 recorded SHA-256 values and `ffprobe` durations for five recordings in the B8.5 inventory; PR #125 recorded the guide-approved temporary exceptions in decision 0004 (four lectures, no 1800 s total, for interim demonstration and testing only); PR #126 corrected the status wording. B8.5 stays **PENDING**: file names, speakers, consent lines, transcripts and review are not recorded, so no licence or consent evidence exists yet.
