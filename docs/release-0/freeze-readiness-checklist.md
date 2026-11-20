@@ -115,7 +115,7 @@ Merged and relevant since the first audit: #25, #27, #46, #54, #61, #83, #85, #8
 **Awaiting guide:**
 - Approval of the three remaining design documents: `grading.md`, `checker.md`, `video.md` (`Status: Approved` is the guide's alone; `studio.md` was approved in PR #147).
 - Review of the LTI library decision (App-C 6, ADR 0001), the B5 decision record, and which of the two `0001` files is renumbered.
-- Retention, lab-storage access and withdrawal handling for B8.5 (data-map questions 1 to 3).
+- *(Decided.)* Retention, lab-storage access, names and transcripts and processing services for B8.5 were decided on 2026-11-19 and recorded in decision 0011; the data map follows it. Still to record: what the lab endpoint keeps (decision 0002, PR #98).
 - Contract-change approvals and the freeze itself (PRD B.0, `docs/RELEASING.md`).
 - A complete Release 0 task list and the definition of the T-labels: the repository has none.
 - The "Release 0 notes" that list where each moved item goes.

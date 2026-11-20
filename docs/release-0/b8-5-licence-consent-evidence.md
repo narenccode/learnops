@@ -30,7 +30,7 @@ dataset evidence) in the project tracker.
 | Written consent line (App-C 8) | 0 | 5 | 0 | 5 |
 | Licence or permission evidence | 0 | 5 | 0 | 5 |
 | Reference transcript, reviewed | 0 | 5 | 0 | 5 |
-| Retention approval | 0 | 5 | 0 | 5 (guide, G-6) |
+| Retention rule | Decided (decision 0011, 2026-11-19) | n/a | n/a | Nothing deleted yet: no evaluation has run |
 
 "Verified" counts only what a command in section 7 actually showed. "Ambiguous" means the evidence
 could be read two ways and nothing in the repository settles it.
@@ -44,8 +44,8 @@ could be read two ways and nothing in the repository settles it.
 | PRD §A6 | "Lecture videos with reference transcripts can be obtained with permission (§B8.5)." |
 | Decision 0004 | Each speaker writes **one consent line** with their name, the date and the exact sentence `used to test speech recognition; video stays in the lab; transcript published under Apache-2.0`. Recordings stay private and outside Git. Approved transcripts are published under Apache-2.0. Harshitha reviews the reference transcripts. |
 | Decision 0004, completion criteria | At least five recordings; total at least 1800 s; reference transcripts prepared and reviewed; speaker consent lines documented. |
-| Decision 0004, temporary exception | Guide approved that the 1800 s minimum need not be reached "for now"; the exception covers only that minimum. **Approval reference: PENDING.** |
-| `docs/data-map.md` | Retention/deletion of recordings, lab-storage access, and retention of names/transcripts are **"Not decided"** (guide questions 1 to 3). |
+| Decision 0004, temporary exception | Guide approved that the 1800 s minimum need not be reached "for now"; the exception covers only that minimum. Approval reference: the guide's confirmation on issue #121, recorded in decision 0004 by PR #125. A second temporary exception allows four lectures for interim work (same record). |
+| `docs/data-map.md`; decision 0011 | Retention/deletion of recordings, lab-storage access, names and transcripts, and processing services were decided by the guide on 2026-11-19 and are recorded in `docs/decisions/0011-b8-5-data-handling.md`; the data-map rows follow it. What the lab endpoint keeps is not recorded yet (decision 0002, PR #98). |
 
 ## 2. Evidence inventory (per recording)
 
@@ -90,7 +90,7 @@ than temporary pipeline-test clips (see gap G-8), or anything about licence.
 | G-3 | No record that speakers were told about the interim storage and the public name/consent line before consenting (decision 0004 requires it) | A statement in the PR or decision record by the person who obtained consent | **PENDING** |
 | G-4 | No outline or reference transcript exists (all ten files are placeholders); no Harshitha review | Reviewed transcripts, then `checked` | **PENDING** |
 | G-5 | Total duration 338 s is below the 1800 s threshold. The guide approved a temporary exception; decision 0004 now cites the guide's confirmation on issue #121 (PR #125), but not the date of the earlier approval. A second temporary exception allows four lectures instead of five for interim demonstration and testing only | Both exceptions are temporary and are not waivers: the set is complete only with five recordings, and the 1800 s total is still the acceptance threshold | **Reference recorded** (date of the earlier approval not recorded); requirement still **not met** |
-| G-6 | Retention and deletion of recordings, extracted audio and drafts; lab-storage access; retention of names, consent lines and transcripts (and what happens on withdrawal) | Guide decisions recorded in `docs/decisions/` (data-map questions 1 to 3) | **PENDING GUIDE** |
+| G-6 | Retention and deletion of recordings, extracted audio and drafts; lab-storage access; retention of names, consent lines and transcripts (and what happens on withdrawal) | The guide's decisions, recorded in `docs/decisions/0011-b8-5-data-handling.md` | **Decided** (2026-11-19); what the lab endpoint keeps is **still to be recorded** |
 | G-7 | Recording file names are `PENDING` in the inventory; the recording-team member who holds each file is not recorded | File names (no folders, no URLs) entered by the owner | **PENDING** |
 | G-8 | Not confirmed that the five local files are the official B8.5 recordings and not temporary Video-pipeline test clips | Owner (Student 4) confirms in writing, in the PR or decision record | **PENDING OWNER** |
 | G-9 | Unmerged work: commit `9c6d703` on `video/b8-5-dataset-evidence` (the five measured durations) is not on `main`; no open PR carries it | A PR from that branch by its owner (this audit left the branch untouched) | **OPEN, owner action** |
@@ -115,7 +115,7 @@ the guide's approval**; nothing in this section is an approved policy.
 7. Nobody writes a consent line for another person.
 8. **PROPOSED:** if a speaker declines or withdraws, the recording is excluded from the set, the
    inventory row returns to `PENDING`, and the owner asks the guide how to handle deletion of the
-   file and of any published name or transcript (data-map question 3). **PENDING GUIDE.**
+   file and of any published name or transcript. **Decided by the guide on 2026-11-19 (decision 0011):** a withdrawing speaker is removed from the current tree, the withdrawal is recorded, and Git history is not rewritten.
 9. **PROPOSED:** if the set cannot reach five consented lectures, the owner reports it to the
    guide; the requirement is not reduced by anyone else.
 
@@ -170,6 +170,6 @@ truthful. It does not show that B8.5 or App-C 8 is met.
 - That the recordings are Indian-English technical lectures spoken from an outline.
 - That the files are the official set (G-8).
 - Transcript accuracy and review (G-4).
-- The date of the guide's earlier approval of the 1800 s exception, and the guide's decisions on retention and storage (G-5, G-6).
+- The date of the guide's earlier approval of the 1800 s exception (G-5). The guide's decisions on retention, storage, names and transcripts and processing services are recorded in decision 0011; what the lab endpoint keeps is still to be recorded (decision 0002).
 - A pull request that puts the five measured durations on `main`: commit `9c6d703` on `video/b8-5-dataset-evidence` is still not on `main` and no open PR carries it (G-9).
 
