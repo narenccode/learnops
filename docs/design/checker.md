@@ -94,17 +94,136 @@ Long-running integration tasks must execute outside web request handlers, in acc
 
 The module interacts with Moodle through supported backup files, Moodle's standard web-services API, LTI 1.3 and browser automation for tests. It must not modify Moodle's source code, database directly or install Moodle plugins.
 
+### 3.4 Rule catalogue CK-01 to CK-13 (FR-C-03)
+
+PRD §C2.3 names the thirteen rules and says each has an id, a severity, a message and a fix hint. It gives
+**only the rule names**. Everything below that is not the PRD name is a **Proposal** for the guide: the
+trigger written in B2 terms, the severity, the message and the fix hint. The rule names are copied from
+the PRD unchanged. Every rule reads only the B2 course model (decision 0003); none reads the raw `.mbz`
+or package.
+
+**Severity (Proposal, §12 item 12).** In v1 every rule is an **error**: each one enforces a PRD rule
+(B1.2, B1.3, B1.4, B7, C-08, C-09) whose breach either stops a learner, gives a wrong grade or breaks
+a protected item. No rule is a warning in v1. The report still groups by severity (C2.4), so a later
+warning-level rule is an additive change.
+
+**Report state per rule (§3.6).** For each rule and each item it applies to, the result is `pass`,
+`finding` or `not checked` (the last when the model lacks the data: a null value, decision 7, or a
+package model without completion or badge data). A `not checked` is listed in the report and is never
+counted as a pass.
+
+**Messages** follow UI-05: what happened, naming the item, then what to do. `{title}`, `{idnumber}` and
+`{section}` are filled from the model; an item without an `idnumber` is named by its title and section
+number.
+
+| Rule (PRD name) | Triggers when (B2 terms) | Input it can judge | Message (Proposal) | Fix hint (Proposal) |
+|---|---|---|---|---|
+| **CK-01** Unreachable section or activity | The path simulation (§3.5) never makes the section or activity available to a learner, although `visible` is not `false` | Package and `.mbz` | "{title} ({idnumber}) in section {section} can never be reached by a learner: its access condition can never be met." | "Change the access condition of {title}, or of the item it waits for, so a learner who works through the course in order can reach it." |
+| **CK-02** Completion rule that can never be met | An activity's `completion` asks for something the activity cannot give: `use_grade` or `pass_grade` with `grade_item` null; `submit` on a type with no submission (for example `page`, `url`, `label`) | Package and `.mbz` | "{title} ({idnumber}) can never be marked complete: its completion rule asks for {condition}, which this activity does not have." | "Change the completion rule of {title} to one the activity supports, for example 'view' for a page, or add the missing grade item." |
+| **CK-03** Graded points ≠ target total | The sum of `grade_item.max_grade` over graded activities differs from the independent target `course.total_points` (rules in §3.2 "CK-03: independent grading target") | Package always; `.mbz` only with an independent target, else `not checked` | "The graded activities add up to {sum} points, but the course target is {target} (difference {difference})." | "Change the points of the graded activities, or the course target, so they are equal. Graded items counted: {list}." |
+| **CK-04** Unlock rule refers to a missing activity | An `availability` completion condition names a `cm` that is no activity in the model, or a `cm = -1` (previous activity) that resolves to nothing (decision 5) | Package and `.mbz` | "The access condition of {title} ({idnumber}) waits for an activity that is not in the course." | "Point the condition at an activity that exists in this course, or remove the condition." |
+| **CK-05** Circular unlock rules | The availability completion conditions form a cycle: A waits for B and B, directly or through others, waits for A | Package and `.mbz` | "{title list} wait for each other in a circle, so none of them can open." | "Remove one condition from the circle so at least one of these items opens first." |
+| **CK-06** Duplicate or invalid idnumber | Two sections or activities share one `idnumber`, or an `idnumber` does not have the B1.2 rule 6 form (lowercase letters and digits joined by single hyphens) | Package and `.mbz`; an activity with a null `idnumber` is an open question (§12 item 14) | "The idnumber '{idnumber}' is used by {count} items: {items}." / "'{idnumber}' on {title} is not a valid idnumber." | "Give every item its own idnumber of lowercase letters and digits joined by hyphens, for example wk-02-task." |
+| **CK-07** Protected item missing, duplicated or changed | Compared with the supplied reference model of the B8.1 template (decision 0003 #21): a protected `idnumber` (`final-project`, `course-feedback` or a configured one) is absent, appears twice, or differs field by field (as FR-C-05), including the course completion criteria and the badge | `.mbz` with `--reference-model`; without it, `not checked` for the comparison (risk 11). Missing or duplicated is still judged by `idnumber` | "The protected item {idnumber} is {missing / present {count} times / changed: {field} was {old}, now {new}}." | "Restore the protected item from the template course. LearnOps never generates or changes protected items (PRD B1.4)." |
+| **CK-08** Course completion or badge criteria refer to missing items | A `course_completion.criteria` entry or a `badges[].criteria` entry names a `cmid` or `idnumber` that is no activity in the model | `.mbz`; package models have `course_completion` and `badges` null, so `not checked` (B8.2 answer A7) | "The {course completion / badge '{name}'} criteria name {idnumber or cmid}, which is not in the course." | "Point the criteria at activities that exist, or remove the stale criterion." |
+| **CK-09** Assignment without a valid marking table, or marking-table points ≠ assignment points | An `assignment` has `marking_table.present` false, or `marking_table.points_total` differs from `grade_item.max_grade` (decision 15). What makes a table "valid" beyond presence and points is open (§12 item 15) | Package and `.mbz` (the builder fills `marking_table`) | "{title} ({idnumber}) has {no marking table / a marking table worth {table} points but is graded out of {points}}." | "Add a marking table to the task description (PRD B1.3), with rows that add up to the assignment's points." |
+| **CK-10** Assignment without marking workflow | An `assignment` has `marking_workflow` false. Null is `not checked` (decision 7; package models, §12 item 16) | `.mbz`; package models `not checked` until §12 item 16 is decided | "{title} ({idnumber}) does not use marking workflow, so a saved grade can reach learners before a mentor releases it." | "Turn on 'Use marking workflow' in the assignment's grade settings (PRD B1.2 rule 4, C-09)." |
+| **CK-11** Practice (H5P) activity with a grade item | An activity of `type` `h5p` has a non-null `grade_item` | Package and `.mbz` | "The practice activity {title} ({idnumber}) has a grade item; practice must stay ungraded." | "Remove the grade from the H5P activity (set its grade type to none). Practice is never graded (PRD B7)." |
+| **CK-12** Media referenced by a full fixed URL instead of a relative path | A `media_refs` entry is a full URL (it has a scheme such as `https://`) instead of a relative path. If `media_refs` is absent, `not checked` (decision 16) | Package and `.mbz` when the builder fills `media_refs` | "{title} ({idnumber}) refers to media by a full address: {url}." | "Store the media file with the course and refer to it by a relative path, for example media/week-01/diagram.png (PRD C-08)." |
+| **CK-13** Activity used in an unlock rule without completion tracking | An activity is named by an availability completion condition, but its `completion.tracking` is `none` | Package and `.mbz` | "{title} ({idnumber}) unlocks {dependants} but has no completion tracking, so it can never count as complete." | "Turn on completion tracking for {title} (PRD B1.2 rule 5)." |
+
+**Small examples that trigger each rule** (B2 fragments; only the fields that matter; `cm` values are
+the `cmid` of another activity in the same model):
+
+| Rule | Example |
+|---|---|
+| CK-01 | An activity with `availability: {"op": "&", "c": [{"type": "date", "d": "<", "t": 1577836800}]}` (only before 1 January 2020): no learner can reach it now |
+| CK-02 | `{"type": "page", "completion": {"tracking": "automatic", "submit": true}}`: a page has no submission |
+| CK-03 | `course.total_points: 120` with graded `max_grade` values 25 + 25 + 25 + 25 = 100 |
+| CK-04 | A condition `{"type": "completion", "cm": 999, "e": 1}` where no activity has `cmid` 999 |
+| CK-05 | Activity A (`cmid` 3) waits for `cm` 7, and activity B (`cmid` 7) waits for `cm` 3 |
+| CK-06 | Two activities with `idnumber: "wk-01-task"`, or one with `idnumber: "Week 1 Task"` |
+| CK-07 | The reference model has `final-project` with `max_grade` 100; the checked model has it with 80, or has no `final-project` |
+| CK-08 | `course_completion.criteria: [{"type": "activity", "idnumber": "old-quiz"}]` and no activity `old-quiz` |
+| CK-09 | `{"type": "assignment", "grade_item": {"max_grade": 25}, "marking_table": {"present": true, "points_total": 20}}` |
+| CK-10 | `{"type": "assignment", "marking_workflow": false}` |
+| CK-11 | `{"type": "h5p", "grade_item": {"max_grade": 10}}` |
+| CK-12 | `media_refs: ["https://example.invalid/media/diagram.png"]` |
+| CK-13 | Activity B waits for `{"type": "completion", "cm": 4}`, and activity 4 has `completion: {"tracking": "none"}` |
+
+**Rules that fire together.** Some planted errors necessarily cause a second finding: a cycle (CK-05),
+a missing target (CK-04) or an untracked activity (CK-13) also leaves the waiting item unreachable
+(CK-01). Whether CK-01 is reported for an item whose cause is already a CK-04, CK-05 or CK-13 finding is
+open (§12 item 13). The B8.3 mapping (§11.3) states the expected findings either way.
+
+**Checks that are not CK rules.** Package-structure errors that the shared B1 validator reports
+(`libs/contracts`: a missing `body` file, an unknown `mode`, a schema error) stop the model from being
+built. The checker reports them with the validator's own code and rule (for example `body_file_missing`,
+B1.1), not as a CK rule. Whether the checker builds a model at all from a package that fails B1 is open
+(§12 item 17).
+
+### 3.5 Learner-path simulation (FR-C-02) (Proposal)
+
+The simulation answers one question for CK-01: can a learner who works through the course reach each
+section and activity? It is a fixed-point loop over the B2 model:
+
+1. Start with a learner who is enrolled, has completed nothing, and has no grades, on the run date.
+2. A section is **open** when `visible` is not `false` and its `availability` is met. An activity is
+   **open** when its section is open, its `visible` is not `false` and its own `availability` is met.
+3. An open activity whose completion rule can be met (it is not a CK-02 case) and whose `tracking` is
+   `manual` or `automatic` is added to the **completed** set.
+4. Repeat steps 2 and 3 until nothing new opens or completes. Every section or activity never opened is
+   reported as CK-01.
+
+Conditions understood in v1: activity completion (including `cm = -1`, decision 5), date, and the `&` and
+`|` operators with nesting. A condition of any other type (for example group, grouping, user profile or
+grade) makes the items that depend on it `not checked`, never silently passed (PRD C2.8). `visible: null`
+is `not checked` (decision 7). Grade conditions are listed as an open question (§12 item 18), because they
+need a grade the simulated learner does not have.
+
+### 3.6 Report states and output (FR-C-04) (Proposal)
+
+**One run, three outputs:** the CLI report, the mentor web report (§6.1) and JSON, all from the same
+result. Findings are grouped by severity (C2.4); each shows the rule id, severity, message, fix hint and
+the affected item (section number, title, `idnumber`, and a link in the web report).
+
+**JSON (Proposal; field names to be fixed before FR-C-04 starts, §12 item 19):**
+
+```json
+{
+  "checker_version": "0.1.0",
+  "input": {"kind": "package", "name": "sample-course"},
+  "summary": {"errors": 1, "warnings": 0, "not_checked": 2},
+  "findings": [
+    {"rule": "CK-03", "severity": "error",
+     "message": "The graded activities add up to 100 points, but the course target is 120 (difference 20).",
+     "fix_hint": "Change the points of the graded activities, or the course target, so they are equal.",
+     "item": {"section": null, "idnumber": null, "title": null}}
+  ],
+  "not_checked": [
+    {"rule": "CK-08", "reason": "The package model has no course completion or badge data."}
+  ]
+}
+```
+
+The JSON never contains file contents, tokens or personal data (§9.3).
+
+**Exit codes (OPS-05):** `0` = no error finding; `1` = at least one error finding; `2` = the checker
+could not run (for example an unreadable input or bad configuration, §10). Whether `not checked` items
+affect the exit code, and whether `cannot judge` (decision 25) and `not checked` (C2.8, risk 11) are one
+state or two, is decision 0003's open question and is still open (§12 item 20).
+
 ## 4. Contracts
 
 | Contract | Provided / used | Fields or functions I rely on | Change needed? |
 |---|---|---|---|
 | B1 — Course package | Used | Course metadata, sections, activities, IDs, availability, completion, points and activity content references | None planned |
-| B2 — Course model | Provided and used | Course metadata, sections, activities, availability, completion, grade items, marking workflow, protected items and badges | Confirm exact schema before implementation |
+| B2 — Course model | Provided and used | Course metadata, sections, activities, availability, completion, grade items, marking workflow, protected items and badges. The fields each CK rule reads are in §3.4 | None: the schema is merged (`contracts/course-model.v1.schema.json`, #46); its decisions are in `docs/decisions/0003-b2-course-model.md`, with the items still open listed there |
 | B3 — LTI 1.3 launch | Provided as integration lead | Subject, role, context, resource link and deployment identity; validated launch and course binding | No change planned |
 | B4 — Moodle web services | Used | Course lookup and course-structure retrieval through approved functions | None planned |
 | B6 — Media paths and lesson manifest | Used | Relative media paths needed to detect CK-12 violations | None planned |
 | B7 — H5P practice output | Used | H5P activity type and grading information needed for CK-11 | None planned |
-| B8 — Test data sets | Used | Template courses, valid sample courses and planted-error test cases | Confirm exact fixture files |
+| B8 — Test data sets | Used | B8.1 template (its B2 model is CK-07's reference), B8.2 clean sample (zero findings expected), B8.3 planted errors (the mapping is §11.3) | None to the contract; the B8.3 variants still to build are listed in §11.3 |
 
 B2 and B3 are provided by this module, with B3 owned as part of the integration-lead responsibility. The other listed contracts are dependencies.
 
@@ -306,7 +425,8 @@ The checker does not automatically repair a course or modify its live configurat
 
 | Level | What is tested | Test data | Requirement IDs |
 |---|---|---|---|
-| Unit | Course-model parsing, availability evaluation, completion rules, each CK rule, model comparison and report formatting | Small synthetic fixtures, including valid courses and individual planted errors | FR-C-01–FR-C-05 |
+| Unit | Course-model parsing, availability evaluation, completion rules, each CK rule (one test per rule with the §3.4 example, plus a passing case), model comparison and report formatting | Small synthetic B2 fixtures, including valid courses and individual planted errors | FR-C-01–FR-C-05 |
+| Dataset | The checker finds every planted error of B8.3 with the expected rule (§11.3) and nothing on B8.2 | B8.2, B8.3 | FR-C-03, C2.7 |
 | Contract | B1 package parsing, B2 model validation, B3 launch handling, B4 lookup usage and B6/B7 fields relevant to CK-12/CK-11 | Valid and invalid contract examples from the repository | FR-C-01, FR-C-03, FR-C-05, FR-C-09 |
 | Integration (harness) | Sample build, check, restoration on fresh Moodle 4.5 and 5.3, role tests and available module smoke tests | Approved B8 sample courses and lab Moodle environments | FR-C-08 |
 | End-to-end | Mentor launches checker, submits a supported input, receives a report and can inspect findings; role matrix is generated | Synthetic course data and fixed lab accounts | FR-C-04, FR-C-06, FR-C-07, FR-C-09 |
@@ -330,6 +450,40 @@ The role-test matrix must cover visitor, signed-in non-member, learner, mentor a
 
 Store test results and reports as CI artefacts where appropriate. Use synthetic data only. Record the environment and tool versions so results can be reproduced.
 
+### 11.3 B8.3 planted-error mapping (Proposal)
+
+PRD C2.7 asks the checker to find 100 % of the planted errors in B8.3 with no false error on B8.2. This
+table is the **target mapping** from each CK rule to the planted error that tests it. It is not the
+dataset. The dataset is B8.3 (PRD §B8: owner Student 2), started in #118 with four package variants;
+the mapping is coordinated with Nagashree, who is preparing the dataset files. Every variant is a copy
+of the B8.2 sample with **one** planted change. **B8.2 itself is never changed:** it stays the clean
+baseline with zero findings.
+
+| Rule | Planted error | Where it is planted | Input kind | Expected finding | Severity | Testable on its own? |
+|---|---|---|---|---|---|---|
+| CK-01 | Week 3 guide Page opens only before 1 January 2020 (a past date condition) | `.mbz`: the activity's availability. A package can only express `unlock.start_date`, which opens a section, never closes it | `.mbz` | CK-01 on the week 3 guide | error | Yes |
+| CK-02 | Week 1 guide Page given the completion rule "submit" | Package: `course.yaml`, the week 1 guide Page gets `completion: submit` (the B1 schema allows `completion` on any activity type and requires it only on assignments) | Package | CK-02 on the week 1 guide | error | Yes, if nothing waits on that Page |
+| CK-03 | `total_points` declared as 120; the graded tasks still add up to 100 | Package: `course.yaml` → `course.total_points` | Package | CK-03 (target 120, sum 100) | error | Yes: changing the target, not a task's points, avoids a CK-09 finding |
+| CK-04 | Week 3 unlock waits for an activity that is not in the course | `.mbz`: the section's availability names a removed `cm`. In a package, the B1 validator already rejects an unknown `unlock.after` in full mode | `.mbz` | CK-04 on week 3; also CK-01 for week 3 unless §12 item 13 suppresses it | error | Only with §12 item 13 decided |
+| CK-05 | Week 2 waits for the week 3 task, and week 3 waits for the week 2 task | `.mbz`: two section availabilities. A package rejects a later reference (decision 0003 #23) | `.mbz` | CK-05 on weeks 2 and 3; also CK-01 for both unless suppressed | error | Only with §12 item 13 decided |
+| CK-06 | Week 2 task reuses `wk-01-task` | Package: `course.yaml`, second task's `idnumber` (already in #118 as `duplicate-id`) | Package (reported today by the B1 validator, `duplicate_idnumber`, B1.2 rule 6) | `duplicate_idnumber` from B1 today; CK-06 once the checker builds a model from it (§12 item 17) | error | Yes |
+| CK-07 | The Final project's points changed from 100 to 80 after the merge | `.mbz` of a merged course, checked with `--reference-model` (B8.1 model) | `.mbz` + reference model (lab) | CK-07: `final-project` changed, `max_grade` 100 → 80 | error | Yes. A package using `final-project` is rejected by B1 (#118 `protected-id`, `schema_not`): that is a B1 error, not CK-07 |
+| CK-08 | The course completion criteria name an activity deleted from the course | `.mbz`: completion criteria | `.mbz` (lab) | CK-08 on the course completion criteria | error | Yes |
+| CK-09 | Week 2 task's marking table rows add up to 20; the task is worth 25 | Package: `weeks/02-task.md`, one marking-table row | Package | CK-09 on `wk-02-task` | error | Yes: the B1 validator lists the marking table as not checked, so only CK-09 fires |
+| CK-10 | Week 1 task with marking workflow off | `.mbz`: assignment grade settings | `.mbz` (lab) | CK-10 on `wk-01-task` | error | Yes |
+| CK-11 | A week 1 practice H5P activity with a grade of 10 | `.mbz`: the H5P activity's grade. In a package, `graded: true` on an `h5p` item is rejected by the B1 schema (`graded` must be `false`, PRD B7): that is a B1 error, not CK-11 | `.mbz` (lab) | CK-11 on the practice item | error | Yes |
+| CK-12 | Week 1 guide refers to an image by `https://example.invalid/diagram.png` | Package: `weeks/01-guide.md` body; the builder fills `media_refs` from it (to confirm with FR-C-01) | Package | CK-12 on the week 1 guide | error | Yes, if the builder reads body media (§12 item 19 note) |
+| CK-13 | The week 1 task, which unlocks week 2, has completion tracking off | `.mbz`: the task's completion tracking. A package cannot say it: the B1 schema requires `completion: submit` on every assignment | `.mbz` (lab) | CK-13 on `wk-01-task`; also CK-01 for week 2 unless suppressed | error | Only with §12 item 13 decided |
+
+**The four variants already in #118** test the B1 validator, not CK rules: `missing-body`
+(`body_file_missing`, B1.1) and `invalid-mode` (`schema_enum`, B1.1) map to no CK rule; `duplicate-id`
+maps to CK-06; `protected-id` is a B1.4 rejection that CK-07 never sees. They stay useful as checks that
+an invalid package is refused with a clear message (C2.8).
+
+**What can be built without the lab:** the package variants (CK-02, CK-03, CK-06, CK-09, CK-12). The
+`.mbz` variants (CK-01, 04, 05, 07, 08, 10, 11, 13) need a Moodle 5.3 lab session, a course restored from
+B8.2 with one setting changed, and a backup with user data off, recorded as B8.1 records its backup.
+
 ## 12. Risks and open questions
 
 | # | Risk or question | Needs the lab? | Plan or owner |
@@ -345,6 +499,16 @@ Store test results and reports as CI artefacts where appropriate. Use synthetic 
 | 9 | The exact CLI subcommands, API routes and environment variables have not yet been confirmed against existing repository conventions | No | Inspect repository configuration before implementation and document final interfaces |
 | 10 | Exact library versions and licence compatibility remain to be verified | No | Pin dependencies and run the project's dependency and licence checks before release |
 | 11 | CK-07 needs a reference for the template course. Decided by the guide (decision 0003 #21), not yet implemented: the reference is the B2 course model of the B8.1 template, built from its `.mbz` backup by the checker's own builder, and it is supplied per run with `--reference-model <path>` on the check command. If it is absent, CK-07 reports `not checked` for that run, not a fault, and says the protected items were not compared. It is compared field by field, the same way as FR-C-05, and cannot show changes to body text or attached files, which B2 does not hold | Yes | Implement the option and the comparison with CK-07; the B8.1 README then names the model file that the lab run uses |
+
+| 12 | **Severity of each rule.** §3.4 proposes `error` for all thirteen, because each enforces a PRD rule. Does the guide want any rule as a warning? | No | **Needs guide** |
+| 13 | **Rules that fire together.** When an item is unreachable because of a CK-04, CK-05 or CK-13 finding, is CK-01 also reported for it, or suppressed as already explained? The B8.3 expected findings (§11.3) depend on the answer | No | **Needs guide** |
+| 14 | **Activities without an `idnumber`** in a hand-made `.mbz` (`idnumber: null`). Is that a CK-06 finding ("invalid"), or allowed for items LearnOps did not generate? PRD A9 identifies activities by `idnumber` | No | **Needs guide** |
+| 15 | **CK-09 "valid marking table".** B2 holds only `present` and `points_total` (decision 15). Are the B1.3 table rules (markers, columns, the C3.5 check names, as in the check-cell vectors of #110) part of CK-09 for a package, and how much of them for an `.mbz`? | No | **Needs guide** |
+| 16 | **CK-10 on package models.** `marking_workflow` is null for a package (decision 0003, unconfirmed item). Should the builder set it from B1.2 rule 4 ("Assignments use marking workflow"), or is CK-10 `not checked` for packages? | No | **Needs guide** (also open in decision 0003) |
+| 17 | **Packages that fail B1.** Does the checker stop with the B1 validator's errors, or still build a partial model and run the CK rules? This decides whether #118's `duplicate-id` is reported as `duplicate_idnumber` or CK-06 | No | **Needs guide** |
+| 18 | **Grade conditions in availability.** The path simulation (§3.5) has no grades; items behind a grade condition are `not checked` in this proposal | No | Proposal; confirm with the guide |
+| 19 | **JSON report field names** (§3.6) and whether Course Studio (FR-S-03) reads the checker's JSON, which would make it a shared interface; and where the builder takes `media_refs` from in a package (CK-12) | No | Fix before FR-C-03/04 start; coordinate with M1 |
+| 20 | **`not checked` and the exit code.** Does a `not checked` count against "0 errors" (C2.7, M1's build gate)? Same open question as decision 0003 ("cannot judge" versus "not checked") | No | **Needs guide** |
 
 Before requesting final approval, compare this table with the risks in the PRD's Appendix C and add any additional risks that specifically affect the Course Checker or integration harness.
 
