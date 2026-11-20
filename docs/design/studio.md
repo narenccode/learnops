@@ -3,7 +3,7 @@
 **Module:** studio
 **Owner:** @Akshita21-09 · **Peer reviewer:** @shraddha0103
 **Release(s):** Release 2 (core), Release 5 (stretch)
-**Status:** In review
+**Status:** Approved
 
 `Status` values: `Draft` → `In review` (peer reviewing) → `Approved`. **Only the guide sets
 `Approved`**, in a pull request the guide merges. Feature code for this module starts only when the
@@ -603,4 +603,4 @@ One requirement (or one tightly related group) per pull request. Feature work st
 
 - [x] Owner: I understand and can explain every section. (Akshita, Student 1, 2026-11-19)
 - [x] Peer reviewer: checked against the PRD chapter and the contracts; comments resolved. (Shraddha, Student 2, 2026-11-20)
-- [ ] Guide: approved (sets `Status: Approved`).
+- [x] Guide: approved (narenccode, Guide, 2026-11-20).
