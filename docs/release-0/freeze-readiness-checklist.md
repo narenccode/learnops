@@ -3,9 +3,9 @@
 **Verdict: NOT READY. Release 0 is NOT frozen, and this document does not freeze it.** The guide
 performs the adoption test and the tag (PRD §D2 items 7 and 8; `docs/RELEASING.md`;
 `.claude/commands/release-check.md`).
-**Audit date:** 2026-11-20, re-audited at `origin/main` `5f3a794`. The first audit was at `3abbc02`
-on 2026-11-16; 37 commits have merged since, and the PRD changed what Release 0 contains (see
-below). GitHub state was queried with `gh` on the audit date and changes quickly; re-check before
+**Audit date:** 2026-11-20, re-audited at `origin/main` `8559c4d` (first at `5f3a794`, refreshed after
+four more commits, #130, #142, #145 and #147, merged). The first audit was at `3abbc02` on
+2026-11-16; 41 commits have merged since, and the PRD changed what Release 0 contains (see below). GitHub state was queried with `gh` on the audit date and changes quickly; re-check before
 relying on it.
 
 **What changed in the PRD since the first audit (PRs #113 and #116).** Release 0 (PRD §D1) now
@@ -46,7 +46,7 @@ to classify the row was not found. A merged PR is not treated as proof of its ac
 |---|---|---|---|
 | 1 | Every Release 0 FR implemented and linked to passing tests (traceability E4) | **Not ready** | The PRD now gives Release 0 no FR: FR-M-01 and FR-M-02 belong to the first release that uses them. `docs/traceability.md` has rows for the contracts, `media_paths`, the example checkers and B8 sets |
 | 2 | Acceptance criteria (§C.x.7) pass | **Not applicable** | Release 0 has none in the PRD; its content is §D1 |
-| 3 | Restore and role-test matrix on Moodle 4.5 **and** 5.3, harness report attached | **Blocked** | Needs lab Moodle sites; the B8.1 `.mbz` does not exist; no harness report found. Moodle 4.5 is waived for B8.1 in Release 0 (decision 0009); PR #130 (approved, open) adds one register for version exceptions |
+| 3 | Restore and role-test matrix on Moodle 4.5 **and** 5.3, harness report attached | **Blocked** | Needs lab Moodle sites; the B8.1 `.mbz` does not exist; no harness report found. Moodle 4.5 is waived for B8.1 in Release 0 (decision 0009); PR #130 (merged) added one register for version exceptions in `docs/decisions/README.md` |
 | 4 | Contracts unchanged, or changed only additively under B.0 | **Not verified** | All eight contract families now have a file on `main` (section 3) but none is frozen; B4 has open follow-ups (#64, #72); B7 is marked draft. Draft PR #115 changes CODEOWNERS for the post-freeze period |
 | 5 | README, `.env.example`, changelog updated | **Not verified** | `.env.example` exists; **no `CHANGELOG.md` and no `docs/releases/` folder exist** (`docs/RELEASING.md` step 2 requires both) |
 | 6 | Security items (A13) reviewed; dependency scan clean | **Not verified** | No scan result recorded in this audit; CI runs a secret scan and pre-commit hooks |
@@ -69,7 +69,7 @@ to classify the row was not found. A merged PR is not treated as proof of its ac
 | App-C item 6 (LTI library and licence) | **Awaiting guide** | `docs/decisions/0001-lti-library.md` is `Proposed`, pending the guide's review. Two files are numbered `0001` (`0001-lti-library.md` and `0001-b5-model-interface-v1.md`); the guide decides which to renumber |
 | App-C item 9 (Moodle 5.3 AI features) | **Not started** | No decision record found. The guide's answer on draft PR #140 puts it in scope for Student 4 |
 | Lab VMs ready (A11) | **Unknown / Blocked** | The guide said on issue #55 that the lab Moodle 4.5 and 5.3 sites exist (2026-11-11) and gave an owner an account on 5.3 (2026-11-14); no A11 readiness record exists |
-| Design document per module approved | **Awaiting guide** | `studio.md` and `grading.md` are `In review`; `checker.md` and `video.md` are `Draft`. None is `Approved` |
+| Design document per module approved | **Partly done: 1 of 4** | `studio.md` is `Approved` (PR #147, 2026-11-20); `grading.md` is `In review`; `checker.md` and `video.md` are `Draft`. The guide approves the other three |
 | CI and repository standards | **Completed** | `ci` succeeded on `main` `5f3a794` (and the two commits before it); review bot and CODEOWNERS exist |
 
 **Moved out of Release 0 by the PRD change:** `libs/lti`, `libs/moodle_ws`, `libs/model_interface`
@@ -102,7 +102,6 @@ items 1 to 5, 7, 8, 10. The Release 0 notes must list where each one goes (not w
 | #129 Lesson Processor demo | Open | Changes requested (Akshita21-09) | One-PR exception from the guide; awaiting peer review |
 | #140 Video design document | Draft | Review required | Guide's answers applied; stays `Draft` |
 | #115 CODEOWNERS after the freeze | Draft | Review required | |
-| #130 register of Moodle version exceptions | Open | Approved | |
 | #31, #33 B8.4, B8.6 datasets | Open / Draft | Review required | Provisional |
 | #35, #63 model-interface and moodle_ws skeletons | Draft | Review required / changes requested | Not Release 0 after the PRD change |
 | #64, #72, #76, #79, #80 B4 and `moodle_ws` | Open | Mixed | B4 follow-ups and stacked library work |
@@ -114,13 +113,12 @@ Merged and relevant since the first audit: #25, #27, #46, #54, #61, #83, #85, #8
 ## 6. Approvals and decisions still needed
 
 **Awaiting guide:**
-- Approval of the four design documents (`Status: Approved` is the guide's alone).
+- Approval of the three remaining design documents: `grading.md`, `checker.md`, `video.md` (`Status: Approved` is the guide's alone; `studio.md` was approved in PR #147).
 - Review of the LTI library decision (App-C 6, ADR 0001), the B5 decision record, and which of the two `0001` files is renumbered.
 - Retention, lab-storage access and withdrawal handling for B8.5 (data-map questions 1 to 3).
 - Contract-change approvals and the freeze itself (PRD B.0, `docs/RELEASING.md`).
 - A complete Release 0 task list and the definition of the T-labels: the repository has none.
 - The "Release 0 notes" that list where each moved item goes.
-- Merging PR #130 (the version-exception register).
 
 **Awaiting the owner / team:**
 - Speaker consent lines, speaker names, file names, transcripts and Harshitha's review for B8.5; written confirmation that the five local files are the official set.
