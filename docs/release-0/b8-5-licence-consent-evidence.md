@@ -172,4 +172,3 @@ truthful. It does not show that B8.5 or App-C 8 is met.
 - Transcript accuracy and review (G-4).
 - The date of the guide's earlier approval of the 1800 s exception (G-5). The guide's decisions on retention, storage, names and transcripts and processing services are recorded in decision 0011; what the lab endpoint keeps is still to be recorded (decision 0002).
 - A pull request that puts the five measured durations on `main`: commit `9c6d703` on `video/b8-5-dataset-evidence` is still not on `main` and no open PR carries it (G-9).
-
