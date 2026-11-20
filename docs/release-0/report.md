@@ -1,7 +1,8 @@
 # Release 0 report chapter: Foundation (T19, revision 3)
 
-**Status:** Draft for review. **Audited against:** `origin/main` at `5f3a794` (2026-11-20). The
-previous revision audited `3abbc02` (2026-11-16); 37 commits have merged since, and **the PRD changed
+**Status:** Draft for review. **Audited against:** `origin/main` at `8559c4d` (2026-11-20; first at `5f3a794`,
+refreshed after #130, #142, #145 and #147 merged). The previous revision audited `3abbc02`
+(2026-11-16); 41 commits have merged since, and **the PRD changed
 what Release 0 contains** (PRs #113 and #116), so this revision re-states the contents list. GitHub
 state (PRs, issues, runs) was queried on 2026-11-20 and changes quickly; re-check before relying on it.
 **Release 0 is not tagged.** `git tag` and the GitHub releases list are both empty.
@@ -68,7 +69,7 @@ where each one goes" (not written yet).
 | 4c | `libs/media_paths`: `hmac` and `s3` signers | **7** | Raise a configuration error by design. B6.4 needs only `none` for the baseline |
 | 5 | Test data B8 v1 | See table 2b | |
 | 6 | App-C items 6 and 9 | **5** | See table 2c |
-| 7 | Design document per module approved | **5 Pending (guide)** | On `main`: `studio.md` and `grading.md` say `In review`; `checker.md` and `video.md` say `Draft`. None is `Approved`. Draft PR #140 completes `video.md` and records the guide's answers; the approval is the guide's |
+| 7 | Design document per module approved | **5 Pending (guide), 1 of 4** | On `main`: `studio.md` says `Approved` (PR #147, 2026-11-20); `grading.md` says `In review`; `checker.md` and `video.md` say `Draft`. Draft PR #140 completes `video.md` and records the guide's answers; the approval is the guide's |
 
 **Not Release 0 any more (PRD change):** `libs/lti` (class 7; contract and ADR only, ADR `Proposed`),
 `libs/moodle_ws` (class 4; pieces merged into stacked branches, PRs #73 to #78, and open PRs #76,
@@ -86,7 +87,7 @@ as a freeze, and draft PR #115 prepares the post-freeze CODEOWNERS rule.
 
 | Set | Class | Evidence and gap |
 |---|---|---|
-| B8.1 template course | **2** documentation (#57, decision 0009) / **7** `.mbz` / **6** lab verification | No `.mbz`. The guide's 5.3-only waiver for Release 0 is on `main` (#95); PR #130 adds a register of version exceptions |
+| B8.1 template course | **2** documentation (#57, decision 0009) / **7** `.mbz` / **6** lab verification | No `.mbz`. The guide's 5.3-only waiver for Release 0 is on `main` (#95); PR #130 (merged) added a register of version exceptions in `docs/decisions/README.md` |
 | B8.2 sample course | **1** | Package and dataset test merged (#61, decision 0010) |
 | B8.3 planted-error courses | **7** | No PR or file found |
 | B8.4 synthetic submissions | **4** | #31 (provisional pilot of 6; the PRD asks for at least 30) |
@@ -140,7 +141,7 @@ it (see `traceability-needs.md`).
 | B8.5 data (App-C 8, 7) | Recordings, consent, transcripts, approval of exception | Checker on `main`; exceptions in decision 0004; evidence audit in #104 (not merged) | 0 of 5 consent lines; transcripts; 1800 s total; five-lecture rule | Speakers, Student 3, guide |
 | BBB (App-C 4, FR-V-09) | Lab metadata and format output | Check script and NOT VERIFIED records on `main` (#96) | Any lab run | Student 4, lab |
 | WER (G-6, App-C 7) | Baseline run, target, method | Tooling merged (#103) | A complete B8.5; ADR 0002 approval; normalisation rule; provider permission | Guide, Student 3, Student 4 |
-| Moodle 4.5 and 5.3 (C-03, D2.3, E2) | Restore and role results on both | Guide's waiver comments for B8.1 and B8.2 (section 7); register in #130 | All results | Student 1, 2, guide |
+| Moodle 4.5 and 5.3 (C-03, D2.3, E2) | Restore and role results on both | Guide's waiver comments for B8.1 and B8.2 (section 7); register in `docs/decisions/README.md` (#130, merged) | All results | Student 1, 2, guide |
 | Design approval | `Status: Approved` | none | All four | Guide |
 | Release readiness (D2.5 to 8) | Changelog, notes, tag, adoption test | none | All | Guide, owners |
 
@@ -175,11 +176,11 @@ not re-fetched: pre-commit, gitleaks over the whole history, mypy, contract exam
 
 | Decision or dependency | Authority | Impact if open |
 |---|---|---|
-| **Moodle versions.** PRD C-03, D2.3 and E2 still say 4.5 **and** 5.3. The guide decided on issue #55 that B8.1 builds and tests on **5.3 only**, with 4.5 waived for Release 0 (decision 0009; #95 merged); PR #130 adds one register | Guide | Row D2.3 stays "not met" |
+| **Moodle versions.** PRD C-03, D2.3 and E2 still say 4.5 **and** 5.3. The guide decided on issue #55 that B8.1 builds and tests on **5.3 only**, with 4.5 waived for Release 0 (decision 0009; #95 merged); PR #130 (merged) added one register | Guide | Row D2.3 stays "not met" |
 | The date of the guide's earlier approval of the 1800 s exception | Guide | B8.5 cannot be called complete; the five-lecture rule still holds |
 | Retention, lab storage and withdrawal handling for B8.5 (data-map questions) | Guide | Consent text depends on it |
 | Which of the two `0001` decision records is renumbered | Guide | Decision records are ambiguous |
-| Approval of four design documents | Guide only | Feature code cannot start; D1 not met |
+| Approval of the three remaining design documents (`studio.md` is `Approved`, PR #147) | Guide only | Feature code cannot start for those modules; D1 not met |
 | LTI library (`0001`), STT options (`0002`, #98), App-C 9 record | Guide | App-C 6 and 9 (Release 0) |
 | The Release 0 notes that list where each moved item goes | Owners, guide | PRD §D1 requires them |
 | Contract changes and the freeze (B.0); open questions on issues #44, #45, #58, #65, #67 | All affected owners and the guide | Contracts not frozen |

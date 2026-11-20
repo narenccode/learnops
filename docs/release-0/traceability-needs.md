@@ -30,7 +30,7 @@ set of edits. First written 2026-11-16 against `origin/main` at `3abbc02`; **re-
 - **`media_paths` rows.** Resolved: `main` has three rows (validation #84, templates #85, signing
   #86) and no duplicate from #38.
 - **B8.1.** `main` carries the guide's 5.3-only decision for B8.1 (decision 0009, PR #95) and the
-  B8.2 deviation; PR #130 (open, approved) adds one register of Moodle version exceptions. Do not
+  B8.2 deviation; PR #130 (merged) added one register of Moodle version exceptions in `docs/decisions/README.md`. Do not
   add a second wording.
 - **B8.5.** `main` says PENDING with five SHA-256 values and no duration. #104 proposes a line
   with 5 local recordings, 338 s of 1800 s and 0 of 5 consent lines. T19 still recommends adding
