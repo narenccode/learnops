@@ -17,6 +17,8 @@ This document **maps** App-C 4 evidence; it adds no implementation, test or deci
 The labels T10 and T17 are the PR authors'; neither is defined in a repository file, so the mapping
 stays **PENDING confirmation** against the external tracker.
 
+**Scope (PRD App-C and §D1, PRDs #113 and #116):** App-C item 4 is verified "in the first release that relies on it", which is Release 3 (FR-V-09). It is **not** a Release 0 item any more; Release 0 carries App-C items 6 and 9 only. The record and script on `main` are early preparation.
+
 Both records are on `main` (decisions `0005` and `0006`, evidence folder
 `docs/decisions/evidence/0005-app-c-4-bbb/`). They use different numbers, so there is no numbering
 collision. The decision files are numbered independently of the two T-labels.
