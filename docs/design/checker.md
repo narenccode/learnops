@@ -269,6 +269,12 @@ These field definitions are a proposed starting point, not a claim that the data
 - Use versioned, reversible database migrations as required by OPS-07.
 - Document backup, restoration and undo procedures in the module README.
 
+**For `docs/data-map.md` (SEC-06; added with the implementing pull request):** uploaded `.mbz` files and
+packages (kept in `CHECKER_UPLOAD_DIR` until checked, then deleted); `checker.run` results (findings
+name course items, never people); `checker.role_run` results and failure screenshots, which show only
+the fixed test accounts; the LTI identity (`iss`, `sub`, context id) of the mentor who started a web run.
+No name or email is stored (B3 §10.1), and nothing is sent to an AI provider (SEC-07).
+
 The checker does not need to store media URLs for playback. When it detects fixed media URLs, it reports them as validation findings; the expected course representation uses relative paths.
 
 ## 6. Interfaces
@@ -320,23 +326,44 @@ The exact subcommand names are proposed and must be aligned with the repository'
 
 ### 6.3 Undo and recovery
 
-Course checking and model comparison are read-only and need no data rollback. Planned design: `--reference-model` only reads the model file it is given, writes nothing and needs no undo; this is not yet implemented or tested. Test-run records and generated artefacts must have a documented cleanup procedure.
+Course checking and model comparison are read-only and need no data rollback. Planned design: `--reference-model` only reads the model file it is given, writes nothing and needs no undo; this is not yet implemented or tested.
 
-The integration harness must document how to clean up disposable test resources and restore the lab to a known clean state. It must not automatically modify a mentor's live course.
+Every command records what it creates, so its undo removes exactly that and nothing else (Proposal):
+
+| Command | What it creates | `--dry-run` | Undo |
+|---|---|---|---|
+| `checker check`, `checker diff` | A `checker.run` row (web and harness runs only); nothing on Moodle | Prints the input and the rules it would run; writes nothing | Nothing to undo for the CLI. A stored run is removed with `checker runs delete <run-id>`, which deletes its row and any upload it kept |
+| `checker roles` | A `checker.role_run` row and screenshots in `CHECKER_ARTEFACT_DIR`. The **fixed test accounts** are made once by the setup script (PRD §C2.5), not by this command | Prints the roles, profiles and sites it would test; opens no browser | `checker runs delete <run-id>` removes the row and its screenshots |
+| Test-account setup script | The fixed test accounts on each lab Moodle, made through the browser as the lab administrator (B4 has no user-creation function, and Moodle is never changed) | Prints the accounts it would create; creates none | `--remove` deletes only the accounts listed in its own record of created accounts, never any other account. Running it twice creates nothing new |
+| `checker integration` | Courses restored on the lab sites, a harness report and artefacts. Each restored course is written to the run record (site, course id, time) when it is created | Prints the stages, sites and courses it would create; restores nothing | `checker integration --undo <run-id>` deletes exactly the courses in that run's record (through the browser, as an administrator), then the artefacts. It never touches the template course or a mentor's course. A course it cannot delete is listed for manual removal |
+
+`checker runs delete` and `checker integration --undo` support `--dry-run` (list what would be removed)
+and `--check` (exit `1` if anything recorded is still present). The harness never modifies a mentor's
+live course.
 
 ### 6.4 Configuration
 
 All configuration must be supplied through environment variables or the supported configuration file. `.env.example` must document every required variable with a safe default or placeholder.
 
-Confirm the existing repository configuration before adding new variables. At minimum, configuration may be needed for:
+Proposed variables (Proposal; each is added to `.env.example` with a placeholder in the pull request
+that first reads it). Names use the `CHECKER_` prefix, so nothing collides with `libs/lti`
+(`LTI_*`, `GATEWAY_*`) or `libs/moodle_ws`, which keep their own variables.
 
-- Moodle 4.5 and 5.3 lab endpoints.
-- Test-account setup and references.
-- Input and artefact directories.
-- Integration-run timeouts.
-- Logging and report output.
+| Variable | Purpose | Placeholder in `.env.example` | First used by |
+|---|---|---|---|
+| `CHECKER_DATABASE_URL` | PostgreSQL connection, schema `checker` (§5) | `postgresql://checker:CHANGE_ME@db:5432/learnops` | FR-C-04, FR-C-09 |
+| `CHECKER_UPLOAD_DIR` | Where uploaded `.mbz` files wait until checked; outside any web root (SEC-05) | `/var/lib/learnops/checker/uploads` | FR-C-09 |
+| `CHECKER_MAX_UPLOAD_MB` | Size limit of an uploaded `.mbz` or package (SEC-05) | `50` | FR-C-01, FR-C-09 |
+| `CHECKER_MAX_UNPACKED_MB`, `CHECKER_MAX_ARCHIVE_ENTRIES` | Zip-bomb limits when a backup is unpacked (§9.2) | `500`, `20000` | FR-C-01 |
+| `CHECKER_ARTEFACT_DIR` | Role-test screenshots and harness reports | `/var/lib/learnops/checker/artefacts` | FR-C-06, FR-C-08 |
+| `CHECKER_MOODLE45_URL`, `CHECKER_MOODLE53_URL` | The two lab Moodle sites for role tests and the harness | `https://moodle45.lab.invalid`, `https://moodle53.lab.invalid` | FR-C-06, FR-C-08 |
+| `CHECKER_TEST_ACCOUNTS_FILE` | Path to the file with the fixed test accounts' usernames and passwords; the file lives outside the repository (C-06) | `/run/secrets/checker_test_accounts.yaml` | FR-C-06 |
+| `CHECKER_HARNESS_TIMEOUT_SECONDS` | Limit for one harness stage | `1800` | FR-C-08 |
+| `CHECKER_TEMPLATE_MODEL` | Default path of the B8.1 reference model for CK-07, when `--reference-model` is not given | (empty) | FR-C-03 (CK-07) |
 
-Secrets must remain outside version control.
+`CHECKER_TEMPLATE_MODEL` only supplies a default for the per-run option of decision 0003 #21; whether a
+default is wanted at all is §12 item 21. Secrets stay outside version control: the test-account
+passwords are in the file that `CHECKER_TEST_ACCOUNTS_FILE` names, never in `.env.example`.
 
 ## 7. Key decisions and alternatives
 
@@ -353,17 +380,25 @@ The decision records should be added under `docs/decisions/` using the repositor
 
 ## 8. Libraries and licences
 
-The following are planned dependencies. Pin exact versions in the project dependency files during implementation and verify the licences before release.
+Proposed pins. Versions and licences were read from PyPI on 2026-11-20. Each line goes into the root
+`requirements.txt` (runtime) or `requirements-dev.txt` (tests) in the pull request that first uses it,
+with its licence as a comment (root `CLAUDE.md` rule 10). Where the repository already pins a package,
+the same pin is used.
 
-| Library | Pinned version | Licence | Why needed | Alternative |
+| Library | Pinned version | Licence (PyPI) | Why needed | Alternative |
 |---|---|---|---|---|
-| Python standard library | Runtime version specified by the project | Python Software Foundation License | File handling, data processing and CLI support | Not applicable |
-| Playwright | To be pinned | Verify package licence | Browser automation for role tests | Selenium, if the project requirements change |
-| YAML parser | To be selected and pinned | MIT or another approved compatible licence | Read role-expectation YAML files | JSON configuration |
-| XML parser | Prefer Python standard library where sufficient | Python Software Foundation License | Parse Moodle backup XML | An approved XML library if additional capabilities are needed |
-| Test framework | To be selected and pinned | Verify package licence | Unit, contract and integration tests | Another compatible Python test framework |
+| Python | 3.12 (PRD §A10) | PSF-2.0 | Runtime, `zipfile`, `json`, `argparse` | Not applicable |
+| `defusedxml` | 0.7.1 | PSF-2.0 | Parse Moodle backup XML from an **untrusted** `.mbz` without entity-expansion or external-entity attacks (§9.2); wraps the standard library parser | The standard library alone is not safe for untrusted XML |
+| `PyYAML` | 6.0.3 (already pinned in `requirements-dev.txt`) | MIT | Read role-expectation YAML (FR-C-07) and course packages (B1) with `safe_load` only | JSON expectations |
+| `jsonschema` | 4.26.0 (already pinned) | MIT | Validate the B2 model and B1 packages against their schemas (B.0 rule 4) | None needed |
+| `playwright` | 1.65.2 | Apache-2.0 | Browser automation for role tests (FR-C-06, PRD §A10) | None: the PRD fixes Playwright |
+| `pytest-playwright` | 0.10.0 | Apache-2.0 | Runs Playwright role tests under pytest with fixtures per screen profile | Plain Playwright API calls from pytest |
+| `pytest` | 9.1.1 (already pinned) | MIT | Unit, contract, dataset and harness tests | None needed |
+| FastAPI and its server | The repository pins, once `libs/lti` adds them (#136 proposes `fastapi==0.116.1`, MIT) | MIT / BSD-3-Clause | Mentor web interface (FR-C-09) | None: the PRD fixes FastAPI |
 
-The project is under Apache-2.0. Dependencies must have compatible licences: MIT, BSD or Apache-2.0; LGPL is permitted only as an unmodified library. Dependency versions and licences must be confirmed rather than guessed.
+All licences are allowed by PRD C-11 (MIT, BSD, Apache-2.0, PSF-2.0). Playwright downloads browser
+binaries at install time; they are not Python packages and are not committed. Re-check each version for
+known vulnerabilities when it is added (SEC-08).
 
 ## 9. Security and privacy
 
@@ -371,7 +406,7 @@ The project is under Apache-2.0. Dependencies must have compatible licences: MIT
 
 | Requirement | Application to the Course Checker |
 |---|---|
-| SEC-01 | Validate LTI launches fully, including signature, issuer, audience, nonce, expiry and deployment ID. Use the shared LTI implementation. |
+| SEC-01 | Validate LTI launches fully, including signature, issuer, audience, nonce, expiry and deployment ID, and **refuse a Learner launch** (EXT-07; module rule 7). This module owns B3 and `libs/lti` (module `CLAUDE.md`); the checker's web interface uses that shared gateway and never validates a launch itself. The LTI library choice is decision record `docs/decisions/0001-lti-library.md`, still **Proposed**: its library choice and its security design both need the guide's approval before `libs/lti` is merged (§12 item 23). |
 | SEC-02 | Authorise every web request using the authenticated role and course context. Mentors may only access permitted course data; administrator capabilities follow the PRD. |
 | SEC-03 | Use only the approved Moodle web-service functions. Store service-account credentials in environment configuration, never in source code or logs. |
 | SEC-04 | The checker does not execute learner-submitted code as part of normal course validation. If the integration harness invokes grading tests, the grading module remains responsible for its required isolated sandbox. |
@@ -439,7 +474,7 @@ The test suite must demonstrate the following PRD §C2.7 criteria:
 2. Pass role tests for **5 roles × 3 screen profiles × 2 Moodle versions**, with at least one negative check per role.
 3. Run the integration harness end to end from a clean state with one command and produce one report.
 
-The role-test matrix must cover visitor, signed-in non-member, learner, mentor and administrator on all three screen profiles and both supported Moodle versions.
+The role-test matrix must cover visitor, signed-in non-member, learner, mentor and administrator on all three screen profiles and both supported Moodle versions. The three profiles (PRD UI-02; module rule 3) are: **phone** 375×812; **laptop** 1366×768 at 100 %, 125 % and 150 % zoom; **half-screen** 683×768. Every role has at least one negative check (something it must not see or do).
 
 ### 11.2 Metrics
 
@@ -481,8 +516,10 @@ maps to CK-06; `protected-id` is a B1.4 rejection that CK-07 never sees. They st
 an invalid package is refused with a clear message (C2.8).
 
 **What can be built without the lab:** the package variants (CK-02, CK-03, CK-06, CK-09, CK-12). The
-`.mbz` variants (CK-01, 04, 05, 07, 08, 10, 11, 13) need a Moodle 5.3 lab session, a course restored from
-B8.2 with one setting changed, and a backup with user data off, recorded as B8.1 records its backup.
+`.mbz` variants (CK-01, 04, 05, 07, 08, 10, 11, 13) need a lab session: a course restored from B8.2 with
+one setting changed, and a backup with user data off, recorded as B8.1 records its backup. PRD C-03 asks
+for **Moodle 4.5 and 5.3**, so each `.mbz` variant is made on both, or the guide records an exception in
+the version-exception register (`docs/decisions/README.md`, #130), as he did for B8.1 and B8.2 (§12 item 22).
 
 ## 12. Risks and open questions
 
@@ -509,8 +546,18 @@ B8.2 with one setting changed, and a backup with user data off, recorded as B8.1
 | 18 | **Grade conditions in availability.** The path simulation (§3.5) has no grades; items behind a grade condition are `not checked` in this proposal | No | Proposal; confirm with the guide |
 | 19 | **JSON report field names** (§3.6) and whether Course Studio (FR-S-03) reads the checker's JSON, which would make it a shared interface; and where the builder takes `media_refs` from in a package (CK-12) | No | Fix before FR-C-03/04 start; coordinate with M1 |
 | 20 | **`not checked` and the exit code.** Does a `not checked` count against "0 errors" (C2.7, M1's build gate)? Same open question as decision 0003 ("cannot judge" versus "not checked") | No | **Needs guide** |
+| 21 | **Default reference model.** Should `CHECKER_TEMPLATE_MODEL` (§6.4) supply a default for `--reference-model`, or must every run name it (decision 0003 #21 says "per run")? | No | **Needs guide**; until then, no default |
+| 22 | **B8.3 `.mbz` variants on 4.5 and 5.3** (§11.3). Built on both (C-03), or 5.3 only with a recorded exception like B8.1 and B8.2? | Yes | **Needs guide** |
+| 23 | **`libs/lti` before approval.** Decision record 0001 says neither approval stage is done, and that `libs/lti` waits for stage 2; implementation branches exist (§13 row 6a) | No | **Needs guide**: approve 0001 or change it to the approach the branches use |
 
-Before requesting final approval, compare this table with the risks in the PRD's Appendix C and add any additional risks that specifically affect the Course Checker or integration harness.
+**Compared with PRD Appendix D (project risks).** "Undocumented Moodle backup format changes between
+versions" is item 1 here. "Browser tests brittle across Moodle versions" is item 5, with the App-D
+mitigation (expectations as data, FR-C-07; one retry; screenshots). "Contract drift between modules"
+applies to B2 and B3, which this module owns: they are frozen at Release 0, change only through
+`/contract-change`, and their contract tests run in CI. "Lab downtime" is item 4. The other App-D risks
+(sandbox escape, AI drafts, scope pressure) belong to other modules. Appendix C items 2 (sections-only
+merge) and 3 (CLI restore route for the harness) affect CK-07 and FR-C-08; item 3 is the harness's own
+question and is open until the harness is designed (§13 row 8).
 
 ## 13. Work breakdown
 
@@ -524,6 +571,7 @@ Implement one requirement or tightly related group per pull request. The order b
 | 4 | Rule catalogue v1 | FR-C-03 | B2; B6 and B7 fields as needed | Implement CK-01 through CK-13 with rule-level unit tests. |
 | 5 | Reports and course-model diff | FR-C-04, FR-C-05 | Course-model parser and rule engine | Provide web/CLI/JSON reports and structural, rule and point comparisons. |
 | 6 | Role expectations and browser tests | FR-C-06, FR-C-07 | Lab Moodle setup and test accounts | Implement YAML expectations, Playwright coverage, negative tests and failure screenshots. |
+| 6a | LTI gateway and launch validation (`libs/lti`) | B3, SEC-01, SEC-02, EXT-07 | Decision record 0001 approved by the guide (library and security design) | Owned by this module (B3). In progress as the `integration/lti-session-routing` and `integration/lti-authentication` branches; first used by row 7, so it belongs to Release 1 (PRD §D1) |
 | 7 | Mentor-facing checker interface | FR-C-09 | B3, checker library and approved web conventions | Support authenticated launches and the two permitted input types. |
 | 8 | Initial integration harness | FR-C-08 | M1 build output, checker, Moodle 4.5/5.3 and role tests | Run from a clean state and produce one consolidated report. |
 | 9 | Harness extensions | FR-C-08 | M3 and M4 smoke-test interfaces | Add grading and video smoke tests when those releases exist. |
