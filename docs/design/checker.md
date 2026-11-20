@@ -118,19 +118,19 @@ number.
 
 | Rule (PRD name) | Triggers when (B2 terms) | Input it can judge | Message (Proposal) | Fix hint (Proposal) |
 |---|---|---|---|---|
-| **CK-01** Unreachable section or activity | The path simulation (§3.5) never makes the section or activity available to a learner, although `visible` is not `false` | Package and `.mbz` | "{title} ({idnumber}) in section {section} can never be reached by a learner: its access condition can never be met." | "Change the access condition of {title}, or of the item it waits for, so a learner who works through the course in order can reach it." |
+| **CK-01** Unreachable section or activity | The path simulation (§3.5) **proves** the section or activity can never open for a learner: its availability, or its section's, evaluates to `false`. An item whose availability is `unknown` (an unsupported or grade condition, `visible: null`, unknown completion of the item it waits for) is `not checked`, never CK-01. An item with `visible: false` is hidden on purpose and is not CK-01 | Package and `.mbz` | "{title} ({idnumber}) in section {section} can never be reached by a learner: its access condition can never be met." | "Change the access condition of {title}, or of the item it waits for, so a learner who works through the course in order can reach it." |
 | **CK-02** Completion rule that can never be met | An activity's `completion` asks for something the activity cannot give: `use_grade` or `pass_grade` with `grade_item` null; `submit` on a type with no submission (for example `page`, `url`, `label`) | Package and `.mbz` | "{title} ({idnumber}) can never be marked complete: its completion rule asks for {condition}, which this activity does not have." | "Change the completion rule of {title} to one the activity supports, for example 'view' for a page, or add the missing grade item." |
 | **CK-03** Graded points ≠ target total | The sum of `grade_item.max_grade` over graded activities differs from the independent target `course.total_points` (rules in §3.2 "CK-03: independent grading target") | Package always; `.mbz` only with an independent target, else `not checked` | "The graded activities add up to {sum} points, but the course target is {target} (difference {difference})." | "Change the points of the graded activities, or the course target, so they are equal. Graded items counted: {list}." |
 | **CK-04** Unlock rule refers to a missing activity | An `availability` completion condition names a `cm` that is no activity in the model, or a `cm = -1` (previous activity) that resolves to nothing (decision 5) | Package and `.mbz` | "The access condition of {title} ({idnumber}) waits for an activity that is not in the course." | "Point the condition at an activity that exists in this course, or remove the condition." |
 | **CK-05** Circular unlock rules | The availability completion conditions form a cycle: A waits for B and B, directly or through others, waits for A | Package and `.mbz` | "{title list} wait for each other in a circle, so none of them can open." | "Remove one condition from the circle so at least one of these items opens first." |
-| **CK-06** Duplicate or invalid idnumber | Two sections or activities share one `idnumber`, or an `idnumber` does not have the B1.2 rule 6 form (lowercase letters and digits joined by single hyphens) | Package and `.mbz`; an activity with a null `idnumber` is an open question (§12 item 14) | "The idnumber '{idnumber}' is used by {count} items: {items}." / "'{idnumber}' on {title} is not a valid idnumber." | "Give every item its own idnumber of lowercase letters and digits joined by hyphens, for example wk-02-task." |
+| **CK-06** Duplicate or invalid idnumber | Two sections or activities share one `idnumber`, or an `idnumber` does not have the B1.2 rule 6 form (lowercase letters and digits joined by single hyphens) | `.mbz`. A package with a duplicate or invalid `idnumber` fails B1 first and is reported as the B1 error, not CK-06 (boundary below). An activity with a null `idnumber` is an open question (§12 item 14) | "The idnumber '{idnumber}' is used by {count} items: {items}." / "'{idnumber}' on {title} is not a valid idnumber." | "Give every item its own idnumber of lowercase letters and digits joined by hyphens, for example wk-02-task." |
 | **CK-07** Protected item missing, duplicated or changed | Compared with the supplied reference model of the B8.1 template (decision 0003 #21): a protected `idnumber` (`final-project`, `course-feedback` or a configured one) is absent, appears twice, or differs field by field (as FR-C-05), including the course completion criteria and the badge | `.mbz` with `--reference-model`; without it, `not checked` for the comparison (risk 11). Missing or duplicated is still judged by `idnumber` | "The protected item {idnumber} is {missing / present {count} times / changed: {field} was {old}, now {new}}." | "Restore the protected item from the template course. LearnOps never generates or changes protected items (PRD B1.4)." |
 | **CK-08** Course completion or badge criteria refer to missing items | A `course_completion.criteria` entry or a `badges[].criteria` entry names a `cmid` or `idnumber` that is no activity in the model | `.mbz`; package models have `course_completion` and `badges` null, so `not checked` (B8.2 answer A7) | "The {course completion / badge '{name}'} criteria name {idnumber or cmid}, which is not in the course." | "Point the criteria at activities that exist, or remove the stale criterion." |
 | **CK-09** Assignment without a valid marking table, or marking-table points ≠ assignment points | An `assignment` has `marking_table.present` false, or `marking_table.points_total` differs from `grade_item.max_grade` (decision 15). What makes a table "valid" beyond presence and points is open (§12 item 15) | Package and `.mbz` (the builder fills `marking_table`) | "{title} ({idnumber}) has {no marking table / a marking table worth {table} points but is graded out of {points}}." | "Add a marking table to the task description (PRD B1.3), with rows that add up to the assignment's points." |
 | **CK-10** Assignment without marking workflow | An `assignment` has `marking_workflow` false. Null is `not checked` (decision 7; package models, §12 item 16) | `.mbz`; package models `not checked` until §12 item 16 is decided | "{title} ({idnumber}) does not use marking workflow, so a saved grade can reach learners before a mentor releases it." | "Turn on 'Use marking workflow' in the assignment's grade settings (PRD B1.2 rule 4, C-09)." |
 | **CK-11** Practice (H5P) activity with a grade item | An activity of `type` `h5p` has a non-null `grade_item` | Package and `.mbz` | "The practice activity {title} ({idnumber}) has a grade item; practice must stay ungraded." | "Remove the grade from the H5P activity (set its grade type to none). Practice is never graded (PRD B7)." |
 | **CK-12** Media referenced by a full fixed URL instead of a relative path | A `media_refs` entry is a full URL (it has a scheme such as `https://`) instead of a relative path. If `media_refs` is absent, `not checked` (decision 16) | Package and `.mbz` when the builder fills `media_refs` | "{title} ({idnumber}) refers to media by a full address: {url}." | "Store the media file with the course and refer to it by a relative path, for example media/week-01/diagram.png (PRD C-08)." |
-| **CK-13** Activity used in an unlock rule without completion tracking | An activity is named by an availability completion condition, but its `completion.tracking` is `none` | Package and `.mbz` | "{title} ({idnumber}) unlocks {dependants} but has no completion tracking, so it can never count as complete." | "Turn on completion tracking for {title} (PRD B1.2 rule 5)." |
+| **CK-13** Activity used in an unlock rule without completion tracking | An activity is named by an availability completion condition with an explicit `cm`, and its `completion.tracking` is `none`. **Null:** B2 requires `completion.tracking` on every activity (`none`, `manual` or `automatic`), so it is never null in a valid model; a source the builder cannot read gives no model (§10), not a CK-13 result. **Unsupported activity types:** CK-13 reads only `completion.tracking`, which every activity has whatever its type, so it applies to types outside the B1 mapping too (decision 0003: "not checked" covers type-specific rules only). **`cm = -1`:** not CK-13, because it skips untracked activities by definition (decision 5); an unresolved `-1` is CK-04 | Package and `.mbz` (a package cannot plant it, §11.3) | "{title} ({idnumber}) unlocks {dependants} but has no completion tracking, so it can never count as complete." | "Turn on completion tracking for {title} (PRD B1.2 rule 5)." |
 
 **Small examples that trigger each rule** (B2 fragments; only the fields that matter; `cm` values are
 the `cmid` of another activity in the same model):
@@ -156,30 +156,65 @@ a missing target (CK-04) or an untracked activity (CK-13) also leaves the waitin
 (CK-01). Whether CK-01 is reported for an item whose cause is already a CK-04, CK-05 or CK-13 finding is
 open (§12 item 13). The B8.3 mapping (§11.3) states the expected findings either way.
 
-**Checks that are not CK rules.** Package-structure errors that the shared B1 validator reports
-(`libs/contracts`: a missing `body` file, an unknown `mode`, a schema error) stop the model from being
-built. The checker reports them with the validator's own code and rule (for example `body_file_missing`,
-B1.1), not as a CK rule. Whether the checker builds a model at all from a package that fails B1 is open
-(§12 item 17).
+**Boundary between B1 validation and CK rules (Proposal; the guide may change it under §12 item 17).**
+A package is first checked by the shared B1 validator (`libs/contracts`), as the B.0 rule 4 asks of
+every contract document. Then:
+
+- **The package fails B1** (any `report.errors`): the run reports **only** the B1 validator's errors,
+  with their own code and rule (for example `duplicate_idnumber`, B1.2 rule 6; `body_file_missing`,
+  B1.1), and no B2 model is built. Every CK rule is listed once as `not checked` with the reason "the
+  package failed B1 validation". The exit code is `1`. No CK finding is ever reported for a package
+  that fails B1, so the same package always gives the same result.
+- **The package passes B1:** the builder makes the B2 model and every CK rule runs on it.
+- **An `.mbz`** has no B1 step: the builder makes the B2 model directly, and every CK rule runs.
+
+So a duplicate `idnumber` **in a package** is always the B1 error `duplicate_idnumber`, never CK-06,
+because B1.2 rule 6 already rejects it. CK-06 is the rule for models built from an **`.mbz`**, where no B1
+step ran, and for the "invalid form" half of the rule there. The B8.3 expectations (§11.3) follow this.
 
 ### 3.5 Learner-path simulation (FR-C-02) (Proposal)
 
 The simulation answers one question for CK-01: can a learner who works through the course reach each
-section and activity? It is a fixed-point loop over the B2 model:
+section and activity? It never guesses. Every answer is one of three values, and only a **proven** "no"
+becomes a finding:
 
-1. Start with a learner who is enrolled, has completed nothing, and has no grades, on the run date.
-2. A section is **open** when `visible` is not `false` and its `availability` is met. An activity is
-   **open** when its section is open, its `visible` is not `false` and its own `availability` is met.
-3. An open activity whose completion rule can be met (it is not a CK-02 case) and whose `tracking` is
-   `manual` or `automatic` is added to the **completed** set.
-4. Repeat steps 2 and 3 until nothing new opens or completes. Every section or activity never opened is
-   reported as CK-01.
+| Result for an item | Meaning | Reported as |
+|---|---|---|
+| **reachable** | A learner can open it, shown step by step | `pass` |
+| **unreachable** | Every way to open it was evaluated, and none can ever be met | CK-01 `finding` |
+| **unknown** | Opening it depends on something the simulation cannot evaluate (below) | `not checked`, with the reason; never CK-01 |
 
-Conditions understood in v1: activity completion (including `cm = -1`, decision 5), date, and the `&` and
-`|` operators with nesting. A condition of any other type (for example group, grouping, user profile or
-grade) makes the items that depend on it `not checked`, never silently passed (PRD C2.8). `visible: null`
-is `not checked` (decision 7). Grade conditions are listed as an open question (§12 item 18), because they
-need a grade the simulated learner does not have.
+**Conditions (three-valued).** Each availability condition evaluates to `true`, `false` or `unknown`:
+
+- **Date:** `true` or `false` on the run date.
+- **Activity completion** (including `cm = -1`, decision 5): `true` once the named activity is
+  *completed* in the simulation; `false` when it can never be completed (below); `unknown` when its
+  completion is unknown. A `cm` that names no activity is `false` (and CK-04).
+- **Any other condition type** (grade, group, grouping, user profile, a negated group `!&` or `!|`, or a
+  type the builder does not recognise): `unknown`. Grade conditions stay `unknown` because the simulated
+  learner has no grades (§12 item 18).
+- **Operators:** `&` is `false` if any part is `false`, otherwise `unknown` if any part is `unknown`,
+  otherwise `true`. `|` is `true` if any part is `true`, otherwise `unknown` if any part is `unknown`,
+  otherwise `false`. So an unsupported condition next to a proven-false one still proves the item
+  unreachable, and an unsupported condition never makes an item unreachable by itself.
+- **`visible`:** `false` keeps the item closed to learners on purpose. That is not CK-01, because the
+  author chose it. `null` makes the item `unknown` (decision 7).
+
+**Completion is simulated only when its conditions can really be met** by a learner with no help from a
+mentor:
+
+| `completion.tracking` | Completed in the simulation when the activity is open, and… |
+|---|---|
+| `none` | never: it can never count as complete (dependants are then `false`; CK-13) |
+| `manual` | always: the learner ticks it themselves |
+| `automatic` | every condition that is set can be met by the learner alone: `view` yes; `submit` yes for an `assignment`, and `unknown` for a type outside the B1 mapping (decision 6); `use_grade` or `pass_grade` `unknown`, because a mentor gives the grade; no condition set at all `unknown`. One `unknown` condition makes the completion `unknown`. A condition the activity can never meet is CK-02 and makes the completion "never" |
+
+**Loop.** Start with an enrolled learner, nothing completed, no grades, on the run date. Repeatedly mark
+items open (all conditions of the section and the activity `true`) and completed (table above) until
+nothing changes. An unreachable activity can never be completed, and one whose reachability is unknown has
+unknown completion; both feed back into the conditions that name them, so the loop repeats until neither
+the open set nor the never-completed set changes. Then every item is **reachable** (it opened),
+**unreachable** (its availability, or its section's, is proven `false`) or **unknown** (anything else).
 
 ### 3.6 Report states and output (FR-C-04) (Proposal)
 
@@ -501,7 +536,7 @@ baseline with zero findings.
 | CK-03 | `total_points` declared as 120; the graded tasks still add up to 100 | Package: `course.yaml` → `course.total_points` | Package | CK-03 (target 120, sum 100) | error | Yes: changing the target, not a task's points, avoids a CK-09 finding |
 | CK-04 | Week 3 unlock waits for an activity that is not in the course | `.mbz`: the section's availability names a removed `cm`. In a package, the B1 validator already rejects an unknown `unlock.after` in full mode | `.mbz` | CK-04 on week 3; also CK-01 for week 3 unless §12 item 13 suppresses it | error | Only with §12 item 13 decided |
 | CK-05 | Week 2 waits for the week 3 task, and week 3 waits for the week 2 task | `.mbz`: two section availabilities. A package rejects a later reference (decision 0003 #23) | `.mbz` | CK-05 on weeks 2 and 3; also CK-01 for both unless suppressed | error | Only with §12 item 13 decided |
-| CK-06 | Week 2 task reuses `wk-01-task` | Package: `course.yaml`, second task's `idnumber` (already in #118 as `duplicate-id`) | Package (reported today by the B1 validator, `duplicate_idnumber`, B1.2 rule 6) | `duplicate_idnumber` from B1 today; CK-06 once the checker builds a model from it (§12 item 17) | error | Yes |
+| CK-06 | Two activities share `wk-01-task`, and one activity has the idnumber `Week 1 Task` | `.mbz`: the activities' ID number fields (two variants, one change each) | `.mbz` (lab) | CK-06 on the two activities; CK-06 on `Week 1 Task` | error | Yes. The package variant `duplicate-id` (#118) is **not** a CK-06 case: it fails B1 and gives `duplicate_idnumber` (B1.2 rule 6) with every CK rule `not checked` (§3.4 boundary) |
 | CK-07 | The Final project's points changed from 100 to 80 after the merge | `.mbz` of a merged course, checked with `--reference-model` (B8.1 model) | `.mbz` + reference model (lab) | CK-07: `final-project` changed, `max_grade` 100 → 80 | error | Yes. A package using `final-project` is rejected by B1 (#118 `protected-id`, `schema_not`): that is a B1 error, not CK-07 |
 | CK-08 | The course completion criteria name an activity deleted from the course | `.mbz`: completion criteria | `.mbz` (lab) | CK-08 on the course completion criteria | error | Yes |
 | CK-09 | Week 2 task's marking table rows add up to 20; the task is worth 25 | Package: `weeks/02-task.md`, one marking-table row | Package | CK-09 on `wk-02-task` | error | Yes: the B1 validator lists the marking table as not checked, so only CK-09 fires |
@@ -510,13 +545,22 @@ baseline with zero findings.
 | CK-12 | Week 1 guide refers to an image by `https://example.invalid/diagram.png` | Package: `weeks/01-guide.md` body; the builder fills `media_refs` from it (to confirm with FR-C-01) | Package | CK-12 on the week 1 guide | error | Yes, if the builder reads body media (§12 item 19 note) |
 | CK-13 | The week 1 task, which unlocks week 2, has completion tracking off | `.mbz`: the task's completion tracking. A package cannot say it: the B1 schema requires `completion: submit` on every assignment | `.mbz` (lab) | CK-13 on `wk-01-task`; also CK-01 for week 2 unless suppressed | error | Only with §12 item 13 decided |
 
-**The four variants already in #118** test the B1 validator, not CK rules: `missing-body`
-(`body_file_missing`, B1.1) and `invalid-mode` (`schema_enum`, B1.1) map to no CK rule; `duplicate-id`
-maps to CK-06; `protected-id` is a B1.4 rejection that CK-07 never sees. They stay useful as checks that
-an invalid package is refused with a clear message (C2.8).
+**The four variants already in #118** test the B1 step, not CK rules. Under the §3.4 boundary each gives
+exactly one B1 error and every CK rule `not checked`, exit code `1`:
 
-**What can be built without the lab:** the package variants (CK-02, CK-03, CK-06, CK-09, CK-12). The
-`.mbz` variants (CK-01, 04, 05, 07, 08, 10, 11, 13) need a lab session: a course restored from B8.2 with
+| #118 variant | Expected result (deterministic) |
+|---|---|
+| `missing-body` | `body_file_missing` (B1.1) |
+| `invalid-mode` | `schema_enum` (B1.1) |
+| `duplicate-id` | `duplicate_idnumber` (B1.2 rule 6) |
+| `protected-id` | `schema_not` (B1.1; the B1.4 protected idnumber) |
+
+They stay useful as checks that an invalid package is refused with a clear message (C2.8), and they are
+the expected results of `answer.yaml` today. If the guide decides otherwise under §12 item 17, this
+table and the CK-06 row change together.
+
+**What can be built without the lab:** the package variants (CK-02, CK-03, CK-09, CK-12). The `.mbz`
+variants (CK-01, 04, 05, 06, 07, 08, 10, 11, 13) need a lab session: a course restored from B8.2 with
 one setting changed, and a backup with user data off, recorded as B8.1 records its backup. PRD C-03 asks
 for **Moodle 4.5 and 5.3**, so each `.mbz` variant is made on both, or the guide records an exception in
 the version-exception register (`docs/decisions/README.md`, #130), as he did for B8.1 and B8.2 (§12 item 22).
@@ -542,7 +586,7 @@ the version-exception register (`docs/decisions/README.md`, #130), as he did for
 | 14 | **Activities without an `idnumber`** in a hand-made `.mbz` (`idnumber: null`). Is that a CK-06 finding ("invalid"), or allowed for items LearnOps did not generate? PRD A9 identifies activities by `idnumber` | No | **Needs guide** |
 | 15 | **CK-09 "valid marking table".** B2 holds only `present` and `points_total` (decision 15). Are the B1.3 table rules (markers, columns, the C3.5 check names, as in the check-cell vectors of #110) part of CK-09 for a package, and how much of them for an `.mbz`? | No | **Needs guide** |
 | 16 | **CK-10 on package models.** `marking_workflow` is null for a package (decision 0003, unconfirmed item). Should the builder set it from B1.2 rule 4 ("Assignments use marking workflow"), or is CK-10 `not checked` for packages? | No | **Needs guide** (also open in decision 0003) |
-| 17 | **Packages that fail B1.** Does the checker stop with the B1 validator's errors, or still build a partial model and run the CK rules? This decides whether #118's `duplicate-id` is reported as `duplicate_idnumber` or CK-06 | No | **Needs guide** |
+| 17 | **Packages that fail B1.** The design proposes (§3.4 boundary): stop with the B1 validator's errors, build no model, list every CK rule as `not checked`. The alternative is to build a partial model and run the CK rules. The proposal keeps the B8.3 results deterministic (§11.3) | No | **Needs guide** to confirm the proposal |
 | 18 | **Grade conditions in availability.** The path simulation (§3.5) has no grades; items behind a grade condition are `not checked` in this proposal | No | Proposal; confirm with the guide |
 | 19 | **JSON report field names** (§3.6) and whether Course Studio (FR-S-03) reads the checker's JSON, which would make it a shared interface; and where the builder takes `media_refs` from in a package (CK-12) | No | Fix before FR-C-03/04 start; coordinate with M1 |
 | 20 | **`not checked` and the exit code.** Does a `not checked` count against "0 errors" (C2.7, M1's build gate)? Same open question as decision 0003 ("cannot judge" versus "not checked") | No | **Needs guide** |
