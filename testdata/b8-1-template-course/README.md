@@ -1,7 +1,7 @@
 # B8.1 Template Course Backup
 
 > **Status: skeleton.** No `.mbz` exists; nothing is verified on Moodle. Release 0 builds and tests on
-> Moodle **5.3 only**; Moodle 4.5 is not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only), and is not recorded as passed. Labels: **PRD** = stated by
+> Moodle **5.3 only**; Moodle 4.5 is not tested; waived for Release 0 (B8.1 only; see [0009](../../docs/decisions/0009-b8-1-template-course.md) and the [register](../../docs/decisions/README.md)), and is not recorded as passed. Labels: **PRD** = stated by
 > the PRD. **Owner** = confirmed by the project owner in a GitHub reply. Sources used in this file: six
 > owner replies on Issue #55, cited by date or by name: 2026-11-07; 2026-11-11; 2026-11-12 at 06:46 UTC
 > (cited as 2026-11-12); 2026-11-12 at 14:43 UTC (cited as "the 14:43 reply"); 2026-11-13 at 09:36 UTC
@@ -48,7 +48,7 @@ PRD C-07 and §B8: test data only, no real learner data (CLAUDE.md rule 4: no re
 | Item | Value |
 |---|---|
 | Moodle release used | Owner (the 11-14 reply, which replaces the 2026-11-12 decision to build on 4.5): build the template on **Moodle 5.3** and run every restore and the sections-only merge test on **5.3**, to save time. The owner reports (Issue #55, 2026-11-14) that Moodle documents that a backup restores into the same or a newer version only, so a template built on 5.3 is expected not to restore on 4.5. This is the owner's report: it has not been checked in the lab or against the Moodle documentation for this project, and the PRD does not state it. Not built yet |
-| Moodle 4.5 | **Not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only).** It is not recorded as passed. It can be tested later with the same steps. Known cost (Owner, the 11-14 reply): if the project later needs the template on 4.5 (PRD C-03: must work on 4.5 and 5.3), it is rebuilt once on 4.5. The decision record and §8 record the waiver with its date |
+| Moodle 4.5 | **Not tested; waived for Release 0 (B8.1 only; see [0009](../../docs/decisions/0009-b8-1-template-course.md) and the [register](../../docs/decisions/README.md)).** It is not recorded as passed. It can be tested later with the same steps. Known cost (Owner, the 11-14 reply): if the project later needs the template on 4.5 (PRD C-03: must work on 4.5 and 5.3), it is rebuilt once on 4.5. The decision record and §8 record the waiver with its date |
 | Course full name, short name, format | Proposal (Owner, 2026-11-12): full name `Template course`, short name `template`, the default Topics (Custom sections) format |
 | User data in the backup | OFF, so the file contains no users (Owner). Check on the finished file, including for real learner data: PENDING MOODLE LAB |
 | Exact build, backup format version, other backup settings, file size, date | PENDING MOODLE LAB |
@@ -107,7 +107,7 @@ that holds the two activities; it is not one of the four items.
 | Course feedback: anonymous | **Owner-confirmed** (the 11-18 reply, P28): anonymous. The 2026-11-07 reply intended it; listing it among the proposals was the mistake |
 | Points | Proposal (Owner, 2026-11-12): the Final project Assignment gets the 100 points and is the only graded item, so `Sample task` (§3) is ungraded. The Moodle default is left, so the points count in the course total. The owner said not to design around it |
 | Final project Assignment name | Owner (the 14:43 reply): `Final project`, idnumber `final-project` |
-| Exact Moodle setting names and values on 5.3 (4.5: not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only)) | PENDING MOODLE LAB |
+| Exact Moodle setting names and values on 5.3 (4.5: not tested; waived for Release 0 (B8.1 only; see [0009](../../docs/decisions/0009-b8-1-template-course.md) and the [register](../../docs/decisions/README.md))) | PENDING MOODLE LAB |
 
 **Baseline for the merge test.** PRD §C1.7 expects the protected items "unchanged (same idnumbers,
 same count, badge and completion criteria intact)"; the list above is the baseline. Totals for the
@@ -162,7 +162,7 @@ not as a missing protected item, and takes it from the decision record after lab
 | Placeholder issuer text | Owner (the 11-18 reply, P9b): `LearnOps lab (placeholder)` |
 | If 5.3 leaves the unawarded badge out of a users-off backup | Owner (the 11-18 reply, P35). Find out first, in lab step 8.5 (open the `.mbz` and look for the badge). If it is left out: record the deviation ("the `.mbz` contains no unawarded badge"; PRD B8.1 expects a badge) in `docs/decisions/0009-b8-1-template-course.md`, this README and the B8.1 row of `docs/traceability.md`; keep the `.mbz` free of users; add the badge by hand to each restored course with `badge.png` and the settings above. **Never add a test user to carry the badge.** The merge test then compares the badge after the manual add, and the record says the `.mbz` does not hold it |
 | Course badges on the lab sites | Owner (Issue #55, update of 2026-11-11): switched on in both lab sites, on by default; not yet checked by the B8.1 owner on the 5.3 site. Checking it needs an administrator screen: ask the guide (Owner, the 11-14 reply) |
-| Badge in the `.mbz` on 5.3; state after restore and merge (4.5: not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only)) | PENDING MOODLE LAB |
+| Badge in the `.mbz` on 5.3; state after restore and merge (4.5: not tested; waived for Release 0 (B8.1 only; see [0009](../../docs/decisions/0009-b8-1-template-course.md) and the [register](../../docs/decisions/README.md))) | PENDING MOODLE LAB |
 
 ## 7. Restore instructions
 
@@ -184,7 +184,7 @@ a course made from the template (PRD §B1.4).
 | Restore route for the harness (App-C item 3: admin CLI or browser automation) | The harness's own question, separate from B8.1 (Owner, the 14:43 reply). Not decided here |
 | Exact steps and options to create a course and to merge | PENDING MOODLE LAB |
 | Clean-up after a test restore | Owner (the 09:36 reply): every course created for a test is deleted after its result is recorded and checked. Owner (the 11-18 reply, P25, P26, P33): that includes restored copies and the merge target; **the template course stays**. Local copies, screenshots, logs and the downloaded `.mbz` stay local, out of Git, and are deleted once the evidence is in the record. Any deletion beyond a test course needs the guide's approval. Do not change site settings or the recycle bin. How to delete a course on 5.3: PENDING MOODLE LAB |
-| Cross-version restore | Owner (the 11-14 reply, which replaces the 14:43 reply on this point): build the template on 5.3 and run every restore and the sections-only merge on 5.3 only. Moodle 4.5 is not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only). There is no 4.5 restore test and no 5.3-to-4.5 test in Release 0; the owner expects a 5.3 template not to restore on 4.5 (owner's report, §3; not verified). For each restore, record the Moodle version, the date and the outcome |
+| Cross-version restore | Owner (the 11-14 reply, which replaces the 14:43 reply on this point): build the template on 5.3 and run every restore and the sections-only merge on 5.3 only. Moodle 4.5 is not tested; waived for Release 0 (B8.1 only; see [0009](../../docs/decisions/0009-b8-1-template-course.md) and the [register](../../docs/decisions/README.md)). There is no 4.5 restore test and no 5.3-to-4.5 test in Release 0; the owner expects a 5.3 template not to restore on 4.5 (owner's report, §3; not verified). For each restore, record the Moodle version, the date and the outcome |
 
 ### Release 0 sections-only backup
 
@@ -258,10 +258,10 @@ the clean-up rule in §7 (Owner, the 14:43, 09:36 and 11-14 replies).
 
 | Check | Moodle 4.5 | Moodle 5.3 |
 |---|---|---|
-| Site and exact release used | Not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only) | PENDING MOODLE LAB |
-| Template `.mbz` restores without error | Not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only) | PENDING MOODLE LAB |
-| Protected items, completion criteria and badge match §4 to §6 | Not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only) | PENDING MOODLE LAB |
-| Sections-only merge leaves protected items unchanged (PRD §C1.7) | Not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only) | PENDING MOODLE LAB |
+| Site and exact release used | Not tested; waived for Release 0 (B8.1 only; see [0009](../../docs/decisions/0009-b8-1-template-course.md) and the [register](../../docs/decisions/README.md)) | PENDING MOODLE LAB |
+| Template `.mbz` restores without error | Not tested; waived for Release 0 (B8.1 only; see [0009](../../docs/decisions/0009-b8-1-template-course.md) and the [register](../../docs/decisions/README.md)) | PENDING MOODLE LAB |
+| Protected items, completion criteria and badge match §4 to §6 | Not tested; waived for Release 0 (B8.1 only; see [0009](../../docs/decisions/0009-b8-1-template-course.md) and the [register](../../docs/decisions/README.md)) | PENDING MOODLE LAB |
+| Sections-only merge leaves protected items unchanged (PRD §C1.7) | Not tested; waived for Release 0 (B8.1 only; see [0009](../../docs/decisions/0009-b8-1-template-course.md) and the [register](../../docs/decisions/README.md)) | PENDING MOODLE LAB |
 
 | Question | Status |
 |---|---|
@@ -279,8 +279,8 @@ the clean-up rule in §7 (Owner, the 14:43, 09:36 and 11-14 replies).
 - [ ] Upload under tag `testdata-b8-1-v1`; put the SHA-256 in `download.py`, §1 and `testdata/README.md`; check that `download.py` and `download.py --check` give the same SHA-256.
 - [ ] Give the checker owner the `.mbz`, its SHA-256 and the §4 list.
 - [x] Comparison field list (§4): sent to Shraddha, so that the checker later compares the same fields (Owner, the 14:43 reply), and answered in her review of #141 (2026-11-19); the badge difference is recorded in §4.
-- [ ] Restore on 5.3 only (4.5 is not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only); the owner expects a 5.3 backup not to restore on 4.5: owner's report, §3, not verified), on the existing 5.3 lab site, into a new course each time, deleting each course by the clean-up rule in §7; record the Moodle version, the date and the outcome of each restore; make the sections-only backup (§7); run the merge test with the §4 tables.
-- [x] Record that Moodle 4.5 is not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only), and its cost (a rebuild on 4.5 if PRD C-03 later needs it), in the decision record (`docs/decisions/0009-b8-1-template-course.md`) and in §8.
+- [ ] Restore on 5.3 only (4.5 is not tested; waived for Release 0 (B8.1 only; see [0009](../../docs/decisions/0009-b8-1-template-course.md) and the [register](../../docs/decisions/README.md)); the owner expects a 5.3 backup not to restore on 4.5: owner's report, §3, not verified), on the existing 5.3 lab site, into a new course each time, deleting each course by the clean-up rule in §7; record the Moodle version, the date and the outcome of each restore; make the sections-only backup (§7); run the merge test with the §4 tables.
+- [x] Record that Moodle 4.5 is not tested; waived for Release 0 (B8.1 only; see [0009](../../docs/decisions/0009-b8-1-template-course.md) and the [register](../../docs/decisions/README.md)), and its cost (a rebuild on 4.5 if PRD C-03 later needs it), in the decision record (`docs/decisions/0009-b8-1-template-course.md`) and in §8.
 - [ ] Keep screenshots and logs local (not committed), check them for personal data, and add the App-C item 2 results to the same decision record (`docs/decisions/0009-b8-1-template-course.md`) as a short, text-only results table that names the local files, before the merge-test course is deleted (Owner, the 14:43 and 09:36 replies).
 
 ## 9. Known limitations and pending decisions
@@ -309,4 +309,4 @@ the clean-up rule in §7 (Owner, the 14:43, 09:36 and 11-14 replies).
 | Comparison field list for Shraddha (an action, not a decision) | Owner's instruction (the 14:43 reply). Sent, and answered in Shraddha's review of #141 (2026-11-19): the checker's course model v1 holds the badge's name and award rule only, so issuer, description and active state are compared only in the lab tables (§4) |
 | Exact contents of the sections-only backup (which sections are in or out; which of the four PRD §B1.4 protected items are removed: final project assignment, course feedback activity, course completion criteria, course badge; whether the protected section 3 is in the copy or the backup; backup settings; content of generated sections); see §7 | Answered (the 11-18 reply, P15c, P30, P31): only generated sections 4 and 5, user data off; see §7 steps 1 to 4 |
 | Whether the course feedback activity is anonymous as a confirmed setting or a proposal (conflicting owner answers, §4) | Answered (the 11-18 reply, P28): owner-confirmed, anonymous |
-| Moodle 4.5 | Not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only). The owner expects a 5.3 template not to restore on 4.5 (owner's report, §3; not verified); if PRD C-03 later needs the template on 4.5, it is rebuilt once on 4.5 (Owner, the 11-14 reply) |
+| Moodle 4.5 | Not tested; waived for Release 0 (B8.1 only; see [0009](../../docs/decisions/0009-b8-1-template-course.md) and the [register](../../docs/decisions/README.md)). The owner expects a 5.3 template not to restore on 4.5 (owner's report, §3; not verified); if PRD C-03 later needs the template on 4.5, it is rebuilt once on 4.5 (Owner, the 11-14 reply) |
