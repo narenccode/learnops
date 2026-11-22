@@ -174,6 +174,11 @@ def test_ck_09_change_is_the_one_declared() -> None:
     assert sum(points) == 20  # the task stays worth 25 in course.yaml
 
 
+def test_ck_12_change_is_the_one_declared() -> None:
+    body = _text("ck-12-full-url-media", "weeks/01-guide.md")
+    assert "https://example.invalid/diagram.png" in body
+
+
 def test_b82_is_unchanged() -> None:
     got = {k: hashlib.sha256(v).hexdigest() for k, v in _files(B82).items()}
     assert got == B82_SHA256

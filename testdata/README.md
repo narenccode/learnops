@@ -33,7 +33,7 @@ Course Checker in Release 1.
 |---|---|
 | Folder | `testdata/b8-3-planted-errors/`; the answer file is `expected-findings.yaml` |
 | Source and licence | Fictional, derived from B8.2 (Apache-2.0, the same as the repository). No real learner data |
-| Status | **PARTIAL.** 3 of 13 rules have a built package variant so far (CK-02, CK-03, CK-09). CK-12 is `planned` and arrives in the next PR of this series. 9 need a Moodle `.mbz` made in a lab and are `pending-lab`: no file exists for them |
+| Status | **PARTIAL.** 4 of 13 rules have a built package variant (CK-02, CK-03, CK-09, CK-12). 9 need a Moodle `.mbz` made in a lab and are `pending-lab`: no file exists for them |
 | What the tests prove | The dataset is well formed and every entry maps to a valid CK rule. **They do not show that the checker detects anything.** No checker exists yet; the 100 % target (PRD C2.7) is measured in Release 1 |
 
 **Layout.** `<variant-id>/package/` is a full copy of the B8.2 package with exactly one file changed.
@@ -54,7 +54,7 @@ B8.2 is never changed. The folders `missing-body`, `duplicate-id`, `protected-id
 | `ck-09-marking-table-sum` | CK-09 | package | built | table adds to 20, task worth 25 |
 | `ck-10-no-marking-workflow` | CK-10 | mbz | pending-lab | marking workflow off |
 | `ck-11-graded-practice-h5p` | CK-11 | mbz | pending-lab | practice H5P with grade 10 |
-| `ck-12-full-url-media` | CK-12 | package | planned | image at `https://example.invalid/diagram.png` |
+| `ck-12-full-url-media` | CK-12 | package | built | image at `https://example.invalid/diagram.png` |
 | `ck-13-unlock-without-completion` | CK-13 | mbz | pending-lab | unlocking task has completion tracking off |
 
 **Reading `expected-findings.yaml`.** Each entry gives the variant `id`, the `rule`, the `element`

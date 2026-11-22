@@ -168,7 +168,7 @@ variants:
   - id: ck-12-full-url-media
     rule: CK-12
     input_kind: package
-    status: planned
+    status: built
     path: weeks/01-guide.md
     element: wk-01-guide
     planted_change: "Guide body gets an image at https://example.invalid/diagram.png (example.invalid never resolves)"
