@@ -1,1 +1,147 @@
-PENDING: reference transcript for lecture-05 not typed yet. Do not use it for any measurement.
+Hello, my name is Shraddha.
+
+I voluntarily consent to having my voice and lecture recording included in the LearnOps B8.5 test dataset for project evaluation and testing purposes.
+
+I understand that this recording will be used as test evidence for the project.
+
+Thank you.
+
+Good morning everyone.
+
+In the previous sections, we learned about database fundamentals, database design, relational tables, and SQL operations.
+
+In this final section, I will explain some important concepts that help make databases reliable, efficient, and secure.
+
+Let's begin with normalization.
+
+Normalization is the process of organizing data in a database to reduce unnecessary duplication and avoid certain data-related problems.
+
+To understand why normalization is needed, imagine a college database where student information, department information, and course information are all stored in a single large table.
+
+If a department name is repeated in hundreds of rows, updating that department name becomes difficult.
+
+If we update only some rows, the database may contain inconsistent information.
+
+Normalization helps solve these problems by dividing large tables into smaller, related tables.
+
+There are different normal forms.
+
+The first normal form, or 1NF, requires that each column contain atomic values. This means each cell should contain a single value rather than a list of multiple values.
+
+For example, storing three phone numbers in one cell does not follow the usual 1NF requirement. We should represent those values separately in an appropriate table structure.
+
+The second normal form, or 2NF, requires that the table is already in 1NF and that every non-key attribute depends on the whole candidate key, not just part of a composite candidate key.
+
+This is especially important when a table has a primary key consisting of multiple columns.
+
+The third normal form, or 3NF, requires that the table is already in 2NF and that non-key attributes do not have inappropriate transitive dependencies on candidate keys.
+
+In simple words, non-key information should depend on the key, the whole key, and nothing but the key.
+
+Another normal form is BCNF, which stands for Boyce-Codd Normal Form.
+
+BCNF is a stronger version of 3NF. It requires every determinant of a non-trivial functional dependency to be a super key.
+
+Normalization helps reduce redundancy and prevent insertion, update, and deletion anomalies.
+
+Now let's move to another important topic: database transactions.
+
+A transaction is a sequence of database operations treated as one logical unit of work.
+
+A simple example is transferring money from one bank account to another.
+
+Suppose Rahul transfers 1,000 rupees to Priya.
+
+The database must perform two operations.
+
+First, it should subtract 1,000 rupees from Rahul's account.
+
+Second, it should add 1,000 rupees to Priya's account.
+
+Both operations must happen correctly.
+
+Imagine that the money is deducted from Rahul's account, but the system crashes before adding it to Priya's account.
+
+This would create an incorrect result.
+
+Transactions help ensure that database operations are handled reliably.
+
+The most important properties of transactions are known as ACID properties.
+
+ACID stands for Atomicity, Consistency, Isolation, and Durability.
+
+First is Atomicity.
+
+Atomicity means that a transaction is treated as a single unit. Either all its operations are completed, or none of them are applied.
+
+In the bank transfer example, both the deduction and addition should succeed. If one operation fails, the transaction should be rolled back.
+
+Second is Consistency.
+
+Consistency means that a transaction should move the database from one valid state to another valid state while maintaining all defined constraints.
+
+For example, a bank transfer should not violate the rules that maintain account balances and transaction records.
+
+Third is Isolation.
+
+Isolation means that concurrent transactions should not interfere with each other in a way that produces incorrect results.
+
+For example, two people may try to update the same bank account at nearly the same time. The database system must coordinate these operations properly.
+
+Fourth is Durability.
+
+Durability means that once a transaction is successfully committed, its changes should remain saved even if a system failure occurs afterward.
+
+These four properties are essential for reliable transaction processing.
+
+Next, let's understand concurrency control.
+
+In a database, multiple users may access and modify data at the same time.
+
+For example, many customers may use a banking application simultaneously.
+
+If two transactions update the same record without proper coordination, the final result may be incorrect.
+
+Concurrency control is used to manage simultaneous transactions and maintain consistency.
+
+One common technique is locking.
+
+A shared lock allows multiple transactions to read data, while an exclusive lock is generally used when a transaction needs to modify data.
+
+Another technique is timestamp ordering, where transactions are coordinated using timestamps.
+
+Database systems also use recovery mechanisms.
+
+Recovery is the process of restoring a database to a correct state after a failure.
+
+Failures may happen because of power loss, hardware problems, software errors, or unexpected system crashes.
+
+Logs help record database changes and support recovery.
+
+A checkpoint is another recovery technique. It allows the database system to record a known recovery position so that it does not always need to process the entire history of operations.
+
+Finally, let's discuss database security.
+
+Database security protects information from unauthorized access, modification, or destruction.
+
+Authentication verifies the identity of a user.
+
+Authorization determines what actions an authenticated user is allowed to perform.
+
+For example, a student may have permission to view their academic information, while an administrator may have permission to update student records.
+
+Other important security practices include using strong passwords, assigning appropriate permissions, encrypting sensitive information, maintaining backups, and regularly monitoring database activity.
+
+To conclude our presentation, we have covered four major areas of Database Management Systems.
+
+First, we learned the fundamentals and importance of DBMS.
+
+Second, we understood how databases are designed using the ER model and relational model.
+
+Third, we learned how SQL is used to create, modify, and retrieve information.
+
+Finally, we discussed normalization, transactions, ACID properties, concurrency control, recovery, and security.
+
+These concepts form the foundation of database management and are used in real-world applications such as banking, healthcare, education, e-commerce, and many other industries.
+
+Thank you everyone for listening to our presentation.
