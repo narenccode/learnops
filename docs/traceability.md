@@ -402,6 +402,7 @@ FR-G-06. Neither requirement is implemented by this skeleton.
 | One token per site, from the environment only | B4 §1, Q24, SEC-03, C-06 | `test_config.py` |
 | Tokens and full URLs stay out of logs and errors | SEC-03, OPS-04, design §4.1 | `test_redaction.py` |
 | One error family with stable codes | Design §4.1, §10.2 (library documentation, Q37) | `test_errors.py` |
+| A function that is not in the allow-list is refused with a fixed message that does not repeat it; matching is exact; every listed function resolves on both versions; a replacement name applies only to its own version | B4 §2a, guide on Q1 | `test_an_unlisted_function_is_refused_and_the_message_repeats_nothing`, `test_every_listed_function_resolves_to_itself_on_both_versions`, `test_matching_is_exact`, `test_a_replacement_name_is_returned_only_for_its_own_version` |
 
 Not covered: the library is being built in steps and cannot call Moodle. Nothing has been checked
 against Moodle (every check in `contracts/moodle-ws.v1.md` §5 is open).
