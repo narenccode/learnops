@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator, Mapping
 from dataclasses import replace
+from decimal import Decimal
 from typing import Any
 
 import pytest
@@ -19,10 +20,14 @@ from moodle_ws import (
     GradeWriteNotAllowed,
     InvalidParameters,
     MoodleClient,
+    MoodleError,
+    MoodleUnreachable,
     Outcome,
+    PermissionDenied,
     Site,
     SiteSettings,
     UnexpectedResponse,
+    WorkflowStateNotAllowed,
     load_allowlist,
     write_draft_grade,
 )
@@ -149,6 +154,310 @@ def test_r2_write_draft_grade_refuses_minus_one_before_reading(
     with pytest.raises(InvalidParameters):
         write(moodle, settings, attemptnumber=-1)
     assert moodle.calls == []
+
+
+# --- R3: locked states refused before sending; still verified after ----------------------------
+
+
+@pytest.mark.parametrize("version", VERSIONS)
+@pytest.mark.parametrize("state", ["readyforrelease", "released"])
+def test_r3_a_locked_state_is_refused_before_anything_is_sent(
+    version: str, state: str, settings: SiteSettings
+) -> None:
+    moodle = SourceFakeMoodle(version, state=state, grade="70.00000")
+    result = write(moodle, settings)
+    assert result.outcome is Outcome.REFUSED_LOCKED
+    assert not result.write_sent
+    assert moodle.count(SAVE) == 0
+    assert moodle.grade == "70.00000"
+
+
+def lock_it(moodle: SourceFakeMoodle) -> None:
+    """Another grader saves a grade and sets readyforrelease between the check and the write."""
+    moodle.state = "readyforrelease"
+    moodle.grade = "70.00000"
+
+
+def test_r3_on_5_3_a_lock_after_the_check_keeps_the_old_grade_and_is_not_verified(
+    settings: SiteSettings,
+) -> None:
+    moodle = SourceFakeMoodle("5.3", between_check_and_write=lock_it)
+    result = write(moodle, settings)
+    assert moodle.grade == "70.00000"  # Moodle kept it while the call looked successful
+    assert result.outcome is Outcome.NOT_VERIFIED
+    assert moodle.count(SAVE) == 1
+
+
+def release_after_write(moodle: SourceFakeMoodle) -> None:
+    """Someone releases the grade right after LearnOps's write, before the read-back."""
+    save = moodle._save
+
+    def save_then_release(params: Mapping[str, Any]) -> Any:
+        answer = save(params)
+        moodle.state = "released"
+        return answer
+
+    moodle._save = save_then_release  # type: ignore[method-assign]
+
+
+# The guide's R3 decision for 4.5 (Option 1, PR #80, 2026-11-15): only a post-write `released` is
+# a lock change; a normal write stays verified; the race to `readyforrelease` cannot be detected.
+
+
+def test_r3_on_4_5_a_normal_write_is_verified(settings: SiteSettings) -> None:
+    moodle = SourceFakeMoodle("4.5")
+    result = write(moodle, settings)
+    assert result.outcome is Outcome.VERIFIED
+    assert (moodle.state, moodle.grade) == ("readyforrelease", "84.50000")
+
+
+@pytest.mark.parametrize("version", VERSIONS)
+def test_r3_a_state_that_ends_released_after_the_write_is_not_verified(
+    version: str, settings: SiteSettings
+) -> None:
+    moodle = SourceFakeMoodle(version)
+    release_after_write(moodle)
+    result = write(moodle, settings)
+    assert moodle.state == "released"
+    assert moodle.grade == "84.50000"  # the grade value alone would have matched
+    assert result.outcome is Outcome.NOT_VERIFIED
+    assert result.write_sent
+    assert moodle.count(SAVE) == 1  # never written again
+
+
+def test_r3_on_4_5_a_race_to_readyforrelease_is_not_detected_and_not_claimed(
+    settings: SiteSettings,
+) -> None:
+    """The accepted limitation: another grader sets `readyforrelease` between the check and the
+    write. 4.5 overwrites their grade (read from the code, lab check 16), and the read-back sees
+    exactly what a normal write leaves, so the result is VERIFIED. This test pins that behaviour;
+    it does not claim the race is caught. Only the pre-write refusal protects a grade locked
+    before the check."""
+    raced = SourceFakeMoodle("4.5", between_check_and_write=lock_it)
+    assert write(raced, settings).outcome is Outcome.VERIFIED
+    assert raced.grade == "84.50000"  # the other grader's 70 is gone
+    already = SourceFakeMoodle("4.5", state="readyforrelease", grade="70.00000")
+    assert write(already, settings).outcome is Outcome.REFUSED_LOCKED
+    assert already.grade == "70.00000"
+
+
+# --- the final read-back fails closed on its warnings field (reply on PR #80, 15 Nov) -----------
+
+
+def a_warning(answer: Any) -> Any:
+    return {**answer, "warnings": [{"warningcode": "1"}]}
+
+
+def no_warnings_field(answer: Any) -> Any:
+    return {key: value for key, value in answer.items() if key != "warnings"}
+
+
+def warnings_none(answer: Any) -> Any:
+    return {**answer, "warnings": None}
+
+
+@pytest.mark.parametrize("version", VERSIONS)
+@pytest.mark.parametrize(
+    "change",
+    [
+        pytest.param({"workflowstate": "released"}, id="released"),
+        pytest.param({"workflowstate": "RELEASED"}, id="upper case"),
+        pytest.param({"note": {"deep": ["released"]}}, id="nested"),
+    ],
+)
+def test_the_guarded_write_still_applies_the_draft_rule(
+    version: str, change: dict[str, Any], settings: SiteSettings
+) -> None:
+    """The guarded sender runs the client's draft rule again (PRD B4: never `released`): the
+    refusal comes before the transport, after the state read."""
+    moodle = SourceFakeMoodle(version)
+    with pytest.raises(WorkflowStateNotAllowed):
+        write(moodle, settings, **change)
+    assert moodle.count(SAVE) == 0
+    assert moodle.grade is None
+
+
+@pytest.mark.parametrize("version", VERSIONS)
+@pytest.mark.parametrize("change", [a_warning, no_warnings_field, warnings_none])
+def test_a_final_read_back_with_a_warning_or_no_warnings_list_is_not_verified(
+    version: str, change: Any, settings: SiteSettings
+) -> None:
+    moodle = SourceFakeMoodle(version)
+    grades = moodle._grades
+    moodle._grades = lambda params: change(grades(params))  # type: ignore[method-assign]
+    result = write(moodle, settings)
+    assert moodle.grade == "84.50000"  # Moodle stored it; the answer cannot confirm it
+    assert result.write_sent
+    assert result.outcome is Outcome.NOT_VERIFIED
+    assert moodle.count(SAVE) == 1
+
+
+# --- marking workflow and state, fail closed (B4 §6) -------------------------------------------
+
+
+@pytest.mark.parametrize("version", VERSIONS)
+@pytest.mark.parametrize("state", ["graded", "notgraded"])
+def test_marking_workflow_off_is_refused_before_anything_is_sent(
+    version: str, state: str, settings: SiteSettings
+) -> None:
+    """Proposed, fail closed (B4 §6): with marking workflow off the grade could reach the learner
+    at once (PRD B4 draft rule), so it is never written."""
+    moodle = SourceFakeMoodle(version, state=state)
+    result = write_draft_grade(client_for(moodle, settings), WRITE, 100)
+    assert result.outcome is Outcome.REFUSED_WORKFLOW_OFF
+    assert not result.write_sent and moodle.count(SAVE) == 0
+
+
+@pytest.mark.parametrize("state", ["", "NotMarked", "inmarking ", "marked", "unknown"])
+def test_an_unknown_state_is_refused(state: str, settings: SiteSettings) -> None:
+    moodle = SourceFakeMoodle("5.3", state=state)
+    result = write_draft_grade(client_for(moodle, settings), WRITE, 100)
+    assert result.outcome is Outcome.REFUSED_STATE_UNKNOWN
+    assert moodle.count(SAVE) == 0
+
+
+@pytest.mark.parametrize("version", VERSIONS)
+@pytest.mark.parametrize(
+    "state", ["notmarked", "inmarking", "readyforreview", "inreview"]
+)
+def test_each_unlocked_marking_workflow_state_may_be_written(
+    version: str, state: str, settings: SiteSettings
+) -> None:
+    moodle = SourceFakeMoodle(version, state=state)
+    result = write_draft_grade(client_for(moodle, settings), WRITE, 100)
+    assert result.outcome is Outcome.VERIFIED
+    assert moodle.count(SAVE) == 1
+
+
+# --- R6: lastattempt missing --------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("version", VERSIONS)
+def test_r6_an_unreadable_state_before_writing_sends_nothing(
+    version: str, settings: SiteSettings
+) -> None:
+    """Open question for the guide (B4 §6): until decided, no write without a readable state."""
+    moodle = SourceFakeMoodle(version, show_lastattempt=False)
+    result = write(moodle, settings)
+    assert result.outcome is Outcome.REFUSED_STATE_UNKNOWN
+    assert moodle.count(SAVE) == 0
+
+
+def test_r6_a_state_hidden_after_the_write_is_not_verified(
+    settings: SiteSettings,
+) -> None:
+    def hide(moodle: SourceFakeMoodle) -> None:
+        moodle.show_lastattempt = False
+
+    moodle = SourceFakeMoodle("5.3", between_check_and_write=hide)
+    assert write(moodle, settings).outcome is Outcome.NOT_VERIFIED
+
+
+# --- R8: a failed read-back is NOT_VERIFIED; the write is never repeated ------------------------
+
+
+@pytest.mark.parametrize("version", VERSIONS)
+@pytest.mark.parametrize("failing", [STATUS, GRADES])
+def test_r8_a_failed_read_back_is_not_verified_and_writes_once(
+    version: str, failing: str, settings: SiteSettings
+) -> None:
+    def fail_from_now_on(m: SourceFakeMoodle) -> None:
+        m.failures[failing] = MoodleUnreachable("timeout")
+
+    # The first status read (the R3 check) works; the failure starts after it.
+    moodle = SourceFakeMoodle(version, between_check_and_write=fail_from_now_on)
+    result = write(moodle, settings)
+    assert moodle.grade == "84.50000"  # Moodle did store it
+    assert result.outcome is Outcome.NOT_VERIFIED
+    assert result.write_sent and not result.succeeded
+    assert moodle.count(SAVE) == 1
+
+
+# --- R9: range checked before writing; a silently ignored grade is caught ----------------------
+
+
+@pytest.mark.parametrize("version", VERSIONS)
+@pytest.mark.parametrize("grade", [-0.5, 100.00001, 101])
+def test_r9_a_grade_out_of_range_is_refused_before_anything_is_sent(
+    version: str, grade: float, settings: SiteSettings
+) -> None:
+    moodle = SourceFakeMoodle(version)
+    result = write(moodle, settings, grade=grade)
+    assert result.outcome is Outcome.REFUSED_OUT_OF_RANGE
+    assert moodle.calls == []
+
+
+@pytest.mark.parametrize("version", VERSIONS)
+def test_r9_moodle_silently_ignoring_a_grade_is_caught_by_the_read_back(
+    version: str, settings: SiteSettings
+) -> None:
+    """The caller's maximum was wrong (100); Moodle's is 50, so Moodle ignores 84.5 with no
+    error. Only the read-back shows it."""
+    moodle = SourceFakeMoodle(version, max_grade=Decimal(50))
+    result = write(moodle, settings, max_grade=100)
+    assert moodle.grade is None
+    assert result.outcome is Outcome.NOT_VERIFIED
+
+
+# --- R10: access failures are their own outcome; the next learner continues -------------------
+
+
+@pytest.mark.parametrize("version", VERSIONS)
+def test_r10_an_access_failure_before_writing_is_its_own_outcome(
+    version: str, settings: SiteSettings
+) -> None:
+    moodle = SourceFakeMoodle(version, failures={STATUS: PermissionDenied("no")})
+    result = write(moodle, settings)
+    assert result.outcome is Outcome.ACCESS_DENIED
+    assert moodle.count(SAVE) == 0
+
+
+def test_r10_one_learner_failing_does_not_stop_the_next(settings: SiteSettings) -> None:
+    """Results are values, not exceptions, so a caller's loop simply continues."""
+    first = SourceFakeMoodle("5.3", failures={STATUS: PermissionDenied("no")})
+    second = SourceFakeMoodle("5.3")
+    outcomes = [write(m, settings).outcome for m in (first, second)]
+    assert outcomes == [Outcome.ACCESS_DENIED, Outcome.VERIFIED]
+
+
+# --- R11: an uncertain write is read back, never retried ---------------------------------------
+
+
+@pytest.mark.parametrize("version", VERSIONS)
+def test_r11_a_lost_answer_is_read_back_once_and_never_rewritten(
+    version: str, settings: SiteSettings
+) -> None:
+    """Moodle stored the grade but the answer was lost. The read-back matches, but fail closed
+    (proposed, pending the guide): it is not success until the mentor confirms it."""
+    moodle = SourceFakeMoodle(version, lose_save_answer=MoodleUnreachable("timeout"))
+    result = write(moodle, settings)
+    assert result.outcome is Outcome.NEEDS_MENTOR_CONFIRMATION
+    assert not result.succeeded
+    assert result.uncertain and result.write_sent
+    assert "confirm" in result.message
+    assert moodle.count(SAVE) == 1
+
+
+@pytest.mark.parametrize("version", VERSIONS)
+@pytest.mark.parametrize(
+    "error", [MoodleUnreachable("timeout"), UnexpectedResponse("garbled")]
+)
+def test_r11_a_write_with_no_answer_is_not_retried_and_the_mentor_decides(
+    version: str, error: MoodleError, settings: SiteSettings
+) -> None:
+    moodle = SourceFakeMoodle(version, failures={SAVE: error})
+    result = write(moodle, settings)
+    assert result.outcome is Outcome.NOT_VERIFIED
+    assert result.uncertain
+    assert moodle.count(SAVE) == 1
+    assert "decide what to do next" in result.message
+
+
+def test_r11_a_refused_write_is_not_retried(settings: SiteSettings) -> None:
+    moodle = SourceFakeMoodle("5.3", failures={SAVE: PermissionDenied("no")})
+    result = write(moodle, settings)
+    assert result.outcome is Outcome.ACCESS_DENIED
+    assert moodle.count(SAVE) == 1
 
 
 # --- the parameters are read once ----------------------------------------------------------------

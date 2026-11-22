@@ -352,7 +352,7 @@ Test names are in `test_moodle_ws_v1.py`.
 | The write rules are exactly R1 to R15 (guide's decisions on PR #64 and, for R12 to R14, PR #72; rules §3a) | B4 draft rule | `test_the_write_rules_are_exactly_r1_to_r15` |
 | R1: `mod_assign_get_grades` is the stored-grade read-back, in the allow-list, rules §2 and the PRD tables (always sent: `assignmentids`), with the §3b matching rule | B4 draft rule | `test_r1_get_grades_is_the_stored_grade_read_back` |
 | R2: `attemptnumber` is the explicit attempt, never `-1`; the read-back matches it | B4 draft rule | `test_r2_attempt_number_is_explicit_never_minus_one` |
-| R3: a write is refused before sending when the state is already `readyforrelease` or `released`, and is still read back; the 4.5 / 5.3 difference is recorded for the lab; R3 holds on 5.3 and is best effort on 4.5, named in the release notes (guide, 15 Nov) | B4 draft rule | `test_r3_locked_states_are_refused_before_sending_and_still_verified` |
+| R3: a write is refused before sending when the state is already `readyforrelease` or `released`, and is still read back; the 4.5 / 5.3 difference is recorded for the lab; R3 holds on 5.3 and is best effort on 4.5, named in the release notes (guide, 15 Nov); a state that ends `released` after the write is `NOT_VERIFIED` and a normal `readyforrelease` write stays verified (guide, 22 Nov) | B4 draft rule | `test_r3_locked_states_are_refused_before_sending_and_still_verified` |
 | R4: `viewhiddencourses`, `viewhiddendetails` and `useremail` are not granted | B4, SEC-03 | `test_r4_declared_capabilities_are_not_granted` |
 | R5: suspended learners are skipped and reported as skipped; `viewsuspendedusers` is not granted | B4 | `test_r5_suspended_learners_are_skipped_and_reported` |
 | R6: `viewownsubmissionsummary` stays lab check 12 | B4, App-C 1 | `test_r6_view_own_submission_summary_stays_a_lab_check` |
@@ -419,6 +419,14 @@ FR-G-06. Neither requirement is implemented by this skeleton.
 | Every grade write goes through `write_draft_grade`: a direct call never writes over a locked learner or with marking workflow off | B4 §3, §3a | `test_grade_write.py`: `test_a_direct_call_*` |
 | R1: the merged contract lists `mod_assign_get_grades`; the read-back asks for the one assignment written; the state alone is never enough | B4 §3a, §3b | `test_grade_write.py`: `test_r1_*` |
 | R2: `write_draft_grade` refuses `-1` before reading anything | B4 §3a | `test_grade_write.py`: `test_r2_*` |
+| R3: `readyforrelease` / `released` refused before sending; a lock after the check is caught on 5.3; a state that ends `released` after the write is `NOT_VERIFIED` on both; on 4.5 a normal write is verified and the race to `readyforrelease` is not detected (accepted limitation, guide on PR #80) (source fake) | B4 §3a | `test_grade_write.py`: `test_r3_*` |
+| The final read-back is `NOT_VERIFIED` when the `mod_assign_get_grades` answer has a warning, no `warnings` field, or `warnings: null` (source fake, both versions) | B4 §3b | `test_grade_write.py`: `test_a_final_read_back_with_a_warning_or_no_warnings_list_is_not_verified` |
+| Marking workflow off and unknown states send nothing; each unlocked state is written (proposed, fail closed, B4 §6) | PRD B4 draft rule; B4 §6 | `test_grade_write.py`: `test_marking_workflow_off_*`, `test_an_unknown_state_*`, `test_each_unlocked_*` |
+| R6: no readable state before the write sends nothing; a state hidden after it is not verified | B4 §3a | `test_grade_write.py`: `test_r6_*` |
+| R8: a failed read-back is `NOT_VERIFIED` and the write is sent once | B4 §3a | `test_grade_write.py`: `test_r8_*` |
+| R9: out-of-range refused before sending; a silently ignored grade is caught by the read-back | B4 §3a | `test_grade_write.py`: `test_r9_*` |
+| R10: an access failure is its own outcome; one learner failing does not stop the next | B4 §3a | `test_grade_write.py`: `test_r10_*` |
+| R11: a lost or garbled answer is read back once, never rewritten; a match needs the mentor's confirmation (proposed, fail closed) | B4 §3a | `test_grade_write.py`: `test_r11_*` |
 | The parameters are read once, so the checks and the write see the same values | B4 §3a | `test_grade_write.py`: `test_write_draft_grade_reads_the_parameters_once` |
 
 R4 and R7 (capabilities kept out, `reviewgrades` on both versions) have no library code; they are
