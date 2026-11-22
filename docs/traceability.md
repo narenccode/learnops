@@ -583,6 +583,19 @@ These need Studio, the checker or a Moodle site and are not claimed by this chan
 - The section idnumbers `wk-01` … `wk-04` are kept for now. They need updating when the B1
   section-idnumber contract change (Issue #65) is implemented.
 
+## B8.3 planted-error courses (test data), Release 0 foundation, PARTIAL
+
+B8.3 is a test data set (PRD §B8) with no requirement ID of its own. It prepares the measurement for
+PRD G-2 and C2.7 (FR-C-03, rules CK-01 to CK-13), which is made in Release 1.
+
+| Item | PRD | Test |
+|---|---|---|
+| Four package variants (CK-02, CK-03, CK-09, CK-12), each a B8.2 copy with exactly one changed file, valid under B1 | B8.3, FR-C-03 | `test_built_variant_changes_exactly_the_declared_file`, `test_built_variant_is_a_valid_b1_package`, `test_planted_changes_are_the_ones_declared` (in `libs/contracts/tests/test_b8_3_planted_errors.py`) |
+| `expected-findings.yaml`: one entry per planted error with a valid CK rule, element, severity and reason; every CK-01 to CK-13 has a variant | B8.3, C2.3 | `test_entry_is_complete_and_valid`, `test_every_ck_rule_has_at_least_one_variant`, `test_ids_are_unique`, `test_every_variant_folder_has_an_entry_and_back` |
+| B8.2 is unchanged (SHA-256 of every file) and B8.3 holds no secrets or email addresses | B8.2, C-07 | `test_b82_is_unchanged`, `test_no_secrets_or_learner_data` |
+| Nine `.mbz` variants (CK-01, 04, 05, 06 twice, 07, 08, 10, 11, 13) | C-03 | None yet: PENDING MOODLE LAB; the 4.5 and 5.3 question is checker design §12 item 22 |
+| The checker finds 100 % of the planted errors and nothing on B8.2 | C2.7, G-2 | **Not tested**: the checker does not exist (Release 1). The tests above check the dataset only |
+
 ## B8.5 lecture video test data set, Release 0 foundation
 
 Files: `testdata/b8-5-lecture-videos/` (README, folder `.gitignore`, placeholder outlines and
