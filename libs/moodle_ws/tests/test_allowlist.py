@@ -19,6 +19,7 @@ from moodle_ws import (
     NotSupported,
     SiteSettings,
     load_allowlist,
+    messages,
 )
 from moodle_ws.allowlist import EXAMPLE_PATH, SCHEMA_PATH
 
@@ -179,3 +180,96 @@ def test_the_list_cannot_be_changed_after_loading() -> None:
     functions: Any = load_allowlist().functions
     with pytest.raises(TypeError):
         functions["core_user_get_users"] = {}
+
+
+# --- the refusal itself (B4 §2a: the library must refuse any other function) -----------------
+
+VERSIONS = ("4.5", "5.3")
+
+
+@pytest.mark.parametrize("version", VERSIONS)
+@pytest.mark.parametrize(
+    "function",
+    [
+        "core_user_get_users",  # a real Moodle function that B4 does not list
+        "mod_assign_set_user_flags",  # the one the guide removed
+        "totally_unknown",
+        "",
+    ],
+)
+def test_an_unlisted_function_is_refused_and_the_message_repeats_nothing(
+    function: str, version: str
+) -> None:
+    assert function not in contract_names()
+    with pytest.raises(FunctionNotAllowed) as caught:
+        load_allowlist().resolve(function, version)
+    # The message is the fixed text: it does not echo what the caller sent.
+    assert str(caught.value) == messages.FUNCTION_NOT_ALLOWED
+    if function:
+        assert function not in str(caught.value)
+
+
+@pytest.mark.parametrize("version", VERSIONS)
+def test_every_listed_function_resolves_to_itself_on_both_versions(
+    version: str,
+) -> None:
+    allowlist = load_allowlist()
+    names = contract_names()
+    assert names  # an empty list would make this test pass for the wrong reason
+    for name in names:
+        assert allowlist.resolve(name, version) == name
+
+
+@pytest.mark.parametrize("version", VERSIONS)
+@pytest.mark.parametrize(
+    "variant",
+    [
+        lambda name: name.upper(),  # case
+        lambda name: name.capitalize(),
+        lambda name: f" {name}",  # spaces
+        lambda name: f"{name} ",
+        lambda name: name[:-1],  # a prefix of a listed name
+        lambda name: f"{name}_x",  # a listed name with more after it
+        lambda name: name.replace("_", "-"),
+    ],
+    ids=[
+        "upper",
+        "capitalised",
+        "leading-space",
+        "trailing-space",
+        "prefix",
+        "suffix",
+        "hyphens",
+    ],
+)
+def test_matching_is_exact(variant: Any, version: str) -> None:
+    allowlist = load_allowlist()
+    for name in contract_names():
+        changed = variant(name)
+        assert changed not in contract_names()
+        with pytest.raises(FunctionNotAllowed):
+            allowlist.resolve(changed, version)
+
+
+def test_a_replacement_name_is_returned_only_for_its_own_version(
+    tmp_path: Path,
+) -> None:
+    # The contract example lists no replacement today, so the case is built in a temporary list.
+    listed = write_list(
+        tmp_path / "list.json",
+        [
+            {
+                "name": "mod_example_old",
+                "parameters": [],
+                "replacements": [{"moodle_version": "5.3", "name": "mod_example_new"}],
+            },
+            {"name": "mod_example_plain", "parameters": []},
+        ],
+    )
+    allowlist = load_allowlist(listed)
+    assert allowlist.resolve("mod_example_old", "5.3") == "mod_example_new"
+    assert allowlist.resolve("mod_example_old", "4.5") == "mod_example_old"
+    assert allowlist.resolve("mod_example_plain", "5.3") == "mod_example_plain"
+    # The replacement is a name to send, not a second listed function.
+    with pytest.raises(FunctionNotAllowed):
+        allowlist.resolve("mod_example_new", "5.3")
