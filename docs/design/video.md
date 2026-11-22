@@ -46,7 +46,7 @@ Requirement wording is copied from PRD §C4.3. The "approach" and "components" c
 | FR-V-14: *(Stretch)* Checkpoint questions per chapter via B5 → B7 items (separate activity) and `cues.json` entries. | R5 | AI-drafted only, mentor-approved, ungraded; starts only when Releases 1–4 meet their exit criteria [§C5]. Not designed here; to be added to this document before Release 5 starts. | Model interface; B7; `cues.json` |
 | FR-V-15: Retention: raw uploads and BigBlueButton intake files are deleted a configurable number of days after the lesson is ready (default 30); published lesson folders are never deleted automatically; a CLI lists and, with confirmation, removes lessons older than a configurable age (default off). | R3 | CLI with `--dry-run`, `--check` and a documented undo [C-05, OPS-05]. | CLI |
 
-Deferrals: none. FR-V-14 is Release 5 by the PRD [§C4.10].
+Deferrals: none from Release 3, the release this document designs. FR-V-14 is deferred to Release 5 by the PRD [§C4.10] and is not designed here.
 
 Release 3 also includes a harness smoke test for this module [§D1]. The integration harness is Module 2's [§C2].
 
@@ -173,7 +173,7 @@ Tables in schema `video` are the four the PRD names [§C4.5]. The columns and st
 - **Migrations:** versioned and reversible [OPS-07]. **Confirmed (Q7):** plain SQL `up` and `down` scripts with a small runner; no ORM and no migration product.
 - **Relative vs absolute:** any media URL stored by a tool is a relative path, never a full fixed URL [C-08]; all manifest paths are relative to the lesson folder [§B6.3]; `video.upload.storage_key` is relative to the storage root.
 - **Backup and restore:** a documented procedure for the tool database and media store [OPS-08]; written with the Release 3 README.
-- **Personal data:** no personal data beyond what LTI provides (name, email if shared, role) [SEC-06]; the manifest records `source.uploaded_by` as the LTI `sub` [§B6.3]; `source.original_name` is not written in v1 (guide decision recorded in the schema).
+- **Personal data:** beyond what LTI provides (name, email if shared, role) the tool itself adds no personal data [SEC-06]. **Lecture video and audio, transcripts and their derived outputs can contain personal data** (the voice and face of the speaker, and spoken names). In this project they are test data only: B8.5 recordings are made by the team with each speaker's written consent, and their handling (retention, lab storage, names and transcripts, processing services) is set by `docs/decisions/0011-b8-5-data-handling.md` (PR #104) and `docs/data-map.md`. For a real deployment, the recordings, extracted audio, transcripts, captions, chapters, summaries and slide text must be treated as personal data, with the retention of FR-V-15, and the operator is responsible for consent [C-07]; the manifest records `source.uploaded_by` as the LTI `sub` [§B6.3]; `source.original_name` is not written in v1 (guide decision recorded in the schema).
 - Tables `video.watch` and `video.cue_response` belong to the extension track (Release 6) [§C6.5] and are not part of this module's baseline.
 
 ## 6. Interfaces
@@ -272,7 +272,7 @@ The PRD fixes the stack but not library versions or licences. Versions below wer
 | TypeScript | 7.0.2 (verified) | Apache-2.0 (verified) | Front end [§A10] | none (stack fixed) |
 | Playwright (Python) | 1.65.2 (verified) | Apache-2.0 (verified) | Browser tests [§A10] | none (stack fixed) |
 | PostgreSQL | 16 [§A10]; minor version TO VERIFY: https://www.postgresql.org/support/versioning/ | TO VERIFY: https://www.postgresql.org/about/licence/ | Database [§A10] | none (stack fixed) |
-| ffmpeg | TO VERIFY: the lab image's `ffmpeg -version` output, including its configuration line (Q10). Record the version and build configuration in the decision record and the release notes | **LGPL build, no GPL-only parts (Q10).** Called as a separate process, never linked. Many builds enable the GPL encoder libx264 (a common Windows build is one), so the chosen LGPL build must still be able to write the H.264/AAC output that FR-V-03 and B6.2 require; if the lab build is GPL, use an LGPL build, or the guide decides an exception | Transcode, poster and scene detection [§C4.5] | none (stack fixed) |
+| ffmpeg | TO VERIFY: the lab image's `ffmpeg -version` output, including its configuration line (Q10). Record the version and build configuration in the decision record and the release notes | **LGPL build, no GPL-only parts (Q10).** Called as a separate process, never linked. Many builds enable the GPL encoder libx264 (a common Windows build is one; the Lesson Processor demo, PR #129, uses `libx264` for local demonstration only and is **not** an approved build), so the chosen LGPL build must still be able to write the H.264/AAC output that FR-V-03 and B6.2 require; if the lab build is GPL, use an LGPL build, or the guide decides an exception | Transcode, poster and scene detection [§C4.5] | none (stack fixed) |
 | LTI 1.3 library | See `docs/decisions/0001-lti-library.md` (Proposed, pending the guide) [App-C 6] | Recorded there | LTI 1.3 launches [§B3] | Chosen in Release 0 |
 | `tusd` (separate server) | v2.10.1 (latest release at 2026-11-19; pin it in the PR that adds it) | MIT (repository `LICENSE.txt`, read through the GitHub API on 2026-11-19; re-check the licence of the release you pin) | FR-V-01 resumable upload (Q11, **Confirmed**) | none (the guide ruled out writing the tus protocol in FastAPI) |
 | Database migrations | Plain SQL scripts and a small runner of our own; no library (Q7, **Confirmed**) | Our code, Apache-2.0 | OPS-07 | none |
@@ -290,7 +290,7 @@ Licences must be permissive OSI-approved (MIT, BSD, Apache-2.0, ISC, PSF-2.0 and
 | SEC-03 Service-account token | No (**Confirmed**, Q13) | The Video module calls no Moodle web service; B4 is listed as used by M2 and M3 [§B.0]. Course mapping for intake uses the metadata BigBlueButton returns, and the course link comes from the LTI launch (`shared.course_link`) |
 | SEC-04 Sandbox | No | Applies to untrusted learner code in Module 3 [SEC-04] |
 | SEC-05 Uploads | Yes | Size limit (max 4 GB [FR-V-01]); type check by content, not only extension; virus-free assumption documented; stored outside any web root until processed [SEC-05] |
-| SEC-06 Personal data | Yes | No personal data beyond what LTI provides; test data only in the lab [SEC-06, C-07] |
+| SEC-06 Personal data | Yes | The tool adds no personal data beyond what LTI provides (name, email if shared, role). **The media itself can contain personal data** (voice, face, spoken names) and so can transcripts, captions and slide text: in this project they are test data only, recorded with written consent and handled as in decision 0011 and the data map; a real deployment treats them as personal data under FR-V-15 [SEC-06, C-07] |
 | SEC-07 Data to hosted AI | Yes | Data sent limited to what the task needs; provider and data sent documented in the data map [SEC-07] |
 | SEC-08 Dependency scan | Yes | Dependencies scanned in CI; no known critical vulnerabilities at release [SEC-08] |
 | SEC-09 CSRF and cookies | Yes | CSRF protection on state-changing requests; secure, same-site cookies for LTI sessions [SEC-09] |
@@ -370,7 +370,7 @@ PRD Appendix C items that affect this module (results in `docs/decisions/`). **P
 | 5 | Exact H5P content-type versions on both Moodle versions | Yes | Decision 0008 exists; concerns FR-V-14 (Release 5) only | Student 1 owns B7 |
 | 6 | LTI 1.3 library choice and licence (§8) | No | `0001-lti-library.md` is Proposed, pending the guide | Guide |
 | 7 | Caption word-error-rate target (G-6) from a first baseline run | Yes | PENDING; evaluation preparation is merged (#103) | Student 4; §13 order 4 |
-| 8 | Licence or consent for every B8.5 video | No | PENDING; audit is draft PR #104 | Student 4; §13 orders 3–4 |
+| 8 | Licence or consent for every B8.5 video | No | PENDING; audit is PR #104 (open, ready for review) | Student 4; §13 orders 3–4 |
 | 9 | Which AI features Moodle 5.3 itself provides (for overlap with chapters or summaries) | No | Not started. **In scope (Q16):** Student 4 checks Moodle 5.3's own AI features for overlap with chapters and summaries | Student 4 |
 
 ### Guide's answers (2026-11-19, PR #140)
@@ -399,7 +399,7 @@ The answers address the questions Q1–Q16 and the sections they name; they are 
 ### Still open after the answers
 
 - **Q9, the speech engine:** stays PENDING until the non-secret lab facts are recorded (draft PR #98).
-- **Q10, the ffmpeg build:** the lab image's `ffmpeg -version` output (with its configuration) must be sent to the guide first. Until then the H.264/AAC output from an LGPL build is not shown to be possible. The Lesson Processor demo (PR #129) runs a local ffmpeg with libx264 and is not the pipeline.
+- **Q10, the ffmpeg build:** the lab image's `ffmpeg -version` output (with its configuration) must be sent to the guide first. Until then the H.264/AAC output from an LGPL build is not shown to be possible. **Compliance status:** the Lesson Processor demo (PR #129) runs whatever ffmpeg is installed locally or by `apt` in CI, and encodes with `libx264`, which is a GPL encoder. That build has not been checked against C-11 and is **not** an approved production build: it is a local demonstration, and its encoder must not be read as the build chosen for the pipeline. The production build is the LGPL build of Q10, once its configuration is shown.
 - **Q14, a hosted production provider:** not chosen.
 - **`tusd` and `boto3`:** licences read on 2026-11-19; versions are pinned in the PR that adds each one.
 - **Approval:** this document stays `Draft`. The owner marks it `In review`; only the guide sets `Approved`, in a pull request he merges.
@@ -415,7 +415,7 @@ One requirement (or one tightly related group) per pull request. Feature work st
 | 1 | B6 contract: schema and at least one valid example | B6 (contract) | none | **Release 0.** **Merged**: B6.3 PR #32, B6.2 PR #93. Frozen at the end of Release 0 |
 | 2 | `media_paths` shared library, including B6.4 with the `none` implementation | B6.1, B6.4 | 1 | **Release 0.** **Merged**: PRs #84, #85, #86 (split of #38) |
 | 3 | B8.5 lecture videos | B8.5 | none | **Release 0 test data.** Dataset checker and tests merged (#82, #89, #99, #125); evidence PENDING (no consent, transcripts or names) |
-| 4 | Appendix C verification of items that concern the video pipeline | App-C #4, #7, #8 (and #6, #9, which are Release 0) | Lab; 3 for #7 and #8 | **Release 3** for #4, #7, #8 (PRD App-C: the first release that relies on them); #6 and #9 are Release 0. #4 record merged but NOT VERIFIED (#96); #7 preparation merged (#103); #8 audit in draft #104; speech ADR draft #98. Preparation may start earlier |
+| 4 | Appendix C verification of items that concern the video pipeline | App-C #4, #7, #8 (and #6, #9, which are Release 0) | Lab; 3 for #7 and #8 | **Release 3** for #4, #7, #8 (PRD App-C: the first release that relies on them); #6 and #9 are Release 0. #4 record merged but NOT VERIFIED (#96); #7 preparation merged (#103); #8 audit in #104 (open, ready for review); speech ADR #98 (draft). Preparation may start earlier |
 | 5 | Storage adapter | FR-V-12 | Q3, Q12 (decided); 2 | Release 3. Moved before the upload because the upload stores through it |
 | 6 | Data model and job queue: migrations, `video.lesson/upload/job/step`, worker loop | §C4.5, OPS-07, OPS-10 | Q1, Q4, Q7 (decided); 5 | Release 3 |
 | 7 | Resumable upload | FR-V-01 | Q11 (decided: `tusd`); 5, 6 | Release 3 |
@@ -435,7 +435,7 @@ One requirement (or one tightly related group) per pull request. Feature work st
 | 21 | README, `.env.example`, changelog, traceability, data map, release notes | §D2 items 5–7, §E4, §E6 | All | Release 3 exit criteria |
 | 22 | *(R5, stretch)* Checkpoints | FR-V-14 | Releases 2 and 3 [§D1]; Releases 1–4 exit criteria [§C5] | Release 5. Design added before it starts |
 
-Demonstration code outside this plan: the paths demo (PR #117, merged) and the lesson processor demo (PR #129, open as a Draft) are local demonstrations, not the Release 3 pipeline. Whether feature-like code may merge while this document is `Draft` is a guide decision on PR #129.
+Demonstration code outside this plan: the paths demo (PR #117, merged) and the lesson processor demo (PR #129, open, ready for review) are local demonstrations, not the Release 3 pipeline. The guide answered on PR #129 (2026-11-19) that the demo may merge as an **explicit one-PR demonstration exception** to CLAUDE.md §6a.2 and §7 item 7. That exception covers that PR only: this design stays `Draft`, no design approval is implied, and feature work for the Release 3 pipeline waits until this document says `Status: Approved`.
 
 ## 14. Review and approval
 
