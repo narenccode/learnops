@@ -3,7 +3,9 @@
 T19 does **not** edit `docs/traceability.md`. Many open PRs also touch it. This note lists what
 T19's documents need so that the change is made once, there. It is a list of observations, not a
 set of edits. First written 2026-11-16 against `origin/main` at `3abbc02`; **re-checked
-2026-11-20 against `origin/main` `5f3a794`** (`docs/traceability.md` is now 820 lines).
+2026-11-20 against `origin/main` `5f3a794`** (`docs/traceability.md` is now 820 lines); **PR statuses refreshed
+2026-11-22 against `origin/main` `5126fe6`** (after #104, #140, #154, #155, #156 and #106 merged). The refresh
+re-read statuses only: the line count and the CI result named below are from 2026-11-20 and were not re-checked.
 
 ## 1. Coordination and overlap
 

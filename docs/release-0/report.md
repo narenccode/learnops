@@ -1,7 +1,11 @@
 # Release 0 report chapter: Foundation (T19, revision 3)
 
 **Status:** Draft for review. **Audited against:** `origin/main` at `8559c4d` (2026-11-20; first at `5f3a794`,
-refreshed after #130, #142, #145 and #147 merged). The previous revision audited `3abbc02`
+refreshed after #130, #142, #145 and #147 merged). **Two dates are kept apart.** The local test results and the
+hosted-CI runs in section 5 and in `demo-script.md` section 7 were produced on **2026-11-20** (at `5f3a794`) and
+were **not re-run**; they are historical results. The PR and file statuses were **refreshed on 2026-11-22**
+against `origin/main` `5126fe6` (after #104, #140, #154, #155, #156 and #106 merged); that refresh re-read
+statuses only and re-ran nothing. The previous revision audited `3abbc02`
 (2026-11-16); 41 commits have merged since, and **the PRD changed
 what Release 0 contains** (PRs #113 and #116), so this revision re-states the contents list. GitHub
 state (PRs, issues, runs) was queried on 2026-11-20 and changes quickly; re-check before relying on it.
@@ -148,7 +152,7 @@ it (see `traceability-needs.md`).
 ## 5. Verification record
 
 **Local (Windows 11, Python 3.12.5, fresh virtual environment from `requirements.txt` **and** `requirements-dev.txt` (plus `mypy`), worktree
-of `origin/main` `5f3a794` plus this PR), run 2026-11-20.** The command list and exit codes are in
+of `origin/main` `5f3a794` plus this PR), run 2026-11-20 and not repeated on the 2026-11-22 refresh.** The command list and exit codes are in
 section 7 of `demo-script.md`; summary: validator 26 of 26 examples passed, `pytest -q -rs` 1 failed, 4103 passed, 5 skipped (the one failure is a Windows-only case-insensitive-filesystem test; CI on Linux is the reference), CI-script
 tests 88 passed, `mypy libs` clean in 56 source files. `requirements.txt` is needed for `tzdata`: without it 32 tests fail on Windows (demo script section 7).
 

@@ -91,13 +91,13 @@ items 1 to 5, 7, 8, 10. The Release 0 notes must list where each one goes (not w
 | 9 | Moodle 5.3 AI features | **Release 0** | **Not started** | No decision record found |
 | 10 | Backup/restore roles | First release that relies on it | **Blocked** | Needs lab |
 
-## 5. Pull requests (queried 2026-11-20; 19 open, listed by relevance)
+## 5. Pull requests (queried 2026-11-20; 19 open, listed by relevance; the #105 and #106 rows were refreshed on 2026-11-22)
 
 | PR | State | Review | Note |
 |---|---|---|---|
 | #98 T8 STT ADR 0002 | Draft | Review required | PROPOSED, pending the guide's approval of its six points |
-| #105 T19 report and demo | Open, ready for review | Changes requested (status wording) | Revised against `main`; the review points are being fixed |
-| #106 T13 literature (P1 to P8) | Draft | Review required | 1 of 6 sources verified; entries pending owner verification |
+| #105 T19 report and demo | Open, ready for review | Changes requested (status wording) | The requested corrections were pushed in `37466ca`; **re-review is pending** |
+| #106 T13 literature (P1 to P12) | Merged 2026-11-22 | Approved (Harshitha, Akshita21-09) | 1 of 6 sources verified; entries P1 to P12 pending owner verification |
 | #129 Lesson Processor demo | Open | Changes requested (Akshita21-09) | One-PR exception from the guide; awaiting peer review |
 | #115 CODEOWNERS after the freeze | Draft | Review required | |
 | #31, #33 B8.4, B8.6 datasets | Open / Draft | Review required | Provisional |
