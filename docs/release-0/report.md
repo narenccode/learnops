@@ -178,7 +178,7 @@ not re-fetched: pre-commit, gitleaks over the whole history, mypy, contract exam
 |---|---|---|
 | **Moodle versions.** PRD C-03, D2.3 and E2 still say 4.5 **and** 5.3. The guide decided on issue #55 that B8.1 builds and tests on **5.3 only**, with 4.5 waived for Release 0 (decision 0009; #95 merged); PR #130 (merged) added one register | Guide | Row D2.3 stays "not met" |
 | The date of the guide's earlier approval of the 1800 s exception | Guide | B8.5 cannot be called complete; the five-lecture rule still holds |
-| Retention, lab storage and withdrawal handling for B8.5 (data-map questions) | Guide | Consent text depends on it |
+| Retention, lab storage, names and transcripts, and processing services for B8.5 (data-map questions) | **Decided by the guide** (2026-11-19, confirmed in his own words 2026-11-20) and recorded in `docs/decisions/0011-b8-5-data-handling.md` in the open audit PR #104 (not merged); the data map follows it. What the lab endpoint keeps is not recorded yet (ADR 0002, PR #98) | Speakers are told about withdrawal and Git history before writing the consent line |
 | Which of the two `0001` decision records is renumbered | Guide | Decision records are ambiguous |
 | Approval of the three remaining design documents (`studio.md` is `Approved`, PR #147) | Guide only | Feature code cannot start for those modules; D1 not met |
 | LTI library (`0001`), STT options (`0002`, #98), App-C 9 record | Guide | App-C 6 and 9 (Release 0) |
