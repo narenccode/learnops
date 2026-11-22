@@ -105,6 +105,26 @@ def test_entry_is_complete_and_valid(v: dict[str, Any]) -> None:
     assert v["id"].startswith(v["rule"].lower())
 
 
+def test_mapping_is_provisional_until_confirmation_is_recorded() -> None:
+    data = yaml.safe_load(EXPECTED.read_text(encoding="utf-8"))
+    assert data["mapping_status"] in {"provisional", "confirmed"}
+    if data["mapping_status"] == "confirmed":
+        confirmation = data["confirmation"] or {}
+        assert (
+            confirmation.get("by")
+            and confirmation.get("reference")
+            and confirmation.get("date")
+        )
+    else:
+        assert data["confirmation"] is None
+
+
+def test_ck_12_is_not_asserted_until_body_media_extraction_is_decided() -> None:
+    (ck12,) = [v for v in _variants() if v["rule"] == "CK-12"]
+    assert ck12["assertable"] is False
+    assert "item 19" in ck12["notes"]
+
+
 def test_ids_are_unique() -> None:
     ids = [v["id"] for v in _variants()]
     assert len(ids) == len(set(ids))
