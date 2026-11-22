@@ -130,7 +130,27 @@ def test_r9_grades_are_compared_as_exact_numbers(
 
 @pytest.mark.parametrize(
     "value",
-    ["", " 84.5", "84.5 ", "1e2", "NaN", "Infinity", "+5", "84,5", True, None, [1]],
+    [
+        "",
+        " 84.5",
+        "84.5 ",
+        "1e2",
+        "NaN",
+        "Infinity",
+        "+5",
+        "84,5",
+        True,
+        None,
+        [1],
+        # Non-ASCII digits: Python's \d and Decimal() accept them, but they are not plain numbers
+        # (review of #161). Each is 84 or 84.5 in another script.
+        "٨٤",  # Arabic-Indic
+        "８４",  # fullwidth
+        "८४",  # Devanagari
+        "8٤",  # an ASCII digit mixed with an Arabic-Indic one
+        "٨٤.5",  # with a decimal part
+        "84.٥",  # a non-ASCII digit after the point
+    ],
 )
 def test_r9_only_plain_numbers_parse(value: Any) -> None:
     assert parse_grade(value) is None
