@@ -62,7 +62,7 @@ B8.2 is never changed. The folders `missing-body`, `duplicate-id`, `protected-id
 other rules that may fire on the same variant. A future checker test should require the `expected`
 finding and tolerate nothing outside `expected` and `also_expected`. `also_expected: [CK-01]` marks
 the open question of whether CK-01 is reported or suppressed when another rule already explains an
-unreachable item (checker design Â§12 item 13). The mapping comes from `docs/design/checker.md` Â§11.3
+unreachable item (checker design §12 item 13). The mapping comes from `docs/design/checker.md` §11.3
 and is not yet confirmed by the guide.
 
 ## B8.5 Lecture videos (owner: Student 4), COMPLETE
