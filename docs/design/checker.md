@@ -2,7 +2,7 @@
 
 
 **Module:** checker
-**Owner:** @shraddha0103 · **Peer reviewer:** @Akshita21-09
+**Owner:** @shraddha0103 · **Peer reviewer:** @Harshithamanjunatha (independent review; this version was drafted by @Akshita21-09 for the owner, PR #148)
 **Release(s):** Release 1 (core); harness extended each later release
 **Status:** Draft
 **Contract decisions:** B2 decision record `docs/decisions/0003-b2-course-model.md`, item 21 (CK-07 reference model; see risk 11 in section 12).
@@ -186,7 +186,18 @@ becomes a finding:
 
 **Conditions (three-valued).** Each availability condition evaluates to `true`, `false` or `unknown`:
 
-- **Date:** `true` or `false` on the run date.
+- **Date: evaluated over time, not only on the run date.** The question is "can this condition ever be
+  true on or after the run date?", because a course is used over weeks:
+  - `from t` (`d` is `>=`): it becomes true at `t` and stays true, so it can be met: `true` for
+    reachability, even when `t` is still in the future. A future start date is never CK-01.
+  - `until t` (`d` is `<`): `true` if `t` is after the run date; `false` if `t` has already passed,
+    because it can never become true again (the window has closed).
+  - Several date conditions joined by `&` are `false` only when their windows cannot overlap at any time
+    on or after the run date (for example `from 1 March` and `until 1 February` of the same year, or an
+    `until` date already passed); otherwise `true`.
+  - Any other combination the simulator cannot settle this way (for example dates inside a negated group,
+    or a date window mixed with conditions that can only be met before it closes) is `unknown`, never
+    `false`.
 - **Activity completion** (including `cm = -1`, decision 5): `true` once the named activity is
   *completed* in the simulation; `false` when it can never be completed (below); `unknown` when its
   completion is unknown. A `cm` that names no activity is `false` (and CK-04).
@@ -394,10 +405,12 @@ that first reads it). Names use the `CHECKER_` prefix, so nothing collides with 
 | `CHECKER_MOODLE45_URL`, `CHECKER_MOODLE53_URL` | The two lab Moodle sites for role tests and the harness | `https://moodle45.lab.invalid`, `https://moodle53.lab.invalid` | FR-C-06, FR-C-08 |
 | `CHECKER_TEST_ACCOUNTS_FILE` | Path to the file with the fixed test accounts' usernames and passwords; the file lives outside the repository (C-06) | `/run/secrets/checker_test_accounts.yaml` | FR-C-06 |
 | `CHECKER_HARNESS_TIMEOUT_SECONDS` | Limit for one harness stage | `1800` | FR-C-08 |
-| `CHECKER_TEMPLATE_MODEL` | Default path of the B8.1 reference model for CK-07, when `--reference-model` is not given | (empty) | FR-C-03 (CK-07) |
+| `CHECKER_TEMPLATE_MODEL` | **Reserved, not read.** Only if the guide approves a default under §12 item 21; until then the checker ignores it | (not listed until the guide decides) | — |
 
-`CHECKER_TEMPLATE_MODEL` only supplies a default for the per-run option of decision 0003 #21; whether a
-default is wanted at all is §12 item 21. Secrets stay outside version control: the test-account
+**CK-07's reference model is given per run.** As decision 0003 #21 says, a run names it with
+`--reference-model <path>`; there is **no default**. Without the option, CK-07's comparison is `not
+checked` for that run (risk 11). A default through `CHECKER_TEMPLATE_MODEL` exists only if the guide
+approves it (§12 item 21). Secrets stay outside version control: the test-account
 passwords are in the file that `CHECKER_TEST_ACCOUNTS_FILE` names, never in `.env.example`.
 
 ## 7. Key decisions and alternatives
