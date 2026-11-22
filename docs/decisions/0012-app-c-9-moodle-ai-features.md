@@ -8,7 +8,7 @@ installed and switched on there is not recorded. No scope change is decided here
 **Requirement:** PRD App-C item 9: "Which AI features Moodle 5.3 itself provides, so LearnOps doesn't
 duplicate them (record any overlap and adjust scope)." App-C and §D1 assign item 9 to Release 0.
 **Contracts touched:** none.
-**Numbering:** `0011` is used by the B8.5 data-handling record in PR #104, which is not merged yet.
+**Numbering:** `0011` is the B8.5 data-handling record, merged in PR #104; this record is `0012`.
 
 ## What was read, and how
 
