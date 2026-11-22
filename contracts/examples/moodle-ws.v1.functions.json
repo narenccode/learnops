@@ -44,6 +44,11 @@
         "applytoall"
       ],
       "optional_parameters": ["plugindata", "advancedgradingdata"]
+    },
+    {
+      "name": "mod_assign_get_grades",
+      "purpose": "Stored-grade read-back",
+      "parameters": ["assignmentids"]
     }
   ]
 }
