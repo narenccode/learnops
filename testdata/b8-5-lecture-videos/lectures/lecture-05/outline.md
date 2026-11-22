@@ -1,7 +1,7 @@
 # Lecture 05 — Normalization, Transactions, ACID Properties and Security
 
 * **Speaker:** Shraddha
-* **Member:** 5
+* **Member:** 4
 * **Subject:** Advanced DBMS Concepts
 * **Planned duration:** 8 minutes 08 seconds
 
