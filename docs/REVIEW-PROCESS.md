@@ -167,6 +167,7 @@ The grey Draft tag disappears. The bot starts within a minute.
 4. If your reviewer requests changes: fix, push, and click **Re-request review** next to their name.
 5. If GitHub says **This branch has conflicts**, click **Update branch** if it is offered, or ask Claude
    (prompt in Part 11). If it only says the branch is **out-of-date**, you do not need to do anything.
+6. GitHub needs the newest push to be approved by a teammate other than the person who pushed it. After you push to a pull request that is already approved, click **Re-request review**: the earlier approval does not cover the new commits.
 
 ### Step 8. If nobody reviews within one working day
 

@@ -325,7 +325,8 @@ any rule works.
 Files: `contracts/moodle-ws.v1.md` (normative rules), `contracts/moodle-ws.v1.schema.json`,
 `contracts/examples/moodle-ws.v1.functions.json` (allow-list), `libs/contracts/tests/test_moodle_ws_v1.py`.
 **Contract work only, draft, not verified on any Moodle site.** Guide's decisions on Q1, Q24 and
-Q37: PR #27.
+Q37: PR #27. Guide's B4 findings (set_user_flags removed, save_grade parameters, read-back,
+capabilities, course identification): rules §2 to §4, with Moodle source evidence in rules §7.
 
 FR-G-01 ("Fetch assignments, the marking table and submissions … through B4") and FR-G-06 ("Write
 only approved drafts to Moodle via B4"), both Release 4, are deliberately not in the table above. They
@@ -340,7 +341,16 @@ Test names are in `test_moodle_ws_v1.py`.
 | The allow-list names exactly the PRD B4 functions, no extra, none missing, no duplicates | B4 | `test_function_names_equal_the_prd_b4_list`, `test_prd_b4_lists_the_expected_number_of_functions` |
 | The allow-list and the rules text (`moodle-ws.v1.md` §2) name the same functions | B.0 rule 1 | `test_function_names_equal_the_rules_table` |
 | Each entry's purpose is the PRD B4 purpose | B4 | `test_purpose_is_the_prd_purpose` |
-| No parameter is listed unless the PRD names it for that function; `mod_assign_save_grade` sends `workflowstate` | B4, App-C 1 | `test_every_parameter_is_named_in_the_prd_for_its_function`, `test_the_prd_names_workflowstate_only_for_save_grade`, `test_save_grade_sends_the_workflow_state` |
+| Always-sent and optional parameters equal the PRD B4 parameter table for each function; none is in both lists; `mod_assign_save_grade` sends `workflowstate` | B4, App-C 1 | `test_every_parameter_is_named_in_the_prd_for_its_function`, `test_example_parameters_equal_the_prd_parameter_table`, `test_the_prd_names_exactly_these_parameters`, `test_no_parameter_is_both_required_and_optional`, `test_a_parameter_not_named_for_its_function_is_found`, `test_save_grade_sends_the_workflow_state` |
+| `mod_assign_save_grade` has the guide's seven required and two optional parameters | B4 (guide's findings) | `test_save_grade_has_the_guides_required_and_optional_parameters` |
+| "Always sent" (LearnOps's rule) is kept apart from what Moodle requires; the PRD column says "Always sent" | B4 | `test_always_sent_is_kept_apart_from_moodle_required` |
+| `mod_assign_set_user_flags` is in neither the allow-list, the PRD B4 tables nor the rules table | B4 (guide's findings) | `test_set_user_flags_is_allowed_nowhere` |
+| The read-back sends `assignid` and `userid`, and the rule (`lastattempt.gradingstatus` exactly `readyforrelease`, otherwise not verified) is stated in the rules and the PRD | B4 draft rule | `test_the_status_read_back_sends_assignment_and_learner`, `test_the_read_back_field_is_stated_in_the_rules_and_the_prd` |
+| A write counts as done only when both the state and the grade value are confirmed; the state alone is never enough | B4 draft rule | `test_success_needs_both_the_state_and_the_grade_value` |
+| The grade-value source (`mod_assign_get_grades`) is only a pending proposal (rules §6a): in no contract list or PRD table, and no text claims it works | B4 draft rule (pending, guide) | `test_the_grade_value_source_is_only_a_pending_proposal` |
+| Course lookup sends `field` and `value`, by course id or shortname, never idnumber | B4 course identification | `test_course_lookup_does_not_rely_on_idnumber` |
+| The capability lists (needed, never granted) are the guide's and do not overlap; a custom role is required | B4, SEC-03 | `test_the_capability_lists_are_the_guides_and_do_not_overlap`, `test_the_custom_role_rule_is_stated` |
+| Every lab check in rules §5 is still open on both versions | App-C 1 | `test_every_lab_check_is_still_open` |
 | `mod_assign_set_user_flags` is not allowed: it can set `released` with only `mod/assign:grade` | Guide, 11 Nov; C-09 | `test_the_dropped_user_flags_function_is_not_listed` |
 | A replacement name for a Moodle version also appears in the PRD B4 text | B4 ("replacements recorded here") | `test_a_replacement_name_is_also_in_the_prd` |
 | No verification state is stored in the schema or example | Guide, Q1 | `test_invalid_document_is_rejected_at_the_expected_place` (five verified-flag cases, including capital letters) |
@@ -352,14 +362,14 @@ Test names are in `test_moodle_ws_v1.py`.
 | Rule | PRD |
 |---|---|
 | Only the functions listed in the contract are called (`libs/moodle_ws` will build its allow-list from the example; the library does not exist yet) | B4 |
-| One service account per site, with a token restricted to those functions and minimum capabilities | B4, SEC-03 |
+| One service account per site, with a token restricted to those functions and the capabilities in rules §4 (the lists are tested; that they are enough is lab check 9) | B4, SEC-03 |
 | The token is stored only in the environment | SEC-03, C-06 |
-| A grade write uses workflow state `readyforrelease`, never `released`; only approved drafts are written | B4, C-09 |
-| Each function exists with the parameters used on Moodle 4.5 and 5.3 (all 10 lab checks are still open) | B4, App-C 1 |
+| A grade write uses workflow state `readyforrelease`, never `released`, and counts as done only when both the state and the grade value are confirmed; the grade-value source is pending the guide's decision (rules §6a), so for now no write is reported as done; only approved drafts are written | B4, C-09 |
+| Each function exists and behaves as expected with the parameters used on Moodle 4.5 and 5.3 (all 12 lab checks are still open) | B4, App-C 1 |
 
-Open: when the lab Moodle sites are available (all ten checks in `moodle-ws.v1.md` §5 wait for
-them; B4 cannot be frozen until they pass), and the parameter name for feedback comments on
-`mod_assign_save_grade` (not in the PRD; lab check 1). Q1, Q24 and Q37 are decided (PR #27).
+Open: when the lab Moodle sites are available (all twelve checks in `moodle-ws.v1.md` §5 wait for
+them; B4 cannot be frozen until they pass), and the field for feedback comments inside `plugindata` on
+`mod_assign_save_grade` (lab check 6). Q1, Q24 and Q37 are decided (PR #27).
 
 ## B7 H5P practice output contract (v1), Release 0 foundation, DRAFT
 
@@ -441,10 +451,10 @@ script exist and are tested (the two rows below that name tests).
 | The template course backup holds the four protected items: the final project assignment (`final-project`), the course feedback activity (`course-feedback`), the course completion criteria and the course badge. The idnumbers are the PRD defaults and are configurable. The protected section number (3) is owner-confirmed (#61 A2, 2026-11-16) and stays configurable | B8.1, B1.4 | None yet: the `.mbz` does not exist |
 | A plain list of the expected protected items (idnumber, type, section, count) for the checker, which builds its model from the `.mbz` | B8.1, B1.4 | None yet |
 | The course badge image is a plain square PNG made by the project (`make_badge.py`, standard library only, Apache-2.0), kept with its source in the B8.1 folder; `--check` confirms the committed `badge.png` matches the script (Owner, Issue #55, 2026-11-18, P9b) | B8.1, C-11 | `test_committed_badge_matches_its_generator`, `test_badge_is_a_square_rgb_png`, `test_badge_check_catches_another_image` (negative control), `test_badge_dry_run_writes_nothing`, `test_badge_writes_a_file_that_passes_check` |
-| The download script `download.py` verifies the SHA-256; `--check` and `--dry-run` write nothing; a failed check or download removes the partial file; it refuses to run until a SHA-256 is recorded; tag `testdata-b8-1-v1`, a rebuild gets a new tag (Owner, Issue #55, 2026-11-18, P24, P33) | B8.1, root `CLAUDE.md` rule 9 | `test_no_recorded_sha_refuses_and_writes_nothing`, `test_download_verifies_and_keeps_no_partial_file`, `test_wrong_sha_removes_the_partial_file`, `test_failed_download_removes_the_partial_file`, `test_ctrl_c_removes_the_partial_file`, `test_partial_downloads_are_gitignored`, `test_check_reports_a_changed_or_missing_file`, `test_dry_run_writes_nothing`, `test_release_names_follow_the_guides_rule` (all in `libs/contracts/tests/test_b8_1_files.py`) |
+| The download script `download.py` verifies the SHA-256; `--check` (read-only) and `--dry-run` write nothing; during a download, a failed SHA-256 verification, a failed download or Ctrl+C removes the `.part` file; it refuses to run until a SHA-256 is recorded; tag `testdata-b8-1-v1`, a rebuild gets a new tag (Owner, Issue #55, 2026-11-18, P24, P33) | B8.1, root `CLAUDE.md` rule 9 | `test_no_recorded_sha_refuses_and_writes_nothing`, `test_download_verifies_and_keeps_no_partial_file`, `test_wrong_sha_removes_the_partial_file`, `test_failed_download_removes_the_partial_file`, `test_ctrl_c_removes_the_partial_file`, `test_partial_downloads_are_gitignored`, `test_check_reports_a_changed_or_missing_file`, `test_dry_run_writes_nothing`, `test_release_names_follow_the_guides_rule` (all in `libs/contracts/tests/test_b8_1_files.py`) |
 | A sections-only backup is merged into the template and the protected items stay unchanged. The intended comparison writes down the same table for each protected item before and after the merge, with the fields type, name, idnumber, section number, points, completion setting and visibility, and the two tables must be equal (Owner, Issue #55, 2026-11-12); no check or test implements this yet. The Release 0 backup procedure is written as an untested draft | B1.4, C1.7, App-C item 2 | None yet: needs a Moodle site |
-| Moodle 5.3 is the owner-confirmed build and test version for Release 0 (Issue #55, 2026-11-14 reply, which replaces the 2026-11-12 decision to build on 4.5). Every restore and the sections-only merge are tested on 5.3 only, recording the Moodle version, the date and the outcome of each restore; the `.mbz` is labelled "built on Moodle 5.3". The owner reports that Moodle documents that a backup restores into the same or a newer version only, so the 5.3 template is expected not to restore on 4.5 (the owner's report: not verified here, and the PRD does not state it). Moodle 4.5 is **not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only)**, not recorded as passed; if PRD C-03 later needs the template on 4.5, it is rebuilt once on 4.5 | C-03 | None yet: not verified; needs Moodle lab testing on 5.3. Moodle 4.5: not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only) |
-| Deviation - C-03: the B8.1 template is built and tested on Moodle 5.3 only; 4.5 not tested, waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only). The B8.2 restore and merge tests have their own decision, made by the guide on 2026-11-16 (A5 on PR #61, recorded there with B8.2, not here); C-03 still applies to the harness (FR-C-08) | C-03 | None (a recorded deviation, not a test) |
+| Moodle 5.3 is the owner-confirmed build and test version for Release 0 (Issue #55, 2026-11-14 reply, which replaces the 2026-11-12 decision to build on 4.5). Every restore and the sections-only merge are tested on 5.3 only, recording the Moodle version, the date and the outcome of each restore; the `.mbz` is labelled "built on Moodle 5.3". The owner reports that Moodle documents that a backup restores into the same or a newer version only, so the 5.3 template is expected not to restore on 4.5 (the owner's report: not verified here, and the PRD does not state it). Moodle 4.5 is **not tested; waived for Release 0 (B8.1 only; see [0009](decisions/0009-b8-1-template-course.md) and the [register](decisions/README.md))**, not recorded as passed; if PRD C-03 later needs the template on 4.5, it is rebuilt once on 4.5 | C-03 | None yet: not verified; needs Moodle lab testing on 5.3. Moodle 4.5: not tested; waived for Release 0 (B8.1 only; see [0009](decisions/0009-b8-1-template-course.md) and the [register](decisions/README.md)) |
+| Deviation - C-03: the B8.1 template is built and tested on Moodle 5.3 only; 4.5 not tested, waived for Release 0 (B8.1 only; see [0009](decisions/0009-b8-1-template-course.md) and the [register](decisions/README.md)). The B8.2 restore and merge tests have their own decision, made by the guide on 2026-11-16 (A5 on PR #61, recorded there with B8.2, not here); C-03 still applies to the harness (FR-C-08) | C-03 | None (a recorded deviation, not a test) |
 
 ### Not covered here
 
@@ -454,7 +464,7 @@ These are pending and are not claimed by this change:
   exists yet. The download script exists but refuses to run until the SHA-256 is recorded in it.
 - **Moodle 5.3 verification:** the restore, the protected items, the completion criteria, the badge
   and the sections-only merge (PRD C1.7, App-C item 2). The B8.1 owner's lab access is ready (in person, the
-  owner's 2026-11-14 reply), but access is not a result and no lab verification result is recorded. **Moodle 4.5 is not tested; waived by the guide for Release 0 (decided 2026-11-14, confirmed as a C-03 deviation 2026-11-15; scope B8.1 only)**
+  owner's 2026-11-14 reply), but access is not a result and no lab verification result is recorded. **Moodle 4.5 is not tested; waived for Release 0 (B8.1 only; see [0009](decisions/0009-b8-1-template-course.md) and the [register](decisions/README.md))**
   and is not claimed as passed.
 - **The App-C item 2 results.** The decision record `docs/decisions/0009-b8-1-template-course.md`
   exists and holds the Moodle 4.5 waiver (PR #95); its number is taken again at merge, after
@@ -490,7 +500,7 @@ it is not CK-03, CK-09 or any other checker rule.
 | A task whose table has a `word_count:N` check tells the learner the report needs at least N words (weeks 1 and 4: 150 and 250) | B1.3, C3.5 (`word_count:<min>`) | `test_task_states_the_minimum_word_count` (4 cases), `test_the_word_minimum_check_catches_a_missing_or_wrong_number` (negative control) |
 | Each task body explains the submission format confirmed by the guide on PR #61: `Repository:`, `Demo:` and `Report:` labels, `report.md` or `report.txt` as the report, and which part a check reads, said exactly for the checks that week's own marking table has (weeks 2 to 4 claimed checks their tables lack) | Grading design Q6 (`grading.md` §4.3a); written into B1.3 and B1.5 by PR #87 (open) | `test_task_explains_the_confirmed_submission_format` (4 cases) |
 | The week sections are numbered after the template's last section (3), and do not collide with the protected section (3; confirmed by the guide on PR #61, 2026-11-16, A2; not a contract value) | B1.4 | `test_week_sections_are_numbered_after_the_templates_last_section`, `test_week_numbers_do_not_collide_with_the_protected_section`, `test_the_numbering_checks_would_catch_the_old_numbering_1_to_4` (negative control) |
-| Deviation - C-03: the B8.2 restore and merge tests run on Moodle 5.3 only in Release 0; 4.5 not tested, waived by the guide for Release 0 (extended to the B8.2 restore and merge tests, decided 2026-11-16 as A5 on PR #61; scope B8.2 restore and merge tests only). Reason: the only template for Release 0 is the 5.3-built one. C-03 returns in Release 1, when the template is rebuilt on 4.5. Scope: B8.2 restore and merge tests only; the B8.1 row and its record (`docs/decisions/0009-b8-1-template-course.md`) are from PR #95, merged | C-03 | None (a recorded deviation, not a test) |
+| Deviation - C-03: the B8.2 restore and merge tests run on Moodle 5.3 only in Release 0; 4.5 not tested, waived for Release 0 (B8.2 restore and merge tests only; see [0010](decisions/0010-b8-2-sample-course.md) and the [register](decisions/README.md)). Reason: the only template for Release 0 is the 5.3-built one. C-03 returns in Release 1, when the template is rebuilt on 4.5. Scope: B8.2 restore and merge tests only; the B8.1 row and its record (`docs/decisions/0009-b8-1-template-course.md`) are from PR #95, merged | C-03 | None (a recorded deviation, not a test) |
 
 ### Not covered here
 

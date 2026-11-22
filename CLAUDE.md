@@ -102,6 +102,7 @@ introduce another language, framework or database. Ask the guide first if you th
 - **When unsure, ask.** If the PRD is unclear or two rules conflict, stop and ask the developer, who asks the guide. Never invent a requirement or a contract field.
 - **Stay in your module.** Change another module or `libs/` only when the task requires it, and say so explicitly in the PR.
 - **Never:** commit to `main`; force-push; disable tests or checks to make them pass; edit `.env`; read or print secrets; run `sudo`; install system packages on a host; add MCP servers or new tools without the guide's approval.
+- **Reviews and merges are the developer's own clicks.** Never approve a pull request, turn on auto-merge or merge on the developer's behalf. When asked to review, run the tests, read the diff and report what you ran and what you found; the developer reads it and submits the approval themselves.
 - Each developer uses **their own** Claude Code account; never share one.
 
 ## 9. Where things are
