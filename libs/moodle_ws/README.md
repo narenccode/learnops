@@ -38,13 +38,14 @@ their own. `call()` returns the transport's answer unchanged.
   deep. Sets, frozensets, NaN and infinity are refused too, because they are not valid JSON and a transport could not send them. `bytes`, `bytearray`, generators, subclasses and other objects raise `InvalidParameters`. The
   transport receives a private copy, so it cannot change the caller's data.
 - **Every direct grade write.** `call("mod_assign_save_grade", ...)` runs the guards above and then
-  raises `GradeWriteNotAllowed`. A grade write is sent only through a `WriteReceipt`: sealed,
-  single-use, bound to one client, holding its own copy of the checked parameters, with the guards
-  above run again on that path. Only the guarded write helper may issue one, after the checks
-  `call()` cannot run alone (maximum grade, locked state, marking workflow) and with a read-back.
-  **That helper is added in a later pull request; until then no grade write can be sent at all.**
-  This stops accidental bypass; it is not a boundary against code that imports private names, and a
-  test fails if any module outside this library uses them.
+  raises `GradeWriteNotAllowed`. The client's one internal send refuses it too, so there is no
+  function or method to import that sends a grade write without the checks `call()` cannot run
+  alone (maximum grade, locked state, marking workflow) and the read-back. (The earlier
+  `WriteReceipt` path is removed: the guide on PR #76, 15 Nov, asked for the bypass to be closed in
+  code.) **The guarded write is added in a later pull request; until then no grade write can be sent
+  at all.** A test fails if the transport is called anywhere else in the library, or if a module
+  outside it uses the client's internals. Code that calls a transport directly is outside what a
+  library can stop; the restricted Moodle service account is the boundary for that (B4 §4).
 
 Apart from `workflowstate`, `attemptnumber` and `grade` on `mod_assign_save_grade`, parameter names are
 not checked. An empty `parameters` list in the contract means "not yet determined"

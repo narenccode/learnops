@@ -7,8 +7,15 @@ from typing import Any, Final
 
 import pytest
 
-from moodle_ws import MoodleClient, Site, SiteSettings, Token
-from moodle_ws.client import _copy_params, _issue_receipt
+from moodle_ws import (
+    GradeWriteNotAllowed,
+    MoodleClient,
+    MoodleError,
+    Site,
+    SiteSettings,
+    Token,
+)
+from moodle_ws.messages import WRITE_NEEDS_HELPER
 
 FAKE_TOKEN: Final = (
     "fakevalue4tests2only"  # letters and digits, as a real token could be
@@ -26,11 +33,14 @@ VALID_WRITE: Final = {
 }
 
 
-def send_checked(client: MoodleClient, params: Any) -> Any:
-    """Send a grade write the way write_draft_grade does after its own checks pass: one copy of
-    the parameters, a receipt, the client's guarded write. Only for tests of the client's guards,
-    which still run on this path."""
-    return client._send_checked_write(_issue_receipt(client, _copy_params(params)))
+def refused_as_direct_write(client: MoodleClient, params: Any) -> MoodleError:
+    """Call mod_assign_save_grade directly. It must pass every client guard and still be refused
+    as a direct grade write: the exact class and message, not a guard's reason."""
+    with pytest.raises(GradeWriteNotAllowed) as caught:
+        client.call("mod_assign_save_grade", params)
+    assert type(caught.value) is GradeWriteNotAllowed
+    assert str(caught.value) == WRITE_NEEDS_HELPER
+    return caught.value
 
 
 @pytest.fixture(autouse=True)
