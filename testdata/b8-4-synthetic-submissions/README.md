@@ -1,7 +1,8 @@
 # B8.4 synthetic submissions (PROVISIONAL pilot)
 
-**Status: PROVISIONAL.** Six pilot submissions and a proposed format. This is not the B8.4 set
-required by PRD §B8 yet, and it does not claim to match the B8.2 sample course.
+**Status: PROVISIONAL.** Nine pilot submissions and a proposed format. This is not the B8.4 set
+required by PRD §B8 yet. The submissions are written against the B8.2 sample course (#61) and in
+the submission form of PRD B1.5 (#87).
 
 | | |
 |---|---|
@@ -16,26 +17,27 @@ required by PRD §B8 yet, and it does not claim to match the B8.2 sample course.
 
 | PRD §B8 requires | Pilot |
 |---|---|
-| At least 30 submissions | 6 |
-| Each has a repo, a demo link and a short report | Yes: `repo/`, `demo_url`, `report.md` |
-| Across quality levels | strong 2, partial 2, weak 1, incorrect 1 |
+| At least 30 submissions | 9 |
+| Each has a repo, a demo link and a short report | Yes: `repo/`, the `Demo:` line of the online text, and a `Report:` section or `report.md` |
+| Across quality levels | strong 2, partial 5, weak 1, incorrect 1 |
 | Reference grades from at least one mentor | **None.** No mentor is named yet (O3). Nothing in this folder is a grade. |
 
 ## Why the pilot is provisional
 
-1. **Rubrics.** The B8.2 sample course (Student 1) does not exist yet. The pilot uses the two
-   marking tables of the merged B1 contract example (`contracts/examples/course-package.v1`,
-   `wk-01-task` and `wk-02-task`). That example says it "is not the B8.2 sample course".
-2. **Submission form.** How a repository URL, demo link and report are placed in a Moodle
-   submission (the submission-content rule, design §4.3a, Q32) is not decided. So
-   `submission.yaml` keeps them as separate neutral fields and nothing is rendered for Moodle.
+1. **Rubrics.** The pilot uses the week 1 and week 2 marking tables of the merged B8.2 sample
+   course (`testdata/b8-2-sample-course`, `wk-01-task` and `wk-02-task`). Only these two of its
+   four tasks are used.
+2. **Submission form.** Each `submission.yaml` carries the online text with the `Repository:`,
+   `Demo:` and `Report:` lines of PRD B1.5, and a `report.md` only when the online text has no
+   `Report:` section. Plain text only: editor HTML (B1.5 rule 5) is unverified until the lab check on
+   Moodle 4.5 and 5.3, so no case uses it. How the real extractor reads these files is Module 3's
+   (Release 4); the tests use a stand-in reader that is checked against the shared vectors.
 3. **Format.** B8's contract file is `testdata/README.md` (`contracts/CLAUDE.md`), and it is
    frozen after Release 0. The schemas here are a proposal that the other owners and the guide
    have not reviewed.
 
-**The pilot must be retargeted once B8.2 is merged and Q32 is resolved:** point each rubric at
-the B8.2 assignment, rewrite the submissions against its marking tables, render them by the
-submission-content rule, then extend the set to at least 30.
+**Still to do:** name the reference-grade mentor (O3), have the format accepted (O7), then extend
+the set to at least 30 with reference grades from at least one mentor.
 
 ## Layout
 
@@ -43,8 +45,8 @@ submission-content rule, then extend the set to at least 30.
 manifest.yaml                    index: rubrics + one entry per submission
 schemas/                         JSON Schemas (Draft 2020-12) for the four document types
 submissions/sNNN/
-  submission.yaml                repository_url, demo_url, report, repo_dir, hosting
-  report.md                      the short report
+  submission.yaml                onlinetext (Repository:, Demo:, Report: lines), files, repo_dir, hosting
+  report.md                      the report, only when the online text has no Report: section
   repo/                          the fictional repository content
   expected.yaml                  author's expected outcome per criterion (no scores)
 reference-grades/                mentor reference grades (empty, see its README)
@@ -70,8 +72,8 @@ decides the split (O5). `edge_cases` uses a fixed list of tags (see the schema).
 **`submission.yaml` `hosting`**: what a future publish step must set up. `publish_repo: false`
 means the repository is not published, so the URL does not clone. `demo_stub` is `answers` (a
 stub page that answers the test question), `unrelated_page` (HTTP 200 with unrelated content) or
-`none` (nothing is served). The URLs are placeholders on `git.lab.invalid` / `demo.lab.invalid`.
-The publish step replaces them with lab addresses (O6).
+`none` (nothing is served). The links in the online text are placeholders on `git.lab.invalid` /
+`demo.lab.invalid`. The publish step replaces them with lab addresses (O6).
 
 **`expected.yaml`**: for every marking-table criterion, the intended result of each check
 (`pass`, `fail`, `error`, `undetermined`) with the reason, plus a qualitative `judgement` (`meets`,
@@ -86,20 +88,27 @@ answer depends on a rubric reading that is not decided. Those cases are left to 
 | s001 | wk-02 | strong | Every check passes; two weak answers named and explained |
 | s002 | wk-02 | partial | README heading "How to use" instead of "Usage" (ambiguous); one clear and one vague weak answer (ambiguous) |
 | s003 | wk-02 | strong | Near-duplicate of s001 (renamed identifiers, reworded report) for the similarity flag (FR-G-04) |
-| s004 | wk-01 | partial | Good reflection at 193 words, just under `word_count:200` |
+| s004 | wk-01 | partial | Good reflection at 146 words, just under `word_count:150` |
 | s005 | wk-01 | weak | No README, nothing served at the demo link, very short reflection |
-| s006 | wk-01 | incorrect | Off-topic project; repository not published (checks `error`); demo returns 200 with an unrelated page, so the check passes but the criterion is not met; reflection long enough but off topic (ambiguous) |
+| s006 | wk-01 | incorrect | Off-topic project; repository not published (`repo_clone` fails, the README check is `error`); demo returns 200 with an unrelated page, so the check passes but the criterion is not met; reflection long enough but off topic (ambiguous) |
+| s007 | wk-02 | partial | A link written inside another line (`My demo link - Demo: ...`) is not a label (B1.5 rule 6), so the demo check is `error` (`field_missing`); the report is a `Report:` section in the online text |
+| s008 | wk-02 | partial | Two `Repository:` lines before the report: the checks that read it are `error` (`field_repeated`); the first does not win (B1.5 rule 7) |
+| s009 | wk-02 | partial | `Report:` comes before `Demo:`, so the `Demo:` line is part of the report and there is no demo label (B1.5 rules 3 and 7) |
 
 Not covered yet: a resubmission (needs the submission-version rules, design §5.4), a demo that
-times out, and a repository that clones but has no `Usage` section at all. Add them when the set
-is retargeted.
+times out, a repository that clones but has no `Usage` section at all, and online text as editor
+HTML (B1.5 rule 5; add a case only after the lab check). The `command:<name>` check is not used by
+B8.2's week 1 and 2, so the tag `command_check_undetermined` is not exercised either.
 
 ## Provisional rules used by the tests
 
 These are not decided. They exist only so that `expected.yaml` can be checked against the files.
 
-- **Word count:** whitespace-separated tokens of the whole `report.md` (the real rule is design §4.3b, Q39).
-- **`readme_sections`:** Markdown heading text at any level, case-insensitive, exact names, no synonyms, fenced code ignored (§4.3b proposal).
+- **Reading the online text:** B1.5 rules 1 to 7 on plain text, by a stand-in reader in the test file.
+  It is checked against the 12 plain cases of `contracts/test-vectors/submission.v1.json`; it is not
+  Module 3's extractor.
+- **Word count:** whitespace-separated pieces of the report: the `Report:` text, or the whole report file as it is (B1.3).
+- **`readme_sections`:** the B1.3 heading rule (ATX headings of 1 to 6 `#`, at most three leading spaces, closing `#` sequence removed, backtick and tilde fences, an unclosed fence runs to the end, Setext headings do not count), checked against the 12 README cases of the same vectors file. Whole heading text, case-insensitive.
 - **`command:<name>`:** `undetermined`, because no check config exists (§4.3c, Q33). It is `error` when the repository cannot be cloned.
 - **No clone:** `repo_clone` is `fail`, and every check that needs the clone is `error` (§4.3d).
 
@@ -107,8 +116,8 @@ These are not decided. They exist only so that `expected.yaml` can be checked ag
 
 | # | Decision | Design ref | Who |
 |---|---|---|---|
-| O1 | Retarget to the B8.2 marking tables once B8.2 is merged | §11.3 | Student 1, Student 3 |
-| O2 | Submission-content rule: how repository, demo and report appear in Moodle | §4.3a, Q32 | Guide, Student 1 |
+| O1 | ~~Retarget to the B8.2 marking tables~~ **Done** (weeks 1 and 2; B8.2 merged in #61) | §11.3 | Student 1, Student 3 |
+| O2 | ~~Submission-content rule~~ **Decided** in PRD B1.5 (#87); the pilot follows it for plain text. Editor HTML stays unverified until the lab check | §4.3a, Q32 | Guide, Student 1 |
 | O3 | Who writes the reference grades, when, and whether a second mentor grades ≥ 10 | §11.3, Q13 | Guide |
 | O4 | Band definition, whole-number scores and the cap when a required check fails | §11.2, Q44, Q25 | Guide |
 | O5 | Set size (30 or ≥ 60), development / sealed test split, who authors the test split | Q45, Q47 | Guide |
@@ -116,12 +125,13 @@ These are not decided. They exist only so that `expected.yaml` can be checked ag
 | O7 | Accept this format (schemas, field names) as the B8.4 part of the B8 contract before the Release 0 freeze | `contracts/CLAUDE.md` | All four students, guide |
 | O8 | Licence of the test content (proposal: Apache-2.0, like the repository) | root `CLAUDE.md` §2.10 | Guide |
 | O9 | Counting and matching rules for `word_count` and `readme_sections` | §4.3b, Q39 | Guide, Students 1 and 2 |
-| O10 | Ambiguous cases in the pilot: s002 README heading, s002 weak answers, s006 off-topic reflection | — | Mentor (in the reference grade) |
+| O10 | Ambiguous cases in the pilot: s002 README heading, s002 weak answers, s006 off-topic reflection, and s007 to s009 (a link the check cannot read but a person can) | — | Mentor (in the reference grade) |
 
 ## Adding a submission
 
 1. Add an entry to `manifest.yaml` (next free `sNNN`, fictional `learner-NN`).
-2. Create `submissions/sNNN/` with `submission.yaml`, `report.md`, `repo/` and `expected.yaml`.
+2. Create `submissions/sNNN/` with `submission.yaml` (the online text; `files: [report.md]` and a
+   `report.md` only when it has no `Report:` section), `repo/` and `expected.yaml`.
    Use only `.invalid` URLs and invented names. Do not add an email address or a real person.
 3. Run `python -m pytest libs/contracts/tests/test_b8_4_dataset.py -q`.
 

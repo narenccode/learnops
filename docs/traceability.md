@@ -585,7 +585,7 @@ These need Studio, the checker or a Moodle site and are not claimed by this chan
 
 ## B8.4 synthetic submissions (PROVISIONAL pilot), Release 0 foundation
 
-Files: `testdata/b8-4-synthetic-submissions/` (manifest, four schemas, six submissions),
+Files: `testdata/b8-4-synthetic-submissions/` (manifest, four schemas, nine submissions),
 `libs/contracts/tests/test_b8_4_dataset.py`. B8.4 is a test-data set (PRD B8) with no requirement
 ID of its own, so no row in the table above maps to it. It is the dataset for the PRD C3.7
 agreement criterion (G-5), which belongs to Release 4 work that does not exist yet.
@@ -595,7 +595,10 @@ agreement criterion (G-5), which belongs to Release 4 work that does not exist y
 | Rule | Source | Test(s) |
 |---|---|---|
 | Manifest, submission, expected-outcome and reference-grade documents validate against their schemas | Proposed format (set README, O7) | `test_schema_is_a_valid_draft_2020_12_schema`, `test_manifest_is_valid`, `test_submission_and_expected_outcome_are_valid`, `test_reference_grade_files_are_valid` |
-| Each submission has a repository, a demo link and a short report | PRD B8 | `test_submission_and_expected_outcome_are_valid` |
+| Each submission has a repository, a demo link and a short report, in the online-text form of PRD B1.5 (a report file only when there is no `Report:` section) | PRD B8, B1.5 | `test_submission_and_expected_outcome_are_valid`, `test_the_pilot_exercises_the_b15_forms_and_failures` |
+| The stand-in reader of the online text (B1.5 rules 1 to 7, plain text) and the B1.3 README heading rule give the expected result of every plain submission vector (12) and every README vector (12) in `contracts/test-vectors/submission.v1.json` | PRD B1.3, B1.5 | `test_the_stand_in_reader_gives_the_expected_parts_of_every_plain_vector`, `test_the_stand_in_heading_rule_gives_the_expected_result_of_every_readme_vector` |
+| The expected-outcome schema rejects `score`, `points`, `total` and `grade` at the document, every criterion and every check, whatever the value | PRD B8 (reference grades only from a mentor) | `test_a_score_field_is_rejected_at_every_level`, `test_a_score_field_is_rejected_whatever_its_value`, `test_a_valid_expected_outcome_is_still_accepted` |
+| Every edge-case tag the files can decide agrees with them (README, demo, report length, clone, and the three label tags) | Set README | `test_every_edge_case_tag_agrees_with_the_files` |
 | Submission, rubric, course package and marking table link up; points sum; only the six check names | PRD B1.3, C3.5 | `test_ids_are_unique_and_match_folders`, `test_references_resolve`, `test_rubric_sources_exist_and_match_the_course_package` |
 | Expected outcomes follow the marking table, carry no scores and agree with the files | Proposed (set README) | `test_expected_outcome_follows_the_marking_table`, `test_expected_check_results_agree_with_the_files` |
 | Reference-grade cross-field rules (criteria match, score range, total = sum) | PRD B8, C3.3 FR-G-03 (sum) | `test_reference_grade_rules_catch_bad_grades` |
@@ -605,8 +608,8 @@ agreement criterion (G-5), which belongs to Release 4 work that does not exist y
 
 ### Not met yet, and not tested
 
-- At least 30 submissions (pilot: 6) and reference grades from at least one mentor (none; Q13).
-- Rubrics from B8.2 (pilot uses the B1 contract example); the Moodle form of a submission (Q32).
+- At least 30 submissions (pilot: 9) and reference grades from at least one mentor (none; Q13).
+- Editor HTML as online text (B1.5 rule 5 is unverified until the lab check on Moodle 4.5 and 5.3), and a reader that is not the stand-in: Module 3's extractor does not exist yet.
 - Word-count and heading-matching rules are provisional (Q39). See the open decisions in
   `testdata/b8-4-synthetic-submissions/README.md`.
 
