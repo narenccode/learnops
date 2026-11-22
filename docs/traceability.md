@@ -327,6 +327,8 @@ Files: `contracts/moodle-ws.v1.md` (normative rules), `contracts/moodle-ws.v1.sc
 **Contract work only, draft, not verified on any Moodle site.** Guide's decisions on Q1, Q24 and
 Q37: PR #27. Guide's B4 findings (set_user_flags removed, save_grade parameters, read-back,
 capabilities, course identification): rules §2 to §4, with Moodle source evidence in rules §7.
+Guide's decisions on the eleven B4 questions (PR #64, 2026-11-12): rules §3a (R1 to R11), §3b and
+§4, the PRD B4 tables and draft rule, and lab checks 13 to 16.
 
 FR-G-01 ("Fetch assignments, the marking table and submissions … through B4") and FR-G-06 ("Write
 only approved drafts to Moodle via B4"), both Release 4, are deliberately not in the table above. They
@@ -347,13 +349,29 @@ Test names are in `test_moodle_ws_v1.py`.
 | `mod_assign_set_user_flags` is in neither the allow-list, the PRD B4 tables nor the rules table | B4 (guide's findings) | `test_set_user_flags_is_allowed_nowhere` |
 | The read-back sends `assignid` and `userid`, and the rule (`lastattempt.gradingstatus` exactly `readyforrelease`, otherwise not verified) is stated in the rules and the PRD | B4 draft rule | `test_the_status_read_back_sends_assignment_and_learner`, `test_the_read_back_field_is_stated_in_the_rules_and_the_prd` |
 | A write counts as done only when both the state and the grade value are confirmed; the state alone is never enough | B4 draft rule | `test_success_needs_both_the_state_and_the_grade_value` |
-| The grade-value source (`mod_assign_get_grades`) is only a pending proposal (rules §6a): in no contract list or PRD table, and no text claims it works | B4 draft rule (pending, guide) | `test_the_grade_value_source_is_only_a_pending_proposal` |
+| The write rules are exactly R1 to R15 (guide's decisions on PR #64 and, for R12 to R14, PR #72; rules §3a) | B4 draft rule | `test_the_write_rules_are_exactly_r1_to_r15` |
+| R1: `mod_assign_get_grades` is the stored-grade read-back, in the allow-list, rules §2 and the PRD tables (always sent: `assignmentids`), with the §3b matching rule | B4 draft rule | `test_r1_get_grades_is_the_stored_grade_read_back` |
+| R2: `attemptnumber` is the explicit attempt, never `-1`; the read-back matches it | B4 draft rule | `test_r2_attempt_number_is_explicit_never_minus_one` |
+| R3: a write is refused before sending when the state is already `readyforrelease` or `released`, and is still read back; the 4.5 / 5.3 difference is recorded for the lab; R3 holds on 5.3 and is best effort on 4.5, named in the release notes (guide, 15 Nov) | B4 draft rule | `test_r3_locked_states_are_refused_before_sending_and_still_verified` |
+| R4: `viewhiddencourses`, `viewhiddendetails` and `useremail` are not granted | B4, SEC-03 | `test_r4_declared_capabilities_are_not_granted` |
+| R5: suspended learners are skipped and reported as skipped; `viewsuspendedusers` is not granted | B4 | `test_r5_suspended_learners_are_skipped_and_reported` |
+| R6: `viewownsubmissionsummary` stays lab check 12 | B4, App-C 1 | `test_r6_view_own_submission_summary_stays_a_lab_check` |
+| R7: `mod/assign:reviewgrades` is granted on both versions | B4, SEC-03 | `test_r7_review_grades_is_granted_on_both_versions` |
+| R8: a failed read-back is `NOT_VERIFIED` and the write is never repeated | B4 draft rule | `test_r8_failed_read_back_is_not_verified_and_never_rewrites` |
+| R9: exact numeric match after parsing, no tolerance; range checked before writing | B4 draft rule | `test_r9_exact_numeric_match_and_range_check_before_writing` |
+| R10: no submission, no grade and no access are separate outcomes, never success; other learners continue | B4 | `test_r10_missing_and_inaccessible_are_separate_outcomes` |
+| R11: an uncertain write is never retried automatically; read back, the mentor decides | B4 draft rule | `test_r11_uncertain_write_is_never_retried_automatically` |
+| R12: a state that cannot be read, or is none of Moodle's six marking-workflow values, is refused before anything is sent (`REFUSED_STATE_UNKNOWN`) | B4 §3a (guide, PR #72) | `test_r12_an_unreadable_or_unknown_state_is_refused_before_sending` |
+| R13: marking workflow off (`graded` / `notgraded`) is refused before anything is sent (`REFUSED_WORKFLOW_OFF`); lab check 4 stays open | B4 §3a (guide, PR #72), PRD C-09 | `test_r13_marking_workflow_off_is_refused_before_sending` |
+| R14: a matching read-back after a lost answer is not done until the mentor confirms it (`NEEDS_MENTOR_CONFIRMATION`) | B4 §3a (guide, PR #72) | `test_r14_a_matching_read_back_after_a_lost_answer_needs_the_mentor` |
+| R15: `applytoall=0` and `addattempt=0` are always sent; any other value is refused before anything is sent | B4 §3a (guide, PR #64, 2026-11-16) | `test_r15_applytoall_and_addattempt_are_pinned_to_zero` |
+| The three former open questions are rules now; each refusal is its own outcome; §6 keeps the lab-access row | B4 §3a, §6 | `test_the_three_proposals_are_rules_now_and_no_longer_open` |
 | Course lookup sends `field` and `value`, by course id or shortname, never idnumber | B4 course identification | `test_course_lookup_does_not_rely_on_idnumber` |
 | The capability lists (needed, never granted) are the guide's and do not overlap; a custom role is required | B4, SEC-03 | `test_the_capability_lists_are_the_guides_and_do_not_overlap`, `test_the_custom_role_rule_is_stated` |
-| Every lab check in rules §5 is still open on both versions | App-C 1 | `test_every_lab_check_is_still_open` |
-| `mod_assign_set_user_flags` is not allowed: it can set `released` with only `mod/assign:grade` | Guide, 11 Nov; C-09 | `test_the_dropped_user_flags_function_is_not_listed` |
+| Every lab check in rules §5 (1 to 18) is still open on both versions, with no decision record; checks 13 to 16 name the rule they cover; checks 17 and 18 ask whether `core_course_get_contents` and `mod_assign_get_assignments` return the `idnumber` fields (guide, 15 Nov; reviewer on PR #64, 16 Nov) | App-C 1 | `test_every_lab_check_is_still_open`, `test_the_decision_lab_checks_name_their_rules` |
+| The rules stay a draft (Status line `Draft`, not approved), no §2 function is marked verified, and the draft rule never allows `released`; each test fails if that text is changed | B4 draft rule, C-09, App-C 1 | `test_the_contract_is_still_a_draft_and_not_approved`, `test_no_function_is_marked_verified`, `test_a_grade_write_never_sends_released` |
 | A replacement name for a Moodle version also appears in the PRD B4 text | B4 ("replacements recorded here") | `test_a_replacement_name_is_also_in_the_prd` |
-| No verification state is stored in the schema or example | Guide, Q1 | `test_invalid_document_is_rejected_at_the_expected_place` (five verified-flag cases, including capital letters) |
+| No verification state is stored in the schema or example | Guide, Q1 | `test_invalid_document_is_rejected_at_the_expected_place` (three verified-flag cases) |
 | Schema is valid; example validates; invalid documents fail at the expected place; unknown fields are accepted | B.0 rule 1, rule 2 | `test_schema_is_a_valid_draft_2020_12_schema`, `test_example_is_valid`, `test_invalid_document_is_rejected_at_the_expected_place`, `test_unknown_fields_are_accepted` |
 | One token variable per site with a placeholder; no single `MOODLE_WS_TOKEN` | B4, SEC-03, C-06; guide, Q24 | `test_one_token_variable_per_site_with_a_placeholder` |
 
@@ -364,12 +382,14 @@ Test names are in `test_moodle_ws_v1.py`.
 | Only the functions listed in the contract are called (`libs/moodle_ws` will build its allow-list from the example; the library does not exist yet) | B4 |
 | One service account per site, with a token restricted to those functions and the capabilities in rules §4 (the lists are tested; that they are enough is lab check 9) | B4, SEC-03 |
 | The token is stored only in the environment | SEC-03, C-06 |
-| A grade write uses workflow state `readyforrelease`, never `released`, and counts as done only when both the state and the grade value are confirmed; the grade-value source is pending the guide's decision (rules §6a), so for now no write is reported as done; only approved drafts are written | B4, C-09 |
-| Each function exists and behaves as expected with the parameters used on Moodle 4.5 and 5.3 (all 12 lab checks are still open) | B4, App-C 1 |
+| A grade write uses workflow state `readyforrelease`, never `released`, and counts as done only when both the state and the grade value are confirmed; the grade value is read with `mod_assign_get_grades` (R1); the write rules R1 to R15 are contract text here, and their enforcement in `libs/moodle_ws` is a separate follow-up; only approved drafts are written | B4, C-09 |
+| Each function exists and behaves as expected with the parameters used on Moodle 4.5 and 5.3 (all lab checks in rules §5 are still open) | B4, App-C 1 |
 
-Open: when the lab Moodle sites are available (all twelve checks in `moodle-ws.v1.md` §5 wait for
+Open: when the lab Moodle sites are available (all checks in `moodle-ws.v1.md` §5 wait for
 them; B4 cannot be frozen until they pass), and the field for feedback comments inside `plugindata` on
-`mod_assign_save_grade` (lab check 6). Q1, Q24 and Q37 are decided (PR #27).
+`mod_assign_save_grade` (lab check 6). Q1, Q24 and Q37 are decided (PR #27); the eleven B4
+questions are decided (PR #64), and so are the three that followed: the state that cannot be read before
+a write, marking workflow off, and a lost answer with a matching read-back (R12 to R14, PR #72).
 
 ## B7 H5P practice output contract (v1), Release 0 foundation, DRAFT
 
@@ -529,8 +549,7 @@ requirement, so it has no FR ID and no row in the table at the top. It is the da
 and App-C 8 (licence or consent for every B8.5 video).
 
 **Status: PENDING.** Five local recording files were identified in earlier work (their SHA-256
-values are in the inventory), but no consent line is written, no duration is recorded, no
-transcript is typed or reviewed, and none is accepted as B8.5 evidence. The tests show that the committed placeholders are well formed and that the PENDING status
+values are in the inventory), but no consent line is written, no transcript is typed or reviewed, and none is accepted as B8.5 evidence. The tests show that the committed placeholders are well formed and that the PENDING status
 is true. They do **not** show that B8.5 or App-C 8 is met.
 
 ### Enforced by the test and covered by automated tests

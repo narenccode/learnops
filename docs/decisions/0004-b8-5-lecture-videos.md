@@ -25,7 +25,7 @@ Each speaker must provide a consent line containing their name, date, and the fo
 
 > used to test speech recognition; video stays in the lab; transcript published under Apache-2.0
 
-Before a speaker writes their consent line, they are told that, until lab storage is ready, the recording stays on the computer of the team member who recorded it, in a folder that is not synced or backed up to a cloud service, and that it is moved to lab storage when that becomes available. They are also told that their name and consent line are public in this repository.
+Before a speaker writes their consent line, they are told that, until lab storage is ready, the recording stays on the computer of the team member who recorded it, in a folder that is not synced or backed up to a cloud service, and that it is moved to lab storage when that becomes available. They are also told that their name and consent line are public in this repository, and that if they withdraw, a withdrawal removes the name from the current files but older versions stay in Git history.
 
 ## Dataset completion criteria
 
