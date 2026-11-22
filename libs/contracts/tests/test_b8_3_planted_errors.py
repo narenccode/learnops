@@ -184,6 +184,16 @@ def test_ck_02_change_is_the_one_declared() -> None:
     assert page["completion"] == "submit"
 
 
+def test_ck_03_change_is_the_one_declared() -> None:
+    assert "total_points: 120" in _text("ck-03-points-total-mismatch", "course.yaml")
+
+
+def test_ck_09_change_is_the_one_declared() -> None:
+    table = _text("ck-09-marking-table-sum", "weeks/02-task.md")
+    points = [int(m) for m in re.findall(r"^\| [^|]+ \| (\d+) \|", table, re.MULTILINE)]
+    assert sum(points) == 20  # the task stays worth 25 in course.yaml
+
+
 def test_b82_is_unchanged() -> None:
     got = {k: hashlib.sha256(v).hexdigest() for k, v in _files(B82).items()}
     assert got == B82_SHA256
