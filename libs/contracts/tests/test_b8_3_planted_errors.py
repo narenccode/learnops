@@ -194,6 +194,14 @@ def test_ck_09_change_is_the_one_declared() -> None:
     assert sum(points) == 20  # the task stays worth 25 in course.yaml
 
 
+def test_ck_12_url_is_in_the_source_file_only() -> None:
+    # Source-level check only. It does NOT show that the URL reaches media_refs of the B2 model or
+    # that a checker reports CK-12: that depends on checker design section 12 item 19 (open), so
+    # the CK-12 expected finding is marked assertable: false.
+    body = _text("ck-12-full-url-media", "weeks/01-guide.md")
+    assert "https://example.invalid/diagram.png" in body
+
+
 def test_b82_is_unchanged() -> None:
     got = {k: hashlib.sha256(v).hexdigest() for k, v in _files(B82).items()}
     assert got == B82_SHA256
