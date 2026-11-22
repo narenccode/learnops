@@ -194,7 +194,7 @@ fails with `MediaSigningConfigError - MEDIA_SIGNING='hmac' is defined in PRD B6.
 - **Actual (verified):** `71 passed` (exit 0); `31:- **Status:** PENDING. Five local recording files were identified in earlier work (PR #99` (the Status line now says five local files are identified and hashed, none is accepted); `57:No consent lines yet.`
 - **Implementation:** the checker lives in the test file `libs/contracts/tests/test_b8_5_dataset.py`.
 - **Evidence:** PRs #82, #89 and #99 (base `main`).
-- **Say clearly:** the passing tests prove that the committed placeholders are well formed and that PENDING is true. They do **not** show a recording, a consent line, a transcript, a word error rate or B8.5 acceptance. None of those is on `main`. Official B8.5 evidence is outside this PR (the audit PR #104, still open, reports on it).
+- **Say clearly:** the passing tests prove that the committed placeholders are well formed and that PENDING is true. They do **not** show a recording, a consent line, a transcript, a word error rate or B8.5 acceptance. None of those is on `main`. Official B8.5 evidence is outside this PR (the audit PR #104, merged, reports on it).
 - **Limitations:** decision 0004 records two temporary exceptions (no 1800 s total; four lectures instead of five for interim work), citing the guide's confirmation on issue #121 (PR #125). They are not waivers: the set is complete only with five consented lectures.
 
 ### A6. Whole suite and type check

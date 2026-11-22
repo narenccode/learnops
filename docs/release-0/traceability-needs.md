@@ -11,7 +11,7 @@ set of edits. First written 2026-11-16 against `origin/main` at `3abbc02`; **re-
 |---|---|
 | T19 edits `docs/traceability.md`? | **No** |
 | Earlier concern: an unmerged combined `media_paths` branch (#38) rewrote the first rows | **Resolved.** #38 was closed on 2026-11-16 as superseded; #84, #85 and #86 are merged and `main` has one row each for validation, templates and the `none` signer |
-| Open PRs that also edit the file | Not counted again. Draft PRs #140 and #98 do not edit it. #104 proposes a B8.5 line in its checklist but does not edit the file. Whoever merges later merges `main` into the branch (no force-push, CLAUDE.md) |
+| Open PRs that also edit the file | Not counted again. Draft PR #98 does not edit it. #104 (merged) proposed a B8.5 line in its checklist but did not edit the file. Whoever merges later merges `main` into the branch (no force-push, CLAUDE.md) |
 | T-series PRs that added traceability text | #96 (App-C 4, merged), #103 (G-6 tooling, merged); #97 (closed as superseded) |
 | T19 adds a row? | No. T19 adds no requirement and no test, so CLAUDE.md §7 item 3 has nothing to record beyond this note |
 
@@ -32,16 +32,16 @@ set of edits. First written 2026-11-16 against `origin/main` at `3abbc02`; **re-
 - **B8.1.** `main` carries the guide's 5.3-only decision for B8.1 (decision 0009, PR #95) and the
   B8.2 deviation; PR #130 (merged) added one register of Moodle version exceptions in `docs/decisions/README.md`. Do not
   add a second wording.
-- **B8.5.** `main` says PENDING with five SHA-256 values and no duration (the durations are in PR #154, open and approved). #104 proposes a line
+- **B8.5.** `main` says PENDING with five SHA-256 values and the five durations (PR #154, merged). #104 (merged) proposed a line
   with 5 local recordings, 338 s of 1800 s and 0 of 5 consent lines. The guide's assistant said in its
   [comment on #105](https://github.com/narenccode/learnops/pull/105#issuecomment-7011724866)
-  (2026-11-19) that the #104 line stays labelled unmerged and that **nothing is added to
+  (2026-11-19), when #104 was still open, that its line stays labelled unmerged and that **nothing is added to
   `docs/traceability.md`**. This instruction has not been repeated by the guide in his own words: his
   own-words confirmations of 2026-11-20 are on #98 (ADR 0002) and #104 (decision 0011) and do not
   cover it. The guide was asked on #105 on 2026-11-22 to confirm it in his own words; until he does, this note
   attributes it to the assistant's comment and nothing more. The instruction is unchanged; a line
   must not run ahead of reviewed evidence. The five measured durations were on
-  the branch `video/b8-5-dataset-evidence` (commit `9c6d703`) and are now carried by PR #154; before it, no PR carried
+  the branch `video/b8-5-dataset-evidence` (commit `9c6d703`) and were carried to `main` by PR #154 (merged); before it, no PR carried
   them.
 - **Video demo.** PR #117 (D4 paths demo) and PR #129 (Lesson Processor demo, FR-V-01, FR-V-03 and
   FR-V-08 in part, one-PR exception from the guide) each add demo text. #129 adds its own
@@ -60,7 +60,7 @@ set of edits. First written 2026-11-16 against `origin/main` at `3abbc02`; **re-
 ## 5. Evidence the traceability owner should consider adding
 
 - Pointers to `docs/release-0/report.md`, `demo-script.md` and `traceability-needs.md` once #105 merges
-  (#104 proposes the same for its own documents).
+  (#104, merged, proposed the same for its own documents).
 - The hosted CI result for the row's commit: `ci` on `main` `5f3a794` succeeded (report section 5).
 - For B8.5 and App-C 4: keep "not verified" lines as they are. Nothing in `main` verifies either.
 

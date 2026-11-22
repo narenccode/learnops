@@ -69,7 +69,7 @@ where each one goes" (not written yet).
 | 4c | `libs/media_paths`: `hmac` and `s3` signers | **7** | Raise a configuration error by design. B6.4 needs only `none` for the baseline |
 | 5 | Test data B8 v1 | See table 2b | |
 | 6 | App-C items 6 and 9 | **5** | See table 2c |
-| 7 | Design document per module approved | **5 Pending (guide), 1 of 4** | On `main`: `studio.md` says `Approved` (PR #147, 2026-11-20); `grading.md` says `In review`; `checker.md` and `video.md` say `Draft`. Draft PR #140 completes `video.md` and records the guide's answers; the approval is the guide's |
+| 7 | Design document per module approved | **5 Pending (guide), 1 of 4** | On `main`: `studio.md` says `Approved` (PR #147, 2026-11-20); `grading.md` says `In review`; `checker.md` and `video.md` say `Draft`. PR #140 (merged 2026-11-22) completed the draft of `video.md` and recorded the guide's answers; it is still `Draft` and the approval is the guide's |
 
 **Not Release 0 any more (PRD change):** `libs/lti` (class 7; contract and ADR only, ADR `Proposed`),
 `libs/moodle_ws` (class 4; pieces merged into stacked branches, PRs #73 to #78, and open PRs #76,
@@ -92,7 +92,7 @@ as a freeze, and draft PR #115 prepares the post-freeze CODEOWNERS rule.
 | B8.3 planted-error courses | **7** | No PR or file found |
 | B8.4 synthetic submissions | **4** | #31 (provisional pilot of 6; the PRD asks for at least 30) |
 | B8.5 lecture videos: checker and tests | **1** | #82, #89; decision 0004 and the inventory hashes (#99) |
-| B8.5 lecture videos: data | **5 Pending** | `main` says PENDING: five hashes, no duration, no consent line, no transcript. Decision 0004 records the guide's temporary exceptions (four lectures, no 1800 s total; issue #121, PR #125). #104 (open, ready for review; unmerged) reports 5 local files with matching hashes, 338 s of 1800 s and 0 of 5 consent lines; **not reviewed** |
+| B8.5 lecture videos: data | **5 Pending** | `main` says PENDING: five hashes and five durations (62, 82, 43, 68, 83 s; PR #154), no consent line, no transcript. Decision 0004 records the guide's temporary exceptions (four lectures, no 1800 s total; issue #121, PR #125). The audit #104 (merged, approved by Harshitha) reports 5 local files with matching hashes, 338 s of 1800 s and 0 of 5 consent lines; it grants nothing |
 | B8.6 model comparison set | **4** | #33 (draft, "one transcript") |
 
 **2c. App-C.**
@@ -106,8 +106,8 @@ as a freeze, and draft PR #115 prepares the post-freeze CODEOWNERS rule.
 | 5 | H5P versions | First release that uses them | 6 | Decision 0008; needs lab |
 | 6 | LTI library and licence | **Release 0** | 5 | `docs/decisions/0001-lti-library.md` exists but is `Proposed`, pending the guide's review; a second file is also numbered `0001` |
 | 7 | Caption WER target | Release 3 (G-6) | 6 | Needs B8.5 complete and a speech provider; ADR 0002 (#98) is `PROPOSED`; evaluation tooling merged (#103) and refuses `official` mode |
-| 8 | Licence or consent for B8.5 | First release that relies on it | 6 | 0 consent lines (decision 0004). Evidence audit: #104 |
-| 9 | Moodle 5.3 AI features | **Release 0** | 7 | No record. The guide's answer on #140 puts the check in scope for Student 4 |
+| 8 | Licence or consent for B8.5 | First release that relies on it | 6 | 0 consent lines (decision 0004). Evidence audit: #104 (merged) |
+| 9 | Moodle 5.3 AI features | **Release 0** | 7 | Record in open PR #156 (decision 0012): source-checked on the Moodle 5.3 source, **not lab-verified**. The guide's answer on #140 put the check in scope for Student 4 |
 | 10 | Backup and restore roles | First release that relies on it | 6 | Needs lab |
 
 ## 3. Release exit criteria (PRD §D2; format of `.claude/commands/release-check.md`)
@@ -124,7 +124,7 @@ as a freeze, and draft PR #115 prepares the post-freeze CODEOWNERS rule.
 | 8 | Guide's adoption test | **Not started** | The guide's act |
 
 **Verdict: not ready to freeze.** This is not an approval and tags nothing. The same verdict is
-reached independently by `freeze-readiness-checklist.md` in open PR #104; this report does not copy
+reached independently by `freeze-readiness-checklist.md` (merged in PR #104); this report does not copy
 it (see `traceability-needs.md`).
 
 ## 4. Evidence audit
@@ -138,7 +138,7 @@ it (see `traceability-needs.md`).
 | Model interface (FR-M-01, FR-M-02) | Library, tests, B5 | B5 contract merged (#25); draft #35 | Library on `main`; speech interface (not Release 0) | Student 3 |
 | Moodle web services (B4, FR-M-01 area) | Library and lab verification | B4 contract merged (#27); #64, #72, #63, #76, #79, #80 open | `libs/moodle_ws` on `main`; App-C 1 lab results (not Release 0) | Student 3, lab |
 | LTI (B3, App-C 6) | Contract, library, licence record | B3 contract merged (#83); ADR 0001 `Proposed` | Guide review of the library choice | Student 2, guide |
-| B8.5 data (App-C 8, 7) | Recordings, consent, transcripts, approval of exception | Checker on `main`; exceptions in decision 0004; evidence audit in #104 (not merged) | 0 of 5 consent lines; transcripts; 1800 s total; five-lecture rule | Speakers, Student 3, guide |
+| B8.5 data (App-C 8, 7) | Recordings, consent, transcripts, approval of exception | Checker on `main`; exceptions in decision 0004; evidence audit in #104 (merged) | 0 of 5 consent lines; transcripts; 1800 s total; five-lecture rule | Speakers, Student 3, guide |
 | BBB (App-C 4, FR-V-09) | Lab metadata and format output | Check script and NOT VERIFIED records on `main` (#96) | Any lab run | Student 4, lab |
 | WER (G-6, App-C 7) | Baseline run, target, method | Tooling merged (#103) | A complete B8.5; ADR 0002 approval; normalisation rule; provider permission | Guide, Student 3, Student 4 |
 | Moodle 4.5 and 5.3 (C-03, D2.3, E2) | Restore and role results on both | Guide's waiver comments for B8.1 and B8.2 (section 7); register in `docs/decisions/README.md` (#130, merged) | All results | Student 1, 2, guide |
@@ -178,7 +178,7 @@ not re-fetched: pre-commit, gitleaks over the whole history, mypy, contract exam
 |---|---|---|
 | **Moodle versions.** PRD C-03, D2.3 and E2 still say 4.5 **and** 5.3. The guide decided on issue #55 that B8.1 builds and tests on **5.3 only**, with 4.5 waived for Release 0 (decision 0009; #95 merged); PR #130 (merged) added one register | Guide | Row D2.3 stays "not met" |
 | The date of the guide's earlier approval of the 1800 s exception | Guide | B8.5 cannot be called complete; the five-lecture rule still holds |
-| Retention, lab storage, names and transcripts, and processing services for B8.5 (data-map questions) | **Decided by the guide** (2026-11-19, confirmed in his own words 2026-11-20) and recorded in `docs/decisions/0011-b8-5-data-handling.md` in the open audit PR #104 (not merged); the data map follows it. What the lab endpoint keeps is not recorded yet (ADR 0002, PR #98) | Speakers are told about withdrawal and Git history before writing the consent line |
+| Retention, lab storage, names and transcripts, and processing services for B8.5 (data-map questions) | **Decided by the guide** (2026-11-19, confirmed in his own words 2026-11-20) and recorded in `docs/decisions/0011-b8-5-data-handling.md` (merged in PR #104); the data map follows it. What the lab endpoint keeps is not recorded yet (ADR 0002, PR #98) | Speakers are told about withdrawal and Git history before writing the consent line |
 | Which of the two `0001` decision records is renumbered | Guide | Decision records are ambiguous |
 | Approval of the three remaining design documents (`studio.md` is `Approved`, PR #147) | Guide only | Feature code cannot start for those modules; D1 not met |
 | LTI library (`0001`), STT options (`0002`, #98), App-C 9 record | Guide | App-C 6 and 9 (Release 0) |

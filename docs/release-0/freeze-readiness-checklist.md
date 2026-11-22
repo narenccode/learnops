@@ -33,7 +33,7 @@ to classify the row was not found. A merged PR is not treated as proof of its ac
 
 | Item | Status | Note |
 |---|---|---|
-| Video design document | **Draft** on `main` | `git log origin/main -- docs/design/video.md` shows #17, #24, #34, #47 and #93; none sets `Approved`. Draft PR #140 completes it and records the guide's answers; the design approval is separate and the guide's alone |
+| Video design document | **Draft** on `main` | `git log origin/main -- docs/design/video.md` shows #17, #24, #34, #47 and #93; none sets `Approved`. PR #140 (merged 2026-11-22) completed the draft and recorded the guide's answers; the document is still `Draft`, and the design approval is separate and the guide's alone |
 | PR #100 (S2 Svarah literature audit) | Merged | T13 as a whole is not complete (PR #106: 1 of 6 sources verified) |
 | PR #103 (G-6 evaluation preparation) | Merged | Preparation only: no official evaluation has run |
 | PR #96 (App-C 4 record) | Merged | Records NOT VERIFIED; no lab observation |
@@ -67,7 +67,7 @@ to classify the row was not found. A merged PR is not treated as proof of its ac
 | Test data B8.5 lecture videos | **Blocked** | Checker and tests merged (#82, #89); inventory hashes (#99). 0 of 5 consent lines, no transcripts, 338 s of 1800 s measured; see the B8.5 evidence document |
 | Test data B8.6 model comparison set | **Not ready** | PR #33 (open, draft): "one transcript" |
 | App-C item 6 (LTI library and licence) | **Awaiting guide** | `docs/decisions/0001-lti-library.md` is `Proposed`, pending the guide's review. Two files are numbered `0001` (`0001-lti-library.md` and `0001-b5-model-interface-v1.md`); the guide decides which to renumber |
-| App-C item 9 (Moodle 5.3 AI features) | **Not started** | No decision record found. The guide's answer on draft PR #140 puts it in scope for Student 4 |
+| App-C item 9 (Moodle 5.3 AI features) | **Not started** | Record in open PR #156 (decision 0012), source-checked and **not lab-verified**; the guide's answer on PR #140 put it in scope for Student 4 |
 | Lab VMs ready (A11) | **Unknown / Blocked** | The guide said on issue #55 that the lab Moodle 4.5 and 5.3 sites exist (2026-11-11) and gave an owner an account on 5.3 (2026-11-14); no A11 readiness record exists |
 | Design document per module approved | **Partly done: 1 of 4** | `studio.md` is `Approved` (PR #147, 2026-11-20); `grading.md` is `In review`; `checker.md` and `video.md` are `Draft`. The guide approves the other three |
 | CI and repository standards | **Completed** | `ci` succeeded on `main` `5f3a794` (and the two commits before it); review bot and CODEOWNERS exist |
@@ -98,9 +98,7 @@ items 1 to 5, 7, 8, 10. The Release 0 notes must list where each one goes (not w
 | #98 T8 STT ADR 0002 | Draft | Review required | PROPOSED, pending the guide's approval of its six points |
 | #105 T19 report and demo | Open, ready for review | Changes requested (status wording) | Revised against `main`; the review points are being fixed |
 | #106 T13 literature (P1 to P8) | Draft | Review required | 1 of 6 sources verified; entries pending owner verification |
-| #104 this audit | Open, ready for review | Changes requested (status wording) | The audit's own verdict (not ready to freeze) is unchanged |
 | #129 Lesson Processor demo | Open | Changes requested (Akshita21-09) | One-PR exception from the guide; awaiting peer review |
-| #140 Video design document | Draft | Review required | Guide's answers applied; stays `Draft` |
 | #115 CODEOWNERS after the freeze | Draft | Review required | |
 | #31, #33 B8.4, B8.6 datasets | Open / Draft | Review required | Provisional |
 | #35, #63 model-interface and moodle_ws skeletons | Draft | Review required / changes requested | Not Release 0 after the PRD change |
@@ -122,7 +120,6 @@ Merged and relevant since the first audit: #25, #27, #46, #54, #61, #83, #85, #8
 
 **Awaiting the owner / team:**
 - Speaker consent lines, speaker names, file names, transcripts and Harshitha's review for B8.5; written confirmation that the five local files are the official set.
-- A pull request for the five measured durations (`video/b8-5-dataset-evidence`, commit `9c6d703`, not on `main`).
 - Creating `CHANGELOG.md` and `docs/releases/r0.md` (PRD §D2 item 5, `docs/RELEASING.md`).
 
 **Blocked by unavailable external services:** the lab Moodle 4.5 and 5.3 sites, a BigBlueButton server, and a speech provider.
