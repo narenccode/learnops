@@ -155,7 +155,7 @@ be used for any measurement.
 ## Completion checklist
 
 Ticked items are confirmed by the committed files and the validation test. Unticked items rest on the owner's
-statement in the pull request and are not verified by the repository: the transcript method, the speaker briefing, where the recordings are stored, and
+statement in the pull request and are not verified by the repository: the speaker briefing, where the recordings are stored, and
 who checked lecture 02.
 
 For each lecture (`lecture-01` … `lecture-05`):
@@ -167,7 +167,7 @@ For each lecture (`lecture-01` … `lecture-05`):
 - [x] Inventory: SHA-256 filled in
 - [ ] The speaker was told about the interim storage, then wrote their own consent line (once per
       speaker); the inventory's Consent cell points to it as `` `0004` speaker-NN ``
-- [ ] `lectures/<lecture-id>/transcript.en.txt` typed or corrected by hand (placeholder removed)
+- [x] `lectures/<lecture-id>/transcript.en.txt` typed or corrected by hand (placeholder removed)
 - [ ] Transcript checked by Harshitha; inventory says `checked`
 
 For the set:

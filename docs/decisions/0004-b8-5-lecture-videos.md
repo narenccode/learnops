@@ -60,3 +60,10 @@ Each lecture's row in the B8.5 inventory (`testdata/README.md`) points to its sp
 - speaker-02: Harshitha, 2026-11-23: "used to test speech recognition; video stays in the lab; transcript published under Apache-2.0"
 - speaker-03: Nagashree V, 2026-11-23: "used to test speech recognition; video stays in the lab; transcript published under Apache-2.0"
 - speaker-04: Shraddha, 2026-11-23: "used to test speech recognition; video stays in the lab; transcript published under Apache-2.0"
+
+## How the transcripts were made
+
+All five reference transcripts were typed by hand by the speaker of that lecture (statement of the owner, Student 4). No
+model draft was used, so no model is recorded. Lecture 02 (speaker Harshitha) was checked by Nagashree V; the other four
+were checked by Harshitha. The guide named Harshitha as reviewer above, so the checker of lecture 02 is a change that
+the guide should acknowledge.
