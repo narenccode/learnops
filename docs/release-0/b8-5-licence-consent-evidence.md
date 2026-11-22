@@ -93,7 +93,7 @@ than temporary pipeline-test clips (see gap G-8), or anything about licence.
 | G-6 | Retention and deletion of recordings, extracted audio and drafts; lab-storage access; retention of names, consent lines and transcripts (and what happens on withdrawal) | The guide's decisions, recorded in `docs/decisions/0011-b8-5-data-handling.md` | **Decided** (2026-11-19); what the lab endpoint keeps is **still to be recorded** |
 | G-7 | Recording file names are `PENDING` in the inventory; the recording-team member who holds each file is not recorded | File names (no folders, no URLs) entered by the owner | **PENDING** |
 | G-8 | Not confirmed that the five local files are the official B8.5 recordings and not temporary Video-pipeline test clips | Owner (Student 4) confirms in writing, in the PR or decision record | **PENDING OWNER** |
-| G-9 | Unmerged work: commit `9c6d703` on `video/b8-5-dataset-evidence` (the five measured durations) is not on `main`; no open PR carries it | A PR from that branch by its owner (this audit left the branch untouched) | **OPEN, owner action** |
+| G-9 | Unmerged work: commit `9c6d703` (the five measured durations) was not on `main` | A PR from that branch by its owner | **Resolved**: PR #154 (merged) put the five durations on `main` |
 | G-10 | No openly licensed source is used: the licence path in PRD §B8.5 ("openly licensed, licence verified and recorded") is not exercised. The project chose the consent path | None, unless the guide changes the decision | Informational |
 
 ## 4. Required handling of a recording whose consent or licence evidence is missing
@@ -135,7 +135,7 @@ Only items required by the repository's requirements are listed.
 |---|---|---|---|
 | 1 | At least 5 recordings exist | Decision 0004 | Local files exist (5); owner confirmation of official status **PENDING** (G-8) |
 | 2 | Total at least 1800 s | Decision 0004 | **Not met (338 s)**; temporary exception recorded in decision 0004 (guide, issue #121, PR #125) |
-| 3 | Duration of each measured with `ffprobe` and recorded | Decision 0004 | Measured in this audit; recorded only on the unmerged branch (G-9) |
+| 3 | Duration of each measured with `ffprobe` and recorded | Decision 0004 | Measured in this audit; recorded on `main` by PR #154 (G-9 resolved) |
 | 4 | SHA-256 of each recording | Set README | On `main`; verified 5 of 5 locally in this audit |
 | 5 | Recording file name in the inventory | Set README | **PENDING** (G-7) |
 | 6 | Speaker per lecture | Set README | **PENDING** (G-2) |
@@ -171,4 +171,3 @@ truthful. It does not show that B8.5 or App-C 8 is met.
 - That the files are the official set (G-8).
 - Transcript accuracy and review (G-4).
 - The date of the guide's earlier approval of the 1800 s exception (G-5). The guide's decisions on retention, storage, names and transcripts and processing services are recorded in decision 0011; what the lab endpoint keeps is still to be recorded (decision 0002).
-- A pull request that puts the five measured durations on `main`: commit `9c6d703` on `video/b8-5-dataset-evidence` is still not on `main` and no open PR carries it (G-9).
