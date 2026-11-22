@@ -2,8 +2,8 @@
 
 Shows the existing `libs/media_paths` library and the B6.3 lesson manifest (PRD B6.1, B6.3, B6.4;
 EXT-09, C-08). Synthetic names only. No media files, no services, no network, no secrets.
-This is not the Release 0 demonstration (that material is on the T19 branch, not in this
-checkout) and not B8.5 evidence.
+This is not the Release 0 demonstration (that material is in `docs/release-0/`: the report, the
+demo script and the traceability note, merged in PR #105) and not B8.5 evidence.
 
 ## Prerequisites
 
