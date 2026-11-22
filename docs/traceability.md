@@ -982,3 +982,26 @@ the normalisation rules and the WER target are not decided, and ADR 0002 (T8) is
 - Any speech model's accuracy; the synthetic tests use made-up text only.
 - That an approval cited in an official run exists (a reviewer checks it).
 - Text normalisation, confidence intervals, timing accuracy and speed: not decided, not built.
+
+## FR-M-02 speech interface library (skeleton, partial), Release 0 foundation
+
+FR-M-02 ("Speech interface library (B5.4)", R0) is partial: the call, the provider rules and the
+checks exist and are mock-tested; no real speech service is called. It is not in the top table
+until it is complete.
+
+| Rule | PRD | Code | Test(s) |
+|---|---|---|---|
+| `transcribe(audio_path, language="en")` returns a B5 transcript (segments and meta) | B5.4 | `libs/model_interface/speech.py` | `test_speech.py`: `test_the_fake_returns_a_valid_b5_transcript`, `test_language_defaults_to_english`, `test_the_package_exports_transcribe` |
+| The provider is chosen by `SPEECH_PROVIDER` with the fake-provider rule; `local` and `hosted` refuse until integrated; a passed provider is for test runs only | B5.2, B5.4, decision 0001 (3) | `speech_providers.py`, `speech.py` | `test_fake_is_refused_outside_a_test_run`, `test_local_and_hosted_refuse_until_a_transport_exists`, `test_an_unset_speech_provider_is_a_clear_error`, `test_passing_a_provider_is_for_test_runs_only` |
+| A bad language or an unreadable audio file is refused before any provider call; the path is never echoed | B5.4, OPS-04 | `speech.py` | `test_a_missing_file_is_refused_before_the_provider_is_called`, `test_a_folder_is_not_an_audio_file`, `test_language_must_be_a_non_empty_string` |
+| The answer is checked against the B5 schema and the time rule; one retry, then `InvalidOutput` with no transcript text; provider failures are not retried | B5.2, B5.4, decision 0001 (5, 9) | `speech.py`, `transcript.py` | `test_one_invalid_answer_is_retried_once`, `test_two_invalid_answers_raise_and_return_nothing`, `test_a_provider_failure_is_not_retried` |
+| `latency_ms` is measured by LearnOps, as a whole number | B5.4, decision 0001 (2) | `speech.py`, `validation.py` | `test_latency_ms_is_measured_here_as_a_whole_number` |
+| Not a rule: time order, and times past `duration_s`; silent audio gives `segments: []` | B5.4, decision 0001 (4, 10, 11) | `speech.py` | `test_segments_out_of_time_order_are_accepted`, `test_times_past_duration_are_accepted`, `test_silent_audio_gives_an_empty_transcript` |
+
+### Not implemented, and therefore not claimed
+
+| What | PRD | Waits for |
+|---|---|---|
+| A real local (lab Whisper-family) or hosted speech service | B5.4 | Q19 and the lab |
+| Logging speech calls to `shared.model_calls` | B5.3 (written for model calls) | A guide decision; the transcript meta has no token counts or `prompt_version` |
+| `SPEECH_TIMEOUT_S`, the budget, and splitting long audio (90-minute dry run) | — | Design proposals (grading.md §4.2); lab check |

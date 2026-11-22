@@ -49,3 +49,7 @@ class ProviderUnavailable(ModelError):
 
 class CallLoggerMissing(ModelError):
     """No call logger is configured outside a test run; nothing was sent to the model."""
+
+
+class AudioNotReadable(ModelError):
+    """The audio file does not exist, is not a file, or cannot be read; nothing was sent."""

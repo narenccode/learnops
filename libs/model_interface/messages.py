@@ -100,3 +100,25 @@ FAKE_NO_FIXTURE: Final = (
     "The fake provider has no response for task '{task}' with these inputs. Add one with "
     "add_response() in the test."
 )
+
+# --- speech interface (PRD B5.4) ---
+AUDIO_NOT_READABLE: Final = (
+    "The audio file cannot be read: it does not exist, is not a file, or this process may not read "
+    "it. Nothing was sent to the speech service. Check the path the caller passed (the file must "
+    "be on this host)."
+)
+SPEECH_BAD_LANGUAGE: Final = "The language must be a non-empty text such as 'en'. Nothing was sent to the speech service."
+SPEECH_INVALID_OUTPUT: Final = (
+    "The speech service returned a transcript that breaks the B5 contract twice ({problem}). No "
+    "transcript is returned. Check the speech provider."
+)
+SPEECH_TIMES_BACKWARDS: Final = "a segment or word ends before it starts"
+SPEECH_PROVIDER_PASSED: Final = (
+    "A speech provider was passed to transcribe() outside a test run. Services use the provider "
+    "named by SPEECH_PROVIDER; passing one is for automated tests only."
+)
+SPEECH_NO_TRANSPORT: Final = (
+    "SPEECH_PROVIDER is '{provider}', but the {provider} speech service is not integrated yet "
+    "(design Q19: its protocol, and the lab endpoint). Nothing was sent. Use the fake provider in "
+    "automated tests only."
+)

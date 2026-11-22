@@ -22,12 +22,9 @@ import json
 import time
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from functools import cache
-from pathlib import Path
 from typing import Any, Final
 
 from jsonschema import Draft202012Validator
-from jsonschema.exceptions import best_match
 
 from . import messages
 from .call_log import CallLogger, CallRecord, resolve_call_logger
@@ -45,11 +42,11 @@ from .providers import (
     resolve_provider,
 )
 from .registry import DEFAULT_REGISTRY, Schema, TaskRegistry
+from .validation import b5_validator as _meta_validator
+from .validation import elapsed_ms as _elapsed_ms
+from .validation import first_problem as _problem
 
 MAX_ATTEMPTS: Final = 2  # PRD B5.2: on invalid output, one retry
-B5_SCHEMA_PATH: Final = (
-    Path(__file__).resolve().parents[2] / "contracts" / "model-interface.v1.schema.json"
-)
 
 
 @dataclass(frozen=True)
@@ -57,25 +54,6 @@ class Result:
     # Validated against the task's output schema. repr() leaves it out: it is model output.
     data: Any = field(repr=False)
     meta: dict[str, Any]  # a B5 model_result_meta record (PRD B5.1)
-
-
-@cache
-def _meta_validator() -> Draft202012Validator:
-    schema = json.loads(B5_SCHEMA_PATH.read_text(encoding="utf-8"))
-    return Draft202012Validator(schema)
-
-
-def _problem(validator: Draft202012Validator, instance: Any) -> str | None:
-    """The first problem, named by its place in the SCHEMA only.
-
-    The schema is code we wrote; the instance is learner input or model output. The place in the
-    instance (absolute_path) can hold keys the model or learner chose, and error.message quotes
-    values, so neither is ever used.
-    """
-    error = best_match(validator.iter_errors(instance))
-    if error is None:
-        return None
-    return f"'{error.validator}' at schema path {list(error.absolute_schema_path) or 'top level'}"
 
 
 def _refuse_constant(name: str) -> None:
@@ -110,10 +88,6 @@ def _meta(
         "cost_estimate": response.cost_estimate if response else None,
         "prompt_version": version,
     }
-
-
-def _elapsed_ms(started: float) -> int:
-    return round((time.perf_counter() - started) * 1000)
 
 
 def run(
