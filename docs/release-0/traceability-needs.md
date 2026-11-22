@@ -36,10 +36,9 @@ set of edits. First written 2026-11-16 against `origin/main` at `3abbc02`; **re-
   with 5 local recordings, 338 s of 1800 s and 0 of 5 consent lines. The guide's assistant said in its
   [comment on #105](https://github.com/narenccode/learnops/pull/105#issuecomment-7011724866)
   (2026-11-19), when #104 was still open, that its line stays labelled unmerged and that **nothing is added to
-  `docs/traceability.md`**. This instruction has not been repeated by the guide in his own words: his
-  own-words confirmations of 2026-11-20 are on #98 (ADR 0002) and #104 (decision 0011) and do not
-  cover it. The guide was asked on #105 on 2026-11-22 to confirm it in his own words; until he does, this note
-  attributes it to the assistant's comment and nothing more. The instruction is unchanged; a line
+  `docs/traceability.md`**. The guide **confirmed it in his own words** on 2026-11-22 in a
+  [comment on #105](https://github.com/narenccode/learnops/pull/105#issuecomment-7080514072) ("this
+  is now my decision as well as the assistant's"). The instruction is unchanged; a line
   must not run ahead of reviewed evidence. The five measured durations were on
   the branch `video/b8-5-dataset-evidence` (commit `9c6d703`) and were carried to `main` by PR #154 (merged); before it, no PR carried
   them.
