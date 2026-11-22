@@ -25,7 +25,7 @@ Files: `libs/contracts/validate_examples.py` (run by CI's "Validate contract exa
 in `libs/contracts/tests/test_validate_examples.py`. Shared validator reference EXT-09 (the
 `contracts` library); this is the E1 "Contract" test level ("every example ... validates against
 its schema, CI, every PR"). It does not cover "generated files" from E1, because no module
-generates contract files yet. What is not checked yet is listed in `libs/contracts/README.md`. Each schema and its examples are checked by the engine
+generates contract files yet. What is still not checked is listed in `libs/contracts/README.md`. Each schema and its examples are checked by the engine
 (previous section).
 
 | Rule | PRD | Test(s) |
@@ -39,6 +39,9 @@ generates contract files yet. What is not checked yet is listed in `libs/contrac
 | One extension rule in both layouts (any case; the stem and the suffix word stay lower case), and a missing-example message that names `.json`, `.yaml` and `.yml` | B.0 rule 1, UI-05 | `test_both_example_layouts_work_alone_and_together` (case `any-case-extension`), `test_schema_without_an_example_in_either_layout_is_an_error` |
 | A link to a file outside `contracts/` is followed and reported under the link's own path (documented, not refused) | EXT-09 | `test_a_link_to_a_file_outside_contracts_is_followed_and_reported_under_the_link` |
 | A schema file not named `<name>.v<N>.schema.json` is reported, never skipped, so a repository with only misnamed schemas cannot pass | B.0 rule 1 | `test_misnamed_schema_is_reported_with_its_path`, `test_misnamed_schema_is_not_treated_as_valid_because_a_folder_matches`, `test_only_misnamed_schemas_never_succeed` |
+| An example no schema takes (a flat file or a folder) and a file that is not `.json`, `.yaml` or `.yml` are reported, never skipped; supporting files in a subfolder and hidden files are not | B.0 rule 1, E1 | `test_a_flat_file_that_no_schema_takes_is_an_orphan`, `test_an_example_folder_with_no_schema_is_an_orphan`, `test_a_file_that_is_not_json_or_yaml_is_reported`, `test_supporting_files_in_a_subfolder_and_hidden_files_are_not_reported` |
+| A key repeated in one JSON or YAML object is an error (with line and column in YAML); the same key in different objects and a YAML merge key are fine | B.0 rule 1, E1 | `test_a_key_repeated_in_one_object_is_reported`, `test_the_same_key_in_different_objects_is_fine` |
+| `NaN`, `Infinity` and `-Infinity` in JSON are errors; ordinary numbers still pass | B.0 rule 1, E1 | `test_json_that_python_accepts_but_json_does_not_is_reported`, `test_ordinary_json_numbers_still_pass` |
 
 ## B1 course package contract (v1), Release 0 foundation
 
