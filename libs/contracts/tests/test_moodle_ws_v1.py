@@ -13,6 +13,13 @@ AUTOMATED here:
   * course identification: by course id or shortname, never idnumber (rules §2b, PRD B4);
   * the capability lists in rules §4 (needed, never granted) and that every lab check in §5 is
     still open;
+  * the guide's eleven decisions on PR #64 (rules §3a, R1 to R11), one test each:
+    mod_assign_get_grades as the stored-grade read-back and its matching rule (§3b), the explicit
+    attempt, locked states, the declared capabilities kept out, suspended learners, the
+    viewownsubmissionsummary lab check, reviewgrades on both versions, NOT_VERIFIED without a
+    repeated write, exact numeric match and the range check, separate outcomes, and no automatic
+    retry; plus the open lab checks 13 to 16 for what the guide read in the code but did not run,
+    and the recorded follow-up for docs/design/grading.md §10.1;
   * a replacement name, if any, also appears in the PRD B4 text (guide's rule, PR #27), and a
     replacement applies only to its own Moodle version (shown on a test-local document, because
     the contract example records none);
@@ -25,6 +32,8 @@ NOT automated, and therefore NOT claimed:
   * that any function exists on Moodle 4.5 or 5.3, or behaves as expected with the parameters
     used: the names come from the Moodle source (rules §7), and all lab checks in §5 are open;
   * that the capability list is enough or minimal: lab check 9 is open;
+  * any 4.5 / 5.3 behaviour behind R1, R3, R4 and R9 (the grade text format, locked-state
+    handling, calls without the declared capabilities, out-of-range grades): lab checks 13 to 16;
   * that libs/moodle_ws refuses functions outside this list, or enforces the draft rule and the
     read-back (rules §3): that is the library's own tests, not this contract's.
 """
@@ -71,6 +80,14 @@ CAPABILITIES_NEEDED = {
     "mod/assign:viewgrades",
     "mod/assign:grade",
     "mod/assign:reviewgrades",
+}
+GET_GRADES = "mod_assign_get_grades"  # guide's decision R1, PR #64
+# Declared by Moodle for functions in §2 but never granted (guide's decisions R4 and R5).
+CAPABILITIES_DECLARED_NOT_GRANTED = {
+    "moodle/course:viewhiddencourses",
+    "moodle/user:viewhiddendetails",
+    "moodle/course:useremail",
+    "moodle/course:viewsuspendedusers",
 }
 CAPABILITIES_NEVER = {
     "moodle/user:update",
@@ -211,6 +228,18 @@ def rules_capabilities() -> tuple[set[str], set[str]]:
     return needed, never
 
 
+def rules_not_granted() -> set[str]:
+    """Capabilities in the "Not granted" table of rules §4 (guide's decisions R4, R5)."""
+    found = tables(section(rules(), "## 4. Capabilities", "## 5."))
+    return {c for row in found["Not granted"] for c in CAPABILITY.findall(row[0])}
+
+
+def lab_checks() -> dict[str, list[str]]:
+    """Check number -> row of the rules §5 checklist."""
+    rows = tables(section(rules(), "## 5. Lab verification checklist", "## 6."))["#"]
+    return {row[0]: row for row in rows}
+
+
 def error_keys(
     validator: Draft202012Validator, instance: Any
 ) -> set[tuple[tuple[Any, ...], str]]:
@@ -248,8 +277,9 @@ def test_example_is_valid(validator: Draft202012Validator, example: Doc) -> None
 
 
 def test_prd_b4_lists_the_expected_number_of_functions() -> None:
-    """Guards the PRD parsing itself: the B4 table names seven functions."""
-    assert len(prd_functions()) == 7
+    """Guards the PRD parsing itself: the B4 table names eight functions (R1 added
+    mod_assign_get_grades)."""
+    assert len(prd_functions()) == 8
 
 
 # --- agreement with the PRD and the rules text ---------------------------------------------
@@ -287,6 +317,7 @@ def test_the_prd_names_exactly_these_parameters() -> None:
         "core_course_get_courses_by_field": ({"field", "value"}, set()),
         "mod_assign_get_submission_status": ({"assignid", "userid"}, set()),
         "mod_assign_save_grade": (SAVE_GRADE_REQUIRED, SAVE_GRADE_OPTIONAL),
+        GET_GRADES: ({"assignmentids"}, set()),
     }
 
 
@@ -340,12 +371,6 @@ def test_no_parameter_is_both_required_and_optional(example: Doc) -> None:
 )
 def test_a_parameter_not_named_for_its_function_is_found(functions: list[Doc]) -> None:
     assert wrongly_placed(functions, prd_b4()) != []
-
-
-def test_the_dropped_user_flags_function_is_not_listed(example: Doc) -> None:
-    """Guide, 11 Nov: it can set `released` with only mod/assign:grade, so it is not allowed."""
-    assert "mod_assign_set_user_flags" not in [f["name"] for f in example["functions"]]
-    assert "mod_assign_set_user_flags" not in prd_functions()
 
 
 def test_save_grade_sends_the_workflow_state(example: Doc) -> None:
@@ -425,32 +450,209 @@ def test_success_needs_both_the_state_and_the_grade_value() -> None:
     assert "numerically equal to the grade sent" in prd
 
 
-def test_the_grade_value_source_is_only_a_pending_proposal(example: Doc) -> None:
-    """Rules §6a proposes mod_assign_get_grades; it is in no contract list until the guide
-    approves it, and no text claims grade verification works yet."""
-    proposed = "mod_assign_get_grades"
-    assert proposed not in {f["name"] for f in example["functions"]}
-    assert proposed not in prd_functions()
-    assert proposed not in prd_parameters(prd_b4())
-    assert proposed not in rules_functions()
-    # The PRD names it once, in the sentence that points to rule R1 in #72; it is in no table.
-    assert prd_b4().count(proposed) == 1
-    pending = plain(
-        section(rules(), "### 6a. Pending decision: grade-value read-back", "## 7.")
-    )
-    assert "Status: proposal for the guide. Not part of B4 yet." in pending
-    assert "Nothing in this section is implemented" in pending
+# --- guide's decisions on PR #64 (rules §3a, R1 to R11), one test each -----------------------
+
+
+def write_rules() -> dict[str, str]:
+    """Rule id -> plain text of its row in the rules §3a table."""
+    rows = tables(section(rules(), "### 3a. Write rules", "### 3b."))["Rule"]
+    return {row[0]: plain(row[1]) for row in rows}
+
+
+def test_the_write_rules_are_exactly_r1_to_r15() -> None:
+    """R1 to R11: the guide on PR #64; R12 to R14: the guide on PR #72 (2026-11-15); R15: the
+    guide on PR #64 (2026-11-16)."""
+    assert list(write_rules()) == [f"R{n}" for n in range(1, 16)]
+
+
+def test_r1_get_grades_is_the_stored_grade_read_back(example: Doc) -> None:
+    """R1: mod_assign_get_grades is in the example, the rules table and the PRD, sends only
+    assignmentids, and the grade-value check is no longer a pending proposal."""
+    entry = next(f for f in example["functions"] if f["name"] == GET_GRADES)
+    assert entry["parameters"] == ["assignmentids"]
+    assert "optional_parameters" not in entry
+    assert GET_GRADES in prd_functions()
+    assert GET_GRADES in rules_functions()
+    r1 = write_rules()["R1"]
+    assert "`mod_assign_get_grades` is the grade-value read-back" in r1
+    assert "lab check 13" in r1
     draft_rule = plain(section(rules(), "## 3. Draft rule", "## 4."))
-    assert "is pending the guide's decision" in draft_rule
-    assert "no grade write is reported as done" in draft_rule
-    # The guide decided it (rule R1 in #72); until that rule lands no grade write is reported done.
-    prd = plain(prd_b4())
+    assert "read with `mod_assign_get_grades`" in draft_rule
+    assert "pending" not in draft_rule.casefold()
+    assert "pending the guide's decision" not in plain(prd_b4())
+    assert "read with `mod_assign_get_grades`" in plain(prd_b4())
+    matching = plain(section(rules(), "### 3b. Grade-value matching rule", "## 4."))
+    for check in (
+        "exactly one entry whose `assignmentid` is the one sent",
+        "`warnings[]` has no entry for that assignment",
+        "exactly one row whose `userid` is the one sent",
+        "equals the explicit `attemptnumber` sent",
+    ):
+        assert check in matching
+
+
+def test_r2_attempt_number_is_explicit_never_minus_one() -> None:
+    r2 = write_rules()["R2"]
+    assert "always the explicit attempt being graded, never `-1`" in r2
+    assert "matches that same attempt" in r2
+    functions = section(rules(), "## 2. Functions", "## 2a.")
+    assert "`attemptnumber` (explicit, never `-1`)" in functions
+    assert "never `-1`" in plain(prd_b4())
+
+
+def test_r3_locked_states_are_refused_before_sending_and_still_verified() -> None:
+    r3 = write_rules()["R3"]
+    assert "already `readyforrelease` or `released`, the write is refused" in r3
+    assert "nothing is sent" in r3
+    assert "read-back after the write is still required" in r3
+    # The 4.5 / 5.3 difference is recorded and left to the lab.
+    assert "On 5.3 a locked submission keeps its old grade value" in r3
+    assert "on 4.5 the code overwrites the grade" in r3
+    assert "lab check 16" in r3
+    assert "already `readyforrelease` or `released`" in plain(prd_b4())
+    # Guide, 15 Nov (PR #80): R3 holds on 5.3; on 4.5 it is best effort, named in the release notes.
+    assert "R3 holds on 5.3" in r3
+    assert "On 4.5 it is best effort" in r3
+    assert "the release notes name this limitation" in r3
+
+
+def test_r4_declared_capabilities_are_not_granted() -> None:
+    needed, never = rules_capabilities()
+    not_granted = rules_not_granted()
+    assert CAPABILITIES_DECLARED_NOT_GRANTED <= not_granted
+    assert not_granted & needed == set()
+    assert "lab check 14" in write_rules()["R4"]
+
+
+def test_r5_suspended_learners_are_skipped_and_reported() -> None:
+    r5 = write_rules()["R5"]
+    assert "skipped and reported as skipped" in r5
+    assert "`moodle/course:viewsuspendedusers` is not granted" in r5
+    needed, _ = rules_capabilities()
+    assert "moodle/course:viewsuspendedusers" in rules_not_granted()
+    assert "moodle/course:viewsuspendedusers" not in needed
+    assert "Suspended learners are skipped and reported as skipped" in plain(prd_b4())
+
+
+def test_r6_view_own_submission_summary_stays_a_lab_check() -> None:
+    r6 = write_rules()["R6"]
+    assert "stays lab check 12" in r6
+    assert "the write is not verified" in r6
+    rows = lab_checks()
+    assert "`mod/assign:viewownsubmissionsummary`" in rows["12"][1]
+
+
+def test_r7_review_grades_is_granted_on_both_versions() -> None:
+    needed, _ = rules_capabilities()
+    assert "mod/assign:reviewgrades" in needed
+    capabilities = plain(section(rules(), "## 4. Capabilities", "## 5."))
+    assert "Granted on both 4.5 and 5.3, with one role definition" in capabilities
+    assert "Moodle 5.3 only" not in capabilities
+    r7 = write_rules()["R7"]
+    assert "not `released`" in r7
+    assert "On 4.5 Moodle does not check it" in r7
+
+
+def test_r8_failed_read_back_is_not_verified_and_never_rewrites() -> None:
+    r8 = write_rules()["R8"]
+    assert "reported as `NOT_VERIFIED`" in r8
+    assert "never repeated" in r8
+    assert "separate operation that sends no write" in r8
+    assert "the write is never repeated" in plain(prd_b4())
+
+
+def test_r9_exact_numeric_match_and_range_check_before_writing() -> None:
+    r9 = write_rules()["R9"]
+    assert "exactly equal; there is no tolerance and no rounding" in r9
     assert (
-        "is read with `mod_assign_get_grades` (the guide's decision; rule R1 in #72"
-        in prd
+        "Before writing, the grade must be a number from 0 to the assignment's maximum"
+        in r9
     )
-    assert "Until that rule lands, no grade write is reported as done." in prd
-    assert "pending the guide's decision" not in prd
+    assert "lab check 15" in r9
+    prd = plain(prd_b4())
+    assert "compared as a number after parsing, never as text, with no tolerance" in prd
+    assert "below zero or above the assignment's maximum" in prd
+
+
+def test_r10_missing_and_inaccessible_are_separate_outcomes() -> None:
+    r10 = write_rules()["R10"]
+    for outcome in (
+        "`NO_SUBMISSION`",
+        "`NO_GRADE`",
+        "`ACCESS_DENIED`",
+        "`SKIPPED_SUSPENDED`",
+    ):
+        assert outcome in r10
+    assert "None is ever reported as success" in r10
+    assert "Processing continues for the other learners" in r10
+    assert "the other learners are still processed" in plain(prd_b4())
+
+
+def test_r11_uncertain_write_is_never_retried_automatically() -> None:
+    r11 = write_rules()["R11"]
+    assert "does not retry the write automatically" in r11
+    assert "reads back first" in r11
+    assert "the mentor decides" in r11
+    assert "never retried automatically" in plain(prd_b4())
+
+
+def test_the_grading_design_conflict_with_r11_is_an_open_follow_up() -> None:
+    """docs/design/grading.md §10.1 (Release 4) is left unchanged on purpose; the conflict is
+    recorded in rules §6, so it cannot be forgotten."""
+    open_questions = plain(section(rules(), "## 6. Open questions", "### 6a."))
+    assert "`docs/design/grading.md` §10.1" in open_questions
+    assert "conflicts with R11" in open_questions
+    assert "R11 wins" in open_questions
+
+
+def test_r12_an_unreadable_or_unknown_state_is_refused_before_sending() -> None:
+    r12 = write_rules()["R12"]
+    assert "refused before anything is sent" in r12
+    assert "`lastattempt` is missing" in r12
+    for state in (
+        "notmarked",
+        "inmarking",
+        "readyforreview",
+        "inreview",
+        "readyforrelease",
+        "released",
+    ):
+        assert f"`{state}`" in r12
+    assert "`REFUSED_STATE_UNKNOWN`" in r12
+
+
+def test_r13_marking_workflow_off_is_refused_before_sending() -> None:
+    r13 = write_rules()["R13"]
+    assert "`graded` or `notgraded`" in r13
+    assert "refused before anything is sent" in r13
+    assert "`notmarked`, `inmarking`, `readyforreview` or `inreview`" in r13
+    assert "`REFUSED_WORKFLOW_OFF`" in r13
+    assert "Lab check 4 stays open" in r13
+
+
+def test_r14_a_matching_read_back_after_a_lost_answer_needs_the_mentor() -> None:
+    r14 = write_rules()["R14"]
+    assert "not counted as done until the mentor confirms it" in r14
+    assert "`NEEDS_MENTOR_CONFIRMATION`" in r14
+
+
+def test_r15_applytoall_and_addattempt_are_pinned_to_zero() -> None:
+    r15 = write_rules()["R15"]
+    assert "always sends `applytoall=0` and `addattempt=0`" in r15
+    assert "refuses any other value before anything is sent" in r15
+
+
+def test_the_three_proposals_are_rules_now_and_no_longer_open() -> None:
+    """The guide decided the three fail-closed proposals on PR #72 (2026-11-15): they are rules,
+    each refusal is its own outcome, and §6 keeps the lab-access and grading-design rows."""
+    decided = plain(section(rules(), "### 3a. Write rules", "### 3b."))
+    assert "separate from `NOT_VERIFIED`" in decided
+    assert "never reported as success" in decided
+    open_questions = plain(section(rules(), "## 6. Open questions", "### 6a."))
+    assert "Proposed, fail closed" not in open_questions
+    for gone in ("Pre-write state unreadable.", "Marking workflow off.", "Lost answer"):
+        assert gone not in open_questions
+    assert "Lab access." in open_questions
 
 
 def test_course_lookup_does_not_rely_on_idnumber(example: Doc) -> None:
@@ -485,10 +687,33 @@ def test_the_custom_role_rule_is_stated() -> None:
 
 
 def test_every_lab_check_is_still_open() -> None:
-    """No live check is claimed: every row of the §5 checklist says open on 4.5 and 5.3."""
-    rows = tables(section(rules(), "## 5. Lab verification checklist", "## 6."))["#"]
-    assert [row[0] for row in rows] == [str(n) for n in range(1, 13)]
-    assert all(row[2:4] == ["open", "open"] for row in rows)
+    """No live check is claimed: every row of the §5 checklist says open on 4.5 and 5.3,
+    including checks 13 to 16 added for the guide's decisions, check 17 (guide, 15 Nov) and
+    check 18 (reviewer on PR #64, 16 Nov)."""
+    rows = lab_checks()
+    assert list(rows) == [str(n) for n in range(1, 19)]
+    assert all(row[2:4] == ["open", "open"] for row in rows.values())
+    assert all(row[4] == "—" for row in rows.values()), "no decision record exists yet"
+
+
+def test_the_decision_lab_checks_name_their_rules() -> None:
+    """Source reading is never a lab result: each decision the guide could not run has an open
+    lab check that names its rule."""
+    rows = lab_checks()
+    assert "`mod_assign_get_grades`" in rows["13"][1] and "(R1, R9)" in rows["13"][1]
+    assert "(R4" in rows["14"][1]
+    assert "silently ignored" in rows["15"][1] and "(R9)" in rows["15"][1]
+    assert "5.3 keeps the old grade" in rows["16"][1] and "(R3)" in rows["16"][1]
+    # Guide, 15 Nov (PR #72): the returned fields are a separate check from item 1's parameters.
+    assert "`core_course_get_contents`" in rows["17"][1]
+    assert "activity and section `idnumber`" in rows["17"][1]
+    assert "may rely on" in rows["17"][1]
+    # Reviewer on PR #64, 16 Nov: grading maps assignments, not only course contents.
+    assert "`mod_assign_get_assignments`" in rows["18"][1]
+    assert "course-module) `idnumber`" in rows["18"][1]
+    assert "may not map assignments" in rows["18"][1]
+    intro = plain(section(rules(), "## 5. Lab verification checklist", "| #"))
+    assert "reading the source (§7) never closes one" in intro
 
 
 def test_a_replacement_name_is_also_in_the_prd(example: Doc) -> None:
@@ -722,3 +947,34 @@ def test_one_token_variable_per_site_with_a_placeholder() -> None:
     assert env.get("MOODLE45_WS_TOKEN") == "CHANGE_ME"
     assert env.get("MOODLE53_WS_TOKEN") == "CHANGE_ME"
     assert "MOODLE_WS_TOKEN" not in env
+
+
+# --- review of #72 (Akshita21-09, 14 Nov): edits that must not pass silently ---------------
+
+
+def test_the_contract_is_still_a_draft_and_not_approved() -> None:
+    """Only the guide approves; a Status line changed to Approved must fail here."""
+    status = next(
+        line for line in rules().splitlines() if line.startswith("**Status:**")
+    )
+    assert status.startswith("**Status:** Draft.")
+    assert "Not approved" in status
+
+
+def test_no_function_is_marked_verified() -> None:
+    """Lab results go to docs/decisions/ first; no §2 row may say yes before that."""
+    table = section(rules(), "## 2. Functions", "## 2a.")
+    header = next(line for line in table.splitlines() if line.startswith("| Purpose"))
+    columns = [cell.strip() for cell in header.strip("|").split("|")]
+    verified = [columns.index("Verified on 4.5"), columns.index("Verified on 5.3")]
+    rows = tables(table)["Purpose"]
+    assert rows, "the function table is empty"
+    for row in rows:
+        assert [row[i] for i in verified] == ["no", "no"], row[1]
+
+
+def test_a_grade_write_never_sends_released() -> None:
+    """PRD B4 draft rule and C-09: a rewrite of §3 that allows released must fail here."""
+    draft_rule = plain(section(rules(), "## 3. Draft rule", "### 3a."))
+    assert "never `released`" in draft_rule
+    assert "`released`" not in draft_rule.replace("never `released`", "")
