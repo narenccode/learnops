@@ -32,15 +32,17 @@ set of edits. First written 2026-11-16 against `origin/main` at `3abbc02`; **re-
 - **B8.1.** `main` carries the guide's 5.3-only decision for B8.1 (decision 0009, PR #95) and the
   B8.2 deviation; PR #130 (merged) added one register of Moodle version exceptions in `docs/decisions/README.md`. Do not
   add a second wording.
-- **B8.5.** `main` says PENDING with five SHA-256 values and no duration. #104 proposes a line
+- **B8.5.** `main` says PENDING with five SHA-256 values and no duration (the durations are in PR #154, open and approved). #104 proposes a line
   with 5 local recordings, 338 s of 1800 s and 0 of 5 consent lines. The guide's assistant said in its
   [comment on #105](https://github.com/narenccode/learnops/pull/105#issuecomment-7011724866)
   (2026-11-19) that the #104 line stays labelled unmerged and that **nothing is added to
   `docs/traceability.md`**. This instruction has not been repeated by the guide in his own words: his
   own-words confirmations of 2026-11-20 are on #98 (ADR 0002) and #104 (decision 0011) and do not
-  cover it. The instruction is unchanged; a line must not run ahead of reviewed evidence. The five measured durations are on
-  the branch `video/b8-5-dataset-evidence` (commit `9c6d703`), not on `main`, and no PR carries
-  them yet.
+  cover it. The guide was asked on #105 on 2026-11-22 to confirm it in his own words; until he does, this note
+  attributes it to the assistant's comment and nothing more. The instruction is unchanged; a line
+  must not run ahead of reviewed evidence. The five measured durations were on
+  the branch `video/b8-5-dataset-evidence` (commit `9c6d703`) and are now carried by PR #154; before it, no PR carried
+  them.
 - **Video demo.** PR #117 (D4 paths demo) and PR #129 (Lesson Processor demo, FR-V-01, FR-V-03 and
   FR-V-08 in part, one-PR exception from the guide) each add demo text. #129 adds its own
   "Video lesson processor demo" section with rows for FR-V-01, FR-V-03 and FR-V-08, marked "in
