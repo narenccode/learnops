@@ -513,6 +513,11 @@ def test_r3_locked_states_are_refused_before_sending_and_still_verified() -> Non
     assert "R3 holds on 5.3" in r3
     assert "On 4.5 it is best effort" in r3
     assert "the release notes name this limitation" in r3
+    # Guide, 22 Nov (PR #150): a post-write `released` is NOT_VERIFIED, with no new outcome
+    # name, and a normal `readyforrelease` write stays verified.
+    assert "a state that ends `released` is `NOT_VERIFIED`" in r3
+    assert "with no new outcome name" in r3
+    assert "a normal `readyforrelease` write stays verified" in r3
 
 
 def test_r4_declared_capabilities_are_not_granted() -> None:
@@ -937,6 +942,11 @@ def test_one_token_variable_per_site_with_a_placeholder() -> None:
     assert env.get("MOODLE45_WS_TOKEN") == "CHANGE_ME"
     assert env.get("MOODLE53_WS_TOKEN") == "CHANGE_ME"
     assert "MOODLE_WS_TOKEN" not in env
+
+
+def test_the_library_is_not_described_as_unwritten() -> None:
+    """libs/moodle_ws exists (the library pull requests), so §2a must not call it unwritten."""
+    assert "not written yet" not in section(rules(), "## 2a.", "## 3.")
 
 
 # --- review of #72 (Akshita21-09, 14 Nov): edits that must not pass silently ---------------
