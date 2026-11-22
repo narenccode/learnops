@@ -1,7 +1,6 @@
 """Shared model and speech interface (PRD B5). FR-M-01 skeleton, built in steps.
 
-This part adds the task registry, the prompt loader and the call log. The providers and run()
-follow in later pull requests.
+This part adds the providers. run() follows in the next pull request.
 """
 
 from .call_log import (
@@ -24,6 +23,7 @@ from .errors import (
     SchemaMismatch,
     UnregisteredTask,
 )
+from .providers import configure_provider, create_provider, get_provider
 from .registry import TaskRegistry, TaskSpec, get_task, register_task
 
 __all__ = [
@@ -44,7 +44,10 @@ __all__ = [
     "TaskSpec",
     "UnregisteredTask",
     "configure_call_logger",
+    "configure_provider",
+    "create_provider",
     "get_call_logger",
+    "get_provider",
     "get_task",
     "register_task",
 ]
