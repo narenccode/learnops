@@ -50,14 +50,14 @@ class LocalProvider(TransportProvider):
             )
         super().__init__(model=model, timeout_s=timeout_s)
         self._url = url
-        self._transport = transport
+        self._wire = transport
 
     @property
     def name(self) -> Provider:
         return "local"
 
-    def _send(self, request: ProviderRequest) -> TransportReply:
-        return self._transport.complete(
+    def _deliver(self, request: ProviderRequest) -> TransportReply:
+        return self._wire.complete(
             url=self._url,
             model=self._model,
             prompt=request.prompt,

@@ -53,7 +53,7 @@ class TransportProvider(ABC):
         return self._model
 
     @abstractmethod
-    def _send(self, request: ProviderRequest) -> TransportReply:
+    def _deliver(self, request: ProviderRequest) -> TransportReply:
         """Call this provider's transport."""
 
     @abstractmethod
@@ -62,7 +62,7 @@ class TransportProvider(ABC):
 
     def complete(self, request: ProviderRequest) -> ProviderResponse:
         try:
-            reply = self._send(request)
+            reply = self._deliver(request)
             return ProviderResponse(
                 text=reply.text,
                 input_tokens=reply.input_tokens,
