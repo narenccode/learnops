@@ -32,7 +32,7 @@ run, and nothing here says how well any model performs.
 ```
 manifest.yaml                  inputs and items (task, status, input, expected, review status)
 rubric.yaml                    review levels and the four FR-M-03 measures (PROVISIONAL, frozen: false)
-schemas/                       manifest, rubric, expected-chapters, expected-practice and two review-form schemas (Draft 2020-12)
+schemas/                       manifest, rubric, expected-practice and two review-form schemas (Draft 2020-12)
 templates/                     PROPOSED mentor review forms with invented examples (see templates/README.md)
 inputs/t001/                   transcript.en.json (B5.4 shape) + source.md (provenance)
 expected/<item id>/            author-drafted expected outputs (see expected/README.md)
@@ -55,9 +55,9 @@ items[].task     ──> rubric.yaml output_review.applies_to / grade_draft_revi
   of the audio. The B5 schema file (`contracts/model-interface.v1.schema.json`) is in PR #25 and
   not on `main` yet. The tests check the PRD B5.4 shape themselves and validate against the B5
   schema when that file is present. Until then that one test is skipped and says why.
-- **Chapters:** PRD B6.2 `chapters.json` `[{start, end, title}]`. B6 (PR #32) names the file but
-  does not define its content, so `schemas/chapters.schema.json` is a test-data schema, **not a
-  contract**.
+- **Chapters:** PRD B6.2 `chapters.json` `[{start, end, title}]`, checked with the merged B6.2
+  contract (`contracts/chapters.v1.schema.json`, validator `contracts.validate_chapters`). This set
+  has no chapters schema of its own.
 - **Practice:** `practice.yaml` (`schemas/practice.schema.json`), a test-data shape, **not a contract**. B7 (PR #54) defines no JSON structure for a draft or a review card, so this follows the FR-S-12 review card (question, correct answer, distractors, explanation, source) as proposed by Student 1 on PR #33. One H5P content type per item (`question_set`); interactive video is never used.
 - **Summary:** PRD B6.2 `summary.en.md`, Markdown. No shape is defined. The first line of the
   expected file is an HTML comment carrying the PROVISIONAL / NOT REVIEWED label. A rendered
@@ -69,8 +69,8 @@ These are authoring rules for the expected outputs, not requirements from the PR
 
 - Every segment and word ends at or after its start. Segments are in time order and lie within
   `duration_s`. (B5 guarantees only segment `end >= start`. Order is not decided there.)
-- Expected chapters are in order, do not overlap, have `end > start`, lie within the transcript,
-  and start on a segment boundary.
+- Expected chapters are not empty, lie within the transcript, and start on a segment boundary.
+  Order, overlap and `end > start` are B6.2's rules, checked by its validator.
 
 ## Open decisions (not decided here)
 
@@ -86,7 +86,7 @@ These are authoring rules for the expected outputs, not requirements from the PR
 | O8 | Size of the set per task (the PRD gives none) | — | Guide |
 | O9 | Licence of the test content (proposal: Apache-2.0, like the repository) | root `CLAUDE.md` §2.10 | Guide |
 | O10 | Accept this format as the B8.6 part of the B8 contract before the Release 0 freeze | `contracts/CLAUDE.md` | All four students, guide |
-| O11 | Chapters content schema: keep this test-data schema or move it into B6. B6 (PR #32) defines `chapters` only as a relative path; this schema is also stricter than PRD B6.2 (at least one chapter, non-empty title), which B6 may decide differently | PR #32 | Student 4 |
+| O11 | ~~Chapters content schema~~ **Closed:** B6.2 now defines it (`contracts/chapters.v1.schema.json`); this set uses it and keeps no schema of its own | PR #32 | Student 4 |
 
 Before any comparison run (design §11.4, §11.2): the rubric is fixed (`frozen: true`), every
 expected output is reviewed, the prompts are frozen, and the provider they were developed on is

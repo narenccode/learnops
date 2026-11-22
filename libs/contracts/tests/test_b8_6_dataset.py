@@ -4,8 +4,9 @@ The set lives in testdata/b8-6-model-comparison/. Its format and rubric are a Re
 by Student 3, not agreed (see that folder's README, "Open decisions").
 
 AUTOMATED here:
-  * the manifest, rubric and expected-chapters schemas are valid Draft 2020-12 schemas, and the
-    manifest, the rubric and every expected chapters file validate;
+  * the manifest, rubric and practice schemas are valid Draft 2020-12 schemas, and the
+    manifest, the rubric and every expected practice file validate; every expected chapters file
+    passes the merged B6.2 validator (contracts.validate_chapters: schema, order, no overlap);
   * ids are unique; every item's input exists; every input, source note and expected file exists;
     pending and placeholder items carry no input or expected output;
   * a provisional set marks every input and item provisional and keeps the rubric unfrozen; a
@@ -17,8 +18,8 @@ AUTOMATED here:
     duration_s (the last two are this set's authoring rules, not B5 guarantees);
   * the transcript validates against contracts/model-interface.v1.schema.json when that file
     exists (B5, PR #25); otherwise that one test is SKIPPED with the reason;
-  * expected chapters are ordered, do not overlap, have end > start, lie within the transcript and
-    start on a segment boundary (authoring rules);
+  * expected chapters are not empty, lie within the transcript and start on a segment boundary
+    (authoring rules; order and overlap are B6.2's rules);
   * the rubric lists the four FR-M-03 measures, covers every non-grading task in the manifest and
     has at least one review level that counts as wrong;
   * an expected practice draft validates against its test-data schema (review-card fields, one
@@ -46,6 +47,7 @@ from typing import Any
 
 import pytest
 import yaml
+from contracts import validate_chapters
 from jsonschema import Draft202012Validator
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -53,7 +55,7 @@ SET_DIR = ROOT / "testdata" / "b8-6-model-comparison"
 SCHEMA_DIR = SET_DIR / "schemas"
 B5_SCHEMA = ROOT / "contracts" / "model-interface.v1.schema.json"
 
-SCHEMA_NAMES = ("manifest", "rubric", "chapters", "practice")
+SCHEMA_NAMES = ("manifest", "rubric", "practice")
 REVIEW_SCHEMA_NAMES = ("grade-draft-review", "output-review")
 FR_M_03_MEASURES = {
     "wrong_answer_rate",
@@ -143,22 +145,18 @@ def transcript_time_problems(transcript: Doc) -> list[str]:
 
 
 def chapter_problems(chapters: list[Doc], transcript: Doc) -> list[str]:
+    """Authoring rules that need the transcript. Order, overlap and end after start are B6.2's
+    own rules and are checked by contracts.validate_chapters."""
     problems: list[str] = []
+    if not chapters:
+        problems.append("there are no chapters")
     duration = transcript["meta"]["duration_s"]
     boundaries = {seg["start"] for seg in transcript["segments"]}
-    previous_end = 0.0
     for i, chapter in enumerate(chapters):
-        if chapter["end"] <= chapter["start"]:
-            problems.append(f"chapter {i} does not end after it starts")
-        if chapter["start"] < previous_end:
-            problems.append(
-                f"chapter {i} overlaps the previous chapter or is out of order"
-            )
         if chapter["end"] > duration:
             problems.append(f"chapter {i} ends after the transcript")
         if chapter["start"] not in boundaries:
             problems.append(f"chapter {i} does not start on a segment boundary")
-        previous_end = chapter["end"]
     return problems
 
 
@@ -317,21 +315,36 @@ def test_time_checks_catch_bad_transcripts() -> None:
 
 @pytest.mark.parametrize("item", ready_items("chapters"), ids=lambda i: str(i["id"]))
 def test_expected_chapters_are_valid_and_fit_the_transcript(
-    item: Doc, validators: dict[str, Draft202012Validator], inputs: dict[str, Doc]
+    item: Doc, inputs: dict[str, Doc]
 ) -> None:
     chapters = load_json(SET_DIR / item["expected"])
-    assert errors(validators["chapters"], chapters) == []
+    report = validate_chapters(chapters)
+    assert report.errors == (), report.errors
     transcript = load_json(SET_DIR / inputs[item["input"]]["path"])
     assert chapter_problems(chapters, transcript) == []
 
 
-def test_chapter_checks_catch_overlap(inputs: dict[str, Doc]) -> None:
-    transcript = load_json(SET_DIR / inputs["t001"]["path"])
+def test_chapter_checks_catch_overlap_through_the_b62_validator() -> None:
     chapters = [
         {"start": 0.0, "end": 60.0, "title": "a"},
         {"start": 52.0, "end": 70.0, "title": "b"},
     ]
-    assert any("overlaps" in p for p in chapter_problems(chapters, transcript))
+    assert not validate_chapters(chapters).ok
+
+
+def test_chapter_checks_catch_what_only_the_transcript_knows(
+    inputs: dict[str, Doc],
+) -> None:
+    transcript = load_json(SET_DIR / inputs["t001"]["path"])
+    off_boundary = [{"start": 1.0, "end": 60.0, "title": "a"}]
+    too_long = [{"start": 0.0, "end": 9999.0, "title": "a"}]
+    assert any(
+        "segment boundary" in p for p in chapter_problems(off_boundary, transcript)
+    )
+    assert any(
+        "after the transcript" in p for p in chapter_problems(too_long, transcript)
+    )
+    assert any("no chapters" in p for p in chapter_problems([], transcript))
 
 
 # --- rubric and results --------------------------------------------------------------------
