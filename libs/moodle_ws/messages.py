@@ -79,6 +79,15 @@ MISSING_SETTING: Final = (
 )
 PLACEHOLDER_SETTING: Final = "{variable} still has the placeholder from .env.example. Set the real value in the environment."
 UNKNOWN_SITE: Final = "That is not a Moodle site. Use one of: {allowed}."
+PLAIN_HTTP_REFUSED: Final = (
+    "The address of Moodle site '{site}' uses plain http, so the token would travel unencrypted. "
+    "Use an https address. A lab site that has only http can set {variable}=true; "
+    "that setting is for the lab only, never for a real site."
+)
+SAME_TOKEN_ON_BOTH_SITES: Final = (
+    "{variable} hold the same token. Each Moodle site has its own service account "
+    "and token (PRD B4); set a different token for each site."
+)
 ALLOW_LIST_UNREADABLE: Final = (
     "The B4 allow-list file {file} could not be read. Restore it from the repository."
 )

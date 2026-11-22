@@ -95,14 +95,19 @@ B4 rules R12 to R14. The last row is this library's own choice, stricter than th
 | Variable | Meaning |
 |---|---|
 | `MOODLE45_URL`, `MOODLE53_URL` | Site address |
-| `MOODLE45_WS_TOKEN`, `MOODLE53_WS_TOKEN` | Service-account token for that site. Environment only |
+| `MOODLE45_WS_TOKEN`, `MOODLE53_WS_TOKEN` | Service-account token for that site. Environment only. The two must differ: the same value for both sites is refused |
+| `MOODLE_WS_UNSAFE_ALLOW_PLAIN_HTTP_LAB_ONLY` | Normally unset. Set to `true` only for a lab site that has no https. It exists so the token is not sent unencrypted by mistake; never use it for a real site |
 
 A missing value, or the `CHANGE_ME` placeholder from `.env.example`, raises `MoodleConfigError`. The
 error names the variable, never the value.
 
 `SiteSettings` makes the same checks when built by hand. The version must match the site, and the URL
-must be `http` or `https` with a host and no credentials, query, fragment or whitespace. `repr()` never
-shows the URL.
+must be `https` with a host and no credentials, query, fragment or whitespace. A plain `http` address is
+refused, because the token would travel unencrypted; it is accepted only when the lab-only setting above
+is `true` (`allow_plain_http=True` when built by hand). `repr()` never shows the URL.
+
+`load_site()` also refuses a token that is the same as the other site's token, when that one is set. The
+error names the two variables, never the value.
 
 ## Tokens and logs
 
