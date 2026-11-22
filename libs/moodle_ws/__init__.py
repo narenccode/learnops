@@ -30,6 +30,7 @@ from .grade_write import (
     grading_status,
     result_for,
     stored_grade_matches,
+    write_draft_grade,
 )
 from .grades import grade_in_range, parse_grade
 from .redact import RedactingFilter, redact, safe_url, sanitize, sanitize_value
@@ -70,4 +71,5 @@ __all__ = [
     "sanitize",
     "sanitize_value",
     "stored_grade_matches",
+    "write_draft_grade",
 ]
