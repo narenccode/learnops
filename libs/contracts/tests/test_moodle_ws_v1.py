@@ -433,8 +433,9 @@ def test_the_grade_value_source_is_only_a_pending_proposal(example: Doc) -> None
     assert proposed not in prd_functions()
     assert proposed not in prd_parameters(prd_b4())
     assert proposed not in rules_functions()
-    # The PRD names it once, in the sentence that points to rule R1 in #72; it is in no table.
-    assert prd_b4().count(proposed) == 1
+    # The PRD names it twice, in no table: in the draft-rule sentence that points to rule R1 in
+    # #72, and in the R3 paragraph added by #138, which names the two read-back calls.
+    assert prd_b4().count(proposed) == 2
     pending = plain(
         section(rules(), "### 6a. Pending decision: grade-value read-back", "## 7.")
     )
