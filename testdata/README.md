@@ -24,18 +24,19 @@ A Moodle course backup with the protected items (PRD B1.4), course completion an
 | Source | Fictional, original content written for LearnOps. No real learner data, real course content or third-party material |
 | Licence or consent | Apache-2.0, the same as the repository (PRD C-11, root `LICENSE`); confirmed by the guide on PR #61. No consent needed: no real person's work is included |
 
-## B8.5 Lecture videos (owner: Student 4), PENDING
+## B8.5 Lecture videos (owner: Student 4), COMPLETE
 
 - **Where:** `b8-5-lecture-videos/` (folder layout, recording and hashing steps, and the
   completion checklist in its README). The inventory table below is the only list of lectures.
-- **Status:** PENDING. Five local recording files were identified in earlier work (PR #99
-  recorded their SHA-256 values in the inventory below). The files are not in Git and are not
-  re-verified here. None is accepted as B8.5 evidence yet: whether they are official B8.5
-  lectures is not confirmed, no speaker consent line is written in decision 0004, and no reference
-  transcript has been typed or reviewed. The five durations (62, 82, 43, 68 and 83 s, 338 s in
-  total, measured with `ffprobe`) are recorded in the inventory. The set is
-  **not complete** and must not be used for any measurement yet. The temporary exceptions in
-  decision 0004 (four lectures, no 1800 s total) do not make it complete.
+- **Status:** COMPLETE. Five recordings are listed in the inventory below, from four speakers: 451, 441, 462,
+  538 and 488 s, **2380 s in total** (the sum of the Duration column; the durations were supplied by the owner
+  as measured with `ffprobe` and rounded down, and were not re-measured by the reviewers). Each lecture has an
+  outline and a reference transcript, the transcripts are marked `checked` (the transcript of lecture 02, whose
+  speaker is Harshitha, was checked by Nagashree V; the other four by Harshitha), and each of the four speakers
+  has written a consent line in decision 0004. These five replace five short clips (338 s) listed earlier, which
+  were never accepted as B8.5 evidence. The files are not in Git. The temporary exceptions in decision 0004
+  (four lectures, no 1800 s total) are not used. This record does **not** show a word error rate or any G-6
+  result: no measurement has been run, and the method and normalisation are still to be approved (App-C 7).
 - **Method (guide decision, recorded in `docs/decisions/0004-b8-5-lecture-videos.md`):**
   - at least **5** short technical lectures in **Indian English**, together approximately
     **30 minutes** of recording; the acceptance threshold is a total of at least **1800 s**;
@@ -94,15 +95,15 @@ complete but the status still says `PENDING`.
 
 | ID | Title | Speaker | Duration (s) | Recording file (lab only) | SHA-256 | Outline | Transcript | Consent | Transcript review |
 |---|---|---|---|---|---|---|---|---|---|
-| lecture-01 | PENDING | PENDING | 62 | PENDING | e42cca9d2f40fb8993a16d883decdec1441503d06ddaff7c16903f08d7567610 | `b8-5-lecture-videos/lectures/lecture-01/outline.md` | `b8-5-lecture-videos/lectures/lecture-01/transcript.en.txt` | PENDING | pending |
-| lecture-02 | PENDING | PENDING | 82 | PENDING | d732504886135d93b402facbaecc9195711b5394f4fc53bed3ca0b1fdec77afe | `b8-5-lecture-videos/lectures/lecture-02/outline.md` | `b8-5-lecture-videos/lectures/lecture-02/transcript.en.txt` | PENDING | pending |
-| lecture-03 | PENDING | PENDING | 43 | PENDING | 2b8cbfd578f8091fc803566a5a0b89875f4e1aed64e53f401cd02ec209689432 | `b8-5-lecture-videos/lectures/lecture-03/outline.md` | `b8-5-lecture-videos/lectures/lecture-03/transcript.en.txt` | PENDING | pending |
-| lecture-04 | PENDING | PENDING | 68 | PENDING | 285ed527b3aec2172720c807afd42ea625dd3385e933b8585fe3ad5fab757845 | `b8-5-lecture-videos/lectures/lecture-04/outline.md` | `b8-5-lecture-videos/lectures/lecture-04/transcript.en.txt` | PENDING | pending |
-| lecture-05 | PENDING | PENDING | 83 | PENDING | 8e8a4d57b8a20f85a11187baac1af3cc39304de24c7f2fb5ea19e0c7565789f8 | `b8-5-lecture-videos/lectures/lecture-05/outline.md` | `b8-5-lecture-videos/lectures/lecture-05/transcript.en.txt` | PENDING | pending |
+| lecture-01 | Introduction to Database Management Systems | Akshita | 451 | Member_1 | 68f57f42fad9b177d8f40ab87dde1d99b373400a8eda4a4ec37de26fac632750 | `b8-5-lecture-videos/lectures/lecture-01/outline.md` | `b8-5-lecture-videos/lectures/lecture-01/transcript.en.txt` | `0004` speaker-01 | checked |
+| lecture-02 | Entity Relationship Model and Relational Model | Harshitha | 441 | Member_2 | e17a7906f490657b140e8a0811922ddd27afef5fb8fe3d1c40c7164d63e4da2c | `b8-5-lecture-videos/lectures/lecture-02/outline.md` | `b8-5-lecture-videos/lectures/lecture-02/transcript.en.txt` | `0004` speaker-02 | checked |
+| lecture-03 | SQL and Database Operations | Nagashree V | 462 | Member_3_1 | c522fc43a44f364d25abbc3a40ad76859ed1b1400cb49163a2fe46fe38bd0cf7 | `b8-5-lecture-videos/lectures/lecture-03/outline.md` | `b8-5-lecture-videos/lectures/lecture-03/transcript.en.txt` | `0004` speaker-03 | checked |
+| lecture-04 | Advanced SQL Queries and Database Operations | Nagashree V | 538 | Member_3_2 | 20138f65210c408d56d079eb74a6972d6f5deeaca6e688240b56c49419cf699b | `b8-5-lecture-videos/lectures/lecture-04/outline.md` | `b8-5-lecture-videos/lectures/lecture-04/transcript.en.txt` | `0004` speaker-03 | checked |
+| lecture-05 | Normalization, Transactions, ACID Properties and Security | Shraddha | 488 | Member_4 | 5eaaa8dd5f0f36d4f3d270604429e45acbf5d1550c1f8869e2a4e7adad49ed7f | `b8-5-lecture-videos/lectures/lecture-05/outline.md` | `b8-5-lecture-videos/lectures/lecture-05/transcript.en.txt` | `0004` speaker-04 | checked |
 
-**Total recorded duration:** PENDING
+**Total recorded duration:** 2380 s (39 min 40 s)
 
-The total is written only when the Status leaves `PENDING` (the checker requires a `PENDING` set to keep this line `PENDING`). Duration (s) values above were measured with `ffprobe` on the five stored files and rounded down; SHA-256 values were computed on the same files. File names, speakers and consent are still `PENDING`. The minimum-total rule and its temporary exception are in decision 0004.
+The total is written because the Status is `COMPLETE` (the checker requires a `PENDING` set to keep this line `PENDING`). Duration (s) values above were supplied by the owner as measured with `ffprobe` on the five stored files and rounded down; SHA-256 values and file names were supplied by the owner for the same files (not re-verified here). The minimum-total rule and its temporary exception are in decision 0004.
 
 How the total is calculated: the sum of the `Duration (s)` column, where each duration is the
 recording's length measured with `ffprobe` and rounded **down** to whole seconds (so the total is
