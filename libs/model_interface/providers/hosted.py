@@ -47,14 +47,14 @@ class HostedProvider(TransportProvider):
         timeout_s: float = DEFAULT_TIMEOUT_S,
     ) -> None:
         super().__init__(model=model, timeout_s=timeout_s)
-        self._transport = transport
+        self._wire = transport
 
     @property
     def name(self) -> Provider:
         return "hosted"
 
-    def _send(self, request: ProviderRequest) -> TransportReply:
-        return self._transport.complete(
+    def _deliver(self, request: ProviderRequest) -> TransportReply:
+        return self._wire.complete(
             model=self._model,
             prompt=request.prompt,
             inputs=request.inputs,
