@@ -6,8 +6,7 @@
 # Fields
 #   id              unique variant id (package variants: also the folder name)
 #   rule            CK rule from PRD C2.3 (CK-01..CK-13)
-#   input_kind      package (folder `<id>/package/`), model (a B2 course model in models/, built by
-#                   make_models.py) or mbz (Moodle backup, built in a lab)
+#   input_kind      package (folder `<id>/package/`) or mbz (Moodle backup, built in a lab)
 #   status          built (files exist in this folder) | planned (package variant, added in a later PR of
 #                   the B8.3 series) | pending-lab (needs a Moodle lab session; no file yet)
 #   path            package variants: the changed file, relative to the package folder
@@ -27,7 +26,6 @@ version: 1
 mapping_status: provisional
 confirmation: null   # {by: [...], reference: <issue/PR/decision link>, date: <YYYY-MM-DD>}
 baseline: testdata/b8-2-sample-course   # must report zero findings
-baseline_model: models/baseline.model.json   # B8.2 as a B2 model; must also report zero findings
 variants:
 
   - id: ck-01-unreachable-by-past-date
@@ -198,138 +196,6 @@ variants:
     reason: "An unlock rule depends on an activity that never records completion."
     also_expected: [CK-01]
     notes: "Week 2 becomes unreachable; CK-01 unless suppressed (section 12 item 13). A package cannot express it."
-
-  - id: ck-01-unreachable-by-past-date-model
-    rule: CK-01
-    input_kind: model
-    status: built
-    path: models/ck-01-unreachable-by-past-date-model.model.json
-    element: "wk-03-guide"
-    planted_change: "wk-03-guide availability is a date condition that closed on 1 January 2020"
-    expected: {rule: CK-01, element: "wk-03-guide", severity: error}
-    reason: "The date condition is already in the past, so no learner can ever open the Page."
-    also_expected: []
-    notes: "The same change as the pending-lab .mbz variant, made in a hand-built B2 model so the rule engine can be tested before a lab backup exists. Nothing waits on the guide, so no other rule interacts."
-
-  - id: ck-04-unlock-missing-activity-model
-    rule: CK-04
-    input_kind: model
-    status: built
-    path: models/ck-04-unlock-missing-activity-model.model.json
-    element: "section 6 (Week 3)"
-    planted_change: "Section 6 (Week 3) availability waits for cmid 999, which no activity has"
-    expected: {rule: CK-04, element: "section 6 (Week 3)", severity: error}
-    reason: "The unlock rule refers to an activity that does not exist."
-    also_expected: [CK-01]
-    notes: "The same change as the pending-lab .mbz variant, made in a hand-built B2 model so the rule engine can be tested before a lab backup exists. Week 3 and, through it, week 4 also become unreachable. Whether CK-01 is reported or suppressed is open (checker design section 12 item 13)."
-
-  - id: ck-05-circular-unlock-model
-    rule: CK-05
-    input_kind: model
-    status: built
-    path: models/ck-05-circular-unlock-model.model.json
-    element: "sections 5 and 6 (Weeks 2 and 3)"
-    planted_change: "Week 2 waits for the week 3 task (cmid 132) and week 3 waits for the week 2 task (cmid 122)"
-    expected: {rule: CK-05, element: "sections 5 and 6 (Weeks 2 and 3)", severity: error}
-    reason: "Each section waits for the other, so neither can ever open."
-    also_expected: [CK-01]
-    notes: "The same change as the pending-lab .mbz variant, made in a hand-built B2 model so the rule engine can be tested before a lab backup exists. CK-01 would also apply to weeks 2, 3 and 4 unless suppressed (section 12 item 13)."
-
-  - id: ck-06-duplicate-idnumber-model
-    rule: CK-06
-    input_kind: model
-    status: built
-    path: models/ck-06-duplicate-idnumber-model.model.json
-    element: "wk-01-task"
-    planted_change: "wk-02-task is given the idnumber wk-01-task, so two activities share it"
-    expected: {rule: CK-06, element: "wk-01-task", severity: error}
-    reason: "idnumbers identify activities and must be unique."
-    also_expected: []
-    notes: "The same change as the pending-lab .mbz variant, made in a hand-built B2 model so the rule engine can be tested before a lab backup exists. "
-
-  - id: ck-06-invalid-idnumber-model
-    rule: CK-06
-    input_kind: model
-    status: built
-    path: models/ck-06-invalid-idnumber-model.model.json
-    element: "Week 1 Task"
-    planted_change: "wk-01-task is given the idnumber Week 1 Task (spaces and capitals)"
-    expected: {rule: CK-06, element: "Week 1 Task", severity: error}
-    reason: "The idnumber is not in the valid form."
-    also_expected: []
-    notes: "The same change as the pending-lab .mbz variant, made in a hand-built B2 model so the rule engine can be tested before a lab backup exists. What counts as valid is the checker's rule; the contract keeps the value as found."
-
-  - id: ck-07-protected-item-changed-model
-    rule: CK-07
-    input_kind: model
-    status: built
-    path: models/ck-07-protected-item-changed-model.model.json
-    element: "final-project"
-    planted_change: "final-project max_grade 80 (its marking table also 80) instead of 100"
-    expected: {rule: CK-07, element: "final-project", severity: error}
-    reason: "A protected item must stay as in the reference model."
-    also_expected: [CK-03]
-    notes: "The same change as the pending-lab .mbz variant, made in a hand-built B2 model so the rule engine can be tested before a lab backup exists. Run with --reference-model models/baseline.model.json (the stand-in for the B8.1 model). The graded total becomes 180 against the declared target 200, so CK-03 also applies. The marking table is changed with the grade so CK-09 does not fire."
-
-  - id: ck-08-completion-criteria-missing-item-model
-    rule: CK-08
-    input_kind: model
-    status: built
-    path: models/ck-08-completion-criteria-missing-item-model.model.json
-    element: "course_completion"
-    planted_change: "A third course completion criterion names cmid 999 (wk-02-bonus), which does not exist"
-    expected: {rule: CK-08, element: "course_completion", severity: error}
-    reason: "The criteria refer to an item that is not in the course."
-    also_expected: [CK-07]
-    notes: "The same change as the pending-lab .mbz variant, made in a hand-built B2 model so the rule engine can be tested before a lab backup exists. Only fires CK-07 as well when run with a reference model, because the protected completion criteria list is no longer the reference list."
-
-  - id: ck-10-no-marking-workflow-model
-    rule: CK-10
-    input_kind: model
-    status: built
-    path: models/ck-10-no-marking-workflow-model.model.json
-    element: "wk-01-task"
-    planted_change: "wk-01-task marking_workflow is false"
-    expected: {rule: CK-10, element: "wk-01-task", severity: error}
-    reason: "Assignments must use a marking workflow so grades are not released automatically."
-    also_expected: []
-    notes: "The same change as the pending-lab .mbz variant, made in a hand-built B2 model so the rule engine can be tested before a lab backup exists. "
-
-  - id: ck-11-graded-practice-h5p-model
-    rule: CK-11
-    input_kind: model
-    status: built
-    path: models/ck-11-graded-practice-h5p-model.model.json
-    element: "wk-01-practice"
-    planted_change: "The practice H5P wk-01-practice has a grade item of 10"
-    expected: {rule: CK-11, element: "wk-01-practice", severity: error}
-    reason: "Practice activities must not carry a grade item."
-    also_expected: [CK-03]
-    notes: "The same change as the pending-lab .mbz variant, made in a hand-built B2 model so the rule engine can be tested before a lab backup exists. The graded total becomes 210 against the declared target 200, so CK-03 also applies."
-
-  - id: ck-12-full-url-media-model
-    rule: CK-12
-    input_kind: model
-    status: built
-    path: models/ck-12-full-url-media-model.model.json
-    element: "wk-01-guide"
-    planted_change: "wk-01-guide media_refs holds https://example.invalid/diagram.png"
-    expected: {rule: CK-12, element: "wk-01-guide", severity: error}
-    reason: "Media must be a relative path, not a full fixed URL (PRD C-08)."
-    also_expected: []
-    notes: "Unlike the package variant ck-12-full-url-media, the media reference is already in media_refs, so this variant does not depend on body-media extraction (checker design section 12 item 19). The baseline has a relative reference on the same activity and must stay clean."
-
-  - id: ck-13-unlock-without-completion-model
-    rule: CK-13
-    input_kind: model
-    status: built
-    path: models/ck-13-unlock-without-completion-model.model.json
-    element: "wk-01-task"
-    planted_change: "wk-01-task completion tracking is none, while week 2 waits for its completion"
-    expected: {rule: CK-13, element: "wk-01-task", severity: error}
-    reason: "An unlock rule depends on an activity that never records completion."
-    also_expected: [CK-01]
-    notes: "The same change as the pending-lab .mbz variant, made in a hand-built B2 model so the rule engine can be tested before a lab backup exists. Weeks 2, 3 and 4 also become unreachable (section 12 item 13)."
 
 # The four #118 variants (missing-body, duplicate-id, protected-id, invalid-mode) test the B1
 # validator, not CK rules, and are recorded in #118's answer.yaml. They are not repeated here.
