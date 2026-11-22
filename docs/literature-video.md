@@ -2,7 +2,7 @@
 
 **Module:** Video (M4, Student 4: Nagashree V, `vnaags`).
 **Requirement:** `docs/GETTING-STARTED.md` (Student 4, "Literature survey for **your** module": at least 6 sources, each opened and verified) and PRD C4.12 "Bloom mapping" (Survey, L2: Indian-English speech recognition, lecture segmentation, summarisation, resumable upload protocols).
-**Status:** Draft. **Owner-verified sources: 1 of the required 6 (S2). The survey is NOT complete and the requirement is NOT met.** Eight further entries (P1 to P8) are recorded as **PENDING OWNER VERIFICATION**; they do not count towards the six.
+**Status:** Draft. **Owner-verified sources: 1 of the required 6 (S2). The survey is NOT complete and the requirement is NOT met.** Twelve further entries (P1 to P12) are recorded as **PENDING OWNER VERIFICATION**; they do not count towards the six.
 
 This file is the single consolidated Video-module survey. `docs/GETTING-STARTED.md` allows a survey in `docs/design/<module>.md` §12 or in `docs/literature-<module>.md`; this file uses the second option. Sources are added one at a time, each only after the owner has opened and verified it (`CLAUDE.md` §6a, rule 5: AI tools can invent citations). AI-researched candidates are kept in a separate "Pending entries" section, labelled PENDING OWNER VERIFICATION, and are not counted.
 
@@ -35,18 +35,23 @@ These were read by an AI assistant (Claude Code, web fetch, 16 Nov 2026), **not 
 | P6 | IETF Internet-Draft *Resumable Uploads for HTTP* (draft-ietf-httpbis-resumable-upload) | Resumable upload | PENDING OWNER VERIFICATION |
 | P7 | BigBlueButton documentation, recording development page | BigBlueButton recordings | PENDING OWNER VERIFICATION |
 | P8 | BigBlueButton documentation, API page (getRecordings) | BigBlueButton recordings | PENDING OWNER VERIFICATION; getRecordings details only partly read |
+| P9 | W3C, *Web Content Accessibility Guidelines (WCAG) 2.1*, success criterion 1.2.2 *Captions (Prerecorded)* | Captioning accessibility | PENDING OWNER VERIFICATION (added 2026-11-22) |
+| P10 | W3C, *WebVTT: The Web Video Text Tracks Format* (Candidate Recommendation Draft, 20 May 2026) | Caption file format (`captions.en.vtt`) | PENDING OWNER VERIFICATION (added 2026-11-22) |
+| P11 | nginx documentation, `client_max_body_size` in `ngx_http_core_module` | Reverse-proxy upload size limit | PENDING OWNER VERIFICATION (added 2026-11-22) |
+| P12 | Jurafsky and Martin, *Speech and Language Processing* (3rd ed. draft), chapter 16 *Automatic Speech Recognition* | WER definition (textbook) | PENDING OWNER VERIFICATION; only the contents page was read (added 2026-11-22) |
 
 ### Coverage against C4.12 survey topics
 
 | Topic | Verified (owner) | Pending | Gap |
 |---|---|---|---|
-| Indian-English speech recognition | S2 | P1, P2 | No source on technical-lecture WER; no WER definition/normalisation source |
+| Indian-English speech recognition | S2 | P1, P2, P12 | No source on technical-lecture WER; P12 (WER definition) has not been opened beyond its contents page; no normalisation source |
 | Lecture segmentation | none | P3 | P3 is 1997 text segmentation, not lecture video or ASR transcripts; no modern lecture-specific source |
 | Summarisation | none | P4 | P4 is conference-talk video; no lecture-transcript summarisation paper read |
-| Resumable upload protocols | none | P5, P6 | No evidence on browser or reverse-proxy size limits or on real-world robustness |
+| Resumable upload protocols | none | P5, P6, P11 | P11 documents one proxy's limit and its 413 error; still no evidence on browser limits or on real-world robustness |
 | BigBlueButton recordings | none | P7, P8 | metadata.xml not seen on P7; P8 read only in part |
+| Captioning accessibility and caption format | none | P9, P10 | P9 and P10 were read at their headers and the one criterion; the WebVTT cue syntax and the other WCAG criteria were not read |
 
-Summary: 1 of 6 verified sources. Even if the owner verifies all of P1 to P8, 9 would be available, but T13's survey also needs the gaps above addressed.
+Summary: 1 of 6 verified sources. Even if the owner verifies all of P1 to P12, 13 would be available, but T13's survey also needs the gaps above addressed.
 
 ---
 
@@ -416,15 +421,54 @@ Labels in these entries: **Source-stated** (printed on the page read), **Our int
 - **Relevance (interpretation):** feeds the BBB-intake design and the lab verification of recording metadata. Not verified against the lab's BBB.
 - **Limits:** partly read; version-dependent.
 
+## P9. WCAG 2.1, success criterion 1.2.2 Captions (Prerecorded)
+
+**Status: PENDING OWNER VERIFICATION.** Page headers and the criterion's text were read by an AI assistant (fetched 2026-11-22), not by the owner.
+
+- **URL:** https://www.w3.org/TR/WCAG21/ (title "Web Content Accessibility Guidelines (WCAG) 2.1"; header "W3C Recommendation 06 May 2025").
+- **Read:** success criterion 1.2.2, *Captions (Prerecorded)*, conformance **Level A**. Paraphrase: captions must be provided for prerecorded audio in synchronised media, unless the media is a labelled alternative to text.
+- **Our interpretation:** a caption file for every lecture video (`captions.en.vtt`, required by PRD B6.2) is what this criterion expects of a lesson page. Whether Moodle's own player meets the rest of WCAG on the lab sites is not claimed.
+- **Relevance (interpretation):** supports why `captions.en.vtt` is a required file. PRD UI-03 names WCAG 2.1 AA for contrast.
+- **Limits:** only one criterion read; Level A, not AA; not a statement about caption **accuracy** (that is G-6).
+
+## P10. WebVTT: The Web Video Text Tracks Format
+
+**Status: PENDING OWNER VERIFICATION.** Page header read by an AI assistant (fetched 2026-11-22), not by the owner. The cue syntax was **not** read.
+
+- **URL:** https://www.w3.org/TR/webvtt1/ (header "W3C Candidate Recommendation Draft, 20 May 2026"; a 2019 Candidate Recommendation is listed as the previous version).
+- **Our interpretation:** the format of the required file `captions.en.vtt` (PRD B6.2). The page is a Candidate Recommendation Draft, not a final Recommendation.
+- **Relevance (interpretation):** the pipeline writes this format from the B5.4 transcript segments; a validator for the file should follow this specification.
+- **Limits:** syntax, timestamps and cue settings not read; status is a draft.
+
+## P11. nginx: `client_max_body_size`
+
+**Status: PENDING OWNER VERIFICATION.** The directive's text was read by an AI assistant (fetched 2026-11-22), not by the owner.
+
+- **URL:** https://nginx.org/en/docs/http/ngx_http_core_module.html (directive `client_max_body_size`, contexts http, server, location).
+- **Read:** the default is `1m`; a request body above the configured size gets the **413 (Request Entity Too Large)** error; the page notes that browsers cannot display this error correctly; `0` disables the check.
+- **Our interpretation:** an example of the proxy limit the PRD means by "below a 100 MB proxy limit" (FR-V-01, chunk size 90 MB). It shows why one large upload request fails behind a default proxy and why chunking is needed.
+- **Relevance (interpretation):** supports the chunked, resumable upload design. It is one product's documentation; the PRD's 100 MB is the project's assumption, not nginx's default.
+- **Limits:** one proxy; says nothing about browsers or about resumable-upload robustness.
+
+## P12. Jurafsky and Martin, Speech and Language Processing, chapter 16
+
+**Status: PENDING OWNER VERIFICATION. Only the contents page was read.**
+
+- **URL:** https://web.stanford.edu/~jurafsky/slp3/ (page header "Speech and Language Processing (3rd ed. draft)", release dated 19 August 2026; the contents list "16: Automatic Speech Recognition").
+- **Not read:** the chapter itself. **UNKNOWN:** whether and how it defines word error rate and its normalisation; this must be checked by opening the chapter.
+- **Our interpretation:** a candidate textbook source for the WER definition the survey still lacks.
+- **Relevance (interpretation):** would support the WER procedure in `docs/decisions/0002-speech-options.md` section 7.3 and `libs/speech_eval`.
+- **Limits:** a draft edition; nothing in this entry is a result about Indian English.
+
 ---
 
 # Remaining gaps and risks
 
-1. **Verification:** 1 of 6 required sources is owner-verified (S2). Pending P1 to P8 need the owner to open each URL; P8 and P3 especially need a full read.
+1. **Verification:** 1 of 6 required sources is owner-verified (S2). Pending P1 to P12 need the owner to open each URL; P8 and P3 especially need a full read.
 2. **Indian-English lecture ASR:** no source covers technical-lecture WER; P2 covers Indian languages, not English. A WER definition and normalisation source is missing.
 3. **Lecture segmentation and summarisation:** only an old text-segmentation paper (P3) and a conference-talk summarisation paper (P4). The unread Springer article is a lead only.
-4. **Resumable upload:** specifications only; no evidence on proxy limits or robustness (the PRD's "upload robustness" evaluation is LearnOps's own to measure).
+4. **Resumable upload:** specifications and one proxy's documented limit (P11); no evidence on browser limits or robustness (the PRD's "upload robustness" evaluation is LearnOps's own to measure).
 5. **BBB:** metadata.xml, separate tracks and the lab BBB version are unverified.
-6. **Not searched:** privacy and consent literature for lecture recordings, captioning accessibility guidance, and Moodle-side video embedding.
+6. **Not yet covered:** privacy and consent literature for lecture recordings (an Indian data-protection source could not be fetched on 2026-11-22), and Moodle-side video embedding (the Moodle documentation site refused automated requests). Captioning accessibility is covered only by P9 and P10, at header level.
 
 *Next sources to add (owner-verified entries only count once the owner has opened them):* the sources above, plus the gap areas.
