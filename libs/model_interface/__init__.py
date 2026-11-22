@@ -1,9 +1,16 @@
 """Shared model and speech interface (PRD B5). FR-M-01 skeleton, built in steps.
 
-This part provides the error family, the messages, the provider settings and the transcript
-checks. The registry, providers and run() follow in later pull requests.
+This part adds the task registry, the prompt loader and the call log. The providers and run()
+follow in later pull requests.
 """
 
+from .call_log import (
+    CallLogger,
+    CallRecord,
+    InMemoryCallLogger,
+    configure_call_logger,
+    get_call_logger,
+)
 from .errors import (
     CallLoggerMissing,
     DuplicateTask,
@@ -17,10 +24,14 @@ from .errors import (
     SchemaMismatch,
     UnregisteredTask,
 )
+from .registry import TaskRegistry, TaskSpec, get_task, register_task
 
 __all__ = [
+    "CallLogger",
     "CallLoggerMissing",
+    "CallRecord",
     "DuplicateTask",
+    "InMemoryCallLogger",
     "InvalidInput",
     "InvalidMeta",
     "InvalidOutput",
@@ -29,5 +40,11 @@ __all__ = [
     "PromptError",
     "ProviderUnavailable",
     "SchemaMismatch",
+    "TaskRegistry",
+    "TaskSpec",
     "UnregisteredTask",
+    "configure_call_logger",
+    "get_call_logger",
+    "get_task",
+    "register_task",
 ]
