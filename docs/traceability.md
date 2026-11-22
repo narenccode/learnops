@@ -402,6 +402,8 @@ FR-G-06. Neither requirement is implemented by this skeleton.
 | Only allow-listed functions are sent; the list comes from the contract example | B4 §2a, guide on Q1 | `test_allowlist.py` |
 | A grade write sends `readyforrelease`, never `released` | B4 §3, C-09 | `test_client.py` |
 | One token per site, from the environment only | B4 §1, Q24, SEC-03, C-06 | `test_config.py` |
+| Site addresses must be https, so a token never travels unencrypted; plain http only through the lab-only setting `MOODLE_WS_UNSAFE_ALLOW_PLAIN_HTTP_LAB_ONLY=true` (exact value), on `load_site` and on settings built by hand; the setting never makes a bad address valid | B4 §1, SEC-03 (guide, #150, 22 Nov) | `test_config.py`: `test_a_plain_http_address_is_refused_and_not_repeated`, `test_the_lab_only_setting_must_be_exactly_true`, `test_settings_built_by_hand_refuse_plain_http_too`, `test_the_lab_setting_never_makes_a_bad_address_valid` |
+| The same token for both sites is refused from either side, trimmed, naming the two variables and never the value; an unset or placeholder other token is no clash | B4 §1, design 4.1 (guide, #150, 22 Nov) | `test_config.py`: `test_the_same_token_for_both_sites_is_refused_from_either_side`, `test_the_same_token_after_trimming_is_still_the_same`, `test_an_unset_other_token_is_not_a_clash` |
 | Tokens and full URLs stay out of logs and errors | SEC-03, OPS-04, design §4.1 | `test_redaction.py` |
 | One error family with stable codes | Design §4.1, §10.2 (library documentation, Q37) | `test_errors.py` |
 | A function that is not in the allow-list is refused with a fixed message that does not repeat it; matching is exact; every listed function resolves on both versions; a replacement name applies only to its own version | B4 §2a, guide on Q1 | `test_an_unlisted_function_is_refused_and_the_message_repeats_nothing`, `test_every_listed_function_resolves_to_itself_on_both_versions`, `test_matching_is_exact`, `test_a_replacement_name_is_returned_only_for_its_own_version` |
@@ -591,9 +593,10 @@ requirement, so it has no FR ID and no row in the table at the top. It is the da
 (caption word error rate, Release 3), App-C 7 (the error-rate target from a first baseline run)
 and App-C 8 (licence or consent for every B8.5 video).
 
-**Status: PENDING.** Five local recording files were identified in earlier work (their SHA-256
-values are in the inventory), but no consent line is written, no transcript is typed or reviewed, and none is accepted as B8.5 evidence. The tests show that the committed placeholders are well formed and that the PENDING status
-is true. They do **not** show that B8.5 or App-C 8 is met.
+**Status: COMPLETE.** Five recordings from four speakers are listed in the inventory (2380 s in total; the owner's
+`ffprobe` durations, hashes and file names, not re-verified by the reviewers), each with an outline and a reference
+transcript marked `checked`, and each speaker has written a consent line in decision 0004. The tests show that the
+committed data is well formed and that the COMPLETE status is true under the written criteria. They do **not** show a word error rate, that the speakers understood the briefing, or that the recordings are the official set: those are the owner's confirmations in the pull request.
 
 ### Enforced by the test and covered by automated tests
 

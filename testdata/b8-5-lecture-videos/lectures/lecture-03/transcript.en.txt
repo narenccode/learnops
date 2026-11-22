@@ -1,1 +1,175 @@
-PENDING: reference transcript for lecture-03 not typed yet. Do not use it for any measurement.
+Hello, my name is Nagashree.
+
+I voluntarily consent to having my voice and lecture recording included in the LearnOps B8.5 test dataset for project evaluation and testing purposes.
+
+I understand that this recording will be used as test evidence for the project.
+
+Thank you.
+
+Good morning everyone.
+
+In the previous section, we learned how data is organized using entities, relationships, and relational tables.
+
+Now we will discuss SQL, which stands for Structured Query Language.
+
+SQL is a standard language used to communicate with relational database management systems.
+
+It allows us to create databases and tables, insert records, retrieve information, update existing records, and delete records.
+
+Let's understand SQL through a simple example of a college database.
+
+Suppose we have a table called Student, containing three columns: Student_ID, Name, and Department.
+
+First, we need to create the table.
+
+The SQL command used to create a table is CREATE.
+
+For example:
+
+CREATE TABLE Student (
+    Student_ID INT PRIMARY KEY,
+    Name VARCHAR(50),
+    Department VARCHAR(30)
+);
+
+This command creates a table named Student with three columns.
+
+Student_ID is an integer and is defined as the primary key. Name and Department are text fields.
+
+SQL commands are commonly grouped into different categories.
+
+The first category is DDL, which stands for Data Definition Language.
+
+DDL commands are used to define or modify the structure of database objects.
+
+Some important DDL commands are CREATE, ALTER, DROP, and TRUNCATE.
+
+CREATE is used to create objects such as tables.
+
+ALTER is used to modify the structure of an existing table. For example, we can add a new column called Email.
+
+DROP is used to remove an entire database object, such as a table.
+
+TRUNCATE is used to remove all rows from a table while keeping the table structure.
+
+The second category is DML, which stands for Data Manipulation Language.
+
+DML commands are used to modify the data stored in tables.
+
+The INSERT command adds new records.
+
+For example:
+
+INSERT INTO Student
+VALUES (101, 'Rahul', 'ISE');
+
+This inserts a student record into the Student table.
+
+The UPDATE command modifies existing records.
+
+For example:
+
+UPDATE Student
+SET Department = 'CSE'
+WHERE Student_ID = 101;
+
+This changes the department of the student whose ID is 101.
+
+The DELETE command removes selected records.
+
+For example:
+
+DELETE FROM Student
+WHERE Student_ID = 101;
+
+This deletes the record belonging to student 101.
+
+The third category is DQL, which stands for Data Query Language.
+
+The main command is SELECT.
+
+SELECT is used to retrieve information from a database.
+
+For example:
+
+SELECT * FROM Student;
+
+This displays all columns and rows from the Student table.
+
+If we want only student names, we can write:
+
+SELECT Name FROM Student;
+
+We can also filter records using the WHERE clause.
+
+For example:
+
+SELECT * FROM Student
+WHERE Department = 'ISE';
+
+This retrieves only the students belonging to the ISE department.
+
+Another useful clause is ORDER BY.
+
+It is used to sort query results.
+
+For example:
+
+SELECT * FROM Student
+ORDER BY Name ASC;
+
+This displays students in ascending alphabetical order by name.
+
+We can also use aggregate functions.
+
+Aggregate functions perform calculations on multiple rows and return a result.
+
+Some common aggregate functions are COUNT, SUM, AVG, MIN, and MAX.
+
+For example:
+
+SELECT COUNT(*) FROM Student;
+
+This returns the total number of student records.
+
+The AVG function calculates an average, while SUM calculates a total.
+
+Another important SQL concept is GROUP BY.
+
+GROUP BY groups records based on a common column.
+
+For example:
+
+SELECT Department, COUNT(*)
+FROM Student
+GROUP BY Department;
+
+This displays the number of students in each department.
+
+Now let's discuss joins.
+
+A join is used to combine related information from two or more tables.
+
+Suppose we have a Student table and a Department table.
+
+The Student table contains Student_ID, Name, and Department_ID.
+
+The Department table contains Department_ID and Department_Name.
+
+An INNER JOIN returns only records that have matching values in both tables.
+
+A LEFT JOIN returns all records from the left table and matching records from the right table. If there is no match, the right-side columns contain NULL values.
+
+A RIGHT JOIN returns all records from the right table and matching records from the left table.
+
+A FULL OUTER JOIN returns matching and non-matching records from both sides, where supported by the database system.
+
+Joins are especially useful when information is distributed across multiple related tables.
+
+Another important concept is a subquery.
+
+A subquery is a query written inside another SQL query.
+
+For example, suppose we want to find students whose marks are greater than the average marks.
+
+We can use a subquery to calculate the average marks first and then compare individual students' marks

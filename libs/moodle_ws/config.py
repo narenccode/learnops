@@ -1,7 +1,8 @@
 """Per-site settings from environment variables (B4 §1, guide on Q24, PR #27).
 
 One token per site. The token lives in the environment only and is held in a Token, so a printed
-SiteSettings never shows it.
+SiteSettings never shows it. The same token on both sites is refused, and a site address must be
+https unless the lab-only setting below is on, because a token must not travel unencrypted.
 """
 
 from __future__ import annotations
@@ -18,6 +19,9 @@ from .errors import MoodleConfigError
 from .secrets import Token
 
 PLACEHOLDER: Final = "CHANGE_ME"  # the value .env.example ships with
+# Plain http is refused unless this is exactly "true" (any letter case). The name says what it
+# is, so it is not mistaken for a normal option: it exists for lab sites that have no https.
+ALLOW_PLAIN_HTTP_VARIABLE: Final = "MOODLE_WS_UNSAFE_ALLOW_PLAIN_HTTP_LAB_ONLY"
 
 
 class Site(StrEnum):
@@ -44,6 +48,7 @@ class SiteSettings:
     moodle_version: str
     url: str = field(repr=False)  # repr() must not show a mistaken credential or path
     token: Token
+    allow_plain_http: bool = False  # lab only; see ALLOW_PLAIN_HTTP_VARIABLE
 
     def __post_init__(self) -> None:
         """The same checks as load_site(), so settings built by hand cannot skip them."""
@@ -51,8 +56,16 @@ class SiteSettings:
             raise _invalid("site")
         if self.moodle_version != _SPECS[self.site].moodle_version:
             raise _invalid("moodle_version")
+        if not isinstance(self.allow_plain_http, bool):
+            raise _invalid("allow_plain_http")
         if not _is_site_address(self.url):
             raise _invalid("url")
+        if urlsplit(self.url).scheme == "http" and not self.allow_plain_http:
+            raise MoodleConfigError(
+                messages.PLAIN_HTTP_REFUSED.format(
+                    site=self.site.value, variable=ALLOW_PLAIN_HTTP_VARIABLE
+                )
+            )
         if not isinstance(self.token, Token):
             raise _invalid("token")
         if self.token.reveal().strip() in ("", PLACEHOLDER):
@@ -101,9 +114,30 @@ def load_site(
         allowed = ", ".join(Site)
         raise MoodleConfigError(messages.UNKNOWN_SITE.format(allowed=allowed))
     spec = _SPECS[chosen]
+    url = _required(spec.url_variable, source)
+    token = _required(spec.token_variable, source)
+    _refuse_the_same_token(chosen, token, source)
     return SiteSettings(
         site=chosen,
         moodle_version=spec.moodle_version,
-        url=_required(spec.url_variable, source),
-        token=Token(_required(spec.token_variable, source)),
+        url=url,
+        token=Token(token),
+        allow_plain_http=source.get(ALLOW_PLAIN_HTTP_VARIABLE, "").strip().lower()
+        == "true",
     )
+
+
+def _refuse_the_same_token(
+    chosen: Site, token: str, environ: Mapping[str, str]
+) -> None:
+    """Each site has its own service account (PRD B4). If the other site's token is set and is
+    the same value, refuse: a token for one site must never open the other. The message names
+    the two variables, never the value."""
+    other = next(item for item in Site if item is not chosen)
+    other_token = environ.get(_SPECS[other].token_variable, "").strip()
+    if other_token and other_token != PLACEHOLDER and other_token == token:
+        raise MoodleConfigError(
+            messages.SAME_TOKEN_ON_BOTH_SITES.format(
+                variable=f"{_SPECS[chosen].token_variable} and {_SPECS[other].token_variable}"
+            )
+        )
