@@ -34,7 +34,7 @@ AUTOMATED here:
 NOT automated, and therefore NOT claimed:
   * that any expected output is correct or reviewed (none is reviewed; open decision O2);
   * the rubric's content (every definition is proposed or open, Q48), set size, or Q12 inputs;
-  * the agreement of the grading-draft item (gd-001 points at B8.4's reference grades; the mentor is not confirmed); that the guide's confirmation of the practice format is on record (it is reported, not linked); any model run or result.
+  * the agreement of the grading-draft item (gd-001 is pending: B8.4 has no reference grades and the mentor is not confirmed); that the guide's confirmation of the practice format is on record (it is reported, not linked); any model run or result.
 """
 
 from __future__ import annotations
@@ -448,34 +448,62 @@ def test_no_real_reviews_are_claimed() -> None:
 # --- the grading-draft item points at B8.4 --------------------------------------------------
 
 
-def test_the_grading_draft_item_points_at_b8_4_and_never_copies_it(
+def grade_draft_problems(item: Doc, b8_4_dir: Path) -> list[str]:
+    """A grading-draft item may be `ready` only when the B8.4 reference grades it names exist,
+    one file per submission (the set's README: READY means the files exist)."""
+    if item["status"] != "ready":
+        return []
+    expected = ROOT / item["expected"]
+    if not expected.is_dir():
+        return [f"{item['id']}: {item['expected']} does not exist"]
+    graded = {p.stem for p in expected.glob("*.yaml")}
+    submissions = {
+        s["id"] for s in load_yaml(b8_4_dir / "manifest.yaml")["submissions"]
+    }
+    if graded != submissions:
+        return [f"{item['id']}: reference grades do not match the B8.4 submissions"]
+    return []
+
+
+def test_the_grading_draft_item_is_pending_and_never_copies_b8_4(manifest: Doc) -> None:
+    item = next(i for i in manifest["items"] if i["id"] == "gd-001")
+    source = next(i for i in manifest["inputs"] if i["id"] == "b8-4")
+    assert item["task"] == "grade_draft"
+    assert source["kind"] == "b8-4-set" and is_b8_4_path(source["path"])
+    # The B8.4 pilot has no reference grades, so the item is pending: no input, no expected.
+    assert item["status"] == "pending"
+    assert "input" not in item and "expected" not in item
+    assert any("reference grades exist" in d for d in item["depends_on"])
+    assert any("mentor" in d and "confirms" in d for d in item["depends_on"])
+    assert not any(p.name == "reference-grades" for p in SET_DIR.rglob("*"))
+
+
+def test_a_grading_draft_item_is_ready_only_when_the_reference_grades_exist(
     manifest: Doc,
 ) -> None:
-    item = next(i for i in manifest["items"] if i["id"] == "gd-001")
-    source = next(i for i in manifest["inputs"] if i["id"] == item["input"])
-    assert item["task"] == "grade_draft" and source["kind"] == "b8-4-set"
-    assert is_b8_4_path(source["path"]) and is_b8_4_path(item["expected"])
-    assert not any(p.name == "reference-grades" for p in SET_DIR.rglob("*"))
-    assert item["expected_review"]["status"] == "not_reviewed"
-    assert any("mentor" in d and "confirms" in d for d in item["depends_on"])
+    """The check that #31 and #33 do not depend on files that one of them does not hold."""
+    for item in manifest["items"]:
+        if item["task"] == "grade_draft":
+            assert grade_draft_problems(item, B8_4_DIR) == [], item["id"]
+    # In-memory negative controls: flipping the item to ready without grades must be caught.
+    ready: Doc = {
+        "id": "gd-001",
+        "task": "grade_draft",
+        "status": "ready",
+        "expected": "testdata/b8-4-synthetic-submissions/reference-grades/mentor-01",
+    }
+    if B8_4_DIR.is_dir():
+        assert grade_draft_problems(ready, B8_4_DIR) != []
 
 
-def test_the_b8_4_files_exist_when_the_set_is_present(manifest: Doc) -> None:
+def test_the_b8_4_input_exists_when_the_set_is_present(manifest: Doc) -> None:
     if not B8_4_DIR.is_dir():
         pytest.skip(
-            "B8.4 (PR #31, which waits for B8.2, PR #61) is not in this tree yet; "
-            "the gd-001 paths are checked once it is"
+            "B8.4 (PR #31) is not in this tree yet; the path of the b8-4 input is checked once it is"
         )
-    item = next(i for i in manifest["items"] if i["id"] == "gd-001")
-    assert (ROOT / item["expected"]).is_dir()
     for source in manifest["inputs"]:
         if is_b8_4_path(source["path"]):
             assert (ROOT / source["path"]).is_file(), source["id"]
-    graded = {p.stem for p in (ROOT / item["expected"]).glob("*.yaml")}
-    submissions = {
-        s["id"] for s in load_yaml(B8_4_DIR / "manifest.yaml")["submissions"]
-    }
-    assert graded == submissions
 
 
 def test_a_b8_4_path_cannot_leave_the_b8_4_set(

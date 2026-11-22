@@ -22,7 +22,7 @@ run, and nothing here says how well any model performs.
 |---|---|---|---|---|
 | Chapters | ch-001 | ready, PROVISIONAL | `inputs/t001/transcript.en.json` | `expected/ch-001/chapters.json`, NOT REVIEWED |
 | Summaries | su-001 | ready, PROVISIONAL | `inputs/t001/transcript.en.json` | `expected/su-001/summary.en.md`, NOT REVIEWED |
-| Grading drafts | gd-001 | ready, PROVISIONAL | B8.4 submissions (`inputs/b8-4/source.md`; the files are in PR #31, not merged) | B8.4 mentor reference grades, 32 from one mentor (the guide has not confirmed the mentor, Q13), NOT REVIEWED. Review form: `templates/` (PROPOSED) |
+| Grading drafts | gd-001 | **pending** | B8.4 submissions (`inputs/b8-4/source.md`; the pilot is in PR #31, not merged) | B8.4 mentor reference grades: **none exist yet**, and the guide has not confirmed the mentor (Q13). Review form: `templates/` (PROPOSED) |
 | Practice drafts | pr-001 | ready, PROVISIONAL | `inputs/t001/transcript.en.json` | `expected/pr-001/practice.yaml`, NOT REVIEWED. Four multiple-choice checkpoint questions in the review-card shape proposed by Student 1 (FR-S-12); the format is confirmed by the guide (reported by Harshitha on 18 Nov; the link to his answer is still to be added) |
 
 "Ready" means the files exist. It does not mean they are agreed or reviewed.
