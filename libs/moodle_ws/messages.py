@@ -31,6 +31,10 @@ ATTEMPT_REQUIRED: Final = (
     "mod_assign_save_grade needs the explicit attempt being graded (a whole number from 0, never "
     "-1), so nothing was sent to Moodle. Pass the attempt number you graded."
 )
+PINNED_ZERO_REQUIRED: Final = (
+    "mod_assign_save_grade must send applytoall=0 and addattempt=0 (B4 R15), so nothing was sent "
+    "to Moodle. Set both to 0."
+)
 GRADE_NOT_A_NUMBER: Final = (
     "The grade is not a plain number of 0 or more, so nothing was sent to Moodle. Pass the "
     "approved grade as a number, for example 84.5."

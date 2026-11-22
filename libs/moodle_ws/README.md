@@ -33,19 +33,24 @@ their own. `call()` returns the transport's answer unchanged.
 - **A grade write without an explicit attempt or a plain grade** (B4 R2, R9). `attemptnumber` must be
   a whole number from 0, never `-1`; `grade` must be a plain non-negative number (`84.5` or
   `"84.5"`; not `True`, `"1e2"` or `"NaN"`). Otherwise `GradeWriteNotAllowed`.
+- **A grade write with `applytoall` or `addattempt` other than `0`** (B4 R15, guide on PR #64,
+  2026-11-16). Both are always sent as the whole number `0`; any other value, `True`/`False`, text or
+  a missing value raises `GradeWriteNotAllowed`.
 - **Parameters that are not plain data**, on every function. `params` must be a mapping of text,
   numbers, booleans, `None`, lists, tuples and dicts, with text or integer keys, at most 32 levels
   deep. Sets, frozensets, NaN and infinity are refused too, because they are not valid JSON and a transport could not send them. `bytes`, `bytearray`, generators, subclasses and other objects raise `InvalidParameters`. The
   transport receives a private copy, so it cannot change the caller's data.
 - **Every direct grade write.** `call("mod_assign_save_grade", ...)` runs the guards above and then
-  raises `GradeWriteNotAllowed`. The client's one internal send refuses it too, so there is no
-  function or method to import that sends a grade write without the checks `call()` cannot run
-  alone (maximum grade, locked state, marking workflow) and the read-back. (The earlier
-  `WriteReceipt` path is removed: the guide on PR #76, 15 Nov, asked for the bypass to be closed in
-  code.) **The guarded write is added in a later pull request; until then no grade write can be sent
-  at all.** A test fails if the transport is called anywhere else in the library, or if a module
-  outside it uses the client's internals. Code that calls a transport directly is outside what a
-  library can stop; the restricted Moodle service account is the boundary for that (B4 §4).
+  raises `GradeWriteNotAllowed`. The client's internal send refuses it too. The only way a grade
+  write reaches Moodle is `write_draft_grade()` (below): it runs the checks `call()` cannot run alone
+  (maximum grade, locked state, marking workflow), sends once and reads the result back, and the
+  sender it uses is created inside that call, so there is nothing to import that skips the checks.
+  That sender works once, on its own copy of the checked parameters, and runs the guards above again
+  before it sends.
+  (The earlier `WriteReceipt` path is removed: the guide on PR #76, 15 Nov, asked for the bypass to
+  be closed in code.) A test fails if the transport is called anywhere else in the library, or if a
+  module outside it uses the client's internals. Code that calls a transport directly is outside
+  what a library can stop; the restricted Moodle service account is the boundary for that (B4 §4).
 
 Apart from `workflowstate`, `attemptnumber` and `grade` on `mod_assign_save_grade`, parameter names are
 not checked. An empty `parameters` list in the contract means "not yet determined"
@@ -54,8 +59,8 @@ not checked. An empty `parameters` list in the contract means "not yet determine
 ## Outcomes of a draft-grade write (B4 §3a, §3b)
 
 `moodle_ws.grade_write` holds the outcome values and the pure checks the guarded write helper uses.
-Nothing in it contacts Moodle; the helper itself is added in a later pull request. Only `VERIFIED` is
-success (R10).
+Only `VERIFIED` is success (R10). `write_draft_grade()` is the one function in it that contacts
+Moodle ([Writing one draft grade](#writing-one-draft-grade-b4-3a-r1-to-r11)).
 
 | Outcome | Meaning |
 |---|---|
@@ -89,6 +94,48 @@ B4 rules R12 to R14. The last row is this library's own choice, stricter than th
 | State missing or unknown before the write | `REFUSED_STATE_UNKNOWN`, nothing sent (R12) | LearnOps cannot show the grade is not locked (R3) |
 | Answer lost, read-back matches | `NEEDS_MENTOR_CONFIRMATION`, not success (R14) | R11 says the mentor decides |
 | Any warning in the `mod_assign_get_grades` answer | `NOT_VERIFIED` | Stricter than §3b |
+| `PermissionDenied` / `TokenInvalid` from the write | `ACCESS_DENIED`, no read-back, not resent | Moodle answered and refused |
+
+## Writing one draft grade (B4 §3a, R1 to R11)
+
+```python
+from moodle_ws import write_draft_grade
+
+result = write_draft_grade(client, save_grade_params, max_grade)
+if not result.succeeded:
+    show(result.outcome, result.message)  # never counted as written
+```
+
+`write_draft_grade` is the only way a grade write reaches Moodle. It copies the parameters once, uses
+that copy for every check and for the write, and sends `mod_assign_save_grade` **at most once**:
+
+1. Refuses a grade below 0 or above `max_grade` (`REFUSED_OUT_OF_RANGE`, R9). Moodle would ignore it
+   silently. The caller reads `max_grade` from the assignment (lab check 2).
+2. Reads the learner's state and writes only over an unlocked marking-workflow state (see
+   [Outcomes](#outcomes-of-a-draft-grade-write-b4-3a-3b)). A permission error is `ACCESS_DENIED` (R10).
+3. Writes once, through a sender that exists only inside this call. If the answer is lost or cannot
+   be understood, it does **not** write again (R11). A permission or token error from the write is
+   `ACCESS_DENIED`, with no read-back and no resend.
+4. Reads back with `mod_assign_get_submission_status` and `mod_assign_get_grades`. Only an exact
+   numeric match of the grade, for the same learner and attempt, with the state `readyforrelease`, is
+   `VERIFIED`. Anything else, including a failed read-back, is `NOT_VERIFIED` (R8, §3b). If the write's
+   answer was lost, the result has `uncertain=True`: a matching read-back is then
+   `NEEDS_MENTOR_CONFIRMATION`, and a mismatch is `NOT_VERIFIED`.
+
+Results are values, not exceptions, so a caller's loop continues with the next learner. That loop, the
+mentor's approval and the follow-up after `NOT_VERIFIED` belong to the grading module (FR-G-01, FR-G-06,
+Release 4).
+
+**On 4.5 and 5.3:** the tests use `tests/source_fake.py`, which behaves as the Moodle **source**
+says: 5.3 keeps a locked grade while the call looks successful, 4.5 overwrites it, and both ignore an
+out-of-range grade. None of this is lab-verified (lab checks 4 and 12 to 16).
+
+**R3 on 4.5 (the guide's decision, PR #80, 15 Nov):** only the pre-write check in step 2 protects a
+grade that is locked before the write. A state that ends `released` after the write is `NOT_VERIFIED`
+on both versions. A normal write stays `VERIFIED` on 4.5. **Known limitation, accepted by the guide:**
+if another grader sets `readyforrelease` between the check and the write, 4.5 overwrites their grade
+and the read-back cannot tell this from a normal write, so it is reported as `VERIFIED`. No allowed
+function makes the check and the write one step, and no second pre-write read is made.
 
 ## Configuration
 

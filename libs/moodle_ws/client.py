@@ -3,17 +3,18 @@
 call() enforces the allow-list and the draft rule before the transport is touched, so a refused
 call never reaches Moodle. This is a second guard behind the restricted external service.
 
-No function or method in this module sends mod_assign_save_grade: _send refuses it on every path.
-There is nothing to import that skips the write checks (the guide on PR #76, 15 Nov: close the
-receipt bypass in code). The guarded write that runs every check and the read-back is added in a
-later pull request.
+A grade write reaches Moodle only through MoodleClient.write_draft_grade (also reachable as
+grade_write.write_draft_grade). _send, used by call(), refuses mod_assign_save_grade on every path.
+The sender the guarded write uses is a closure created inside that one call, so there is no name to
+import that sends a grade write without the write checks (the guide on PR #76, 15 Nov: close the
+receipt bypass in code).
 """
 
 from __future__ import annotations
 
 import math
 from collections.abc import Mapping
-from typing import Any, Final
+from typing import TYPE_CHECKING, Any, Final
 
 from . import messages
 from .allowlist import AllowList, load_allowlist
@@ -34,6 +35,9 @@ from .errors import (
 from .grades import parse_grade
 from .transport import MoodleTransport
 
+if TYPE_CHECKING:  # grade_write imports this module, so only for the type
+    from .grade_write import WriteResult
+
 SAVE_GRADE: Final = "mod_assign_save_grade"
 # Removed from B4 by the guide's findings (PR #64). Refused here even if an allow-list file still
 # lists it, so an older contract file cannot bring it back.
@@ -42,6 +46,9 @@ _ALWAYS_REFUSED: Final = frozenset({SET_USER_FLAGS})
 WORKFLOW_PARAMETER: Final = "workflowstate"  # named by PRD App-C item 1
 ATTEMPT_PARAMETER: Final = "attemptnumber"  # PRD B4 parameter table
 GRADE_PARAMETER: Final = "grade"  # PRD B4 parameter table
+# B4 R15 (guide, PR #64, 2026-11-16): always sent, always 0. Either at 1 changes a learner's grade
+# (every group member, or a new attempt), so no other value is sent.
+PINNED_ZERO_PARAMETERS: Final = ("applytoall", "addattempt")
 READY_FOR_RELEASE: Final = "readyforrelease"
 RELEASED: Final = "released"
 MAX_DEPTH: Final = 32  # a local safety limit on nesting, not a Moodle rule
@@ -134,13 +141,19 @@ def is_explicit_attempt(value: object) -> bool:
 
 
 def _check_grade_write(function: str, params: dict[str, Any]) -> None:
-    """B4 R2 and R9, the part the client can check alone: an explicit attempt and a plain,
-    non-negative number as the grade. The maximum needs the assignment, so it is checked by the
-    guarded write, not here."""
+    """B4 R2, R9 and R15, the part the client can check alone: an explicit attempt, applytoall=0
+    and addattempt=0, and a plain, non-negative number as the grade. The maximum needs the
+    assignment, so it is checked by the guarded write, not here."""
     if function != SAVE_GRADE:
         return
     if not is_explicit_attempt(params.get(ATTEMPT_PARAMETER)):
         raise GradeWriteNotAllowed(messages.ATTEMPT_REQUIRED)
+    for name in PINNED_ZERO_PARAMETERS:
+        value = params.get(name)
+        if (
+            type(value) is not int or value != 0
+        ):  # missing, bool, text or any other number
+            raise GradeWriteNotAllowed(messages.PINNED_ZERO_REQUIRED)
     grade = parse_grade(params.get(GRADE_PARAMETER))
     if grade is None or grade < 0:
         raise GradeWriteNotAllowed(messages.GRADE_NOT_A_NUMBER)
@@ -153,6 +166,15 @@ def _public_error(error: MoodleError, settings: SiteSettings) -> MoodleError:
     public = type(error).__new__(type(error))
     Exception.__init__(public, text.format(site=settings.site))
     return public
+
+
+def _failure_for(error: Exception, settings: SiteSettings) -> MoodleError:
+    """The library's own error for anything a transport raised, with a fixed message."""
+    if isinstance(error, MoodleError):
+        return _public_error(error, settings)
+    if isinstance(error, OSError):  # includes TimeoutError and ConnectionError
+        return MoodleUnreachable(messages.UNREACHABLE.format(site=settings.site))
+    return UnexpectedResponse(messages.UNEXPECTED.format(site=settings.site))
 
 
 class MoodleClient:
@@ -180,6 +202,36 @@ class MoodleClient:
         (maximum grade, locked state, marking workflow) and reads the result back."""
         return self._send(function, _copy_params(params))
 
+    def write_draft_grade(
+        self, params: Mapping[str, Any], max_grade: object
+    ) -> WriteResult:
+        """Write one mentor-approved draft grade, at most once, and read it back (B4 §3, §3a).
+
+        The checks and the read-back are grade_write's; the send is created here, inside this one
+        call, and works once, so it cannot be imported or reused to skip them."""
+        # Imported here, not at the top: grade_write imports this module.
+        from . import grade_write
+
+        settings = self._settings
+        used = False
+
+        def send_once(checked: Mapping[str, Any]) -> Any:
+            nonlocal used
+            if used:
+                raise GradeWriteNotAllowed(messages.WRITE_NEEDS_HELPER)
+            used = True  # before sending: a write is never sent twice (R8, R11)
+            values = _copy_params(checked)
+            name = self._allowlist.resolve(SAVE_GRADE, settings.moodle_version)
+            _check_draft_rule(SAVE_GRADE, values)
+            _check_grade_write(SAVE_GRADE, values)
+            try:
+                return self._transport.call(settings, name, values)
+            except Exception as error:
+                failure = _failure_for(error, settings)
+            raise failure  # outside the except block, as in _send
+
+        return grade_write._checked_write(self, params, max_grade, send_once)
+
     def _send(self, function: str, values: dict[str, Any]) -> Any:
         settings = self._settings
         if function in _ALWAYS_REFUSED:
@@ -193,13 +245,9 @@ class MoodleClient:
             raise GradeWriteNotAllowed(messages.WRITE_NEEDS_HELPER)
         try:
             return self._transport.call(settings, name, values)
-        except MoodleError as error:
-            failure = _public_error(error, settings)
-        except OSError:  # includes TimeoutError and ConnectionError
-            failure = MoodleUnreachable(messages.UNREACHABLE.format(site=settings.site))
-        except Exception:
-            failure = UnexpectedResponse(messages.UNEXPECTED.format(site=settings.site))
-        # Raised outside the except blocks so the original, which may hold a token or a URL, is not
+        except Exception as error:
+            failure = _failure_for(error, settings)
+        # Raised outside the except block so the original, which may hold a token or a URL, is not
         # kept as __context__. "raise ... from None" would only hide it.
         raise failure
 
