@@ -379,7 +379,7 @@ Test names are in `test_moodle_ws_v1.py`.
 
 | Rule | PRD |
 |---|---|
-| Only the functions listed in the contract are called (`libs/moodle_ws` will build its allow-list from the example; the library does not exist yet) | B4 |
+| Only the functions listed in the contract are called. `libs/moodle_ws` builds its allow-list from the example (`test_allowlist.py`: `test_the_list_equals_the_contract_example`); the client that refuses any other function follows. Not enforced against a real Moodle: there is no real transport yet | B4 |
 | One service account per site, with a token restricted to those functions and the capabilities in rules §4 (the lists are tested; that they are enough is lab check 9) | B4, SEC-03 |
 | The token is stored only in the environment | SEC-03, C-06 |
 | A grade write uses workflow state `readyforrelease`, never `released`, and counts as done only when both the state and the grade value are confirmed; the grade value is read with `mod_assign_get_grades` (R1); the write rules R1 to R15 are contract text here, and their enforcement in `libs/moodle_ws` is a separate follow-up; only approved drafts are written | B4, C-09 |
@@ -390,6 +390,22 @@ them; B4 cannot be frozen until they pass), and the field for feedback comments 
 `mod_assign_save_grade` (lab check 6). Q1, Q24 and Q37 are decided (PR #27); the eleven B4
 questions are decided (PR #64), and so are the three that followed: the state that cannot be read before
 a write, marking workflow off, and a lost answer with a matching read-back (R12 to R14, PR #72).
+
+## `libs/moodle_ws` skeleton, Release 0 foundation
+
+Files: `libs/moodle_ws/`. The library has no requirement ID of its own (design Q7, Q43, open), so no
+row in the table above maps to it. Interim, per design §2: read side under FR-G-01, write side under
+FR-G-06. Neither requirement is implemented by this skeleton.
+
+| Rule | Source | Test |
+|---|---|---|
+| One token per site, from the environment only | B4 §1, Q24, SEC-03, C-06 | `test_config.py` |
+| Tokens and full URLs stay out of logs and errors | SEC-03, OPS-04, design §4.1 | `test_redaction.py` |
+| One error family with stable codes | Design §4.1, §10.2 (library documentation, Q37) | `test_errors.py` |
+| A function that is not in the allow-list is refused with a fixed message that does not repeat it; matching is exact; every listed function resolves on both versions; a replacement name applies only to its own version | B4 §2a, guide on Q1 | `test_an_unlisted_function_is_refused_and_the_message_repeats_nothing`, `test_every_listed_function_resolves_to_itself_on_both_versions`, `test_matching_is_exact`, `test_a_replacement_name_is_returned_only_for_its_own_version` |
+
+Not covered: the library is being built in steps and cannot call Moodle. Nothing has been checked
+against Moodle (every check in `contracts/moodle-ws.v1.md` §5 is open).
 
 ## B7 H5P practice output contract (v1), Release 0 foundation, DRAFT
 
