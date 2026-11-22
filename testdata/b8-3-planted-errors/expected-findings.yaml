@@ -16,8 +16,15 @@
 #   reason          why it must be reported
 #   also_expected   other rules that may fire on the same variant (interactions), or []
 #   notes           open points
+#   assertable      optional; false = the expected finding is provisional and must not be asserted by a checker test yet
 
 version: 1
+# PROVISIONAL. This mapping comes from docs/design/checker.md section 11.3, which is itself a
+# Proposal. It is NOT an approved expected-results baseline and must not be used as the oracle
+# for the 100 % target (PRD C2.7) until `confirmation` below is filled in by Akshita and the guide.
+# When confirmed, set mapping_status to confirmed and record who confirmed it, where and when.
+mapping_status: provisional
+confirmation: null   # {by: [...], reference: <issue/PR/decision link>, date: <YYYY-MM-DD>}
 baseline: testdata/b8-2-sample-course   # must report zero findings
 variants:
 
@@ -175,7 +182,8 @@ variants:
     expected: {rule: CK-12, element: wk-01-guide, severity: error}
     reason: "Media must be a relative path, not a full fixed URL (PRD C-08)."
     also_expected: []
-    notes: "Detectable only if the model builder reads media from the body (checker design section 12 item 19)."
+    assertable: false   # PROVISIONAL: not asserted until checker design section 12 item 19 is decided
+    notes: "CK-12 reads media_refs of the B2 model (design section 3.4). Whether the model builder extracts media from a page body into media_refs is open (section 12 item 19). Until it is agreed and tested end to end, this variant only plants the URL in the source file; its expected finding is not asserted."
 
   - id: ck-13-unlock-without-completion
     rule: CK-13

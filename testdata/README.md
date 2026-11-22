@@ -54,8 +54,10 @@ B8.2 is never changed. The folders `missing-body`, `duplicate-id`, `protected-id
 | `ck-09-marking-table-sum` | CK-09 | package | built | table adds to 20, task worth 25 |
 | `ck-10-no-marking-workflow` | CK-10 | mbz | pending-lab | marking workflow off |
 | `ck-11-graded-practice-h5p` | CK-11 | mbz | pending-lab | practice H5P with grade 10 |
-| `ck-12-full-url-media` | CK-12 | package | built | image at `https://example.invalid/diagram.png` |
+| `ck-12-full-url-media` | CK-12 | package | built (finding not asserted) | image at `https://example.invalid/diagram.png`; provisional until body-media extraction is decided |
 | `ck-13-unlock-without-completion` | CK-13 | mbz | pending-lab | unlocking task has completion tracking off |
+
+**The mapping is PROVISIONAL.** `expected-findings.yaml` says `mapping_status: provisional` and `confirmation: null`. It is not an approved baseline and not the oracle for the 100 % target until Akshita and the guide confirm it and the confirmation is recorded in the file. CK-12 is also marked `assertable: false`: whether the model builder extracts body media into `media_refs` is open (checker design §12 item 19).
 
 **Reading `expected-findings.yaml`.** Each entry gives the variant `id`, the `rule`, the `element`
 (by idnumber), the `expected` finding (rule, element, severity), the `reason`, and `also_expected`:

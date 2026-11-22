@@ -105,6 +105,26 @@ def test_entry_is_complete_and_valid(v: dict[str, Any]) -> None:
     assert v["id"].startswith(v["rule"].lower())
 
 
+def test_mapping_is_provisional_until_confirmation_is_recorded() -> None:
+    data = yaml.safe_load(EXPECTED.read_text(encoding="utf-8"))
+    assert data["mapping_status"] in {"provisional", "confirmed"}
+    if data["mapping_status"] == "confirmed":
+        confirmation = data["confirmation"] or {}
+        assert (
+            confirmation.get("by")
+            and confirmation.get("reference")
+            and confirmation.get("date")
+        )
+    else:
+        assert data["confirmation"] is None
+
+
+def test_ck_12_is_not_asserted_until_body_media_extraction_is_decided() -> None:
+    (ck12,) = [v for v in _variants() if v["rule"] == "CK-12"]
+    assert ck12["assertable"] is False
+    assert "item 19" in ck12["notes"]
+
+
 def test_ids_are_unique() -> None:
     ids = [v["id"] for v in _variants()]
     assert len(ids) == len(set(ids))
@@ -174,7 +194,10 @@ def test_ck_09_change_is_the_one_declared() -> None:
     assert sum(points) == 20  # the task stays worth 25 in course.yaml
 
 
-def test_ck_12_change_is_the_one_declared() -> None:
+def test_ck_12_url_is_in_the_source_file_only() -> None:
+    # Source-level check only. It does NOT show that the URL reaches media_refs of the B2 model or
+    # that a checker reports CK-12: that depends on checker design section 12 item 19 (open), so
+    # the CK-12 expected finding is marked assertable: false.
     body = _text("ck-12-full-url-media", "weeks/01-guide.md")
     assert "https://example.invalid/diagram.png" in body
 
