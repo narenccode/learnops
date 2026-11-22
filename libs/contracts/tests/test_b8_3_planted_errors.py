@@ -11,6 +11,8 @@ import hashlib
 import importlib.util
 import json
 import re
+import shutil
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -289,6 +291,94 @@ def test_model_is_a_valid_b2_course_model(name: str) -> None:
     schema = json.loads(SCHEMA.read_text("utf-8"))
     errors = list(Draft202012Validator(schema).iter_errors(_model(name)))
     assert not errors, [e.message for e in errors]
+
+
+def _flat(node: Any, prefix: str = "") -> dict[str, Any]:
+    """Every leaf of a JSON document as {"/a/0/b": value}. An empty dict or list is its own leaf."""
+    if isinstance(node, dict) and node:
+        items = node.items()
+    elif isinstance(node, list) and node:
+        items = enumerate(node)
+    else:
+        return {prefix: node}
+    out: dict[str, Any] = {}
+    for key, value in items:
+        out.update(_flat(value, f"{prefix}/{key}"))
+    return out
+
+
+def _changed_paths(variant: str) -> set[str]:
+    base, got = _flat(_model("baseline")), _flat(_model(variant))
+    absent = object()
+    return {
+        k for k in base.keys() | got.keys() if base.get(k, absent) != got.get(k, absent)
+    }
+
+
+_AVAIL = "/sections/6/activities/0/availability"
+# The ONLY paths each variant may change from the baseline. Paths use section and activity
+# positions in the baseline. A new extra mutation fails test_model_variant_changes_only_its_paths.
+ALLOWED_CHANGES: dict[str, set[str]] = {
+    "ck-01-unreachable-by-past-date-model": {
+        _AVAIL,  # null becomes the date condition: this leaf and the new keys below it
+        f"{_AVAIL}/op",
+        f"{_AVAIL}/showc/0",
+        f"{_AVAIL}/c/0/type",
+        f"{_AVAIL}/c/0/d",
+        f"{_AVAIL}/c/0/t",
+    },
+    "ck-04-unlock-missing-activity-model": {"/sections/6/availability/c/0/cm"},
+    # The baseline's week 3 already waits for the week 2 task, so one edit closes the cycle:
+    # week 2 now waits for the week 3 task.
+    "ck-05-circular-unlock-model": {"/sections/5/availability/c/0/cm"},
+    "ck-06-duplicate-idnumber-model": {"/sections/5/activities/1/idnumber"},
+    "ck-06-invalid-idnumber-model": {"/sections/4/activities/2/idnumber"},
+    # Coupled on purpose: the marking table moves with the grade so CK-09 does not fire.
+    "ck-07-protected-item-changed-model": {
+        "/sections/3/activities/0/grade_item/max_grade",
+        "/sections/3/activities/0/marking_table/points_total",
+    },
+    # One extra criterion appended: its three keys are the coupled paths.
+    "ck-08-completion-criteria-missing-item-model": {
+        "/course_completion/criteria/2/type",
+        "/course_completion/criteria/2/cmid",
+        "/course_completion/criteria/2/idnumber",
+    },
+    "ck-10-no-marking-workflow-model": {"/sections/4/activities/2/marking_workflow"},
+    "ck-11-graded-practice-h5p-model": {
+        "/sections/4/activities/1/grade_item",  # null becomes an object
+        "/sections/4/activities/1/grade_item/max_grade",
+    },
+    "ck-12-full-url-media-model": {"/sections/4/activities/0/media_refs/0"},
+    # Completion goes from automatic-on-submit to none, so the submit flag goes with it.
+    "ck-13-unlock-without-completion-model": {
+        "/sections/4/activities/2/completion/tracking",
+        "/sections/4/activities/2/completion/submit",
+    },
+}
+
+
+def test_every_model_variant_has_an_allowed_change_list() -> None:
+    assert set(ALLOWED_CHANGES) == {v["id"] for v in _models()}
+
+
+@pytest.mark.parametrize("variant", sorted(ALLOWED_CHANGES))
+def test_model_variant_changes_only_its_paths(variant: str) -> None:
+    assert _changed_paths(variant) == ALLOWED_CHANGES[variant]
+
+
+def test_changed_path_check_catches_an_extra_mutation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Negative control, on a copy: a stray edit to a variant must show up as an unlisted path.
+    copy = tmp_path / "models"
+    shutil.copytree(MODELS, copy)
+    name = "ck-10-no-marking-workflow-model"
+    data = json.loads((copy / f"{name}.model.json").read_text("utf-8"))
+    data["course"]["total_points"] = 999
+    (copy / f"{name}.model.json").write_text(json.dumps(data), "utf-8")
+    monkeypatch.setattr(sys.modules[__name__], "MODELS", copy)
+    assert _changed_paths(name) - ALLOWED_CHANGES[name] == {"/course/total_points"}
 
 
 @pytest.mark.parametrize("v", _models(), ids=lambda v: v["id"])
