@@ -256,7 +256,6 @@ Not decided. This file does not settle it.
 
 | Question | Who decides |
 |---|---|
-| **Grading design §10.1.** `docs/design/grading.md` §10.1 (Release 4, draft) still says an unknown outcome may "write again under the same idempotency key", which conflicts with R11. R11 wins; the fix belongs to the grading design pull request (#62), not here (guide, PR #72, 2026-11-15) | Student 3, guide |
 | **Lab access.** When the Moodle 4.5 and 5.3 lab sites are available. All checks in §5 wait for them. B4 can be merged as a draft before that, but it cannot be frozen at the end of Release 0 until the checks pass (guide, PR #27). Guide, PR #72, 2026-11-15: the 5.3 lab site is available, and a first live run of the web-service calls was made there on 14 November, but it is not matched to the items in §5, so every item stays open until a decision record names it. 4.5 has no live run and no date. The §5 rule "4.5 and 5.3" stays until the guide decides how the two versions are tested, at the start of Release 1 | Guide |
 
 **Decided by the guide (PR #27, 2026-10-29):**

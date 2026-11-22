@@ -361,12 +361,11 @@ Test names are in `test_moodle_ws_v1.py`.
 | R9: exact numeric match after parsing, no tolerance; range checked before writing | B4 draft rule | `test_r9_exact_numeric_match_and_range_check_before_writing` |
 | R10: no submission, no grade and no access are separate outcomes, never success; other learners continue | B4 | `test_r10_missing_and_inaccessible_are_separate_outcomes` |
 | R11: an uncertain write is never retried automatically; read back, the mentor decides | B4 draft rule | `test_r11_uncertain_write_is_never_retried_automatically` |
-| The `docs/design/grading.md` §10.1 conflict with R11 is recorded as open; R11 wins, and the fix belongs to #62 | B4 | `test_the_grading_design_conflict_with_r11_is_an_open_follow_up` |
 | R12: a state that cannot be read, or is none of Moodle's six marking-workflow values, is refused before anything is sent (`REFUSED_STATE_UNKNOWN`) | B4 §3a (guide, PR #72) | `test_r12_an_unreadable_or_unknown_state_is_refused_before_sending` |
 | R13: marking workflow off (`graded` / `notgraded`) is refused before anything is sent (`REFUSED_WORKFLOW_OFF`); lab check 4 stays open | B4 §3a (guide, PR #72), PRD C-09 | `test_r13_marking_workflow_off_is_refused_before_sending` |
 | R14: a matching read-back after a lost answer is not done until the mentor confirms it (`NEEDS_MENTOR_CONFIRMATION`) | B4 §3a (guide, PR #72) | `test_r14_a_matching_read_back_after_a_lost_answer_needs_the_mentor` |
 | R15: `applytoall=0` and `addattempt=0` are always sent; any other value is refused before anything is sent | B4 §3a (guide, PR #64, 2026-11-16) | `test_r15_applytoall_and_addattempt_are_pinned_to_zero` |
-| The three former open questions are rules now; each refusal is its own outcome; §6 keeps the lab-access and grading-design rows | B4 §3a, §6 | `test_the_three_proposals_are_rules_now_and_no_longer_open` |
+| The three former open questions are rules now; each refusal is its own outcome; §6 keeps the lab-access row | B4 §3a, §6 | `test_the_three_proposals_are_rules_now_and_no_longer_open` |
 | Course lookup sends `field` and `value`, by course id or shortname, never idnumber | B4 course identification | `test_course_lookup_does_not_rely_on_idnumber` |
 | The capability lists (needed, never granted) are the guide's and do not overlap; a custom role is required | B4, SEC-03 | `test_the_capability_lists_are_the_guides_and_do_not_overlap`, `test_the_custom_role_rule_is_stated` |
 | Every lab check in rules §5 (1 to 18) is still open on both versions, with no decision record; checks 13 to 16 name the rule they cover; checks 17 and 18 ask whether `core_course_get_contents` and `mod_assign_get_assignments` return the `idnumber` fields (guide, 15 Nov; reviewer on PR #64, 16 Nov) | App-C 1 | `test_every_lab_check_is_still_open`, `test_the_decision_lab_checks_name_their_rules` |
@@ -383,19 +382,14 @@ Test names are in `test_moodle_ws_v1.py`.
 | Only the functions listed in the contract are called. `libs/moodle_ws` builds its allow-list from the example (`test_allowlist.py`: `test_the_list_equals_the_contract_example`); the client that refuses any other function follows. Not enforced against a real Moodle: there is no real transport yet | B4 |
 | One service account per site, with a token restricted to those functions and the capabilities in rules §4 (the lists are tested; that they are enough is lab check 9) | B4, SEC-03 |
 | The token is stored only in the environment | SEC-03, C-06 |
-| A grade write uses workflow state `readyforrelease`, never `released`, and counts as done only when both the state and the grade value are confirmed; the grade value is read with `mod_assign_get_grades` (R1); the write rules R1 to R11 are contract text here, and their enforcement in `libs/moodle_ws` is a separate follow-up; only approved drafts are written | B4, C-09 |
+| A grade write uses workflow state `readyforrelease`, never `released`, and counts as done only when both the state and the grade value are confirmed; the grade value is read with `mod_assign_get_grades` (R1); the write rules R1 to R15 are contract text here, and their enforcement in `libs/moodle_ws` is a separate follow-up; only approved drafts are written | B4, C-09 |
 | Each function exists and behaves as expected with the parameters used on Moodle 4.5 and 5.3 (all lab checks in rules §5 are still open) | B4, App-C 1 |
 
 Open: when the lab Moodle sites are available (all checks in `moodle-ws.v1.md` §5 wait for
 them; B4 cannot be frozen until they pass), and the field for feedback comments inside `plugindata` on
 `mod_assign_save_grade` (lab check 6). Q1, Q24 and Q37 are decided (PR #27); the eleven B4
-questions are decided (PR #64). Still open for the guide: what happens when the state cannot be read
-before a write, whether marking workflow off is refused, and whether a lost answer with a
-matching read-back counts as done (rules §6; each has a fail-closed proposal).
-
-**Follow-up (not in this branch):** `docs/design/grading.md` §10.1 (Release 4, draft) says an unknown
-outcome may "write again under the same idempotency key"; R11 forbids an automatic retry. The
-grading design must be updated in its own pull request.
+questions are decided (PR #64), and so are the three that followed: the state that cannot be read before
+a write, marking workflow off, and a lost answer with a matching read-back (R12 to R14, PR #72).
 
 ## `libs/moodle_ws` skeleton, Release 0 foundation
 
@@ -570,8 +564,7 @@ requirement, so it has no FR ID and no row in the table at the top. It is the da
 and App-C 8 (licence or consent for every B8.5 video).
 
 **Status: PENDING.** Five local recording files were identified in earlier work (their SHA-256
-values are in the inventory), but no consent line is written, no duration is recorded, no
-transcript is typed or reviewed, and none is accepted as B8.5 evidence. The tests show that the committed placeholders are well formed and that the PENDING status
+values are in the inventory), but no consent line is written, no transcript is typed or reviewed, and none is accepted as B8.5 evidence. The tests show that the committed placeholders are well formed and that the PENDING status
 is true. They do **not** show that B8.5 or App-C 8 is met.
 
 ### Enforced by the test and covered by automated tests

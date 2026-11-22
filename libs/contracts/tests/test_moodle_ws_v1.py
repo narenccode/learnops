@@ -18,8 +18,7 @@ AUTOMATED here:
     attempt, locked states, the declared capabilities kept out, suspended learners, the
     viewownsubmissionsummary lab check, reviewgrades on both versions, NOT_VERIFIED without a
     repeated write, exact numeric match and the range check, separate outcomes, and no automatic
-    retry; plus the open lab checks 13 to 16 for what the guide read in the code but did not run,
-    and the recorded follow-up for docs/design/grading.md §10.1;
+    retry; plus the open lab checks 13 to 16 for what the guide read in the code but did not run;
   * a replacement name, if any, also appears in the PRD B4 text (guide's rule, PR #27), and a
     replacement applies only to its own Moodle version (shown on a test-local document, because
     the contract example records none);
@@ -596,15 +595,6 @@ def test_r11_uncertain_write_is_never_retried_automatically() -> None:
     assert "never retried automatically" in plain(prd_b4())
 
 
-def test_the_grading_design_conflict_with_r11_is_an_open_follow_up() -> None:
-    """docs/design/grading.md §10.1 (Release 4) is left unchanged on purpose; the conflict is
-    recorded in rules §6, so it cannot be forgotten."""
-    open_questions = plain(section(rules(), "## 6. Open questions", "### 6a."))
-    assert "`docs/design/grading.md` §10.1" in open_questions
-    assert "conflicts with R11" in open_questions
-    assert "R11 wins" in open_questions
-
-
 def test_r12_an_unreadable_or_unknown_state_is_refused_before_sending() -> None:
     r12 = write_rules()["R12"]
     assert "refused before anything is sent" in r12
@@ -644,7 +634,7 @@ def test_r15_applytoall_and_addattempt_are_pinned_to_zero() -> None:
 
 def test_the_three_proposals_are_rules_now_and_no_longer_open() -> None:
     """The guide decided the three fail-closed proposals on PR #72 (2026-11-15): they are rules,
-    each refusal is its own outcome, and §6 keeps the lab-access and grading-design rows."""
+    each refusal is its own outcome, and §6 keeps the lab-access row."""
     decided = plain(section(rules(), "### 3a. Write rules", "### 3b."))
     assert "separate from `NOT_VERIFIED`" in decided
     assert "never reported as success" in decided
