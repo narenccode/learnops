@@ -35,6 +35,45 @@ GRADE_NOT_A_NUMBER: Final = (
     "The grade is not a plain number of 0 or more, so nothing was sent to Moodle. Pass the "
     "approved grade as a number, for example 84.5."
 )
+OUTCOME_VERIFIED: Final = (
+    "The draft grade was written and read back, and it matches what was sent. A mentor releases it "
+    "in Moodle."
+)
+OUTCOME_NOT_VERIFIED: Final = (
+    "The draft grade could not be confirmed by reading it back, so it is not counted as written. "
+    "It was not sent again. Check it in Moodle and decide what to do next."
+)
+OUTCOME_UNCERTAIN: Final = (
+    "Moodle did not confirm the write, and the read-back did not show it either. It was not sent "
+    "again. Check the grade in Moodle and decide what to do next."
+)
+OUTCOME_REFUSED_LOCKED: Final = (
+    "The learner's grade is already ready for release or released, so nothing was sent. Change it "
+    "in Moodle if it must change."
+)
+OUTCOME_REFUSED_OUT_OF_RANGE: Final = (
+    "The grade is below 0 or above the assignment's maximum, so nothing was sent. Correct the "
+    "grade and approve it again."
+)
+OUTCOME_REFUSED_STATE_UNKNOWN: Final = (
+    "The learner's current grading state could not be read, so nothing was sent: LearnOps cannot "
+    "show the grade is not locked. Check the learner in Moodle."
+)
+OUTCOME_REFUSED_WORKFLOW_OFF: Final = (
+    "Marking workflow is off for this assignment, so nothing was sent: the grade could be shown "
+    "to the learner at once. Turn marking workflow on in Moodle first."
+)
+OUTCOME_NEEDS_MENTOR_CONFIRMATION: Final = (
+    "Moodle did not confirm the write, but reading it back shows the grade that was sent. It was "
+    "not sent again. Check it in Moodle and confirm it before it counts as written."
+)
+OUTCOME_ACCESS_DENIED: Final = (
+    "The service account cannot see or grade this learner's submission, so nothing was written. "
+    "Ask your administrator."
+)
+OUTCOME_NO_SUBMISSION: Final = "The learner has no submission, so nothing was written. Grade them in Moodle if needed."
+OUTCOME_NO_GRADE: Final = "The submission has no approved grade, so nothing was written. Approve a grade first."
+OUTCOME_SKIPPED_SUSPENDED: Final = "The learner is suspended in this course, so they were skipped. Grade them in Moodle if needed."
 MISSING_SETTING: Final = (
     "{variable} is not set. Set it in the environment before contacting Moodle."
 )

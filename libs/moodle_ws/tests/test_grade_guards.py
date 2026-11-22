@@ -20,6 +20,7 @@ import pytest
 
 import moodle_ws
 import moodle_ws.client
+import moodle_ws.grade_write
 from moodle_ws import (
     GradeWriteNotAllowed,
     MoodleClient,
@@ -224,7 +225,7 @@ def test_a_direct_call_reports_the_guards_reason_not_the_direct_write_refusal(
 
 @pytest.mark.parametrize("name", REMOVED_NAMES)
 def test_the_receipt_path_no_longer_exists(name: str) -> None:
-    for module in (moodle_ws, moodle_ws.client):
+    for module in (moodle_ws, moodle_ws.client, moodle_ws.grade_write):
         assert not hasattr(module, name)
     assert not hasattr(MoodleClient, name)
 
