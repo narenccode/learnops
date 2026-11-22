@@ -48,6 +48,12 @@ attempts, unexpected names and Range requests; it does not make the route safe t
 - **No resumable (tus) upload (module rule 4 of `modules/video/CLAUDE.md` is not met).** One request carries the whole file; no 90 MB chunks, no resume.
 - **No persistent background queue (module rule 5 and OPS-10 are not met).** A thread in the web process does the work; job state is in
   memory and is lost on restart.
+- **ffmpeg licence status (PRD C-11).** The demo runs ffmpeg as a separate program and encodes with
+  `libx264`, which is a **GPL** encoder; the Windows build named above and the `apt` package in CI are
+  typically built with it. That build was **not checked against C-11 and is not an approved
+  production build**: it is for local demonstration only. The Video design (`docs/design/video.md`,
+  Q10) requires an LGPL build with no GPL-only parts for the pipeline, to be confirmed from the lab
+  image's `ffmpeg -version` output. Do not read this demo's encoder as the pipeline's.
 - **No production deployment configuration.** No Dockerfile, Compose file, worker container,
   storage adapter or TLS. ffmpeg is installed by hand (Windows steps above) and in the CI job.
 - **No generated captions, transcript or chapters.** `captions.en.vtt`, `transcript.en.json` and
