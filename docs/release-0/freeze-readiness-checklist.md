@@ -96,9 +96,9 @@ items 1 to 5, 7, 8, 10. The Release 0 notes must list where each one goes (not w
 | PR | State | Review | Note |
 |---|---|---|---|
 | #98 T8 STT ADR 0002 | Draft | Review required | PROPOSED, pending the guide's approval of its six points |
-| #105 T19 report and demo | Draft | Review required | Revised against `main` `5f3a794` |
+| #105 T19 report and demo | Open, ready for review | Changes requested (status wording) | Revised against `main`; the review points are being fixed |
 | #106 T13 literature (P1 to P8) | Draft | Review required | 1 of 6 sources verified; entries pending owner verification |
-| #104 this audit | Draft | Review required | |
+| #104 this audit | Open, ready for review | Changes requested (status wording) | The audit's own verdict (not ready to freeze) is unchanged |
 | #129 Lesson Processor demo | Open | Changes requested (Akshita21-09) | One-PR exception from the guide; awaiting peer review |
 | #140 Video design document | Draft | Review required | Guide's answers applied; stays `Draft` |
 | #115 CODEOWNERS after the freeze | Draft | Review required | |
