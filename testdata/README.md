@@ -57,6 +57,8 @@ B8.2 is never changed. The folders `missing-body`, `duplicate-id`, `protected-id
 | `ck-12-full-url-media` | CK-12 | package | planned | image at `https://example.invalid/diagram.png` |
 | `ck-13-unlock-without-completion` | CK-13 | mbz | pending-lab | unlocking task has completion tracking off |
 
+**The mapping is PROVISIONAL.** `expected-findings.yaml` says `mapping_status: provisional` and `confirmation: null`. It is not an approved baseline and not the oracle for the 100 % target until Akshita and the guide confirm it and the confirmation is recorded in the file. CK-12 is also marked `assertable: false`: whether the model builder extracts body media into `media_refs` is open (checker design §12 item 19).
+
 **Reading `expected-findings.yaml`.** Each entry gives the variant `id`, the `rule`, the `element`
 (by idnumber), the `expected` finding (rule, element, severity), the `reason`, and `also_expected`:
 other rules that may fire on the same variant. A future checker test should require the `expected`
