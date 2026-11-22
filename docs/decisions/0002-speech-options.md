@@ -1,8 +1,8 @@
 # 0002. Speech-to-text options for the Video pipeline (T8)
 
 **Date:** 2026-11-16
-**Status:** PROPOSED. **Section 8 was approved by the guide with two amendments** on 2026-11-19
-([comment on PR #98](https://github.com/narenccode/learnops/pull/98#issuecomment-6996765969)); the record is **not complete**: the non-secret lab facts and the
+**Status:** PROPOSED. **Section 8 was approved by the guide with two amendments**; the guide confirmed it in his own words on 2026-11-20
+([comment on PR #98](https://github.com/narenccode/learnops/pull/98#issuecomment-7053405605)); the record is **not complete**: the non-secret lab facts and the
 FFmpeg build are not recorded yet (section 3 and section 9), so no engine is chosen here. The open
 questions that remain are listed in section 9.
 **Owner:** Student 4 (Video) · **Requirements:** FR-V-04, FR-M-02, G-6, G-7, App-C 7, C-10, EXT-04, OPS-10, OPS-11
@@ -307,7 +307,7 @@ does not prove it: G-7 covers the whole pipeline.
 
 ## 8. Decision (approved by the guide with two amendments, 2026-11-19)
 
-**Approved by the guide in [a comment on PR #98](https://github.com/narenccode/learnops/pull/98#issuecomment-6996765969), 2026-11-19, with the two amendments
+**Approved by the guide in [a comment on PR #98](https://github.com/narenccode/learnops/pull/98#issuecomment-7053405605), 2026-11-20 (first given on 2026-11-19), with the two amendments
 below.** The approval covers the six points of this section only; the open questions of section 9
 stay open, and no engine behind the lab endpoint is chosen.
 
@@ -336,7 +336,7 @@ stay open, and no engine behind the lab endpoint is chosen.
 
 ## 9. Questions and the guide's answers
 
-The guide answered on 2026-11-19 ([comment on PR #98](https://github.com/narenccode/learnops/pull/98#issuecomment-6996765969)). Q1 to Q3 are answered only in
+The guide answered on 2026-11-19 ([comment on PR #98](https://github.com/narenccode/learnops/pull/98#issuecomment-7053405605)). Q1 to Q3 are answered only in
 principle: the facts must still be recorded here.
 
 | # | Question | Guide's answer (2026-11-19) | State |
@@ -410,6 +410,6 @@ community thread (a user report, not a source of fact) was not re-read.
 | Item | Value |
 |---|---|
 | Guide decision | **Section 8 approved with two amendments** (8(1) as written, plus the PRD A10 clarification; 8(4) self-hosted evaluation on the lab VM only, with the guide's approval for the engine). The open questions of section 9 are answered where the table says so; the lab facts are still to be recorded |
-| Decided by / date | The guide (through the guide's assistant), 2026-11-19 |
-| Link to approval | [https://github.com/narenccode/learnops/pull/98#issuecomment-6996765969](https://github.com/narenccode/learnops/pull/98#issuecomment-6996765969) |
+| Decided by / date | The guide, 2026-11-20 (first given by the guide's assistant on 2026-11-19, then confirmed by the guide in his own words) |
+| Link to approval | [https://github.com/narenccode/learnops/pull/98#issuecomment-7053405605](https://github.com/narenccode/learnops/pull/98#issuecomment-7053405605) |
 | Record complete? | **No.** Open: the non-secret lab facts (Q1 to Q3), the endpoint's retention entry, the FFmpeg build and configuration. The status of this record changes once those are recorded |
