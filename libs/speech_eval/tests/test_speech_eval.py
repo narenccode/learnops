@@ -286,16 +286,18 @@ def full_official(tmp_path: Path) -> Path:
     return make_run(tmp_path, mode="official", run=run, approvals=approvals)
 
 
-def test_the_repository_dataset_is_still_pending() -> None:
-    # Fails on purpose the day B8.5 becomes COMPLETE: then re-check the official-run gates.
-    assert dataset_status(REPO_ROOT) == "PENDING"
+def test_the_repository_dataset_is_complete() -> None:
+    # B8.5 became COMPLETE when its five lectures, transcripts and consent lines were committed.
+    # The official-run gates were re-checked then: the dataset-status gate now passes on the
+    # real repository, and the next test shows an official run is still refused for other reasons.
+    assert dataset_status(REPO_ROOT) == "COMPLETE"
 
 
 def test_official_mode_is_refused_today(tmp_path: Path) -> None:
     run = load_run(full_official(tmp_path), repo_root=REPO_ROOT)
     joined = " | ".join(run.errors)
     assert "no normaliser is approved yet" in joined
-    assert "dataset status is PENDING, not COMPLETE" in joined
+    assert "dataset status" not in joined  # the B8.5 status gate is satisfied
     assert (
         OFFICIAL_NORMALISERS == frozenset()
     )  # fails on purpose when someone adds one: cite the decision

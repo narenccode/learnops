@@ -1,5 +1,5 @@
 """Shared fixtures. The fake provider reads only the real process environment, so tests set it
-with monkeypatch instead of passing a mapping. The provider fixtures arrive with the providers."""
+with monkeypatch instead of passing a mapping."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from collections.abc import Iterator
 import pytest
 
 from model_interface.call_log import reset_call_logger
+from model_interface.providers import reset_provider
 from model_interface.registry import TaskRegistry
 
 from .echo_task import ECHO_INPUT, ECHO_OUTPUT
@@ -27,9 +28,18 @@ def clean_env(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     """Start every test with no provider settings, shared provider or configured logger."""
     for name in SETTINGS:
         monkeypatch.delenv(name, raising=False)
+    reset_provider()
     reset_call_logger()
     yield
+    reset_provider()
     reset_call_logger()
+
+
+@pytest.fixture
+def fake_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LEARNOPS_ENV", "test")
+    monkeypatch.setenv("MODEL_ALLOW_FAKE", "true")
+    monkeypatch.setenv("MODEL_PROVIDER", "fake")
 
 
 @pytest.fixture
