@@ -2,19 +2,37 @@
 
 AUTOMATED here (structure only, by contracts/course-package.v1.schema.json):
   * the schema is a valid Draft 2020-12 schema;
-  * the example package's course.yaml validates, also with mode "sections-only";
+  * the example package's course.yaml validates, also with mode "sections-only", and so does the
+    second example without section idnumbers (a section idnumber is optional: absent is valid,
+    null and an empty string are not);
   * required fields, types, enums, identifier and path patterns, ISO dates, the two default
     protected idnumbers (B1.4), the per-type required fields (B1.1, B7), and that unknown
-    fields are accepted (PRD B.0, EXT-02).
+    fields are accepted (PRD B.0, EXT-02);
+  * the B7 practice entry: an h5p activity has graded false and a `file` (a relative path
+    ending in lowercase .h5p, same path rules as `body`). `file` is defined for h5p only, so on
+    any other type it is an unknown field and is not checked (guide's decision, Issue #44).
+  * the relative-path rule (C-08): `$defs/relative_path` is the same pattern as B6, accepts every
+    valid vector and rejects every invalid vector of contracts/test-vectors/relative-path.v1.json,
+    and rejects exactly the Unicode 15.0.0 categories Cc and Cf (plus the ASCII and whitespace rules).
 
-NOT automated here, and therefore NOT claimed as enforced (the schema's $comment lists them):
-  * B1.2 rules 1, 2, 3, 5 and 6: one guide Page and one task Assignment per week, the unlock
-    chain, points summing to total_points, completion on unlock activities, unique idnumbers;
+NOT checked by the schema, so not tested here (the schema's $comment lists them). The validator
+in libs/contracts (tests: test_validate_course.py, test_config.py) enforces two of them:
+idnumbers unique within one package (B1.2 rule 6, first half) and the protected idnumbers a site
+configures beyond the two defaults (B1.4).
+No code checks the rest yet. The validator lists each of them as "not checked" in every report:
+  * B1.2 rules 1, 2, 3 and 5: one guide Page and one task Assignment per week, the unlock chain,
+    points summing to total_points, completion on unlock activities;
+  * B1.2 rule 6, second half: an idnumber is never reused for a different activity across
+    package versions (it needs the previous version of the package);
   * B1.3: the marking table inside an assignment body (markers, columns, points, Check names);
-  * B1.4: configured protected idnumbers other than the two defaults, protected_section;
-  * that the files named by "body" exist.
-These need validator code that does not exist yet (Release 0/1 work in libs/contracts and the
-checker). Until then they are checked by hand, not by this file.
+  * B1.4: the protected_section number;
+  * B1.1, in a parsed course.yaml: that the files named by "body" exist. validate_package checks
+    it for a package folder (test_validate_package.py);
+  * B7: that the .h5p file named by an h5p activity exists (no real .h5p is kept in the
+    repository);
+  * B7: that an ordinary optional h5p practice entry comes right after the week's guide Page
+    (list order). Video checkpoint placement is an open decision and is not covered.
+Until they are implemented they are checked by hand, not by this file.
 
 Each invalid case below must fail at the expected place with the expected schema keyword, so a
 case cannot pass for the wrong reason.
@@ -25,6 +43,8 @@ from __future__ import annotations
 import copy
 import datetime
 import json
+import re
+import unicodedata
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -37,6 +57,13 @@ from jsonschema import Draft202012Validator, FormatChecker
 ROOT = Path(__file__).resolve().parents[3]
 SCHEMA_PATH = ROOT / "contracts" / "course-package.v1.schema.json"
 EXAMPLE_YAML = ROOT / "contracts" / "examples" / "course-package.v1" / "course.yaml"
+EXAMPLE_NO_SECTION_IDS = (
+    ROOT
+    / "contracts"
+    / "examples"
+    / "course-package.v1"
+    / "course-without-section-idnumber.yaml"
+)
 
 Doc = dict[str, Any]
 Loc = tuple[str | int, ...]
@@ -81,6 +108,29 @@ def add_activity(**fields: Any) -> Edit:
         doc["sections"][0]["activities"].append(fields)
 
     return edit
+
+
+DROP = object()  # marks a field that h5p_fields() must leave out
+
+
+def h5p_fields(**changes: Any) -> dict[str, Any]:
+    """A valid h5p practice entry (PRD B7); `changes` overrides or adds fields.
+
+    A change whose value is DROP removes that field, so a case can leave out exactly one.
+    """
+    fields: dict[str, Any] = {
+        "type": "h5p",
+        "idnumber": "wk-01-practice",
+        "title": "Practice",
+        "graded": False,
+        "file": "wk-01-practice.h5p",
+    }
+    for key, value in changes.items():
+        if value is DROP:
+            del fields[key]
+        else:
+            fields[key] = value
+    return fields
 
 
 def compose(*edits: Edit) -> Edit:
@@ -172,6 +222,49 @@ def test_example_in_sections_only_mode_is_valid(
     assert messages(validator, doc) == []
 
 
+# --- the section idnumber is optional (issue #65, decided by the guide) ---------------------
+
+
+def test_example_without_section_idnumbers_is_valid(
+    validator: Draft202012Validator,
+) -> None:
+    no_ids: Doc = yaml.safe_load(EXAMPLE_NO_SECTION_IDS.read_text(encoding="utf-8"))
+    assert all("idnumber" not in section for section in no_ids["sections"])
+    assert messages(validator, no_ids) == []
+
+
+def test_example_without_section_idnumbers_differs_from_the_main_example_only_there(
+    example: Doc,
+) -> None:
+    # The two examples must not drift apart: the second is the first minus the section idnumbers.
+    no_ids: Doc = yaml.safe_load(EXAMPLE_NO_SECTION_IDS.read_text(encoding="utf-8"))
+    expected = copy.deepcopy(example)
+    for section in expected["sections"]:
+        del section["idnumber"]
+    assert no_ids == expected
+
+
+@pytest.mark.parametrize("mode", ["full", "sections-only"])
+@pytest.mark.parametrize("which", ["first", "all"])
+def test_section_without_idnumber_is_valid(
+    validator: Draft202012Validator, doc: Doc, mode: str, which: str
+) -> None:
+    doc["course"]["mode"] = mode
+    sections = doc["sections"][:1] if which == "first" else doc["sections"]
+    for section in sections:
+        del section["idnumber"]
+    assert messages(validator, doc) == []
+
+
+def test_a_present_section_idnumber_is_still_validated(
+    validator: Draft202012Validator, doc: Doc
+) -> None:
+    # Optional means absent is allowed, not that anything goes: the other cases in this file
+    # (pattern, protected values, type, empty string, null) still apply to a present value.
+    doc["sections"][0]["idnumber"] = "Wk-01"
+    assert (WEEK1 + ("idnumber",), "pattern") in error_keys(validator, doc)
+
+
 # --- invalid: required fields --------------------------------------------------------------
 
 MISSING = [
@@ -184,7 +277,8 @@ MISSING = [
     missing("course without mode", COURSE + ("mode",)),
     missing("section without number", WEEK1 + ("number",)),
     missing("section without title", WEEK1 + ("title",)),
-    missing("section without idnumber", WEEK1 + ("idnumber",)),
+    # A section idnumber is optional since the guide's decision on issue #65: see
+    # test_section_without_idnumber_is_valid.
     missing("section without activities", WEEK1 + ("activities",)),
     missing("activity without type", PAGE + ("type",)),
     missing("activity without idnumber", PAGE + ("idnumber",)),
@@ -196,7 +290,13 @@ MISSING = [
     missing("assignment without completion", TASK + ("completion",)),
     Case(
         "h5p without graded",
-        add_activity(type="h5p", idnumber="wk-01-practice", title="Practice"),
+        add_activity(**h5p_fields(graded=DROP)),
+        NEW_ACTIVITY,
+        "required",
+    ),
+    Case(
+        "h5p without file",
+        add_activity(**h5p_fields(file=DROP)),
         NEW_ACTIVITY,
         "required",
     ),
@@ -209,6 +309,17 @@ def test_missing_required_field_is_rejected(
 ) -> None:
     case.edit(doc)
     assert (case.at, case.keyword) in error_keys(validator, doc)
+
+
+@pytest.mark.parametrize("field", ["graded", "file"])
+def test_h5p_missing_field_is_named_and_only_that_field(
+    validator: Draft202012Validator, doc: Doc, field: str
+) -> None:
+    # The MISSING cases above only look at (place, keyword), which both fields share. This
+    # pins the message, so "without graded" cannot pass because `file` is missing, or the reverse.
+    add_activity(**h5p_fields(**{field: DROP}))(doc)
+    required = [m for m in messages(validator, doc) if "required property" in m]
+    assert required == [f"'{field}' is a required property"]
 
 
 # --- invalid: identifiers (slug, idnumber, unlock.after) -----------------------------------
@@ -325,6 +436,8 @@ TYPE_CASES = [
     bad("section number is negative", WEEK1 + ("number",), -1, "minimum"),
     bad("section title is empty", WEEK1 + ("title",), "", "minLength"),
     bad("section idnumber is a number", WEEK1 + ("idnumber",), 1, "type"),
+    # Only an absent idnumber is valid (issue #65, D3): null is not "no idnumber".
+    bad("section idnumber is null", WEEK1 + ("idnumber",), None, "type"),
     bad("activities is a string", WEEK1 + ("activities",), "x", "type"),
     bad("activities is empty", WEEK1 + ("activities",), [], "minItems"),
     bad("unlock is a list", WEEK1 + ("unlock",), [], "type"),
@@ -364,11 +477,33 @@ TYPE_CASES = [
     bad("body is a number", PAGE + ("body",), 5, "type"),
     Case(
         "h5p that is graded",
-        add_activity(
-            type="h5p", idnumber="wk-01-practice", title="Practice", graded=True
-        ),
+        add_activity(**h5p_fields(graded=True)),
         NEW_ACTIVITY + ("graded",),
         "const",
+    ),
+    Case(
+        "h5p graded is a string",
+        add_activity(**h5p_fields(graded="false")),
+        NEW_ACTIVITY + ("graded",),
+        "const",
+    ),
+    Case(
+        "h5p file is a number",
+        add_activity(**h5p_fields(file=5)),
+        NEW_ACTIVITY + ("file",),
+        "type",
+    ),
+    Case(
+        "h5p file is a list",
+        add_activity(**h5p_fields(file=["a.h5p"])),
+        NEW_ACTIVITY + ("file",),
+        "type",
+    ),
+    Case(
+        "h5p file is null",
+        add_activity(**h5p_fields(file=None)),
+        NEW_ACTIVITY + ("file",),
+        "type",
     ),
 ]
 
@@ -415,6 +550,167 @@ def test_body_that_is_not_a_relative_path_is_rejected(
     assert (case.at, case.keyword) in error_keys(validator, doc)
 
 
+# --- invalid: h5p file paths (same path rules as body, plus a lowercase .h5p ending) --------
+
+# Everything BAD_BODIES rejects, rewritten to end in .h5p so that only the path rule is tested,
+# plus values that are paths but do not end in a lowercase .h5p.
+BAD_H5P_FILES = [
+    # URLs, absolute paths and '..' (whitespace-free values, split on spaces):
+    *"../x.h5p practice/../../x.h5p /abs/x.h5p https://example.org/x.h5p file:///x.h5p".split(),
+    # Wrong extension, or no name before it:
+    *"x.H5P x.h5P x.zip x.h5p.zip x.h5p.bak x practice/ xh5p x.h5p/ .h5p practice/.h5p".split(),
+    # Values that cannot be written in the lists above:
+    "mailto:a@b.c.h5p",
+    "C:\\x.h5p",
+    "practice\\x.h5p",
+    "",
+    "x.h5p\n",
+    "practice/x\n.h5p",
+]
+H5P_FILE_CASES = [
+    Case(
+        f"h5p file {v!r}",
+        add_activity(**h5p_fields(file=v)),
+        NEW_ACTIVITY + ("file",),
+        "pattern",
+    )
+    for v in BAD_H5P_FILES
+]
+
+
+@pytest.mark.parametrize("case", params(H5P_FILE_CASES))
+def test_h5p_file_that_is_not_a_relative_h5p_path_is_rejected(
+    validator: Draft202012Validator, doc: Doc, case: Case
+) -> None:
+    case.edit(doc)
+    assert (case.at, case.keyword) in error_keys(validator, doc)
+
+
+def test_h5p_with_a_protected_idnumber_is_rejected(
+    validator: Draft202012Validator, doc: Doc
+) -> None:
+    # B1.4 holds for every activity type, so an h5p entry cannot take a protected idnumber.
+    add_activity(**h5p_fields(idnumber="final-project"))(doc)
+    assert (NEW_ACTIVITY + ("idnumber",), "not") in error_keys(validator, doc)
+
+
+# --- paths: the one relative-path rule shared with B6 (PRD C-08; guide decisions on #32, #38) --
+#
+# B1 uses the same $defs/relative_path rule as B6.3, and the same shared vectors. The vector file
+# is loaded here, never copied, so the schemas and libs/media_paths test one list.
+
+B6_SCHEMA_PATH = ROOT / "contracts" / "lesson-manifest.v1.schema.json"
+PATH_VECTORS_PATH = ROOT / "contracts" / "test-vectors" / "relative-path.v1.json"
+PATH_VECTORS = json.loads(PATH_VECTORS_PATH.read_text(encoding="utf-8"))
+VALID_PATHS: list[str] = [v["path"] for v in PATH_VECTORS["valid"]]
+BAD_PATHS: list[str] = [v["path"] for v in PATH_VECTORS["invalid"]]
+
+
+@pytest.fixture(scope="module")
+def path_validator(schema: dict[str, Any]) -> Draft202012Validator:
+    """A validator for $defs/relative_path alone."""
+    return Draft202012Validator(schema["$defs"]["relative_path"])
+
+
+@pytest.mark.parametrize("path", VALID_PATHS, ids=repr)
+def test_every_valid_path_vector_is_accepted(
+    path_validator: Draft202012Validator, path: str
+) -> None:
+    assert messages(path_validator, path) == []
+
+
+@pytest.mark.parametrize("path", BAD_PATHS, ids=repr)
+def test_every_invalid_path_vector_is_rejected(
+    path_validator: Draft202012Validator, path: str
+) -> None:
+    assert ((), "pattern") in error_keys(path_validator, path)
+
+
+@pytest.mark.parametrize("path", VALID_PATHS, ids=repr)
+def test_body_accepts_every_valid_path_vector(
+    validator: Draft202012Validator, doc: Doc, path: str
+) -> None:
+    set_at(PAGE + ("body",), path)(doc)
+    assert messages(validator, doc) == []
+
+
+@pytest.mark.parametrize("path", BAD_PATHS, ids=repr)
+def test_body_rejects_every_invalid_path_vector(
+    validator: Draft202012Validator, doc: Doc, path: str
+) -> None:
+    set_at(PAGE + ("body",), path)(doc)
+    assert (PAGE + ("body",), "pattern") in error_keys(validator, doc)
+
+
+def test_b1_relative_path_pattern_is_exactly_the_b6_pattern(
+    schema: dict[str, Any],
+) -> None:
+    # One rule, one list: the B1 pattern is a copy of the B6 pattern, including the Unicode
+    # 15.0.0 Cc and Cf ranges inside it. If either changes alone, this fails.
+    b6 = json.loads(B6_SCHEMA_PATH.read_text(encoding="utf-8"))["$defs"][
+        "relative_path"
+    ]
+    b1 = schema["$defs"]["relative_path"]
+    assert b1["type"] == b6["type"] == "string"
+    assert b1["pattern"] == b6["pattern"]
+
+
+# --- paths: Unicode Cc and Cf (guide decision on #32, copied into B1) ----------------------
+#
+# The pattern rejects the complete Unicode 15.0.0 categories Cc and Cf. The expected sets here
+# come from Python's Unicode database, never from a list typed in this file. The first test
+# fails if Python's database is not 15.0.0, because the pattern's list is pinned and must not
+# follow Python: a new Unicode version is a reviewed contract decision (PRD B.0).
+
+UNICODE_VERSION = "15.0.0"
+CONTROL_AND_FORMAT = ("Cc", "Cf")
+
+
+def _code_points_in(categories: tuple[str, ...]) -> list[int]:
+    return [p for p in range(0x110000) if unicodedata.category(chr(p)) in categories]
+
+
+def _range_count(code_points: list[int]) -> int:
+    return sum(
+        1 for i, p in enumerate(code_points) if i == 0 or code_points[i - 1] != p - 1
+    )
+
+
+def test_python_unicode_database_is_the_pinned_version() -> None:
+    assert unicodedata.unidata_version == UNICODE_VERSION, (
+        f"This Python uses Unicode {unicodedata.unidata_version}; the relative-path rule "
+        f"is pinned to Unicode {UNICODE_VERSION}. A new Unicode version needs a reviewed "
+        "contract decision (PRD B.0) for B1, B6 and libs/media_paths together."
+    )
+
+
+def test_unicode_15_0_has_2_cc_and_21_cf_ranges() -> None:
+    # UCD 15.0.0 DerivedGeneralCategory.txt: Cc 65 code points, Cf 170.
+    cc, cf = (_code_points_in((c,)) for c in CONTROL_AND_FORMAT)
+    assert (_range_count(cc), len(cc), _range_count(cf), len(cf)) == (2, 65, 21, 170)
+
+
+def test_pattern_rejects_exactly_cc_and_cf_among_all_code_points(
+    schema: dict[str, Any],
+) -> None:
+    # Every code point, placed after the first character of a one-segment name (a<c>.mp4),
+    # through the schema's own pattern (jsonschema checks "pattern" with re.search, as here).
+    # Whitespace and the ASCII rules reject a few more; nothing else may differ. The colon is
+    # in the expected set only because in this position it forms a URL scheme or drive-letter
+    # prefix ("a:"): the rule does not reject a colon everywhere (notes/b:c.md and 12:30.mp4
+    # are valid, see the shared vectors).
+    pattern = re.compile(schema["$defs"]["relative_path"]["pattern"])
+    forbidden = set(_code_points_in(CONTROL_AND_FORMAT))
+    whitespace = {p for p in range(0x110000) if re.fullmatch(r"\s", chr(p))}
+    rejected = forbidden | whitespace | {ord(c) for c in ":\\?#%"}
+    wrong = [
+        f"U+{p:04X}"
+        for p in range(0x110000)
+        if (pattern.search(f"a{chr(p)}.mp4") is None) != (p in rejected)
+    ]
+    assert wrong == []
+
+
 # --- valid variations: the schema must NOT reject these ------------------------------------
 
 
@@ -448,11 +744,21 @@ ACCEPTED = [
     Accepted(
         "label activity", add_activity(type="label", idnumber="wk-01-note", title="N")
     ),
+    Accepted("ungraded h5p activity", add_activity(**h5p_fields())),
     Accepted(
-        "ungraded h5p activity",
-        add_activity(
-            type="h5p", idnumber="wk-01-practice", title="Practice", graded=False
-        ),
+        "h5p activity in a folder",
+        add_activity(**h5p_fields(file="practice/week-1/wk-01-practice.h5p")),
+    ),
+    Accepted(
+        "h5p file with '..' inside a name",
+        add_activity(**h5p_fields(file="a/..b/c.h5p")),
+    ),
+    Accepted("h5p with an unknown field", add_activity(**h5p_fields(future="x"))),
+    # `file` is defined for h5p only (guide's decision), so elsewhere it is an unknown field.
+    Accepted("file on a page is not checked", set_at(PAGE + ("file",), 5)),
+    Accepted(
+        "file on a url activity is not checked",
+        add_activity(type="url", idnumber="wk-01-link", title="Link", file="no path"),
     ),
     Accepted(
         "idnumber that only contains a protected one",
