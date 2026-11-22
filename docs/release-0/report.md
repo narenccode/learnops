@@ -111,7 +111,7 @@ as a freeze, and draft PR #115 prepares the post-freeze CODEOWNERS rule.
 | 6 | LTI library and licence | **Release 0** | 5 | `docs/decisions/0001-lti-library.md` exists but is `Proposed`, pending the guide's review; a second file is also numbered `0001` |
 | 7 | Caption WER target | Release 3 (G-6) | 6 | Needs B8.5 complete and a speech provider; ADR 0002 (#98) is `PROPOSED`; evaluation tooling merged (#103) and refuses `official` mode |
 | 8 | Licence or consent for B8.5 | First release that relies on it | 6 | 0 consent lines (decision 0004). Evidence audit: #104 (merged) |
-| 9 | Moodle 5.3 AI features | **Release 0** | 7 | Record in open PR #156 (decision 0012): source-checked on the Moodle 5.3 source, **not lab-verified**. The guide's answer on #140 put the check in scope for Student 4 |
+| 9 | Moodle 5.3 AI features | **Release 0** | 3 | **The decision record exists on `main`**: `docs/decisions/0012-app-c-9-moodle-ai-features.md` (PR #156, merged 2026-11-22). It is **source-checked** (Moodle's 5.3 source), **not lab-verified**: the lab Moodle 5.3 site was not looked at, Moodle 4.5 was not read, and the guide has not approved its proposed outcome. The record is present; the lab verification is outstanding. The guide's answer on #140 put the check in scope for Student 4 |
 | 10 | Backup and restore roles | First release that relies on it | 6 | Needs lab |
 
 ## 3. Release exit criteria (PRD §D2; format of `.claude/commands/release-check.md`)
@@ -185,7 +185,7 @@ not re-fetched: pre-commit, gitleaks over the whole history, mypy, contract exam
 | Retention, lab storage, names and transcripts, and processing services for B8.5 (data-map questions) | **Decided by the guide** (2026-11-19, confirmed in his own words 2026-11-20) and recorded in `docs/decisions/0011-b8-5-data-handling.md` (merged in PR #104); the data map follows it. What the lab endpoint keeps is not recorded yet (ADR 0002, PR #98) | Speakers are told about withdrawal and Git history before writing the consent line |
 | Which of the two `0001` decision records is renumbered | Guide | Decision records are ambiguous |
 | Approval of the three remaining design documents (`studio.md` is `Approved`, PR #147) | Guide only | Feature code cannot start for those modules; D1 not met |
-| LTI library (`0001`), STT options (`0002`, #98), App-C 9 record | Guide | App-C 6 and 9 (Release 0) |
+| LTI library (`0001`), STT options (`0002`, #98); the proposed outcome of the App-C 9 record (`0012`, on `main`) | Guide | App-C 6 and 9 (Release 0) |
 | The Release 0 notes that list where each moved item goes | Owners, guide | PRD §D1 requires them |
 | Contract changes and the freeze (B.0); open questions on issues #44, #45, #58, #65, #67 | All affected owners and the guide | Contracts not frozen |
 | Real T19 criteria | Owner | This chapter stays provisional |

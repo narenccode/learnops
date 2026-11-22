@@ -67,7 +67,7 @@ to classify the row was not found. A merged PR is not treated as proof of its ac
 | Test data B8.5 lecture videos | **Blocked** | Checker and tests merged (#82, #89); inventory hashes (#99). 0 of 5 consent lines, no transcripts, 338 s of 1800 s measured; see the B8.5 evidence document |
 | Test data B8.6 model comparison set | **Not ready** | PR #33 (open, draft): "one transcript" |
 | App-C item 6 (LTI library and licence) | **Awaiting guide** | `docs/decisions/0001-lti-library.md` is `Proposed`, pending the guide's review. Two files are numbered `0001` (`0001-lti-library.md` and `0001-b5-model-interface-v1.md`); the guide decides which to renumber |
-| App-C item 9 (Moodle 5.3 AI features) | **Not started** | Record in open PR #156 (decision 0012), source-checked and **not lab-verified**; the guide's answer on PR #140 put it in scope for Student 4 |
+| App-C item 9 (Moodle 5.3 AI features) | **Implemented, not verified** | The decision record **exists on `main`**: `docs/decisions/0012-app-c-9-moodle-ai-features.md` (PR #156, merged 2026-11-22). It is source-checked, **not lab-verified**: the lab Moodle 5.3 site and Moodle 4.5 were not looked at, and the guide has not approved its proposed outcome. The guide's answer on PR #140 put it in scope for Student 4 |
 | Lab VMs ready (A11) | **Unknown / Blocked** | The guide said on issue #55 that the lab Moodle 4.5 and 5.3 sites exist (2026-11-11) and gave an owner an account on 5.3 (2026-11-14); no A11 readiness record exists |
 | Design document per module approved | **Partly done: 1 of 4** | `studio.md` is `Approved` (PR #147, 2026-11-20); `grading.md` is `In review`; `checker.md` and `video.md` are `Draft`. The guide approves the other three |
 | CI and repository standards | **Completed** | `ci` succeeded on `main` `5f3a794` (and the two commits before it); review bot and CODEOWNERS exist |
@@ -88,7 +88,7 @@ items 1 to 5, 7, 8, 10. The Release 0 notes must list where each one goes (not w
 | 6 | LTI 1.3 library and licence | **Release 0** | **Awaiting guide** | ADR 0001 is Proposed |
 | 7 | Caption WER target from baseline run | Release 3 (G-6) | **Blocked** | Needs B8.5 complete and a speech provider; evaluation preparation merged (#103); ADR 0002 is draft PR #98, with the guide's one record fix applied |
 | 8 | Licence or consent for every B8.5 video | First release that relies on it | **Blocked** | 0 of 5; see the B8.5 evidence document |
-| 9 | Moodle 5.3 AI features | **Release 0** | **Not started** | No decision record found |
+| 9 | Moodle 5.3 AI features | **Release 0** | **Implemented, not verified** | Record `0012` is on `main` (PR #156, merged 2026-11-22), source-checked only; the lab 5.3 check and the guide's approval of its proposed outcome are outstanding |
 | 10 | Backup/restore roles | First release that relies on it | **Blocked** | Needs lab |
 
 ## 5. Pull requests (queried 2026-11-20; 19 open, listed by relevance; the #105 and #106 rows were refreshed on 2026-11-22)
