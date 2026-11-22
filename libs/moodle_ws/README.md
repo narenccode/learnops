@@ -3,11 +3,52 @@
 Every Moodle web-services call in LearnOps goes through this library (PRD B4, C-02). No module calls
 Moodle directly.
 
-**Status: Release 0 skeleton, built in steps.** This part adds the error family, the user-facing
-messages, the `Token` type, the site settings and redaction. The allow-list, the transport interface and the client follow in later pull requests. **It cannot call a real Moodle.**
+**Status: Release 0 skeleton.** It enforces the allow-list and the draft rule, and keeps tokens out of
+logs and errors. **It cannot call a real Moodle yet.** See [Not implemented](#not-implemented).
 
 Contract: `contracts/moodle-ws.v1.md`, with the allow-list in `contracts/moodle-ws.v1.schema.json` and
 `contracts/examples/moodle-ws.v1.functions.json`. Nothing in it is verified on a Moodle site yet.
+
+## Calling it
+
+```python
+from moodle_ws import create_client
+
+client = create_client("moodle45", transport)
+answer = client.call("mod_assign_get_assignments", params)
+```
+
+`create_client()` raises `NotSupported` without a transport, because no real one exists. Tests pass
+their own. `call()` returns the transport's answer unchanged.
+
+## What it refuses, before anything is sent
+
+- **Any function outside the allow-list.** The list is read from the contract, and matching is exact.
+- **A grade write that breaks the draft rule** (B4 §3). `mod_assign_save_grade` must send
+  `workflowstate` as `readyforrelease`. Any other value, or none, is refused. On that function, a key
+  or value that is exactly `released`, at any depth, is also refused. `mod_assign_set_user_flags` is
+  no longer in the B4 allow-list (guide's findings, PR #64), so it is refused as any other unlisted
+  function, even if an allow-list file still lists it. A sentence containing the word, such as
+  feedback text, is allowed.
+- **A grade write without an explicit attempt or a plain grade** (B4 R2, R9). `attemptnumber` must be
+  a whole number from 0, never `-1`; `grade` must be a plain non-negative number (`84.5` or
+  `"84.5"`; not `True`, `"1e2"` or `"NaN"`). Otherwise `GradeWriteNotAllowed`.
+- **Parameters that are not plain data**, on every function. `params` must be a mapping of text,
+  numbers, booleans, `None`, lists, tuples and dicts, with text or integer keys, at most 32 levels
+  deep. Sets, frozensets, NaN and infinity are refused too, because they are not valid JSON and a transport could not send them. `bytes`, `bytearray`, generators, subclasses and other objects raise `InvalidParameters`. The
+  transport receives a private copy, so it cannot change the caller's data.
+- **Every direct grade write.** `call("mod_assign_save_grade", ...)` runs the guards above and then
+  raises `GradeWriteNotAllowed`. A grade write is sent only through a `WriteReceipt`: sealed,
+  single-use, bound to one client, holding its own copy of the checked parameters, with the guards
+  above run again on that path. Only the guarded write helper may issue one, after the checks
+  `call()` cannot run alone (maximum grade, locked state, marking workflow) and with a read-back.
+  **That helper is added in a later pull request; until then no grade write can be sent at all.**
+  This stops accidental bypass; it is not a boundary against code that imports private names, and a
+  test fails if any module outside this library uses them.
+
+Apart from `workflowstate`, `attemptnumber` and `grade` on `mod_assign_save_grade`, parameter names are
+not checked. An empty `parameters` list in the contract means "not yet determined"
+(B4 §2a), not "no parameters".
 
 ## Configuration
 
@@ -36,6 +77,9 @@ shows the URL.
   and `extra` fields. If a record cannot be cleaned, its content is dropped and a fixed message is
   logged, so logging never raises. **It is not attached automatically.** Each service must attach it to
   each log handler, because a filter on a logger does not cover its child loggers.
+- `call()` keeps the error class from a transport but replaces its text with a fixed message, and
+  raises it outside the `except` block, so the original is not kept as `__cause__` or `__context__`.
+  `raise ... from None` would only hide it.
 - Only the token as written and percent-encoded is matched. Other encodings are not, because no
   transport requires one yet. Check this when a real transport is written.
 
@@ -52,11 +96,13 @@ All derive from `MoodleError`, with a `code` and a `retryable` flag.
 | `NotSupported` | `not_supported` | no |
 | `FunctionNotAllowed` | `function_not_allowed` | no |
 | `WorkflowStateNotAllowed` | `workflow_state_not_allowed` | no |
+| `GradeWriteNotAllowed` | `grade_write_not_allowed` | no |
 | `InvalidParameters` | `invalid_parameters` | no |
 | `MoodleConfigError` | `moodle_config_error` | no |
 
 The first five are from `docs/design/grading.md` §4.1. All are library documentation, not contract
-text (guide on Q37, PR #27).
+text (guide on Q37, PR #27). `call()` turns an `OSError` from a transport into `MoodleUnreachable`, and
+any other exception into `UnexpectedResponse`.
 
 ## Tests
 
@@ -64,8 +110,22 @@ text (guide on Q37, PR #27).
 pytest -q libs/moodle_ws
 ```
 
-Opening a socket fails the test, so no test can reach a network. This shows the guards work. It
-shows nothing about Moodle.
+They use a scripted fake transport with no Moodle-shaped data, and opening a socket fails the test.
+This shows the guards work. It shows nothing about Moodle.
+
+## Not implemented
+
+Each of these waits for the lab checks in `contracts/moodle-ws.v1.md` §5:
+
+- A real transport: the endpoint, how the token is sent, and the response format.
+- Mapping Moodle's error answers to these classes.
+- Parameter names, apart from `workflowstate`, `attemptnumber` and `grade`. The parameter for feedback
+  comments is unknown.
+- Normalized models (`docs/design/grading.md` §4.1). Until they exist, `call()` returns data as is.
+- The file download, and the capability list.
+- A Fake Moodle built from recordings (design Q53).
+
+No function here has been called against a real Moodle.
 
 ## Undo
 

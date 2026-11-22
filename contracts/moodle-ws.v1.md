@@ -100,7 +100,7 @@ Rules for the allow-list:
 - If a name differs on a Moodle version, the replacement goes into `replacements` **and** the PRD
   §B4 text changes in the same pull request (guide, PR #27). None is recorded yet.
 - The file download in §2 is not a web-services function, so it is not in the allow-list.
-- `libs/moodle_ws` (not written yet) builds its allow-list from this example and must refuse any
+- `libs/moodle_ws` builds its allow-list from this example and must refuse any
   other function, so the contract and the code cannot drift apart.
 
 ## 3. Draft rule
