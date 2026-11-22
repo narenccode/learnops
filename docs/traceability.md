@@ -380,7 +380,7 @@ Test names are in `test_moodle_ws_v1.py`.
 
 | Rule | PRD |
 |---|---|
-| Only the functions listed in the contract are called (`libs/moodle_ws` will build its allow-list from the example; the library does not exist yet) | B4 |
+| Only the functions listed in the contract are called. `libs/moodle_ws` builds its allow-list from the example (`test_allowlist.py`: `test_the_list_equals_the_contract_example`); the client that refuses any other function follows. Not enforced against a real Moodle: there is no real transport yet | B4 |
 | One service account per site, with a token restricted to those functions and the capabilities in rules §4 (the lists are tested; that they are enough is lab check 9) | B4, SEC-03 |
 | The token is stored only in the environment | SEC-03, C-06 |
 | A grade write uses workflow state `readyforrelease`, never `released`, and counts as done only when both the state and the grade value are confirmed; the grade value is read with `mod_assign_get_grades` (R1); the write rules R1 to R11 are contract text here, and their enforcement in `libs/moodle_ws` is a separate follow-up; only approved drafts are written | B4, C-09 |
@@ -396,6 +396,21 @@ matching read-back counts as done (rules §6; each has a fail-closed proposal).
 **Follow-up (not in this branch):** `docs/design/grading.md` §10.1 (Release 4, draft) says an unknown
 outcome may "write again under the same idempotency key"; R11 forbids an automatic retry. The
 grading design must be updated in its own pull request.
+
+## `libs/moodle_ws` skeleton, Release 0 foundation
+
+Files: `libs/moodle_ws/`. The library has no requirement ID of its own (design Q7, Q43, open), so no
+row in the table above maps to it. Interim, per design §2: read side under FR-G-01, write side under
+FR-G-06. Neither requirement is implemented by this skeleton.
+
+| Rule | Source | Test |
+|---|---|---|
+| One token per site, from the environment only | B4 §1, Q24, SEC-03, C-06 | `test_config.py` |
+| Tokens and full URLs stay out of logs and errors | SEC-03, OPS-04, design §4.1 | `test_redaction.py` |
+| One error family with stable codes | Design §4.1, §10.2 (library documentation, Q37) | `test_errors.py` |
+
+Not covered: the library is being built in steps and cannot call Moodle. Nothing has been checked
+against Moodle (every check in `contracts/moodle-ws.v1.md` §5 is open).
 
 ## B7 H5P practice output contract (v1), Release 0 foundation, DRAFT
 

@@ -949,6 +949,11 @@ def test_one_token_variable_per_site_with_a_placeholder() -> None:
     assert "MOODLE_WS_TOKEN" not in env
 
 
+def test_the_library_is_not_described_as_unwritten() -> None:
+    """libs/moodle_ws exists (the library pull requests), so §2a must not call it unwritten."""
+    assert "not written yet" not in section(rules(), "## 2a.", "## 3.")
+
+
 # --- review of #72 (Akshita21-09, 14 Nov): edits that must not pass silently ---------------
 
 
