@@ -11,8 +11,10 @@ import re
 from decimal import Decimal, InvalidOperation
 from typing import Final
 
-# Plain decimal notation only: no sign other than "-", no exponent, no spaces, no "NaN".
-_DECIMAL_TEXT: Final = re.compile(r"-?(?:\d+(?:\.\d*)?|\.\d+)")
+# Plain decimal notation only: ASCII digits, no sign other than "-", no exponent, no spaces, no
+# "NaN". [0-9], not \d: in Python \d matches every Unicode digit (Arabic-Indic, fullwidth,
+# Devanagari), and the raw text is what would reach Moodle.
+_DECIMAL_TEXT: Final = re.compile(r"-?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)")
 
 
 def parse_grade(value: object) -> Decimal | None:
