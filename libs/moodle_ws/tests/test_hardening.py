@@ -8,24 +8,32 @@ from __future__ import annotations
 
 import logging
 import traceback
+from collections.abc import Iterator, Mapping
 from dataclasses import replace
 from typing import Any
 
 import pytest
 
 from moodle_ws import (
+    InvalidParameters,
+    MoodleClient,
     MoodleConfigError,
+    MoodleError,
     RedactingFilter,
     Site,
     SiteSettings,
     Token,
+    WorkflowStateNotAllowed,
     load_site,
     sanitize_value,
 )
-from moodle_ws.messages import LOG_NOT_CLEANED
+from moodle_ws.messages import INVALID_PARAMETERS, LOG_NOT_CLEANED
 
 from .conftest import FAKE_TOKEN, FAKE_URL
+from .fake_transport import FakeTransport
 
+READ = "core_course_get_contents"
+SAVE_GRADE = "mod_assign_save_grade"
 LIMIT = 32
 
 
@@ -41,6 +49,19 @@ def nested(levels: int, kind: type = dict) -> Any:
     return value
 
 
+class PrintsReleased:
+    def __str__(self) -> str:
+        return "released"
+
+    __repr__ = __str__
+
+    def __eq__(self, other: object) -> bool:
+        return True
+
+    def __hash__(self) -> int:
+        return 1
+
+
 class TextSubclass(str):
     pass
 
@@ -49,21 +70,288 @@ class DictSubclass(dict[str, Any]):
     pass
 
 
+class ListSubclass(list[Any]):
+    pass
+
+
 class HoldsToken:
     def __str__(self) -> str:
         return FAKE_TOKEN
 
 
+class CopyRunsCode:
+    def __deepcopy__(self, memo: dict[int, Any]) -> str:
+        raise AssertionError("copying must not run an object's own code")
+
+
+class ChangesBetweenReads(Mapping[str, Any]):
+    """A grade write whose key "a" shows a safe value on the first read and `released`
+    afterwards."""
+
+    def __init__(self) -> None:
+        self.reads = 0
+
+    def __getitem__(self, key: str) -> str:
+        if key == "workflowstate":
+            return "readyforrelease"
+        self.reads += 1
+        return "safe" if self.reads == 1 else "released"
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(["workflowstate", "a"])
+
+    def __len__(self) -> int:
+        return 2
+
+
+class FailsWhenRead(Mapping[str, Any]):
+    def __getitem__(self, key: str) -> str:
+        raise ValueError(FAKE_TOKEN)
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(["a"])
+
+    def __len__(self) -> int:
+        return 1
+
+
 # Unusual values, on every kind of function
+
+
+UNSUPPORTED = [
+    pytest.param(b"released", id="bytes"),
+    pytest.param(bytearray(b"released"), id="bytearray"),
+    pytest.param(PrintsReleased(), id="object printing released"),
+    pytest.param((item for item in ["released"]), id="generator"),
+    pytest.param(iter(["released"]), id="iterator"),
+    pytest.param(TextSubclass("released"), id="str subclass"),
+    pytest.param(DictSubclass(a="released"), id="dict subclass"),
+    pytest.param(ListSubclass(["released"]), id="list subclass"),
+    pytest.param(HoldsToken(), id="object holding the token"),
+    pytest.param(CopyRunsCode(), id="object with its own deepcopy"),
+    pytest.param(object(), id="plain object"),
+    pytest.param(lambda: "released", id="function"),
+    pytest.param(memoryview(b"released"), id="memoryview"),
+]
+
+
+@pytest.mark.parametrize("value", UNSUPPORTED)
+@pytest.mark.parametrize("function", [READ, SAVE_GRADE])
+def test_an_unusual_value_is_refused_on_every_function(
+    function: str, value: Any, settings: SiteSettings
+) -> None:
+    transport = FakeTransport()
+    params = {"workflowstate": "readyforrelease", "a": value}
+    with pytest.raises(InvalidParameters) as caught:
+        MoodleClient(settings, transport).call(function, params)
+    assert transport.calls == []
+    assert str(caught.value) == INVALID_PARAMETERS
+    assert FAKE_TOKEN not in visible(caught.value)
+
+
+@pytest.mark.parametrize(
+    "wrap",
+    [
+        lambda v: {"a": {"b": v}},
+        lambda v: {"a": [v]},
+        lambda v: {"a": (v,)},
+    ],
+    ids=["in a dict", "in a list", "in a tuple"],
+)
+def test_an_unusual_value_is_refused_when_nested(
+    wrap: Any, settings: SiteSettings
+) -> None:
+    transport = FakeTransport()
+    with pytest.raises(InvalidParameters):
+        MoodleClient(settings, transport).call(READ, wrap(b"released"))
+    assert transport.calls == []
+
+
+@pytest.mark.parametrize("key", [PrintsReleased(), b"released", (1, 2), None, 1.5])
+def test_an_unusual_key_is_refused(key: Any, settings: SiteSettings) -> None:
+    transport = FakeTransport()
+    with pytest.raises(InvalidParameters):
+        MoodleClient(settings, transport).call(READ, {"a": {key: 1}})
+    assert transport.calls == []
+
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"released": 1},
+        {"a": {"RELEASED": 1}},
+        {"a": [{" released ": 1}]},
+    ],
+)
+def test_a_key_named_released_is_refused_on_the_write_function(
+    params: dict[str, Any], settings: SiteSettings
+) -> None:
+    transport = FakeTransport()
+    values = {"workflowstate": "readyforrelease", **params}
+    with pytest.raises(WorkflowStateNotAllowed):
+        MoodleClient(settings, transport).call(SAVE_GRADE, values)
+    assert transport.calls == []
+
+
+def test_read_functions_may_use_the_word_as_a_key(settings: SiteSettings) -> None:
+    transport = FakeTransport()
+    MoodleClient(settings, transport).call(READ, {"released": "released"})
+    assert len(transport.calls) == 1
+
+
+def test_plain_values_all_reach_the_transport(settings: SiteSettings) -> None:
+    params = {
+        "text": "x",
+        "number": 1,
+        "fraction": 1.5,
+        "flag": True,
+        "nothing": None,
+        "list": [1, "a"],
+        "tuple": (1,),
+        "set": {1},
+        "frozenset": frozenset({1}),
+        "dict": {"a": 1, 2: "b"},
+    }
+    transport = FakeTransport()
+    MoodleClient(settings, transport).call(READ, params)
+    assert transport.calls == [(READ, params)]
 
 
 # Parameters must be a mapping
 
 
+@pytest.mark.parametrize("params", ["abc", 5, [("a", 1)], b"x", ("a",), object()])
+def test_params_that_are_not_a_mapping_are_refused(
+    params: Any, settings: SiteSettings
+) -> None:
+    transport = FakeTransport()
+    with pytest.raises(InvalidParameters) as caught:
+        MoodleClient(settings, transport).call(READ, params)
+    assert isinstance(caught.value, MoodleError)
+    assert caught.value.retryable is False
+    assert transport.calls == []
+
+
+def test_an_object_that_only_looks_like_a_mapping_is_refused(
+    settings: SiteSettings,
+) -> None:
+    class HasItems:
+        def items(self) -> list[tuple[str, str]]:
+            return [("a", "b")]
+
+    transport = FakeTransport()
+    with pytest.raises(InvalidParameters):
+        MoodleClient(settings, transport).call(READ, HasItems())  # type: ignore[arg-type]
+    assert transport.calls == []
+
+
+def test_a_mapping_that_fails_when_read_is_refused_safely(
+    settings: SiteSettings,
+) -> None:
+    transport = FakeTransport()
+    with pytest.raises(InvalidParameters) as caught:
+        MoodleClient(settings, transport).call(READ, FailsWhenRead())
+    assert caught.value.__context__ is None
+    assert caught.value.__cause__ is None
+    assert FAKE_TOKEN not in visible(caught.value)
+    assert transport.calls == []
+
+
+def test_a_mapping_is_read_once_so_it_cannot_change_after_the_check(
+    settings: SiteSettings,
+) -> None:
+    transport = FakeTransport()
+    MoodleClient(settings, transport).call(SAVE_GRADE, ChangesBetweenReads())
+    assert transport.calls == [
+        (SAVE_GRADE, {"workflowstate": "readyforrelease", "a": "safe"})
+    ]
+
+
+def test_no_params_means_an_empty_mapping(settings: SiteSettings) -> None:
+    transport = FakeTransport()
+    MoodleClient(settings, transport).call(READ)
+    assert transport.calls == [(READ, {})]
+
+
 # Nested values are private to the transport
 
 
+class ChangingTransport(FakeTransport):
+    def call(
+        self, settings: SiteSettings, function: str, params: Mapping[str, Any]
+    ) -> Any:
+        params["nested"]["key"] = "changed"
+        params["items"].append("changed")
+        params["sets"].add("changed")
+        params["deep"][0]["key"] = "changed"
+        return None
+
+
+def test_a_transport_cannot_change_nested_values(settings: SiteSettings) -> None:
+    params = {
+        "nested": {"key": "kept"},
+        "items": ["kept"],
+        "sets": {"kept"},
+        "deep": ({"key": "kept"},),
+    }
+    MoodleClient(settings, ChangingTransport()).call(READ, params)
+    assert params == {
+        "nested": {"key": "kept"},
+        "items": ["kept"],
+        "sets": {"kept"},
+        "deep": ({"key": "kept"},),
+    }
+
+
+def test_the_caller_cannot_change_what_the_transport_kept(
+    settings: SiteSettings,
+) -> None:
+    held = ["readyforrelease"]
+    transport = FakeTransport()
+    MoodleClient(settings, transport).call(READ, {"held": held})
+    held.append("released")
+    assert transport.calls[0][1] == {"held": ["readyforrelease"]}
+
+
 # The depth limit, at its boundary
+
+
+@pytest.mark.parametrize("kind", [dict, list])
+def test_the_deepest_allowed_nesting_is_accepted(
+    kind: type, settings: SiteSettings
+) -> None:
+    transport = FakeTransport()
+    params = {"a": nested(LIMIT - 1, kind)}  # the top mapping is level 1
+    MoodleClient(settings, transport).call(READ, params)
+    assert transport.calls == [(READ, params)]
+
+
+@pytest.mark.parametrize("levels", [LIMIT, 3000])
+@pytest.mark.parametrize("kind", [dict, list])
+def test_nesting_past_the_limit_is_refused(
+    levels: int, kind: type, settings: SiteSettings
+) -> None:
+    transport = FakeTransport()
+    with pytest.raises(InvalidParameters):
+        MoodleClient(settings, transport).call(READ, {"a": nested(levels, kind)})
+    assert transport.calls == []
+
+
+def test_released_at_the_deepest_level_is_found(settings: SiteSettings) -> None:
+    value: Any = "released"
+    for _ in range(LIMIT - 1):
+        value = [value]
+    transport = FakeTransport()
+    with pytest.raises(WorkflowStateNotAllowed):
+        MoodleClient(settings, transport).call(SAVE_GRADE, {"a": value})
+    assert transport.calls == []
+
+
+def test_the_same_object_twice_is_not_a_loop(settings: SiteSettings) -> None:
+    shared = ["x"]
+    transport = FakeTransport()
+    MoodleClient(settings, transport).call(READ, {"a": shared, "b": shared})
+    assert transport.calls == [(READ, {"a": ["x"], "b": ["x"]})]
 
 
 # Site settings built by hand
@@ -169,6 +457,38 @@ def test_repr_shows_neither_the_url_nor_the_token(settings: SiteSettings) -> Non
 
 
 # The client constructor
+
+
+@pytest.mark.parametrize("site", ["moodle45", Site.MOODLE45, None, 1])
+def test_a_client_without_settings_is_refused_when_built(site: Any) -> None:
+    with pytest.raises(MoodleConfigError, match="needs site settings"):
+        MoodleClient(site, FakeTransport())
+
+
+@pytest.mark.parametrize("transport", [None, "transport", object(), 1])
+def test_a_client_without_a_transport_is_refused_when_built(
+    transport: Any, settings: SiteSettings
+) -> None:
+    with pytest.raises(MoodleConfigError, match="needs a transport"):
+        MoodleClient(settings, transport)
+
+
+def test_a_transport_whose_call_is_not_callable_is_refused(
+    settings: SiteSettings,
+) -> None:
+    class NotCallable:
+        call = "not a method"
+
+    with pytest.raises(MoodleConfigError, match="needs a transport"):
+        MoodleClient(settings, NotCallable())  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize("allowlist", [{}, [], "all", object()])
+def test_a_bad_allowlist_is_refused_when_built(
+    allowlist: Any, settings: SiteSettings
+) -> None:
+    with pytest.raises(MoodleConfigError, match="needs an AllowList"):
+        MoodleClient(settings, FakeTransport(), allowlist)
 
 
 # Sanitizing and logging
