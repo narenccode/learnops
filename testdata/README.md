@@ -24,7 +24,7 @@ A Moodle course backup with the protected items (PRD B1.4), course completion an
 | Source | Fictional, original content written for LearnOps. No real learner data, real course content or third-party material |
 | Licence or consent | Apache-2.0, the same as the repository (PRD C-11, root `LICENSE`); confirmed by the guide on PR #61. No consent needed: no real person's work is included |
 
-## B8.5 Lecture videos (owner: Student 4), PENDING
+## B8.5 Lecture videos (owner: Student 4), COMPLETE
 
 - **Where:** `b8-5-lecture-videos/` (folder layout, recording and hashing steps, and the
   completion checklist in its README). The inventory table below is the only list of lectures.

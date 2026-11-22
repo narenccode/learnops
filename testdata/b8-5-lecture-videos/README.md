@@ -1,4 +1,4 @@
-# B8.5 Lecture videos (owner: Student 4), PENDING
+# B8.5 Lecture videos (owner: Student 4), COMPLETE
 
 At least five short technical lectures in Indian English, approximately 30 minutes in total
 (acceptance threshold: at least 1800 s), recorded by the project team for this project (no
@@ -154,13 +154,17 @@ be used for any measurement.
 
 ## Completion checklist
 
+Ticked items are confirmed by the committed files and the validation test. Unticked items rest on the owner's
+statement in the pull request and are not verified by the repository: the transcript method, the speaker briefing, where the recordings are stored, and
+who checked lecture 02.
+
 For each lecture (`lecture-01` … `lecture-05`):
 
-- [ ] `lectures/<lecture-id>/outline.md` holds the speaker's outline (placeholder removed)
+- [x] `lectures/<lecture-id>/outline.md` holds the speaker's outline (placeholder removed)
 - [ ] The lecture is recorded and stored as described in "Where recordings are kept" (folder
       not synced or backed up to a cloud service; not shared)
-- [ ] Inventory: title, speaker, Duration (s) and Recording file filled in
-- [ ] Inventory: SHA-256 filled in
+- [x] Inventory: title, speaker, Duration (s) and Recording file filled in
+- [x] Inventory: SHA-256 filled in
 - [ ] The speaker was told about the interim storage, then wrote their own consent line (once per
       speaker); the inventory's Consent cell points to it as `` `0004` speaker-NN ``
 - [ ] `lectures/<lecture-id>/transcript.en.txt` typed or corrected by hand (placeholder removed)
@@ -168,14 +172,14 @@ For each lecture (`lecture-01` … `lecture-05`):
 
 For the set:
 
-- [ ] At least five lectures complete
-- [ ] Total recorded duration at least 1800 s (the acceptance threshold for "approximately
+- [x] At least five lectures complete
+- [x] Total recorded duration at least 1800 s (the acceptance threshold for "approximately
       30 minutes"), written on the inventory's total line
-- [ ] Only then: the Status lines in `testdata/README.md` and in this README change from `PENDING`
+- [x] Only then: the Status lines in `testdata/README.md` and in this README change from `PENDING`
       to `COMPLETE`
-- [ ] The B8.5 validation test passes: `python -m pytest -q libs/contracts/tests/test_b8_5_dataset.py`
+- [x] The B8.5 validation test passes: `python -m pytest -q libs/contracts/tests/test_b8_5_dataset.py`
       (added in the same PR as this README)
-- [ ] `git ls-files testdata/b8-5-lecture-videos` lists only `README.md`, `.gitignore`,
+- [x] `git ls-files testdata/b8-5-lecture-videos` lists only `README.md`, `.gitignore`,
       `outline.md` and `transcript.en.txt` files
 
 ## Licence
