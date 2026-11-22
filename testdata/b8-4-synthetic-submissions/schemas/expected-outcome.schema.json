@@ -5,9 +5,7 @@
   "description": "What the author designed each rubric criterion to show: the intended machine-check results and a qualitative judgement with the reasoning. It is NOT a reference grade and carries no scores; reference grades come only from a mentor (PRD B8) and live in reference-grades/.",
   "type": "object",
   "required": ["schema", "submission_id", "rubric", "provisional", "criteria"],
-  "not": {
-    "anyOf": [{ "required": ["score"] }, { "required": ["total"] }, { "required": ["grade"] }]
-  },
+  "allOf": [{ "$ref": "#/$defs/no_scores" }],
   "properties": {
     "schema": { "const": "learnops.testdata.b8-4.expected-outcome/v1" },
     "submission_id": { "type": "string", "pattern": "^s[0-9]{3}$" },
@@ -19,7 +17,7 @@
       "items": {
         "type": "object",
         "required": ["criterion", "checks", "judgement", "rationale"],
-        "not": { "anyOf": [{ "required": ["score"] }, { "required": ["points"] }] },
+        "allOf": [{ "$ref": "#/$defs/no_scores" }],
         "properties": {
           "criterion": {
             "type": "string",
@@ -32,6 +30,7 @@
             "items": {
               "type": "object",
               "required": ["check", "expected", "reason"],
+              "allOf": [{ "$ref": "#/$defs/no_scores" }],
               "properties": {
                 "check": { "type": "string", "minLength": 1 },
                 "expected": {
@@ -48,6 +47,19 @@
           },
           "rationale": { "type": "string", "minLength": 1 }
         }
+      }
+    }
+  },
+  "$defs": {
+    "no_scores": {
+      "description": "No score of any kind: the author's expected outcome is not a grade (PRD B8; reference grades come only from a mentor). Applied to the document, to every criterion and to every check.",
+      "not": {
+        "anyOf": [
+          { "required": ["score"] },
+          { "required": ["points"] },
+          { "required": ["total"] },
+          { "required": ["grade"] }
+        ]
       }
     }
   }

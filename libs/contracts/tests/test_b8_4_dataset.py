@@ -398,6 +398,86 @@ def test_tags_agree_with_expected_outcomes(manifest: Doc) -> None:
         ]
 
 
+@pytest.mark.parametrize("sid", submission_ids())
+def test_every_edge_case_tag_agrees_with_the_files(sid: str, manifest: Doc) -> None:
+    """The tags that the files and hosting settings can decide (review of #31). `off_topic` and the
+    reading behind `check_passes_but_criterion_unmet` are the author's judgement, so they are not
+    derived here; the second one is only checked to be possible (see below)."""
+    folder = SUBMISSIONS_DIR / sid
+    entry = next(s for s in manifest["submissions"] if s["id"] == sid)
+    submission = load_yaml(folder / "submission.yaml")
+    expected = load_yaml(folder / "expected.yaml")
+    tags = set(entry["edge_cases"])
+    hosting = submission["hosting"]
+    repo = folder / submission["repo_dir"]
+    checks = [
+        (crit["criterion"], c["check"], c["expected"])
+        for crit in expected["criteria"]
+        for c in crit["checks"]
+    ]
+
+    def failed(name: str) -> bool:
+        return any(c.split(":")[0] == name and e == "fail" for _, c, e in checks)
+
+    readme_exists = (repo / "README.md").is_file()
+    if hosting["publish_repo"]:
+        assert ("readme_missing" in tags) == (not readme_exists), sid
+    assert ("readme_section_missing" in tags) == (
+        hosting["publish_repo"] and readme_exists and failed("readme_sections")
+    ), sid
+    assert ("demo_unreachable" in tags) == (hosting["demo_stub"] == "none"), sid
+    assert ("report_under_word_count" in tags) == failed("word_count"), sid
+    assert ("repo_not_cloneable" in tags) == (not hosting["publish_repo"]), sid
+    if "check_passes_but_criterion_unmet" in tags:
+        # At least one criterion has checks that all pass while the author judged it not met.
+        assert any(
+            crit["checks"]
+            and all(c["expected"] == "pass" for c in crit["checks"])
+            and crit["judgement"] in {"partly_meets", "does_not_meet"}
+            for crit in expected["criteria"]
+        ), sid
+
+
+SCORE_FIELDS = ("score", "points", "total", "grade")
+
+
+def expected_outcome_with(level: str, field: str) -> Doc:
+    """A valid expected outcome (s001) with one score field added at one level."""
+    doc: Doc = load_yaml(SUBMISSIONS_DIR / "s001" / "expected.yaml")
+    if level == "document":
+        doc[field] = 1
+    elif level == "criterion":
+        doc["criteria"][0][field] = 1
+    else:
+        doc["criteria"][0]["checks"][0][field] = 1
+    return doc
+
+
+@pytest.mark.parametrize("field", SCORE_FIELDS)
+@pytest.mark.parametrize("level", ["document", "criterion", "check"])
+def test_a_score_field_is_rejected_at_every_level(
+    validators: dict[str, Draft202012Validator], level: str, field: str
+) -> None:
+    doc = expected_outcome_with(level, field)
+    assert errors(validators["expected-outcome"], doc) != [], (level, field)
+
+
+@pytest.mark.parametrize("value", [None, 0, "10", {"x": 1}])
+def test_a_score_field_is_rejected_whatever_its_value(
+    validators: dict[str, Draft202012Validator], value: Any
+) -> None:
+    doc = expected_outcome_with("criterion", "points")
+    doc["criteria"][0]["points"] = value
+    assert errors(validators["expected-outcome"], doc) != []
+
+
+def test_a_valid_expected_outcome_is_still_accepted(
+    validators: dict[str, Draft202012Validator],
+) -> None:
+    doc: Doc = load_yaml(SUBMISSIONS_DIR / "s001" / "expected.yaml")
+    assert errors(validators["expected-outcome"], doc) == []
+
+
 def test_pilot_covers_every_intended_level(manifest: Doc) -> None:
     assert {s["intended_level"] for s in manifest["submissions"]} == LEVELS
 
