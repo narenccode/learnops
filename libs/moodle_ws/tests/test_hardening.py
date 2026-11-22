@@ -431,7 +431,11 @@ def test_a_bad_url_is_refused_without_being_repeated(url: Any) -> None:
 
 @pytest.mark.parametrize(
     "url",
-    ["https://site.invalid", "http://site.invalid:8080", "https://site.invalid/moodle"],
+    [
+        "https://site.invalid",
+        "https://site.invalid:8443",
+        "https://site.invalid/moodle",
+    ],
 )
 def test_a_plain_site_address_is_accepted(url: str) -> None:
     assert SiteSettings(Site.MOODLE45, "4.5", url, Token(FAKE_TOKEN)).url == url
