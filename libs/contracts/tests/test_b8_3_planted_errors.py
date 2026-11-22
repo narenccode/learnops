@@ -13,6 +13,7 @@ import json
 import re
 import shutil
 import sys
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
@@ -295,6 +296,7 @@ def test_model_is_a_valid_b2_course_model(name: str) -> None:
 
 def _flat(node: Any, prefix: str = "") -> dict[str, Any]:
     """Every leaf of a JSON document as {"/a/0/b": value}. An empty dict or list is its own leaf."""
+    items: Iterable[tuple[Any, Any]]
     if isinstance(node, dict) and node:
         items = node.items()
     elif isinstance(node, list) and node:
