@@ -1,1 +1,229 @@
-PENDING: reference transcript for lecture-04 not typed yet. Do not use it for any measurement.
+Hello, my name is Nagashree.
+
+I voluntarily consent to having my voice and lecture recording included in the LearnOps B8.5 test dataset for project evaluation and testing purposes.
+
+I understand that this recording will be used as test evidence for the project.
+
+Thank you.
+
+Good morning everyone.
+
+In the previous section, we learned about SQL and its basic operations, including creating tables, inserting records, updating data, deleting records, and retrieving information using SELECT statements.
+
+We also discussed SQL command categories, aggregate functions, joins, subqueries, constraints, and transaction-related commands.
+
+In this lecture, I will continue with SQL by explaining some additional querying concepts and practical database operations that help us work with information more effectively.
+
+Let's begin with filtering data using different SQL operators.
+
+We already know that the WHERE clause is used to filter records based on a particular condition.
+
+Apart from the equal-to operator, SQL provides several other comparison operators.
+
+For example, greater than, less than, greater than or equal to, less than or equal to, and not equal to.
+
+Suppose our Student table contains student names, departments, and marks.
+
+If we want to retrieve students who have scored more than 80 marks, we can write:
+
+SELECT *
+FROM Student
+WHERE Marks > 80;
+
+This query displays only the students whose marks are greater than 80.
+
+SQL also provides logical operators such as AND, OR, and NOT.
+
+AND is used when all specified conditions must be true.
+
+OR is used when at least one condition must be true.
+
+NOT is used to reverse a condition.
+
+For example:
+
+SELECT *
+FROM Student
+WHERE Department = 'ISE'
+AND Marks > 80;
+
+This retrieves students who belong to the ISE department and have scored more than 80 marks.
+
+Another useful operator is BETWEEN.
+
+It is used to check whether a value falls within a specified range.
+
+For example:
+
+SELECT *
+FROM Student
+WHERE Marks BETWEEN 70 AND 90;
+
+This retrieves students whose marks are between 70 and 90, including the specified boundary values.
+
+Next, let's understand the LIKE operator.
+
+LIKE is used to search for a particular pattern in text data.
+
+For example:
+
+SELECT *
+FROM Student
+WHERE Name LIKE 'A%';
+
+This retrieves students whose names begin with the letter A.
+
+Here, the percentage symbol represents zero or more characters.
+
+Similarly, an underscore represents exactly one character.
+
+Another useful operator is IN.
+
+It checks whether a value matches any value in a given list.
+
+For example:
+
+SELECT *
+FROM Student
+WHERE Department IN ('ISE', 'CSE');
+
+This retrieves students belonging to either the ISE or CSE department.
+
+Now let's discuss NULL values.
+
+In a database, NULL represents a missing, unknown, or unavailable value.
+
+It is important to understand that NULL is different from zero or an empty string.
+
+We cannot check NULL values using the normal equal-to operator.
+
+Instead, SQL provides IS NULL and IS NOT NULL.
+
+For example:
+
+SELECT *
+FROM Student
+WHERE Email IS NULL;
+
+This retrieves students whose email information is missing.
+
+Similarly, IS NOT NULL retrieves records where the email field contains a non-NULL value.
+
+Now let's look at two more useful SQL features: DISTINCT and aliases.
+
+The DISTINCT keyword is used to remove duplicate values from query results.
+
+For example:
+
+SELECT DISTINCT Department
+FROM Student;
+
+This displays each department only once, even if many students belong to the same department.
+
+An alias is a temporary alternative name given to a table or column in a query.
+
+For example:
+
+SELECT Name AS Student_Name
+FROM Student;
+
+Here, Student_Name is the display name given to the Name column in the query result.
+
+Aliases make query results easier to understand, especially when working with multiple tables.
+
+Next, let's understand the difference between WHERE and HAVING.
+
+Both clauses are used for filtering, but they work at different stages of a query.
+
+WHERE filters individual rows before grouping.
+
+HAVING filters groups after the GROUP BY operation.
+
+For example:
+
+SELECT Department, COUNT(*) AS Total_Students
+FROM Student
+GROUP BY Department
+HAVING COUNT(*) > 10;
+
+This query groups students according to their departments, counts the students in each department, and displays only those departments having more than ten students.
+
+This is particularly useful when working with aggregate functions.
+
+Now let's discuss set operations in SQL.
+
+Set operations allow us to combine the results of multiple SELECT queries.
+
+Some important set operations are UNION, UNION ALL, INTERSECT, and EXCEPT.
+
+UNION combines the results of two queries and removes duplicate rows.
+
+UNION ALL also combines the results, but keeps duplicate rows.
+
+INTERSECT returns only the rows that are common to both query results.
+
+EXCEPT returns rows from the first query that are not present in the second query.
+
+For these operations, the SELECT statements must return compatible numbers of columns with compatible data types.
+
+These operations are useful when we need to combine or compare information from different queries.
+
+Next, let's understand views.
+
+A view is a virtual table created using an SQL query.
+
+It does not normally store a separate copy of the underlying data. Instead, it presents data from one or more existing tables.
+
+For example, suppose a college wants to display student names and departments without showing other student information.
+
+We can create a view using:
+
+CREATE VIEW Student_View AS
+SELECT Name, Department
+FROM Student;
+
+After creating the view, we can retrieve its information using:
+
+SELECT *
+FROM Student_View;
+
+Views help simplify complex queries and can also restrict which columns are exposed to particular users.
+
+Another important concept is indexing.
+
+An index is a database structure that helps the database find records more efficiently.
+
+We can compare an index with the index at the end of a textbook.
+
+Instead of searching every page to find a particular topic, we can use the index to locate it faster.
+
+Similarly, a database index can reduce the amount of data that needs to be searched when executing certain queries.
+
+For example:
+
+CREATE INDEX idx_student_name
+ON Student(Name);
+
+This creates an index on the Name column of the Student table.
+
+Indexes can improve data retrieval performance, especially for frequently searched columns.
+
+However, they also require additional storage and may increase the cost of INSERT, UPDATE, and DELETE operations because the indexes may need to be maintained.
+
+Finally, let's understand the concept of stored procedures.
+
+A stored procedure is a group of SQL statements stored in the database that can be executed when required.
+
+Instead of repeatedly writing the same set of SQL statements, we can define them once and execute the procedure whenever necessary.
+
+Stored procedures can help organize frequently used database operations and reduce repeated query-writing.
+
+The syntax and capabilities of stored procedures may differ between database systems such as MySQL, Oracle, and SQL Server.
+
+To summarize this lecture, we explored additional SQL concepts such as comparison and logical operators, pattern matching, NULL handling, DISTINCT, aliases, HAVING, set operations, views, indexes, and stored procedures.
+
+These concepts make SQL more powerful and help us retrieve, organize, and manage database information efficiently.
+
+In the next section, my teammate will explain normalization, transactions, ACID properties, concurrency control, recovery, and database security, which are equally important for maintaining reliable and secure databases.
+
+Thank you.
