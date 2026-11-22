@@ -13,6 +13,7 @@ from .client import MoodleClient, create_client
 from .config import Site, SiteSettings, load_site
 from .errors import (
     FunctionNotAllowed,
+    GradeWriteNotAllowed,
     InvalidParameters,
     MoodleConfigError,
     MoodleError,
@@ -23,6 +24,7 @@ from .errors import (
     UnexpectedResponse,
     WorkflowStateNotAllowed,
 )
+from .grades import grade_in_range, parse_grade
 from .redact import RedactingFilter, redact, safe_url, sanitize, sanitize_value
 from .secrets import Token
 from .transport import MoodleTransport
@@ -30,6 +32,7 @@ from .transport import MoodleTransport
 __all__ = [
     "AllowList",
     "FunctionNotAllowed",
+    "GradeWriteNotAllowed",
     "InvalidParameters",
     "MoodleClient",
     "MoodleConfigError",
@@ -46,9 +49,11 @@ __all__ = [
     "UnexpectedResponse",
     "WorkflowStateNotAllowed",
     "create_client",
+    "grade_in_range",
     "load_allowlist",
     "load_site",
     "messages",
+    "parse_grade",
     "redact",
     "safe_url",
     "sanitize",

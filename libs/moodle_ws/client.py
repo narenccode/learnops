@@ -1,11 +1,15 @@
 """The one way LearnOps calls Moodle web services (PRD B4, C-02).
 
 call() enforces the allow-list and the draft rule before the transport is touched, so a refused
-call never reaches Moodle. This is a second guard behind the restricted external service.
+call never reaches Moodle. This is a second guard behind the restricted external service. A grade
+write is never sent by call(): the supported path is grade_write.write_draft_grade, and a sealed,
+single-use WriteReceipt stops a send that skips its checks by mistake. Python has no private names,
+so the receipt cannot stop code that deliberately imports them (see WriteReceipt).
 """
 
 from __future__ import annotations
 
+import math
 from collections.abc import Mapping
 from typing import Any, Final
 
@@ -13,6 +17,8 @@ from . import messages
 from .allowlist import AllowList, load_allowlist
 from .config import Site, SiteSettings, load_site
 from .errors import (
+    FunctionNotAllowed,
+    GradeWriteNotAllowed,
     InvalidParameters,
     MoodleConfigError,
     MoodleError,
@@ -23,11 +29,17 @@ from .errors import (
     UnexpectedResponse,
     WorkflowStateNotAllowed,
 )
+from .grades import parse_grade
 from .transport import MoodleTransport
 
 SAVE_GRADE: Final = "mod_assign_save_grade"
+# Removed from B4 by the guide's findings (PR #64). Refused here even if an allow-list file still
+# lists it, so an older contract file cannot bring it back.
 SET_USER_FLAGS: Final = "mod_assign_set_user_flags"
+_ALWAYS_REFUSED: Final = frozenset({SET_USER_FLAGS})
 WORKFLOW_PARAMETER: Final = "workflowstate"  # named by PRD App-C item 1
+ATTEMPT_PARAMETER: Final = "attemptnumber"  # PRD B4 parameter table
+GRADE_PARAMETER: Final = "grade"  # PRD B4 parameter table
 READY_FOR_RELEASE: Final = "readyforrelease"
 RELEASED: Final = "released"
 MAX_DEPTH: Final = 32  # a local safety limit on nesting, not a Moodle rule
@@ -48,12 +60,11 @@ def _copy_value(value: Any, path: frozenset[int]) -> Any:
     runs an object's own code. An object cannot pass the draft rule by hiding what it holds."""
     kind = type(value)
     if kind in _PLAIN_VALUES:
+        # NaN and infinity are not valid JSON, so the transport could not send them.
+        if kind is float and not math.isfinite(value):
+            raise InvalidParameters(messages.INVALID_PARAMETERS)
         return value
-    if (
-        kind not in (dict, list, tuple, set, frozenset)
-        or id(value) in path
-        or len(path) >= MAX_DEPTH
-    ):
+    if kind not in (dict, list, tuple) or id(value) in path or len(path) >= MAX_DEPTH:
         raise InvalidParameters(messages.INVALID_PARAMETERS)
     inner = path | {id(value)}
     if kind is dict:
@@ -61,7 +72,7 @@ def _copy_value(value: Any, path: frozenset[int]) -> Any:
             raise InvalidParameters(messages.INVALID_PARAMETERS)
         return {key: _copy_value(item, inner) for key, item in value.items()}
     copied = [_copy_value(item, inner) for item in value]
-    return copied if kind is list else kind(copied)
+    return copied if kind is list else tuple(copied)
 
 
 def _copy_params(params: Mapping[str, Any] | None) -> dict[str, Any]:
@@ -94,25 +105,72 @@ def _holds_released(params: dict[str, Any]) -> bool:
         elif isinstance(value, dict):
             pending.extend(value.keys())
             pending.extend(value.values())
-        elif isinstance(value, list | tuple | set | frozenset):
+        elif isinstance(value, list | tuple):
             pending.extend(value)
     return False
 
 
 def _check_draft_rule(function: str, params: dict[str, Any]) -> None:
     """B4 §3: a grade write sends readyforrelease and never released."""
-    if function not in (SAVE_GRADE, SET_USER_FLAGS):
+    if function != SAVE_GRADE:
         return
     if _holds_released(params):
         raise WorkflowStateNotAllowed(
             messages.RELEASE_REFUSED.format(function=function, state=RELEASED)
         )
-    if function == SAVE_GRADE and params.get(WORKFLOW_PARAMETER) != READY_FOR_RELEASE:
+    if params.get(WORKFLOW_PARAMETER) != READY_FOR_RELEASE:
         raise WorkflowStateNotAllowed(
             messages.WORKFLOW_STATE_REQUIRED.format(
                 function=function, state=READY_FOR_RELEASE
             )
         )
+
+
+def is_explicit_attempt(value: object) -> bool:
+    """B4 R2: an attempt number is a whole number from 0; never -1 ("latest") and never bool."""
+    return type(value) is int and value >= 0
+
+
+def _check_grade_write(function: str, params: dict[str, Any]) -> None:
+    """B4 R2 and R9, the part the client can check alone: an explicit attempt and a plain,
+    non-negative number as the grade. It runs on every path, including a receipt's. The maximum
+    needs the assignment, so grade_write checks it before issuing the receipt."""
+    if function != SAVE_GRADE:
+        return
+    if not is_explicit_attempt(params.get(ATTEMPT_PARAMETER)):
+        raise GradeWriteNotAllowed(messages.ATTEMPT_REQUIRED)
+    grade = parse_grade(params.get(GRADE_PARAMETER))
+    if grade is None or grade < 0:
+        raise GradeWriteNotAllowed(messages.GRADE_NOT_A_NUMBER)
+
+
+_RECEIPT_SEAL: Final = object()
+
+
+class WriteReceipt:
+    """Proof that grade_write.write_draft_grade ran every pre-write check (R2, R3, R9 and the
+    marking-workflow and state checks) for exactly these parameters, on this client.
+
+    It holds its own copy of the checked parameters, so what was checked is what is sent, and it
+    works once. It cannot be built without the module's seal. This stops a grade write that skips
+    the checks by mistake; it is not a boundary against code that deliberately imports private
+    names (a test checks no module outside this library does)."""
+
+    __slots__ = ("_client", "_params", "_used")
+
+    def __init__(
+        self, seal: object, client: MoodleClient, params: dict[str, Any]
+    ) -> None:
+        if seal is not _RECEIPT_SEAL:
+            raise GradeWriteNotAllowed(messages.WRITE_NEEDS_HELPER)
+        self._client = client
+        self._params = params
+        self._used = False
+
+
+def _issue_receipt(client: MoodleClient, checked: Mapping[str, Any]) -> WriteReceipt:
+    """For grade_write only, after all its checks have passed."""
+    return WriteReceipt(_RECEIPT_SEAL, client, _copy_params(checked))
 
 
 def _public_error(error: MoodleError, settings: SiteSettings) -> MoodleError:
@@ -142,11 +200,35 @@ class MoodleClient:
         self._allowlist = load_allowlist() if allowlist is None else allowlist
 
     def call(self, function: str, params: Mapping[str, Any] | None = None) -> Any:
-        """The transport's answer, unchanged until the normalized models exist (design §4.1)."""
+        """The transport's answer, unchanged until the normalized models exist (design §4.1).
+
+        mod_assign_save_grade is checked like any call and then refused: a grade write is sent
+        only through grade_write.write_draft_grade, which runs the checks call() cannot run alone
+        (maximum grade, locked state, marking workflow) and reads the result back."""
+        return self._send(function, _copy_params(params), None)
+
+    def _send_checked_write(self, receipt: WriteReceipt) -> Any:
+        """Send the grade write a receipt allows. For grade_write only."""
+        if (
+            type(receipt) is not WriteReceipt
+            or receipt._client is not self
+            or receipt._used
+        ):
+            raise GradeWriteNotAllowed(messages.WRITE_NEEDS_HELPER)
+        receipt._used = True  # before sending: a write is never sent twice (R8, R11)
+        return self._send(SAVE_GRADE, receipt._params, receipt)
+
+    def _send(
+        self, function: str, values: dict[str, Any], receipt: WriteReceipt | None
+    ) -> Any:
         settings = self._settings
+        if function in _ALWAYS_REFUSED:
+            raise FunctionNotAllowed(messages.FUNCTION_NOT_ALLOWED)
         name = self._allowlist.resolve(function, settings.moodle_version)
-        values = _copy_params(params)
         _check_draft_rule(function, values)
+        _check_grade_write(function, values)
+        if function == SAVE_GRADE and receipt is None:
+            raise GradeWriteNotAllowed(messages.WRITE_NEEDS_HELPER)
         try:
             return self._transport.call(settings, name, values)
         except MoodleError as error:
