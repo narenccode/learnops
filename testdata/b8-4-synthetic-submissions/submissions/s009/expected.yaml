@@ -1,0 +1,37 @@
+# PROVISIONAL author's expected outcome. NOT a reference grade: no scores.
+# Rubric: B8.2 wk-02-task. Exercises B1.5 rule 6 or 7 (a label the reader cannot use).
+schema: learnops.testdata.b8-4.expected-outcome/v1
+submission_id: s009
+rubric: b8-2-wk-02-task
+provisional: true
+criteria:
+  - criterion: Repository
+    checks:
+      - check: repo_clone
+        expected: pass
+        reason: >-
+          hosting.publish_repo is true.
+    judgement: meets
+    rationale: >-
+      The repository link clones.
+  - criterion: Document answers
+    checks:
+      - check: http_ok:demo_url
+        expected: error
+        reason: >-
+          The Demo: line comes after Report:, so B1.5 rule 3 makes it part of the report, and there is no Demo label before the report: field_missing.
+    judgement: ambiguous
+    rationale: >-
+      The link is in the report and works, but the check cannot read it. Whether that earns the marks is for the mentor's reference grade.
+  - criterion: README
+    checks:
+      - check: readme_sections:Setup,Usage
+        expected: pass
+        reason: >-
+          repo/README.md has Setup and Usage headings.
+    judgement: meets
+    rationale: The README has the two sections the criterion asks for.
+  - criterion: Weak answers
+    checks: []
+    judgement: meets
+    rationale: The report names two questions the assistant answers badly and says why.

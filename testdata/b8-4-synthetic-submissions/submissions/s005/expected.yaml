@@ -1,8 +1,8 @@
 # PROVISIONAL author's expected outcome. NOT a reference grade: no scores.
-# Rubric: B1 contract example wk-01-task (not B8.2).
+# Rubric: B8.2 wk-01-task.
 schema: learnops.testdata.b8-4.expected-outcome/v1
 submission_id: s005
-rubric: b1-example-wk-01-task
+rubric: b8-2-wk-01-task
 provisional: true
 criteria:
   - criterion: Working demo
@@ -12,24 +12,22 @@ criteria:
         reason: hosting.demo_stub is none, so nothing answers at the demo link.
     judgement: does_not_meet
     rationale: The report itself says the demo was not put online.
-  - criterion: Code quality
+  - criterion: Repository and README
     checks:
-      - check: repo_file:README.md
+      - check: repo_clone
+        expected: pass
+        reason: hosting.publish_repo is true.
+      - check: readme_sections:Setup
         expected: fail
-        reason: The repository clones but has no README.md.
-      - check: command:setup
-        expected: undetermined
-        reason: >-
-          No check config defines "setup" yet (design §4.3c, Q33), so its result cannot be
-          predicted.
-    judgement: does_not_meet
-    rationale: No README, so setup is not explained; the code answers only two fixed strings.
+        reason: The repository clones but has no README.md, so there is no Setup heading.
+    judgement: partly_meets
+    rationale: The repository clones, but there is no README, so setup is not explained.
   - criterion: Reflection
     checks:
-      - check: word_count:200
+      - check: word_count:150
         expected: fail
         reason: >-
-          report.md is far below 200 words under the PROVISIONAL counting rule (whitespace-separated
+          report.md is far below 150 words under the PROVISIONAL counting rule (whitespace-separated
           tokens of the whole file).
     judgement: does_not_meet
     rationale: >-

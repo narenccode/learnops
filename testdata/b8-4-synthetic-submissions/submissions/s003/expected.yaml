@@ -1,10 +1,10 @@
 # PROVISIONAL author's expected outcome. NOT a reference grade: no scores.
-# Rubric: B1 contract example wk-02-task (not B8.2).
+# Rubric: B8.2 wk-02-task.
 # Near-duplicate of s001: the similarity check (FR-G-04) should flag the pair. The similarity
 # method and thresholds are not decided (design §3.1, Q49), so no expected score is recorded.
 schema: learnops.testdata.b8-4.expected-outcome/v1
 submission_id: s003
-rubric: b1-example-wk-02-task
+rubric: b8-2-wk-02-task
 provisional: true
 criteria:
   - criterion: Repository

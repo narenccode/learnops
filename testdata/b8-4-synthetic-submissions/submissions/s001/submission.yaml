@@ -1,9 +1,11 @@
 # PROVISIONAL pilot submission. Fictional; written for this project.
 schema: learnops.testdata.b8-4.submission/v1
 id: s001
-repository_url: https://git.lab.invalid/learner-01/handbook-assistant.git
-demo_url: https://demo.lab.invalid/learner-01/
-report: report.md
+onlinetext: |-
+  Repository: https://git.lab.invalid/learner-01/handbook-assistant.git
+  Demo: https://demo.lab.invalid/learner-01/
+onlinetext_format: plain
+files: [report.md]
 repo_dir: repo
 hosting:
   publish_repo: true

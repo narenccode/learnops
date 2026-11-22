@@ -1,32 +1,32 @@
 # B8.4 synthetic submissions (PRD B8): PROVISIONAL PILOT.
 #
-# Six fictional submissions written against the marking tables of the merged B1 contract example
-# (contracts/examples/course-package.v1), because the B8.2 sample course does not exist yet. That
-# example is "not the B8.2 sample course" (its own header says so), so nothing here claims to match
-# B8.2. The whole set must be retargeted once B8.2 is merged and the submission-content rule
-# (design Q32) is resolved. See README.md, "Open decisions".
+# Nine fictional submissions written against the marking tables of the merged B8.2 sample course
+# (testdata/b8-2-sample-course), in the submission form of PRD B1.5: online text with Repository:,
+# Demo: and Report: lines, and a report file only when the online text has no Report: section.
+# The set is still provisional: no mentor reference grades, nine submissions instead of 30, and a
+# format that the other owners and the guide have not accepted. See README.md, "Open decisions".
 #
 # All content is fictional and written for this project. No real learner data.
 schema: learnops.testdata.b8-4/v1
 status: provisional
 
 rubrics:
-  - id: b1-example-wk-01-task
-    course_package: contracts/examples/course-package.v1/course.yaml
+  - id: b8-2-wk-01-task
+    course_package: testdata/b8-2-sample-course/package/course.yaml
     assignment_idnumber: wk-01-task
-    task_body: contracts/examples/course-package.v1/weeks/01-task.md
+    task_body: testdata/b8-2-sample-course/package/weeks/01-task.md
     provisional: true
-    note: B1 contract example, not B8.2. Replace with the B8.2 assignment when it is merged.
-  - id: b1-example-wk-02-task
-    course_package: contracts/examples/course-package.v1/course.yaml
+    note: B8.2 sample course (merged). The rubric is final; the set that uses it is provisional.
+  - id: b8-2-wk-02-task
+    course_package: testdata/b8-2-sample-course/package/course.yaml
     assignment_idnumber: wk-02-task
-    task_body: contracts/examples/course-package.v1/weeks/02-task.md
+    task_body: testdata/b8-2-sample-course/package/weeks/02-task.md
     provisional: true
-    note: B1 contract example, not B8.2. Replace with the B8.2 assignment when it is merged.
+    note: B8.2 sample course (merged). The rubric is final; the set that uses it is provisional.
 
 submissions:
   - id: s001
-    rubric: b1-example-wk-02-task
+    rubric: b8-2-wk-02-task
     learner_ref: learner-01
     intended_level: strong
     edge_cases: []
@@ -36,7 +36,7 @@ submissions:
     provisional: true
 
   - id: s002
-    rubric: b1-example-wk-02-task
+    rubric: b8-2-wk-02-task
     learner_ref: learner-02
     intended_level: partial
     edge_cases: [readme_section_missing, ambiguous_judgement]
@@ -46,7 +46,7 @@ submissions:
     provisional: true
 
   - id: s003
-    rubric: b1-example-wk-02-task
+    rubric: b8-2-wk-02-task
     learner_ref: learner-03
     intended_level: strong
     edge_cases: [near_duplicate]
@@ -57,32 +57,60 @@ submissions:
     near_duplicate_of: s001
 
   - id: s004
-    rubric: b1-example-wk-01-task
+    rubric: b8-2-wk-01-task
     learner_ref: learner-04
     intended_level: partial
-    edge_cases: [report_under_word_count, command_check_undetermined]
+    edge_cases: [report_under_word_count]
     ambiguous: false
     split: unassigned
     authored_by: Student 3
     provisional: true
 
   - id: s005
-    rubric: b1-example-wk-01-task
+    rubric: b8-2-wk-01-task
     learner_ref: learner-05
     intended_level: weak
-    edge_cases:
-      [readme_missing, demo_unreachable, report_under_word_count, command_check_undetermined]
+    edge_cases: [readme_missing, demo_unreachable, report_under_word_count]
     ambiguous: false
     split: unassigned
     authored_by: Student 3
     provisional: true
 
   - id: s006
-    rubric: b1-example-wk-01-task
+    rubric: b8-2-wk-01-task
     learner_ref: learner-06
     intended_level: incorrect
-    edge_cases:
-      [repo_not_cloneable, check_passes_but_criterion_unmet, off_topic, ambiguous_judgement]
+    edge_cases: [repo_not_cloneable, check_passes_but_criterion_unmet, off_topic, ambiguous_judgement]
+    ambiguous: true
+    split: unassigned
+    authored_by: Student 3
+    provisional: true
+
+  - id: s007
+    rubric: b8-2-wk-02-task
+    learner_ref: learner-07
+    intended_level: partial
+    edge_cases: [label_missing, ambiguous_judgement]
+    ambiguous: true
+    split: unassigned
+    authored_by: Student 3
+    provisional: true
+
+  - id: s008
+    rubric: b8-2-wk-02-task
+    learner_ref: learner-08
+    intended_level: partial
+    edge_cases: [label_repeated, ambiguous_judgement]
+    ambiguous: true
+    split: unassigned
+    authored_by: Student 3
+    provisional: true
+
+  - id: s009
+    rubric: b8-2-wk-02-task
+    learner_ref: learner-09
+    intended_level: partial
+    edge_cases: [label_inside_report, ambiguous_judgement]
     ambiguous: true
     split: unassigned
     authored_by: Student 3

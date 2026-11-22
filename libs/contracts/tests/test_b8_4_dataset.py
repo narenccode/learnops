@@ -25,8 +25,8 @@ NOT automated, and therefore NOT claimed:
   * PRD B8 size (at least 30 submissions) and reference grades from at least one mentor. The
     pilot has 6 and no reference grades (mentor not named, design Q13). These are release-gate
     checks to add when the set is complete;
-  * that the rubrics match B8.2 (they are the B1 contract example; B8.2 does not exist yet);
-  * the Moodle form of a submission (submission-content rule, design Q32);
+  * that a submission extractor (Module 3) reads these files: the reader below is a stand-in, checked against the shared vectors;
+  * the Moodle form of a submission as editor HTML (B1.5 rule 5 is unverified until the lab check);
   * machine-check behaviour on real infrastructure (lab git server and demo stubs, not ready);
   * the marking-table parse below is a stand-in for the shared parser planned in libs/contracts
     (design §4.3b); it is not that parser.
@@ -106,21 +106,107 @@ def parse_marking_table(body: str) -> list[tuple[str, int, list[str]]]:
     return rows
 
 
-def word_count(text: str) -> int:
-    # PROVISIONAL counting rule: whitespace-separated tokens of the whole report file.
-    return len(text.split())
+SUBMISSION_VECTORS = ROOT / "contracts" / "test-vectors" / "submission.v1.json"
+LABEL_LINE = re.compile(r"^ *(repository|demo|report):(.*)$", re.IGNORECASE)
+FENCE_LINE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
+ATX_LINE = re.compile(r"^ {0,3}(#{1,6})([ \t].*)?$")
 
 
-def readme_headings(readme: Path) -> set[str]:
-    if not readme.is_file():
-        return set()
-    text = readme.read_text(encoding="utf-8")
-    # Ignore fenced code blocks so a "# comment" inside one is not read as a heading.
-    text = re.sub(r"```.*?```", "", text, flags=re.DOTALL)
+def read_submission(onlinetext: str, files: dict[str, str]) -> dict[str, Doc]:
+    """Stand-in reader for PRD B1.5 rules 1 to 7, plain online text only (rule 5, editor HTML, is
+    unverified until the lab). It is NOT the submission extractor of Module 3: it exists so that
+    expected.yaml can be derived from the files, and it is checked against every plain case of the
+    shared vectors in contracts/test-vectors/submission.v1.json (see the tests below)."""
+    lines = onlinetext.split("\n")
+    found: dict[str, list[str]] = {"repository": [], "demo": []}
+    report_at: int | None = None
+    first = ""
+    for index, line in enumerate(lines):
+        match = LABEL_LINE.match(line)
+        if match is None:
+            continue
+        label = match.group(1).lower()
+        if label == "report":
+            report_at, first = index, match.group(2)
+            break
+        found[label].append(match.group(2).strip())
+    parts: dict[str, Doc] = {}
+    for label, values in found.items():
+        if not values:
+            parts[label] = {"error": "field_missing"}
+        elif len(values) > 1:
+            parts[label] = {"error": "field_repeated"}
+        else:
+            parts[label] = {"value": values[0]}
+    if report_at is not None:
+        text = "\n".join([first.lstrip(" "), *lines[report_at + 1 :]]).strip()
+        parts["report"] = {
+            "value": text,
+            "source": "onlinetext",
+            "words": len(text.split()),
+        }
+        return parts
+    for name in ("report.md", "report.txt"):
+        if name in files:
+            text = files[name]
+            parts["report"] = {
+                "value": text,
+                "source": name,
+                "words": len(text.split()),
+            }
+            return parts
+    parts["report"] = {"error": "field_missing"}
+    return parts
+
+
+def readme_headings(text: str) -> set[str]:
+    """Heading texts of a README by PRD B1.3 (the readme_cases of the shared vectors): ATX headings
+    of 1 to 6 # with at most three leading spaces, a closing # sequence after a space or tab removed,
+    surrounding spaces and tabs removed; headings inside a fenced block (``` or ~~~, at most three
+    leading spaces, closed by the same character at least as long, or running to the end) and Setext
+    headings do not count. Compared case-insensitively."""
+    headings: set[str] = set()
+    fence: str | None = None
+    for line in text.split("\n"):
+        opening = FENCE_LINE.match(line)
+        if fence is not None:
+            if (
+                opening
+                and opening.group(1)[0] == fence[0]
+                and len(opening.group(1)) >= len(fence)
+                and not opening.group(2).strip()
+            ):
+                fence = None
+            continue
+        if opening and not (opening.group(1)[0] == "`" and "`" in opening.group(2)):
+            fence = opening.group(1)
+            continue
+        atx = ATX_LINE.match(line)
+        if atx:
+            body = (atx.group(2) or "").strip(" \t")
+            body = re.sub(r"(?:^|[ \t]+)#+$", "", body).strip(" \t")
+            headings.add(body.lower())
+    return headings
+
+
+def readme_sections_result(argument: str, readme: str) -> Doc:
+    wanted = [name.strip() for name in argument.split(",")]
+    have = readme_headings(readme)
+    missing = [name for name in wanted if name.lower() not in have]
+    return {"result": "fail", "missing": missing} if missing else {"result": "pass"}
+
+
+def submission_files(folder: Path, submission: Doc) -> dict[str, str]:
     return {
-        m.group(1).strip().lower()
-        for m in re.finditer(r"^#+\s+(.+)$", text, re.MULTILINE)
+        name: (folder / name).read_text(encoding="utf-8")
+        for name in submission.get("files", [])
     }
+
+
+def parts_of(folder: Path, submission: Doc) -> dict[str, Doc]:
+    return read_submission(
+        submission["onlinetext"], submission_files(folder, submission)
+    )
 
 
 def predict_check(check: str, folder: Path, submission: Doc) -> str:
@@ -128,11 +214,17 @@ def predict_check(check: str, folder: Path, submission: Doc) -> str:
     name, _, arg = check.partition(":")
     hosting = submission["hosting"]
     repo = folder / submission["repo_dir"]
+    parts = parts_of(folder, submission)
     if name == "http_ok":
+        if "error" in parts["demo"]:
+            return "error"  # B1.5 rule 7: the label is missing or repeated
         return "fail" if hosting["demo_stub"] == "none" else "pass"
     if name == "word_count":
-        report = (folder / submission["report"]).read_text(encoding="utf-8")
-        return "pass" if word_count(report) >= int(arg) else "fail"
+        if "error" in parts["report"]:
+            return "error"
+        return "pass" if parts["report"]["words"] >= int(arg) else "fail"
+    if "error" in parts["repository"]:
+        return "error"  # the repository link cannot be read, so nothing needs the clone
     if not hosting["publish_repo"]:
         # Nothing to clone: the clone itself fails, anything that needs the clone cannot run.
         return "fail" if name == "repo_clone" else "error"
@@ -141,8 +233,9 @@ def predict_check(check: str, folder: Path, submission: Doc) -> str:
     if name == "repo_file":
         return "pass" if (repo / arg).is_file() else "fail"
     if name == "readme_sections":
-        wanted = {section.strip().lower() for section in arg.split(",")}
-        return "pass" if wanted <= readme_headings(repo / "README.md") else "fail"
+        readme = repo / "README.md"
+        text = readme.read_text(encoding="utf-8") if readme.is_file() else ""
+        return str(readme_sections_result(arg, text)["result"])
     if name == "command":
         return "undetermined"  # no check config exists yet (design Q33)
     raise AssertionError(f"unknown check name {name!r}")
@@ -235,7 +328,13 @@ def test_submission_and_expected_outcome_are_valid(
     assert submission["id"] == sid
     assert expected["submission_id"] == sid
     assert expected["rubric"] == entry["rubric"]
-    assert (folder / submission["report"]).is_file()
+    for name in submission.get("files", []):
+        assert (folder / name).is_file(), name
+    # B1.5 rule 4: a report file is used only when the online text has no Report: section.
+    has_report_section = (
+        "error" not in parts_of(folder, {**submission, "files": []})["report"]
+    )
+    assert not (has_report_section and submission.get("files")), sid
     assert (folder / submission["repo_dir"]).is_dir()
 
 
@@ -258,11 +357,11 @@ def test_reference_grade_rules_catch_bad_grades(
     tables: dict[str, list[tuple[str, int, list[str]]]],
 ) -> None:
     # In-memory only: no reference grade is written to the repository until a mentor grades.
-    rows = tables["b1-example-wk-02-task"]
+    rows = tables["b8-2-wk-02-task"]
     grade: Doc = {
         "schema": "learnops.testdata.b8-4.reference-grade/v1",
         "submission_id": "s001",
-        "rubric": "b1-example-wk-02-task",
+        "rubric": "b8-2-wk-02-task",
         "mentor_ref": "mentor-01",
         "graded_at": "2026-11-01",
         "blind_to_drafts": True,
@@ -428,6 +527,21 @@ def test_every_edge_case_tag_agrees_with_the_files(sid: str, manifest: Doc) -> N
     assert ("demo_unreachable" in tags) == (hosting["demo_stub"] == "none"), sid
     assert ("report_under_word_count" in tags) == failed("word_count"), sid
     assert ("repo_not_cloneable" in tags) == (not hosting["publish_repo"]), sid
+    parts = parts_of(folder, submission)
+    missing = {
+        k for k in ("repository", "demo") if parts[k].get("error") == "field_missing"
+    }
+    report_lines = parts["report"].get("value", "").split("\n")[1:]
+    inside = {
+        m.group(1).lower()
+        for m in map(LABEL_LINE.match, report_lines)
+        if m and m.group(1).lower() in missing
+    }
+    assert ("label_repeated" in tags) == any(
+        parts[k].get("error") == "field_repeated" for k in ("repository", "demo")
+    ), sid
+    assert ("label_inside_report" in tags) == bool(inside), sid
+    assert ("label_missing" in tags) == bool(missing - inside), sid
     if "check_passes_but_criterion_unmet" in tags:
         # At least one criterion has checks that all pass while the author judged it not met.
         assert any(
@@ -476,6 +590,52 @@ def test_a_valid_expected_outcome_is_still_accepted(
 ) -> None:
     doc: Doc = load_yaml(SUBMISSIONS_DIR / "s001" / "expected.yaml")
     assert errors(validators["expected-outcome"], doc) == []
+
+
+def _vectors() -> Doc:
+    loaded: Doc = json.loads(SUBMISSION_VECTORS.read_text(encoding="utf-8"))
+    return loaded
+
+
+PLAIN_CASES = [
+    c for c in _vectors()["cases"] if c["input"]["onlinetext_format"] == "plain"
+]
+README_CASES = [
+    c for c in _vectors()["readme_cases"] if c["expected"]["result"] != "invalid"
+]
+
+
+@pytest.mark.parametrize("case", PLAIN_CASES, ids=[c["id"] for c in PLAIN_CASES])
+def test_the_stand_in_reader_gives_the_expected_parts_of_every_plain_vector(
+    case: Doc,
+) -> None:
+    """The reader below the pilot is only trusted as far as it agrees with the shared vectors."""
+    files = {f["name"]: f["text"] for f in case["input"]["files"]}
+    parts = read_submission(case["input"]["onlinetext"], files)
+    assert parts == case["expected"], case["id"]
+
+
+@pytest.mark.parametrize("case", README_CASES, ids=[c["id"] for c in README_CASES])
+def test_the_stand_in_heading_rule_gives_the_expected_result_of_every_readme_vector(
+    case: Doc,
+) -> None:
+    check = case["check"]
+    assert check.startswith("readme_sections:")
+    readme = next(f["text"] for f in case["files"] if f["name"] == "README.md")
+    # Only a README.md at the repository root is read (B1.3); the vector says what is there.
+    assert readme_sections_result(check.partition(":")[2], readme) == case["expected"]
+
+
+def test_the_pilot_exercises_the_b15_forms_and_failures(manifest: Doc) -> None:
+    sources: set[str] = set()
+    errors_seen: set[str] = set()
+    for s in manifest["submissions"]:
+        folder = SUBMISSIONS_DIR / s["id"]
+        parts = parts_of(folder, load_yaml(folder / "submission.yaml"))
+        sources.add(parts["report"]["source"])
+        errors_seen |= {p["error"] for p in parts.values() if "error" in p}
+    assert sources == {"onlinetext", "report.md"}  # a Report: section and a report file
+    assert errors_seen == {"field_missing", "field_repeated"}
 
 
 def test_pilot_covers_every_intended_level(manifest: Doc) -> None:

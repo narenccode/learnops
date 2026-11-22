@@ -2,23 +2,27 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:learnops:testdata:b8-4:submission:v1",
   "title": "B8.4 synthetic submission (PROVISIONAL)",
-  "description": "One fictional submission: repository + demo link + short report (PRD B8). The fields are format-neutral on purpose: how they are placed in Moodle online text or files is the submission-content rule, which is not decided (design Q32).",
+  "description": "One fictional submission in the form of PRD B1.5: online text with Repository:, Demo: and Report: lines, and, when the online text has no Report: section, a report file. The repository and the report stay as files so the set can be reviewed. How a reader extracts the parts is B1.5 and the shared vectors in contracts/test-vectors/submission.v1.json.",
   "type": "object",
-  "required": ["schema", "id", "repository_url", "demo_url", "report", "repo_dir", "hosting"],
+  "required": ["schema", "id", "onlinetext", "onlinetext_format", "repo_dir", "hosting"],
   "properties": {
     "schema": { "const": "learnops.testdata.b8-4.submission/v1" },
     "id": { "type": "string", "pattern": "^s[0-9]{3}$" },
-    "repository_url": {
+    "onlinetext": {
       "type": "string",
-      "description": "Placeholder on a reserved .invalid host (RFC 2606); replaced by the lab git server address when the set is published.",
-      "pattern": "^https://[a-z0-9.-]+\\.invalid/"
+      "minLength": 1,
+      "description": "The learner's online text, exactly as the reader gets it (B1.5). Links are placeholders on reserved .invalid hosts (RFC 2606); the publish step replaces them with lab addresses."
     },
-    "demo_url": {
-      "type": "string",
-      "description": "Placeholder on a reserved .invalid host; replaced by a lab stub page when the set is published.",
-      "pattern": "^https://[a-z0-9.-]+\\.invalid/"
+    "onlinetext_format": {
+      "const": "plain",
+      "description": "Only plain text. Editor HTML is not used until the lab check on Moodle 4.5 and 5.3 (B1.5 rule 5 is unverified)."
     },
-    "report": { "const": "report.md" },
+    "files": {
+      "type": "array",
+      "uniqueItems": true,
+      "description": "Uploaded files in this submission's folder. Only a report file is used, and only when the online text has no Report: section (B1.5 rule 4).",
+      "items": { "enum": ["report.md", "report.txt"] }
+    },
     "repo_dir": { "const": "repo" },
     "hosting": {
       "type": "object",
@@ -27,7 +31,7 @@
       "properties": {
         "publish_repo": {
           "type": "boolean",
-          "description": "false: the repository is not published, so the URL does not clone."
+          "description": "false: the repository is not published, so the repository link does not clone."
         },
         "demo_stub": {
           "enum": ["answers", "unrelated_page", "none"],

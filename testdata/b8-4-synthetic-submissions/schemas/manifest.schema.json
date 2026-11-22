@@ -88,7 +88,19 @@
               "check_passes_but_criterion_unmet",
               "off_topic",
               "ambiguous_judgement",
-              "command_check_undetermined"
+              "command_check_undetermined",
+              "label_missing",
+              "label_repeated",
+              "label_inside_report",
+              "label_missing",
+              "label_repeated",
+              "label_inside_report",
+              "label_missing",
+              "label_repeated",
+              "label_inside_report",
+              "label_missing",
+              "label_repeated",
+              "label_inside_report"
             ]
           }
         },

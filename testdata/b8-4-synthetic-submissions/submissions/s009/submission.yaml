@@ -1,0 +1,14 @@
+# PROVISIONAL pilot submission. Fictional; written for this project.
+schema: learnops.testdata.b8-4.submission/v1
+id: s009
+onlinetext: |-
+  Repository: https://git.lab.invalid/learner-09/river-walk-bot.git
+  Report: My assistant answers questions about the fictional River Walk volunteer guide. Two
+  questions it answers badly: "When is the next walk?" because dates are in a table, and "Do I need
+  boots?" because the guide says "sturdy shoes".
+  Demo: https://demo.lab.invalid/learner-09/
+onlinetext_format: plain
+repo_dir: repo
+hosting:
+  publish_repo: true
+  demo_stub: answers

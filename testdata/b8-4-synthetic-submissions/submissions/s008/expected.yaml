@@ -1,0 +1,37 @@
+# PROVISIONAL author's expected outcome. NOT a reference grade: no scores.
+# Rubric: B8.2 wk-02-task. Exercises B1.5 rule 6 or 7 (a label the reader cannot use).
+schema: learnops.testdata.b8-4.expected-outcome/v1
+submission_id: s008
+rubric: b8-2-wk-02-task
+provisional: true
+criteria:
+  - criterion: Repository
+    checks:
+      - check: repo_clone
+        expected: error
+        reason: >-
+          The online text has two Repository: lines before the report, so the check that reads it is recorded as error with reason field_repeated (B1.5 rule 7: the first one does not win).
+    judgement: ambiguous
+    rationale: >-
+      The check cannot choose between the two links, but the second one is the new repository and clones. Which one counts is for the mentor's reference grade.
+  - criterion: Document answers
+    checks:
+      - check: http_ok:demo_url
+        expected: pass
+        reason: >-
+          hosting.demo_stub is answers.
+    judgement: meets
+    rationale: >-
+      The stub demo answers a question from the handbook.
+  - criterion: README
+    checks:
+      - check: readme_sections:Setup,Usage
+        expected: error
+        reason: >-
+          The repository link is not read (field_repeated), so the README cannot be read.
+    judgement: ambiguous
+    rationale: The README has the two sections the criterion asks for.
+  - criterion: Weak answers
+    checks: []
+    judgement: meets
+    rationale: The report names two questions the assistant answers badly and says why.

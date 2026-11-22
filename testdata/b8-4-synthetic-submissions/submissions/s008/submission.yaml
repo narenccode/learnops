@@ -1,0 +1,16 @@
+# PROVISIONAL pilot submission. Fictional; written for this project.
+schema: learnops.testdata.b8-4.submission/v1
+id: s008
+onlinetext: |-
+  Repository: https://git.lab.invalid/learner-08/old-bike-share-bot.git
+  Repository: https://git.lab.invalid/learner-08/bike-share-bot.git
+  Demo: https://demo.lab.invalid/learner-08/
+  Report: I rebuilt my assistant for the fictional Canal Bike Share handbook and moved it to a new
+  repository. Two questions it answers badly: "Who pays for a lost lock?" because the handbook says
+  "the member" in a table the assistant does not read, and "Can I park at a tram stop?" because the
+  word park also appears in a paragraph about parks.
+onlinetext_format: plain
+repo_dir: repo
+hosting:
+  publish_repo: true
+  demo_stub: answers

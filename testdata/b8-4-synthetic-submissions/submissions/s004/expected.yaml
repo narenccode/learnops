@@ -1,8 +1,8 @@
 # PROVISIONAL author's expected outcome. NOT a reference grade: no scores.
-# Rubric: B1 contract example wk-01-task (not B8.2).
+# Rubric: B8.2 wk-01-task.
 schema: learnops.testdata.b8-4.expected-outcome/v1
 submission_id: s004
-rubric: b1-example-wk-01-task
+rubric: b8-2-wk-01-task
 provisional: true
 criteria:
   - criterion: Working demo
@@ -12,27 +12,25 @@ criteria:
         reason: hosting.demo_stub is answers.
     judgement: meets
     rationale: The stub demo answers the test question ("how many days until" a given date).
-  - criterion: Code quality
+  - criterion: Repository and README
     checks:
-      - check: repo_file:README.md
+      - check: repo_clone
         expected: pass
-        reason: hosting.publish_repo is true and repo/README.md exists.
-      - check: command:setup
-        expected: undetermined
-        reason: >-
-          No check config defines "setup" yet (design §4.3c, Q33), so its result cannot be
-          predicted.
+        reason: hosting.publish_repo is true.
+      - check: readme_sections:Setup
+        expected: pass
+        reason: repo/README.md has a Setup heading.
     judgement: meets
-    rationale: The README explains setup and how to run the tests; the code is small and clear.
+    rationale: The repository clones, and the README explains setup and how to run the tests.
   - criterion: Reflection
     checks:
-      - check: word_count:200
+      - check: word_count:150
         expected: fail
         reason: >-
-          report.md has 193 words under the PROVISIONAL counting rule (whitespace-separated
+          report.md has 146 words under the PROVISIONAL counting rule (whitespace-separated
           tokens of the whole file; the real rule is not decided, design §4.3b, Q39).
     judgement: partly_meets
     rationale: >-
       The report covers what worked and what did not, with specific causes, but is just under
-      the 200-word minimum. How far a near miss lowers the score is for the mentor (cap rule
+      the 150-word minimum. How far a near miss lowers the score is for the mentor (cap rule
       Q25).
