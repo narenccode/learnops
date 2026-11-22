@@ -53,7 +53,7 @@ attempts, unexpected names and Range requests; it does not make the route safe t
   typically built with it. That build was **not checked against C-11 and is not an approved
   production build**: it is for local demonstration only. The Video design (`docs/design/video.md`,
   Q10) requires an LGPL build with no GPL-only parts for the pipeline, to be confirmed from the lab
-  image's `ffmpeg -version` output. Do not read this demo's encoder as the pipeline's.
+  image's `ffmpeg -version` output. Do not read this demo's encoder as the pipeline's. The guide granted a narrow, recorded exception for this demo only, which is the licence record for its ffmpeg: `docs/decisions/0013-video-demo-ffmpeg-libx264-exception.md`. It ends when the demo is removed or replaced by the pipeline and is not a precedent.
 - **No production deployment configuration.** No Dockerfile, Compose file, worker container,
   storage adapter or TLS. ffmpeg is installed by hand (Windows steps above) and in the CI job.
 - **No generated captions, transcript or chapters.** `captions.en.vtt`, `transcript.en.json` and
