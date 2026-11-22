@@ -92,7 +92,7 @@ as a freeze, and draft PR #115 prepares the post-freeze CODEOWNERS rule.
 | B8.3 planted-error courses | **7** | No PR or file found |
 | B8.4 synthetic submissions | **4** | #31 (provisional pilot of 6; the PRD asks for at least 30) |
 | B8.5 lecture videos: checker and tests | **1** | #82, #89; decision 0004 and the inventory hashes (#99) |
-| B8.5 lecture videos: data | **5 Pending** | `main` says PENDING: five hashes, no duration, no consent line, no transcript. Decision 0004 records the guide's temporary exceptions (four lectures, no 1800 s total; issue #121, PR #125). #104 (draft) reports 5 local files with matching hashes, 338 s of 1800 s and 0 of 5 consent lines; **not reviewed** |
+| B8.5 lecture videos: data | **5 Pending** | `main` says PENDING: five hashes, no duration, no consent line, no transcript. Decision 0004 records the guide's temporary exceptions (four lectures, no 1800 s total; issue #121, PR #125). #104 (open, ready for review; unmerged) reports 5 local files with matching hashes, 338 s of 1800 s and 0 of 5 consent lines; **not reviewed** |
 | B8.6 model comparison set | **4** | #33 (draft, "one transcript") |
 
 **2c. App-C.**
@@ -142,15 +142,15 @@ it (see `traceability-needs.md`).
 | BBB (App-C 4, FR-V-09) | Lab metadata and format output | Check script and NOT VERIFIED records on `main` (#96) | Any lab run | Student 4, lab |
 | WER (G-6, App-C 7) | Baseline run, target, method | Tooling merged (#103) | A complete B8.5; ADR 0002 approval; normalisation rule; provider permission | Guide, Student 3, Student 4 |
 | Moodle 4.5 and 5.3 (C-03, D2.3, E2) | Restore and role results on both | Guide's waiver comments for B8.1 and B8.2 (section 7); register in `docs/decisions/README.md` (#130, merged) | All results | Student 1, 2, guide |
-| Design approval | `Status: Approved` | none | All four | Guide |
+| Design approval | `Status: Approved` | `studio.md` is `Approved` (#147); `grading.md` is `In review`; `checker.md` and `video.md` are `Draft` | The other three (1 of 4 done) | Guide |
 | Release readiness (D2.5 to 8) | Changelog, notes, tag, adoption test | none | All | Guide, owners |
 
 ## 5. Verification record
 
-**Local (Windows 11, Python 3.12.5, fresh virtual environment from `requirements-dev.txt`, worktree
+**Local (Windows 11, Python 3.12.5, fresh virtual environment from `requirements.txt` **and** `requirements-dev.txt` (plus `mypy`), worktree
 of `origin/main` `5f3a794` plus this PR), run 2026-11-20.** The command list and exit codes are in
 section 7 of `demo-script.md`; summary: validator 26 of 26 examples passed, `pytest -q -rs` 1 failed, 4103 passed, 5 skipped (the one failure is a Windows-only case-insensitive-filesystem test; CI on Linux is the reference), CI-script
-tests 88 passed, `mypy libs` clean in 56 source files.
+tests 88 passed, `mypy libs` clean in 56 source files. `requirements.txt` is needed for `tzdata`: without it 32 tests fail on Windows (demo script section 7).
 
 **Hosted (GitHub Actions), separate from the above.** `gh run list --branch main` on 2026-11-20:
 workflow `ci` succeeded on `5f3a794`, `d1faffc` and `d28018f` (the three latest commits on `main`).
