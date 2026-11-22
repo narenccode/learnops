@@ -1,1 +1,85 @@
-PENDING: reference transcript for lecture-01 not typed yet. Do not use it for any measurement.
+Hello, my name is Akshita.
+
+I voluntarily consent to having my voice and lecture recording included in the LearnOps B8.5 test dataset for project evaluation and testing purposes.
+
+I understand that this recording will be used as test evidence for the project.
+
+Thank you.
+
+Good morning everyone.
+
+Today, our team is going to explain an important subject in computer science called Database Management Systems, commonly known as DBMS.
+
+I will begin by explaining what data is, what a database means, why we need a database management system, and some of its important features.
+
+Let's start with a simple question: What is data?
+
+Data refers to raw facts and information. For example, a student's name, roll number, phone number, marks, and attendance are all examples of data.
+
+When we collect and organize related data in one place, it becomes a database.
+
+For example, imagine a college that has thousands of students. The college needs to maintain information about every student's name, department, semester, attendance, examination marks, and fees.
+
+If all this information is stored in separate notebooks or ordinary files, managing it becomes difficult. Searching for a particular student's information may take a long time. Updating records can also lead to mistakes.
+
+This is where a Database Management System becomes useful.
+
+A Database Management System is software that allows users to create, store, organize, retrieve, update, and manage data efficiently.
+
+Some popular examples of DBMS software are MySQL, Oracle Database, Microsoft SQL Server, PostgreSQL, and SQLite.
+
+We use database systems in many areas of our daily lives. Banks use them to maintain customer accounts and transaction records. Hospitals use them to store patient details and medical records. Online shopping platforms use databases to manage products, customers, orders, and payments. Universities use them to maintain student information and examination results.
+
+Now, let's understand why we need DBMS.
+
+The first important reason is to reduce data redundancy.
+
+Data redundancy means storing the same information multiple times. Suppose a student's phone number is stored in three different files. If the student changes their number, all three files must be updated. If one file is not updated, the information becomes inconsistent.
+
+A DBMS helps reduce unnecessary duplication by organizing information properly.
+
+The second reason is data consistency. Consistency means that the same information should remain correct across the database. A well-designed database helps prevent conflicting information.
+
+The third reason is data security. Not every person should have access to every piece of information. For example, a student may be allowed to view their marks, but only authorized faculty members should be allowed to modify them. A DBMS provides access controls and permissions.
+
+The fourth reason is data sharing. Multiple authorized users can access the same database. For example, in a college, the examination department, accounts department, and administration department may all use information from a common database.
+
+Another important feature is backup and recovery. If a system crashes or data is accidentally lost, database systems provide mechanisms to restore information from backups or recovery records.
+
+Now let's discuss the architecture of a DBMS.
+
+A commonly taught database architecture is the three-schema architecture. It has three levels: the external level, the conceptual level, and the internal level.
+
+The external level is the view of the database seen by individual users. Different users may see different parts of the same database. For example, a student sees their marks and attendance, while an administrator can access broader student records.
+
+The conceptual level describes the overall logical structure of the database. It explains what information is stored, the relationships between different tables, and the constraints applied to the data.
+
+The internal level describes how the data is physically stored in the computer, including storage structures, files, and indexes.
+
+This architecture helps provide data abstraction. Data abstraction means hiding unnecessary implementation details from users.
+
+There are also two important types of data independence.
+
+Logical data independence means that changes to the logical structure of the database should not require changes to every user's view.
+
+Physical data independence means that changes to physical storage arrangements should not affect the logical structure of the database.
+
+Next, let's look at different data models.
+
+A data model describes how information is organized and how different pieces of data are related.
+
+The hierarchical model organizes data in a tree-like structure, where records have parent-child relationships.
+
+The network model allows more complex relationships, where one record can be connected to multiple other records.
+
+The relational model organizes data into tables containing rows and columns. It is one of the most widely used database models.
+
+The object-oriented model represents data as objects, similar to object-oriented programming.
+
+Modern database systems also include NoSQL databases, which support different ways of storing data, such as documents, key-value pairs, graphs, and wide-column structures.
+
+To summarize my part, DBMS is essential because it helps us store and manage large amounts of information safely and efficiently. It reduces redundancy, improves consistency, supports multiple users, and provides security and recovery mechanisms.
+
+In the next part, my teammate will explain how databases are designed using the Entity Relationship model and how information is represented using relational tables.
+
+Thank you.

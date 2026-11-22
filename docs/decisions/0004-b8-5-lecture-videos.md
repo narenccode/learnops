@@ -56,4 +56,7 @@ One line per speaker, written by that speaker. A speaker who gives more than one
 
 Each lecture's row in the B8.5 inventory (`testdata/README.md`) points to its speaker's line as `0004` speaker-NN. Nobody writes a consent line for another person.
 
-No consent lines yet.
+- speaker-01: Akshita, 2026-11-23: "used to test speech recognition; video stays in the lab; transcript published under Apache-2.0"
+- speaker-02: Harshitha, 2026-11-23: "used to test speech recognition; video stays in the lab; transcript published under Apache-2.0"
+- speaker-03: Nagashree V, 2026-11-23: "used to test speech recognition; video stays in the lab; transcript published under Apache-2.0"
+- speaker-04: Shraddha, 2026-11-23: "used to test speech recognition; video stays in the lab; transcript published under Apache-2.0"

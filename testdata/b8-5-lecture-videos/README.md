@@ -7,12 +7,13 @@ pipeline (PRD G-6, App-C 7). The method is the guide's
 decision in `docs/decisions/0004-b8-5-lecture-videos.md`. The inventory, one row per lecture, is
 the B8.5 table in `testdata/README.md`.
 
-**Status: PENDING.** Five recordings are listed in the inventory (`testdata/README.md`), with the SHA-256
-values and durations supplied by the owner on 2026-11-23 (451, 441, 462, 538 and 488 s; 2380 s in total,
-provisional, not re-verified here). They replace the five short clips listed earlier (338 s), which were
-never accepted as B8.5 evidence. The files are not in Git. None of the new files is accepted as B8.5
-evidence yet: no speaker name is recorded, no speaker consent line is written in decision 0004, and
-every file under `lectures/` is still a placeholder. Do not use this set for any measurement.
+**Status: COMPLETE.** Five recordings are listed in the inventory (`testdata/README.md`): 451, 441, 462, 538 and
+488 s, 2380 s in total, from four speakers. Each has an outline and a reference transcript, the transcripts are
+marked `checked` (lecture 02, whose speaker is Harshitha, was checked by Nagashree V; the other four by
+Harshitha), and each speaker has written a consent line in decision 0004. The durations, hashes and file
+names were supplied by the owner and not re-verified by the reviewers. The files are not in Git. This record does
+not show a word error rate: no measurement has been run, and the method and normalisation are still to be
+approved (App-C 7).
 
 ## Folder layout
 
