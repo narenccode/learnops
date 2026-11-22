@@ -1,4 +1,7 @@
-"""The B1 JSON Schema, loaded once, and its errors turned into issues (PRD B1.1)."""
+"""The B1 and B2 JSON Schemas, loaded once, and their errors turned into issues (PRD B1.1, B2).
+
+`schema_issues` and `identifier_pattern` are for the B1 course package; `model_schema_issues` is
+for the B2 course model and reports rule `B2`."""
 
 from __future__ import annotations
 
@@ -18,7 +21,11 @@ from .report import Issue
 SCHEMA_PATH = (
     Path(__file__).resolve().parents[2] / "contracts" / "course-package.v1.schema.json"
 )
+MODEL_SCHEMA_PATH = (
+    Path(__file__).resolve().parents[2] / "contracts" / "course-model.v1.schema.json"
+)
 RULE = "B1.1"
+MODEL_RULE = "B2"
 
 
 @functools.cache
@@ -34,15 +41,55 @@ def _validator() -> Draft202012Validator:
 
 
 @functools.cache
+def _model_validator() -> Draft202012Validator:
+    loaded = json.loads(MODEL_SCHEMA_PATH.read_text(encoding="utf-8"))
+    return Draft202012Validator(loaded, format_checker=FormatChecker())
+
+
+@functools.cache
 def identifier_pattern() -> re.Pattern[str]:
     """The idnumber pattern, read from the schema so that the two can never drift apart."""
     return re.compile(load_schema()["$defs"]["identifier"]["pattern"])
+
+
+@functools.cache
+def pattern_texts() -> dict[str, tuple[str, str]]:
+    """The message and hint for each `pattern` in the B1 schema, keyed by the pattern text.
+
+    The patterns are read from the schema, so a changed pattern keeps its words. A test checks
+    that every pattern in the schema is listed here (UI-05: never show a regular expression).
+    """
+    defs = load_schema()["$defs"]
+    return {
+        defs["relative_path"]["pattern"]: messages.B1_PATH_NOT_RELATIVE,
+        defs["identifier"]["pattern"]: messages.B1_IDNUMBER_INVALID,
+        defs["h5p_file"]["allOf"][1]["pattern"]: messages.B1_H5P_FILE_NOT_H5P,
+        defs["unlock"]["properties"]["start_date"]["pattern"]: messages.B1_DATE_NOT_ISO,
+    }
 
 
 def schema_issues(document: object) -> list[Issue]:
     """Every schema error, ordered by place so the result is the same on every run."""
     errors = sorted(_validator().iter_errors(document), key=error_order)
     return [_to_issue(error) for error in errors]
+
+
+def model_schema_issues(document: object) -> list[Issue]:
+    """Every B2 course model schema error, in the same order as `schema_issues`."""
+    errors = sorted(_model_validator().iter_errors(document), key=error_order)
+    return [_to_model_issue(error) for error in errors]
+
+
+def _to_model_issue(error: ValidationError) -> Issue:
+    location = tuple(error.absolute_path)
+    place = messages.where(location) if location else messages.MODEL_NAME
+    return Issue(
+        code=f"schema_{error.validator}",
+        rule=MODEL_RULE,
+        message=messages.SCHEMA_ERROR.format(where=place, detail=error.message),
+        fix_hint=messages.MODEL_SCHEMA_HINT,
+        location=location,
+    )
 
 
 def error_order(error: ValidationError) -> tuple[list[tuple[int, int, str]], str]:
@@ -70,6 +117,18 @@ def _to_issue(error: ValidationError) -> Issue:
             fix_hint=messages.PROTECTED_DEFAULT_HINT,
             location=location,
         )
+    pattern = error.validator_value
+    if error.validator == "pattern" and isinstance(pattern, str):
+        texts = pattern_texts().get(pattern)
+        if texts is not None:
+            message, hint = texts
+            return Issue(
+                code="schema_pattern",
+                rule=RULE,
+                message=message.format(where=place, value=error.instance),
+                fix_hint=hint,
+                location=location,
+            )
     return Issue(
         code=f"schema_{error.validator}",
         rule=RULE,

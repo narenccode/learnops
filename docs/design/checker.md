@@ -5,6 +5,7 @@
 **Owner:** @shraddha0103 · **Peer reviewer:** @Akshita21-09
 **Release(s):** Release 1 (core); harness extended each later release
 **Status:** Draft
+**Contract decisions:** B2 decision record `docs/decisions/0003-b2-course-model.md`, item 21 (CK-07 reference model; see risk 11 in section 12).
 
 ## 1. Purpose and scope
 
@@ -63,7 +64,7 @@ flowchart TD
 
 ### 3.2 Component responsibilities
 
-- **Course-model builder:** Reads a Course Studio package or parses a Moodle backup and produces the B2 normalised course model.
+- **Course-model builder:** Reads a Course Studio package or parses a Moodle backup and produces the B2 normalised course model. For package models, it copies the package's declared `total_points` into `course.total_points`. For an `.mbz` model, including a merged course, it receives the independently declared target as a separate input and writes that value to `course.total_points`; it never derives the target from the gradebook items. A merged course remains `source.kind = mbz`.
 - **Rule engine:** Applies the defined validation rules to the course model. Each finding includes a rule ID, severity, message and fix hint.
 - **Availability evaluator:** Evaluates Moodle availability and completion rules and simulates whether a learner can reach each section and activity.
 - **Course-model diff:** Compares two course models for structural, rule and point differences.
@@ -71,6 +72,19 @@ flowchart TD
 - **Mentor web interface:** Accepts supported course inputs and displays findings grouped by severity, with links to the affected item and suggested fixes.
 - **Role-test runner:** Uses Playwright, fixed test accounts and YAML expectations to test permitted and prohibited access.
 - **Integration harness:** Coordinates sample-course generation, checking, restoration, role tests and available module smoke tests.
+
+#### CK-03: independent grading target
+
+CK-03 compares the sum of graded activity points with an independent course target. It must not use the computed gradebook total as its own target.
+
+- **Package model (`source.kind = package`):** use the package's declared `total_points`. If it is absent or null, use the B1 default of 100.
+- **Moodle backup model (`source.kind = mbz`):** use `course.total_points` only when the model builder was supplied an independent target. This includes merged courses; the merged target is supplied separately to the builder and written into `course.total_points`. The merged course remains `source.kind = mbz`.
+- **No independent target:** if an `.mbz` model has no independently supplied target, `course.total_points` remains absent or null and CK-03 returns `cannot judge`. Do not apply the package default of 100 and do not infer a target from gradebook items.
+- **Calculation:** sum `grade_item.max_grade` across graded activities and exclude ungraded activities. Compare that sum with the independent target. A matching sum is `pass`; a mismatch is `finding`.
+- **Report:** include the target, calculated sum, difference and the grade items counted.
+- **Open (not decided):** how to compare when points are not integers (exact, rounded to a precision or within a tolerance) is not specified and no rule is implemented. This section says `cannot judge` where risk 11 and PRD C2.8 say `not checked`; whether these are one report state or two is not decided. See decision 0003, section 3.
+
+For a merged course, the final project is part of the course and counts in the graded sum. The intended merged total must be declared independently before the test when the merged package adds graded points. The builder's exact API/input mechanism remains an implementation detail to be specified when FR-C-01 is designed; this document does not invent a CLI flag or another source for the target.
 
 ### 3.3 Execution boundaries
 
@@ -161,7 +175,7 @@ Exact HTTP route names and request/response schemas will be recorded after the s
 Proposed command structure:
 
 ```text
-checker check <input> --config <file>
+checker check <input> [--reference-model <path>] --config <file>
 checker diff <model-a> <model-b> --config <file>
 checker roles --config <file>
 checker integration --config <file>
@@ -180,13 +194,14 @@ Expected behaviour:
 - `--dry-run`: Print the intended operations without making changes.
 - `--check`: Perform read-only validation; exit with code `0` if no problems are found, `1` if problems are found and `2` for an execution error.
 - `--config`: Read configuration from the specified file.
+- `--reference-model <path>` (`checker check` only): supplies the B2 course model of the B8.1 template course, built from its `.mbz` backup. CK-07 uses it to compare protected items field by field (decision 0003 #21). If it is absent, CK-07 cannot perform that comparison. The resulting report state and wording remain subject to the open question in decision 0003, section 3. Planned, not implemented.
 - Normal execution: Perform the requested operation and save the results.
 
 The exact subcommand names are proposed and must be aligned with the repository's existing CLI conventions before implementation.
 
 ### 6.3 Undo and recovery
 
-Course checking and model comparison are read-only and need no data rollback. Test-run records and generated artefacts must have a documented cleanup procedure.
+Course checking and model comparison are read-only and need no data rollback. Planned design: `--reference-model` only reads the model file it is given, writes nothing and needs no undo; this is not yet implemented or tested. Test-run records and generated artefacts must have a documented cleanup procedure.
 
 The integration harness must document how to clean up disposable test resources and restore the lab to a known clean state. It must not automatically modify a mentor's live course.
 
@@ -329,6 +344,7 @@ Store test results and reports as CI artefacts where appropriate. Use synthetic 
 | 8 | Uploaded backups may be malformed or contain unsafe archive paths | No for basic unit tests; yes for lab validation | Validate inputs and test archive handling with synthetic malformed fixtures |
 | 9 | The exact CLI subcommands, API routes and environment variables have not yet been confirmed against existing repository conventions | No | Inspect repository configuration before implementation and document final interfaces |
 | 10 | Exact library versions and licence compatibility remain to be verified | No | Pin dependencies and run the project's dependency and licence checks before release |
+| 11 | CK-07 needs a reference for the template course. Decided by the guide (decision 0003 #21), not yet implemented: the reference is the B2 course model of the B8.1 template, built from its `.mbz` backup by the checker's own builder, and it is supplied per run with `--reference-model <path>` on the check command. If it is absent, CK-07 reports `not checked` for that run, not a fault, and says the protected items were not compared. It is compared field by field, the same way as FR-C-05, and cannot show changes to body text or attached files, which B2 does not hold | Yes | Implement the option and the comparison with CK-07; the B8.1 README then names the model file that the lab run uses |
 
 Before requesting final approval, compare this table with the risks in the PRD's Appendix C and add any additional risks that specifically affect the Course Checker or integration harness.
 
