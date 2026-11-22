@@ -1,7 +1,7 @@
 # `libs/contracts`: shared contract validators (PRD EXT-09)
 
 Validates documents against the contracts in the repository folder `contracts/`. Today it
-validates the **B1 course package** (PRD B1). Modules import it; they never copy it.
+validates the **B1 course package** (PRD B1) and the **B2 course model** (PRD B2). Modules import it; they never copy it.
 
 Not to be confused with `contracts/` at the repository root, which holds schemas and examples
 (data), not Python.
@@ -27,6 +27,26 @@ files, so it cannot check body files and lists them as not checked.
 `report.ok` is true when there are no errors. It does **not** mean everything was checked: read
 `report.not_checked`.
 
+## Validating a B2 course model
+
+```python
+from contracts import validate_course_model
+
+report = validate_course_model(model)   # a parsed course-model JSON document
+```
+
+`validate_course_model(doc)` checks the document against the B2 schema
+(`contracts/course-model.v1.schema.json`) and, when `source.timezone` is a non-empty string,
+that Python's `zoneinfo.ZoneInfo` resolves it (a schema cannot check a name). It returns the
+same `ValidationReport`; its issues use rule `B2`. A missing, null, empty or non-text timezone
+is left to the schema's rules, so it is reported once. It reads no files and no environment
+variables, and does not raise on a malformed document.
+
+It does **not** run the checker's rules CK-01 to CK-13: they belong to the checker module. For
+this function `report.not_checked` is always empty, and that does **not** mean those rules
+passed, only that this library holds no pending B2 rules. `report.ok` means the structure and
+the time zone are valid, nothing more.
+
 ## What is checked
 
 The schema first (structure, B1.1). When `course.yaml` is valid, also:
@@ -35,6 +55,8 @@ The schema first (structure, B1.1). When `course.yaml` is valid, also:
 |---|---|
 | `idnumber`s are unique within the package (sections and activities together) | B1.2 rule 6, first half |
 | Extra protected idnumbers from `ValidationConfig`, in both modes | B1.4 |
+| Unlock rule by mode, in document order (the section number, `idnumber` and title are not read; an absent `unlock` equals both fields null). Full: the first section must have `after` null; every later section needs `after` naming the single assignment of the section just before it, and that section must hold exactly one assignment. Sections-only: every listed section, a single one included, needs `after`. It may name a template activity that is not in the package, and a name that matches nothing after the merge is the checker's CK-04; it must not name an activity of its own section or a later one. Cycles across sections are the checker's CK-05. Section-level `cm = -1` in `availability.py` resolves strictly before the section | B1.2 rule 2 |
+| B2 course model: `validate_course_model(doc)` (see above) runs the B2 schema and the `zoneinfo` check, and is separate from `validate_package`. The pieces for the future builder are `timezone_issues(model)`, which checks `source.timezone` with `zoneinfo`, and `site_timezone(os.environ)` reads `SITE_TIMEZONE` with no default and raises `ConfigError` when it is missing or invalid | B2 |
 | `validate_package` only: every `body` names a file inside the package folder (not missing, not a folder, no `..`, absolute path or link that leaves the folder). Only that the file exists is checked, never its content | B1.1 |
 
 ## Lesson files: chapters, slides, cues (PRD B6.2)
@@ -56,13 +78,15 @@ activity, that a `url` is allowed by the player.
 
 ## What is not checked (always listed in `report.not_checked`)
 
-One guide Page and one task Assignment per week, the unlock chain, the points total, completion
+One guide Page and one task Assignment per week, the points total, completion
 on unlock activities, an idnumber never reused across package versions, the marking table, the
 Check vocabulary and `protected_section`. Their ownership or details are still open (see
 `docs/design/studio.md` §12, `docs/design/grading.md` Q39 and the pull requests of this
 library). The body files are also listed when the validator did not check them: for a parsed
 document, or for a package whose `course.yaml` has errors. Marking workflow (CK-10) is not a
-package field.
+package field. The `.h5p` file of an `h5p` activity (B7) is never looked for: not that it exists,
+not that it is valid, not its content type, so interactive video (lab demonstrations only) is not
+checked either. `h5p_files_not_checked` says so.
 
 The checker's rules (CK-01…CK-13) work on the course model (B2) and stay in Module 2.
 

@@ -30,7 +30,7 @@ evidence, fill in the PENDING cells below; do not edit anything else without new
 | BigBlueButton | PRD expects 3.0 on Ubuntu 22.04 with the **video** recording format enabled | PRD A11 (expectation, not observed) |
 | BigBlueButton version actually installed | PENDING | T17 |
 | Recording formats enabled on the lab server | PENDING | T17 |
-| Moodle versions | PRD expects 4.5 and 5.3; the owner's decision (Issue #55, `docs/traceability.md`) is to build on 4.5 and test on 5.3 | PRD C-03 (expectation, not observed) |
+| Moodle versions | PRD C-03 expects 4.5 and 5.3. This item is not one of the Release 0 exceptions in the [register](README.md); no version is observed yet and both remain required | PRD C-03 (expectation, not observed) |
 | Moodle build and BigBlueButton plugin (`mod_bigbluebuttonbn`) versions actually installed | PENDING | T17 |
 | Date of observation | PENDING | T17 |
 

@@ -25,7 +25,7 @@ Each speaker must provide a consent line containing their name, date, and the fo
 
 > used to test speech recognition; video stays in the lab; transcript published under Apache-2.0
 
-Before a speaker writes their consent line, they are told that, until lab storage is ready, the recording stays on the computer of the team member who recorded it, in a folder that is not synced or backed up to a cloud service, and that it is moved to lab storage when that becomes available. They are also told that their name and consent line are public in this repository.
+Before a speaker writes their consent line, they are told that, until lab storage is ready, the recording stays on the computer of the team member who recorded it, in a folder that is not synced or backed up to a cloud service, and that it is moved to lab storage when that becomes available. They are also told that their name and consent line are public in this repository, and that if they withdraw, a withdrawal removes the name from the current files but older versions stay in Git history.
 
 ## Dataset completion criteria
 
@@ -40,7 +40,13 @@ The dataset is considered complete when:
 
 The guide has approved, for now, that the current B8.5 dataset work does not need to reach the 1800 second total. This is a temporary exception, not a permanent removal of the requirement, and no other minimum is set in its place. The exception covers only the minimum total duration. Every recording's duration is still measured with `ffprobe` and recorded correctly, the other completion criteria still apply, and the dataset is not complete until they are met.
 
-Approval reference (date and where the guide gave it): PENDING. It was reported by the developer; the guide should add the reference to this section.
+Approval reference: the guide confirmed it in his own words on issue #121 on 2026-11-20 ([comment](https://github.com/narenccode/learnops/issues/121#issuecomment-7053492287)). The date of the earlier approval is not recorded.
+
+## Temporary exception: minimum number of lectures
+
+The guide has approved, for now, that the interim demonstration and testing work may proceed with four lecture recordings instead of five, ideally from four different speakers. This is a temporary exception, not a permanent removal of the requirement: the dataset is not complete until five recordings exist, every other completion criterion still applies, and no other minimum is set in its place. The five-lecture minimum in PRD B8.5 and in the completion criteria above is unchanged.
+
+Approval reference: the guide's own-words confirmation on issue #121 of 2026-11-20 ([comment](https://github.com/narenccode/learnops/issues/121#issuecomment-7053492287)), which covers both exceptions.
 
 ## Consent lines
 
@@ -50,4 +56,14 @@ One line per speaker, written by that speaker. A speaker who gives more than one
 
 Each lecture's row in the B8.5 inventory (`testdata/README.md`) points to its speaker's line as `0004` speaker-NN. Nobody writes a consent line for another person.
 
-No consent lines yet.
+- speaker-01: Akshita, 2026-11-23: "used to test speech recognition; video stays in the lab; transcript published under Apache-2.0"
+- speaker-02: Harshitha, 2026-11-23: "used to test speech recognition; video stays in the lab; transcript published under Apache-2.0"
+- speaker-03: Nagashree V, 2026-11-23: "used to test speech recognition; video stays in the lab; transcript published under Apache-2.0"
+- speaker-04: Shraddha, 2026-11-23: "used to test speech recognition; video stays in the lab; transcript published under Apache-2.0"
+
+## How the transcripts were made
+
+All five reference transcripts were typed by hand by the speaker of that lecture (statement of the owner, Student 4). No
+model draft was used, so no model is recorded. Lecture 02 (speaker Harshitha) was checked by Nagashree V; the other four
+were checked by Harshitha. The guide named Harshitha as reviewer above, so the checker of lecture 02 is a change that
+the guide should acknowledge.

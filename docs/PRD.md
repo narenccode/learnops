@@ -91,10 +91,11 @@ passwords**.
 | Release grades to learners | In **Moodle** only | ❌ | In Moodle only |
 | Practice review (stretch) | ✅ | ❌ | ✅ |
 | Tool configuration, model provider, keys | ❌ | ❌ | ✅ (environment only) |
-| *(Extension, Release 6)* Watch lessons in the dual-stream player; answer cue activities | ✅ (preview) | ✅ (enrolled courses only) | ✅ |
+| *(Extension, Release 6; Learner access conditional on EXT-07 / OI-25 approval)* Watch lessons in the dual-stream player; answer cue activities | ✅ (preview) | Planned (enrolled courses only); subject to OI-25 approval and the approved contract/gateway approach | ✅ |
 
-Rules: a launch with any role not listed is refused with a clear message. A user sees only data
-for the course (LTI context) they launched from, except administrators.
+Rules: role URIs not listed in §B3 are ignored. A launch is refused, with a clear message, only if
+no recognised role remains. A user sees only data for the course (LTI context) they launched from,
+except administrators.
 
 ## A6. Scope
 
@@ -190,7 +191,7 @@ The rule: **future features must be new consumers of data that already exists, n
 | EXT-04 | **Adapters at every external dependency** | Model provider, speech provider, storage backend (local folder or S3-compatible) and Moodle access sit behind interfaces with one adapter each. Swapping one is configuration, not code. |
 | EXT-05 | **Feature flags** | Optional features (practice, summaries, slide index, BigBlueButton intake) can be switched on or off per deployment. |
 | EXT-06 | **Stable identifiers** | Activities identified by Moodle `idnumber`; lessons by slug; never by position or display name. |
-| EXT-07 | **Reserved extension points** | The LTI gateway already validates the Learner role and refuses it with "not available in this version". F-1 (player) and F-3 (tutor) will enable Learner launches without changing the gateway. |
+| EXT-07 | **Reserved extension points** | Baseline tools refuse Learner-only launches with "not available in this version". Learner access for F-1 (player) and F-3 (tutor) is a planned extension, not currently supported. Whether it can be enabled without changing the gateway or the B3 schema is unresolved (ADR 0001, OI-25): the guide must decide how Learner is represented in the normalised launch result and whether the v1 enum can be extended or a new contract version is required. No Learner support is claimed until that decision and any required contract change are approved (§B.0). |
 | EXT-08 | **Data produced now for features built later** | The video pipeline produces the slide index (`slides.json`) and cue file (`cues.json`) now; F-1 will display them. |
 | EXT-09 | **One shared library per cross-cutting concern** | `lti`, `moodle_ws`, `model_interface`, `contracts` (schemas + validators), `media_paths`. Modules import them; they never copy code. |
 
@@ -311,7 +312,7 @@ Moodle sites have: completion tracking on; web services enabled with a dedicated
 
 1. Each contract has an owner, a version (`v1`, `v2`, …) and a JSON Schema in `/contracts`, with at least one valid example file.
 2. **Frozen at the end of Release 0.** After that: additive, optional fields only (EXT-02).
-3. A change is a pull request that updates the schema, the examples, this PRD section, and the tests of every module that uses the contract. **Until Release 0 is frozen**, it needs the approval of one owner of an affected module; the guide approves the PRD text and reviews the whole contract set once at the Release 0 gate. **After the freeze**, the guide's approval is also required for the contract itself (enforced through CODEOWNERS).
+3. A change is a pull request that updates the schema, the examples, this PRD section, and the tests of every module that uses the contract. **Until Release 0 is frozen**, it needs the approval of one owner of an affected module; the guide approves the PRD text and reviews the whole contract set once at the Release 0 gate. **After the freeze**, the guide's approval is also required for the contract itself (enforced through CODEOWNERS). A consuming module adds its tests when its code that reads the contract exists; before that, the shared contract tests cover the change.
 4. Every module validates contract data it reads and writes against the schema; invalid data is rejected with a clear error.
 
 | Contract | Owner | Used by |
@@ -344,7 +345,7 @@ course:
 sections:
   - number: 1
     title: "Week 1 — Set up your tools"
-    idnumber: wk-01
+    idnumber: wk-01                 # optional authoring label (B1.2 rule 6)
     unlock:
       after: null                 # first week: open
       start_date: null            # optional ISO date
@@ -388,7 +389,17 @@ sections:
 3. Graded points across the course sum to `total_points` (default 100).
 4. Assignments use marking workflow (so grades stay hidden until released, §B4).
 5. Completion tracking is on for every activity used in an unlock rule.
-6. All `idnumber`s are unique within the course, lowercase ASCII with hyphens, and never reused for a different activity.
+6. All `idnumber`s that are present are unique within the course (a section's `idnumber` is optional, see below), lowercase ASCII with hyphens, and never reused for a different activity.
+
+**The section `idnumber` is optional.** It is an authoring label for Studio: Moodle stores no
+`idnumber` for a section, so a section is identified by its `number`. A restore, a reverse import
+(FR-S-08) and the round trip (C1.7) match a section by its number, and a reverse import leaves the
+field out. A section may omit `idnumber`. When it is present it must be a valid idnumber (absent is
+the only way to have none: `null` and an empty string are errors) and it is unique within the
+package (rule 6). Every activity has an `idnumber`. A protected item is defined by its `idnumber`
+(B1.4), so CK-07, which matches a protected item by its `idnumber`, does not apply to a section
+without one. The configurable `protected_section` number of B1.4 is a separate rule and is unchanged.
+Decision record `docs/decisions/0007-b1-optional-section-idnumber.md`.
 
 ### B1.3 Marking table format
 
@@ -446,6 +457,9 @@ HTML table in the Moodle assignment description; the grading assistant parses it
     field (`http_ok:`) and a trailing `;` fail the same way (CK-09). The `command:<name>` check
     and its configuration, the argument format of `repo_file:<path>`, the criterion keys, and the
     other parsing details of a marking table are not defined here.
+  - Shared test cases for a `Check` cell, with the result a parser must give, are in
+    `contracts/test-vectors/check-cells.v1.json`. They cover what this section states and decide
+    none of the points above that it leaves open.
 - The HTML rendering keeps the `data-marking-table="v1"` attribute so the table can be parsed back.
 
 ### B1.4 Protected activities and output modes
@@ -584,11 +598,12 @@ information is lost.
 | Moodle role | Platform; each LearnOps tool registered as an External tool (LTI 1.3) by the administrator |
 | Tool endpoints | Login initiation, launch (redirect), JWKS; one registration per tool (Studio, Checker, Grading, Video) |
 | Message type | `LtiResourceLinkRequest` (Deep Linking not required in v1) |
-| Claims used | `sub`, `name`, `email` (if shared), `roles`, `context` (course id, title), `resource_link`, `deployment_id` |
-| Role mapping | `…/membership#Instructor` → Mentor; `…/institution/person#Administrator` → Administrator; `…/membership#Learner` → refused by the baseline tools (EXT-07); accepted only by the player tool from Release 6 (§C6) |
+| Claims inspected by the LTI gateway | `iss`, `aud`, `azp`, `https://purl.imsglobal.org/spec/lti/claim/version`, `exp`, `nonce`, `sub`, `name`, `email` (if shared), `roles`, `context` (course id, title), `resource_link`, `deployment_id`, and the message type. The version claim must equal `"1.3.0"`; it, `aud`, `azp`, `exp` and `nonce` are used only to validate the launch (§A13 SEC-01) |
+| Normalised launch result (what modules receive) | `iss`, `sub`, `deployment_id`, message type, one role (Mentor or Administrator), `context` (id, title), `resource_link` (id), `name` and `email` (if shared). Modules never receive the raw ID token, the nonce, the state or other validation-only token material. Fields and schema: `contracts/lti-launch.v1.md` and `contracts/lti-launch.v1.schema.json` |
+| Role mapping | `…/membership#Instructor` → Mentor; `…/institution/person#Administrator` → Administrator; `…/membership#Learner` → Learner-only launches are refused by the baseline tools (EXT-07). Release 6 player support for Learner is conditional on the guide resolving ADR 0001 OI-25 and approving the required contract and gateway compatibility approach (§B.0); no Release 6 Learner acceptance is currently guaranteed |
 | Grade/completion return | Not used by the baseline. The player (Release 6) may use LTI Assignment and Grade Services for watch completion (FR-X-13, feature flag) |
-| Session | Server-side session bound to (`sub`, context id); expires after 2 h idle; re-launch from Moodle to continue |
-| Course binding | The LTI context id is mapped to the Moodle course id (via web services, §B4) and stored in `shared.course_link` |
+| Session | Server-side session bound to (`iss`, `sub`, context id); expires after 2 h idle; re-launch from Moodle to continue |
+| Course binding | The LTI context id is mapped to the Moodle course id (via web services, §B4) and stored in `shared.course_link`, keyed by `iss` plus context id |
 
 ## B4. Moodle web-services usage (v1)
 
@@ -604,8 +619,23 @@ information is lost.
 | Submissions | `mod_assign_get_submissions`, `mod_assign_get_submission_status` |
 | Submission files | Download through the token-authenticated file URL returned by the API |
 | Write draft grade + feedback | `mod_assign_save_grade` with marking-workflow state **`readyforrelease`** and feedback comments; never `released` |
+| Stored-grade read-back | `mod_assign_get_grades` |
 
-- **Draft rule:** grades written by LearnOps stay invisible to learners until the mentor releases them in Moodle (marking workflow). Only mentor-approved drafts are written.
+- Parameters LearnOps sends (names from the Moodle 4.5 and 5.3 source; their behaviour is still checked in the lab, App-C item 1). "Always sent" is LearnOps's rule, not Moodle's: Moodle itself requires the seven `mod_assign_save_grade` parameters, `assignid` and `assignmentids`, while `field`, `value` and `userid` on the other two functions have defaults in Moodle and are sent anyway:
+
+| Function | Always sent | Optional |
+|---|---|---|
+| `core_course_get_courses_by_field` | `field`, `value` | — |
+| `mod_assign_get_submission_status` | `assignid`, `userid` | — |
+| `mod_assign_save_grade` | `assignmentid`, `userid`, `grade`, `attemptnumber`, `addattempt`, `workflowstate`, `applytoall` | `plugindata`, `advancedgradingdata` |
+| `mod_assign_get_grades` | `assignmentids` | — |
+
+- **Course identification:** a course is looked up by its id (`field` = `id`) or, as an alternative, its shortname (`field` = `shortname`); never by its idnumber. Moodle returns a course's idnumber only to accounts with `moodle/course:update`, which the service account does not have.
+- **Draft rule:** grades written by LearnOps stay invisible to learners until the mentor releases them in Moodle (marking workflow). Only mentor-approved drafts are written. A grade write sends only the workflow state `readyforrelease`. After each write, LearnOps reads the result back and reports the write as done only when both are confirmed: `lastattempt.gradingstatus` is exactly `readyforrelease` (from `mod_assign_get_submission_status` for that assignment and learner), and the stored grade for that learner and attempt is numerically equal to the grade sent. If either is different, missing, ambiguous or cannot be read, the write is reported as not verified. The stored grade is read with `mod_assign_get_grades` and compared as a number after parsing, never as text, with no tolerance.
+- **Write rules** (guide's decisions on PR #64; full text in `contracts/moodle-ws.v1.md` §3): `attemptnumber` is always the explicit attempt being graded, never `-1`, and the read-back matches that attempt. A write is refused before anything is sent if the learner's state is already `readyforrelease` or `released`, or if the grade is below zero or above the assignment's maximum. A failed read-back is reported as not verified and the write is never repeated. A write whose outcome is unknown is never retried automatically: it is read back and the mentor decides what happens next. Suspended learners are skipped and reported as skipped. A missing submission, a missing grade and an access failure are separate outcomes, never reported as success, and the other learners are still processed.
+- The service account's capabilities are listed in `contracts/moodle-ws.v1.md` §4.
+
+**Grade-write safety and Moodle-version limitation (rule R3 in `contracts/moodle-ws.v1.md` §3a).** Before sending a grade write, LearnOps checks the current grade workflow state and refuses the write without sending anything if the grade is already locked (`readyforrelease` or `released`). The write uses `readyforrelease`, never `released`, and LearnOps reads the stored grade (`mod_assign_get_grades`) and the workflow state (`mod_assign_get_submission_status`) back before reporting the result. If the post-write state is `released`, the result is `NOT_VERIFIED`; it must not be reported as a verified draft write. A normal write that remains `readyforrelease` may be verified when the read-back matches. On Moodle 5.3, if a grade becomes locked after the pre-write check, Moodle retains the old grade and the read-back detects the mismatch, so the result is `NOT_VERIFIED` (read from Moodle's code, not yet run; B4 lab check 16). **Moodle 4.5 is best-effort:** there is no atomic check-and-write operation, and if another grader changes the state to `readyforrelease` between LearnOps' pre-write check and its write, Moodle may allow LearnOps to overwrite that grade (read from Moodle's code, not yet run; B4 lab check 16). The resulting `readyforrelease` state cannot be distinguished from a normal successful write by the available read-back, so this race may be reported as verified. This limitation is accepted for v1, is not claimed to be prevented or detected, and must be stated in release notes. LearnOps does not add a second pre-write read; grades are never released by the tool.
 
 ## B5. Model and speech interface (v1)
 
@@ -623,10 +653,13 @@ result = model.run(
 # result.meta      -> provider, model, input/output tokens, latency_ms, cost_estimate, prompt_version
 ```
 
+`cost_estimate` is a numeric estimate in US dollars (USD). For a local model with no billed inference cost, report `0.0`. If cost is unknown or the provider does not report it, report `null`; unknown cost must never be represented as zero. `input_tokens` and `output_tokens` may also be `null` when the provider does not report usage.
+
 ### B5.2 Providers
 
 - `local`: the lab LLM endpoint (default in the lab).
 - `hosted`: one hosted LLM API, through the provider's official SDK.
+- `fake`: a deterministic provider for automated tests that calls no model. The service refuses it unless an explicit test-only setting is on, and that setting is refused in the lab and in production.
 - Chosen by `MODEL_PROVIDER` and `MODEL_NAME`; keys from environment variables only.
 - Structured output is validated; on invalid output: one retry, then a clear error (never a silent partial result).
 
@@ -643,7 +676,13 @@ transcript = speech.transcribe(audio_path, language="en")
 # transcript.meta     -> provider, model, duration_s, latency_ms, cost_estimate
 ```
 
-Providers: `local` (lab Whisper-family service) or `hosted` (a speech-to-text API). Same rules as B5.2.
+- `start`, `end` and `duration_s` are seconds. Segment and word times count from the start of the original audio, also when the audio is processed in chunks.
+- Every segment's `end` is greater than or equal to its `start`, and so is every word's `end` to its `start`.
+- Segments and words may arrive out of time order; a consumer sorts them by `start`.
+- `segments` may be `[]` (for example, silent audio), a segment's `text` may be empty, and `words` may be `[]`.
+- `cost_estimate` follows B5.1 (USD; `0.0` for a local model with no billed cost; `null` when unknown).
+
+Providers: `local` (lab Whisper-family service), `hosted` (a speech-to-text API) or `fake` (automated tests only). Same rules as B5.2.
 
 ## B6. Media paths and lesson manifest (v1)
 
@@ -773,7 +812,7 @@ url = media_signing.sign(relative_path, ttl_seconds=3600)
 ## B7. H5P practice output (v1, stretch)
 
 - Content types pinned in the first release that uses them (exact library versions recorded): question set (checkpoints), drag-the-words or drag-and-drop / ordering, branching scenario. Interactive video only in lab demonstrations (with openly licensed videos).
-- Each practice item is a standard `.h5p` file plus an entry in `course.yaml` (`type: h5p`, `idnumber`, `graded: false`).
+- Each practice item is a standard `.h5p` file plus an entry in `course.yaml` (`type: h5p`, `idnumber`, `graded: false`, `file`: a relative path to the `.h5p` file).
 - Placed after the week's guide Page; **never graded** (no grade item; the checker enforces this).
 - Video checkpoints are produced in two modes: a separate activity after the video (default), and `cues.json` entries for the future player (F-1).
 
@@ -1124,7 +1163,7 @@ the right moment instead of after the video; recorded and live lessons look the 
 
 | ID | Requirement | Release |
 |---|---|---|
-| FR-X-01 | Learner launch through the LTI gateway (enables Learner role for the player only, per EXT-07); course and lesson from the launch. | R6 |
+| FR-X-01 | Learner launch through the LTI gateway, with course and lesson from the launch (planned for the player; see EXT-07). **Conditional:** not compatible with the current B3 v1 contract, whose normalised result has no Learner role. It depends on the guide resolving ADR 0001 OI-25 and approving the required contract and gateway approach (§B.0). | R6 |
 | FR-X-02 | Read `lesson.json` (B6.3); play tracks by role: `camera` + `screen` → dual modes; `main` only → single-video mode. | R6 |
 | FR-X-03 | Layout modes: **dual** (screen large, camera small), **side-by-side** (equal), **picture-in-picture** (camera over screen) and **picture-in-picture swapped**, **camera only**, **slides only**. The learner's last mode is remembered per course. | R6 |
 | FR-X-04 | Synchronisation: one master clock; drift between tracks corrected when it exceeds 150 ms; seek, pause and speed apply to both. | R6 |
