@@ -61,6 +61,13 @@ class WorkflowStateNotAllowed(MoodleError):
     code = "workflow_state_not_allowed"
 
 
+class GradeWriteNotAllowed(MoodleError):
+    """A grade write broke B4 rule R2 or R9 (no explicit attempt, or a grade that is not a plain
+    non-negative number). Nothing was sent to Moodle."""
+
+    code = "grade_write_not_allowed"
+
+
 class InvalidParameters(MoodleError):
     """The parameters are not a mapping of plain values. Nothing was sent to Moodle."""
 
