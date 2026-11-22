@@ -405,6 +405,10 @@ FR-G-06. Neither requirement is implemented by this skeleton.
 | Tokens and full URLs stay out of logs and errors | SEC-03, OPS-04, design §4.1 | `test_redaction.py` |
 | One error family with stable codes | Design §4.1, §10.2 (library documentation, Q37) | `test_errors.py` |
 | A function that is not in the allow-list is refused with a fixed message that does not repeat it; matching is exact; every listed function resolves on both versions; a replacement name applies only to its own version | B4 §2a, guide on Q1 | `test_an_unlisted_function_is_refused_and_the_message_repeats_nothing`, `test_every_listed_function_resolves_to_itself_on_both_versions`, `test_matching_is_exact`, `test_a_replacement_name_is_returned_only_for_its_own_version` |
+| `mod_assign_set_user_flags` is refused: by the contract allow-list, and by name even if an allow-list lists it | Guide's B4 findings, PR #64 | `test_client.py`: `test_set_user_flags_is_refused_by_the_contract_allow_list`, `test_set_user_flags_is_refused_even_if_an_allow_list_lists_it` |
+| No direct grade write: `call()` refuses `mod_assign_save_grade` after its guards; only a sealed, single-use, client-bound receipt can send one, and the guards run on that path too; no module outside the library uses it | B4 §3, §3a | `test_grade_guards.py` |
+| R2: `attemptnumber` is explicit (a whole number from 0, never `-1`) on every grade-write path | B4 §3a | `test_grade_guards.py`: `test_r2_*` |
+| R9: a grade is a plain non-negative number, parsed exactly (no exponent, `NaN`, whitespace or bool); the range check accepts 0 to the maximum | B4 §3a | `test_grade_guards.py`: `test_r9_*` |
 
 Not covered: all of this runs against a scripted fake transport. No real transport exists, and nothing
 has been checked against Moodle (every check in `contracts/moodle-ws.v1.md` §5 is open).

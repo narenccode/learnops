@@ -204,13 +204,15 @@ def test_no_traceback_frame_holds_the_original_exception(
     with pytest.raises(MoodleUnreachable) as caught:
         MoodleClient(settings, FakeTransport(failure=failure)).call(FUNCTION)
     tb = caught.value.__traceback__
-    frames = 0
+    checked: list[str] = []
     while tb is not None:
         if tb.tb_frame.f_code.co_filename.endswith("client.py"):
-            frames += 1
+            checked.append(tb.tb_frame.f_code.co_name)
             assert failure not in tb.tb_frame.f_locals.values()
         tb = tb.tb_next
-    assert frames == 1
+    # call() delegates to _send(). Naming both frames keeps this test exact: if a frame is added or
+    # lost, the test fails and someone checks that frame too.
+    assert checked == ["call", "_send"]
 
 
 def test_a_public_error_logged_without_a_filter_shows_no_token(
