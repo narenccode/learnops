@@ -593,9 +593,10 @@ requirement, so it has no FR ID and no row in the table at the top. It is the da
 (caption word error rate, Release 3), App-C 7 (the error-rate target from a first baseline run)
 and App-C 8 (licence or consent for every B8.5 video).
 
-**Status: PENDING.** Five local recording files were identified in earlier work (their SHA-256
-values are in the inventory), but no consent line is written, no transcript is typed or reviewed, and none is accepted as B8.5 evidence. The tests show that the committed placeholders are well formed and that the PENDING status
-is true. They do **not** show that B8.5 or App-C 8 is met.
+**Status: COMPLETE.** Five recordings from four speakers are listed in the inventory (2380 s in total; the owner's
+`ffprobe` durations, hashes and file names, not re-verified by the reviewers), each with an outline and a reference
+transcript marked `checked`, and each speaker has written a consent line in decision 0004. The tests show that the
+committed data is well formed and that the COMPLETE status is true under the written criteria. They do **not** show a word error rate, that the speakers understood the briefing, or that the recordings are the official set: those are the owner's confirmations in the pull request.
 
 ### Enforced by the test and covered by automated tests
 

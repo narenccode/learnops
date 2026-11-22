@@ -1,1 +1,123 @@
-PENDING: reference transcript for lecture-02 not typed yet. Do not use it for any measurement.
+Hello, my name is Harshitha.
+
+I voluntarily consent to having my voice and lecture recording included in the LearnOps B8.5 test dataset for project evaluation and testing purposes.
+
+I understand that this recording will be used as test evidence for the project.
+
+Thank you.
+
+Good morning everyone.
+
+In the previous section, we learned what a DBMS is and why it is important.
+
+Now I will explain how we design a database before actually creating it. Two important concepts in this process are the Entity Relationship model and the Relational model.
+
+Let's begin with the Entity Relationship model, also called the ER model.
+
+The ER model is used to represent the structure of a database visually. It helps database designers understand what information needs to be stored and how different types of information are connected.
+
+The three basic components of an ER model are entities, attributes, and relationships.
+
+First, let's understand entities.
+
+An entity is a real-world object or concept about which we want to store information.
+
+For example, in a college database, Student, Teacher, Course, and Department can all be entities.
+
+An entity type describes a category of objects, while an entity instance represents one particular object in that category.
+
+For example, Student is an entity type, and a particular student with roll number 101 is an entity instance.
+
+The second component is attributes.
+
+Attributes describe the properties of an entity.
+
+For example, a Student entity may have attributes such as Student_ID, Name, Age, Email, and Department.
+
+Attributes can be of different types.
+
+A simple attribute cannot be divided into smaller meaningful parts. For example, Age.
+
+A composite attribute can be divided into smaller components. For example, Address may contain Street, City, State, and PIN code.
+
+A single-valued attribute has only one value for an entity, such as a date of birth.
+
+A multivalued attribute can have multiple values. For example, a student may have multiple phone numbers.
+
+A derived attribute can be calculated from another attribute. For example, Age can be calculated using Date of Birth.
+
+The third component is relationships.
+
+A relationship describes how two or more entities are associated with each other.
+
+For example, a Student enrolls in a Course. Here, Student and Course are entities, and Enrolls is the relationship.
+
+Relationships are commonly classified based on cardinality.
+
+One-to-one means one entity is associated with only one entity on the other side.
+
+One-to-many means one entity can be associated with many entities. For example, one department can have many students.
+
+Many-to-many means many entities on one side can be associated with many entities on the other side. For example, many students can enroll in many courses.
+
+In ER diagrams, entities are generally represented using rectangles, attributes using ovals, and relationships using diamonds. Lines connect these components.
+
+Another important concept is the key.
+
+A key is an attribute, or a group of attributes, used to identify records or establish relationships between tables.
+
+A super key is any set of attributes that uniquely identifies a record.
+
+A candidate key is a minimal super key, meaning no unnecessary attribute is included.
+
+A primary key is the candidate key selected to identify each record in a table.
+
+For example, in a Student table, Student_ID can be selected as the primary key because every student has a unique ID.
+
+A foreign key is an attribute in one table that refers to a key in another table. It helps establish relationships between tables.
+
+For example, a Department_ID in the Student table may refer to Department_ID in the Department table.
+
+Now let's move to the Relational model.
+
+The relational model represents data in the form of tables. Each table is also called a relation.
+
+A table consists of rows and columns.
+
+A row is called a tuple, and a column is called an attribute.
+
+For example, imagine a Student table containing Student_ID, Name, and Department_ID.
+
+One row might contain the information: 101, Rahul, and 10.
+
+Another row might contain: 102, Priya, and 20.
+
+Each row represents one student, and each column represents one property of the student.
+
+The relational model is powerful because it allows us to connect information stored in different tables.
+
+For example, instead of storing the department name repeatedly for every student, we can create a separate Department table.
+
+The Student table stores Department_ID as a foreign key, and the Department table stores the corresponding department name.
+
+This avoids unnecessary repetition and makes database management easier.
+
+Now let's understand relational integrity constraints.
+
+Integrity constraints are rules that help maintain the correctness of data.
+
+Entity integrity means that a primary key cannot contain NULL values because every record must be identifiable.
+
+Referential integrity means that a foreign key value must refer to an existing valid record in the referenced table, unless NULL is permitted.
+
+Domain constraints ensure that values belong to an allowed domain. For example, Age may be restricted to positive integers.
+
+These constraints prevent invalid information from entering the database.
+
+To summarize, the ER model helps us plan and visually design the database, while the relational model helps us represent that design using tables, rows, columns, and keys.
+
+Together, these concepts provide the foundation for creating a well-structured database.
+
+In the next section, my teammate will explain SQL, which is the language used to interact with relational databases.
+
+Thank you.
