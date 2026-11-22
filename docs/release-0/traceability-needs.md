@@ -56,11 +56,11 @@ re-read statuses only: the line count and the CI result named below are from 202
 | `docs/traceability.md` line 38 | Cites "#25, #27" as contracts with flat examples. Both are now **merged**, so the sentence is correct as written |
 | `docs/traceability.md` (B8.1 and B1 sections, around lines 11 and 41) and `testdata/b8-1-template-course/README.md` | Cite "Issue #61" for a licence answer of 2026-11-11. #61 is a merged pull request (B8.2). The owner must check which issue was meant |
 | Anything naming #91 as merged | #91 merged only into a stacked branch and was replaced by #102 |
-| `modules/video/demo/README.md` line 5 | Says the Release 0 demonstration "is on the T19 branch, not in this checkout". That becomes false when #105 merges; update the line then |
+| `modules/video/demo/README.md` line 5 | Says the Release 0 demonstration "is on the T19 branch, not in this checkout". #105 merged on 2026-11-22 and the line is now updated (it points to `docs/release-0/`) |
 
 ## 5. Evidence the traceability owner should consider adding
 
-- Pointers to `docs/release-0/report.md`, `demo-script.md` and `traceability-needs.md` once #105 merges
+- Pointers to `docs/release-0/report.md`, `demo-script.md` and `traceability-needs.md`, now that #105 has merged (2026-11-22)
   (#104, merged, proposed the same for its own documents).
 - The hosted CI result for the row's commit: `ci` on `main` `5f3a794` succeeded (report section 5).
 - For B8.5 and App-C 4: keep "not verified" lines as they are. Nothing in `main` verifies either.
