@@ -209,8 +209,9 @@ wording allows it. So hosted providers are **not** used on B8.5 audio in this re
   permitted without the guide's decision. `CLAUDE.md` §5 says to ask the guide before introducing
   anything outside the fixed stack.
 - **Hosted provider:** B5.4 allows `hosted` as "a speech-to-text API" without naming a vendor, so
-  a non-Whisper hosted API is not excluded by the text. Which one, and whether recordings may leave
-  the lab (SEC-07, data map question 4), is not decided.
+  a non-Whisper hosted API is not excluded by the text. Which one is not decided: a hosted provider for
+  production stays open (guide, 2026-11-20). B8.5 audio never goes to a hosted provider (decision
+  0011, SEC-07).
 - **Distilled Whisper variants** (for example `distil-large-v3`, supported by faster-whisper) are
   Whisper-family in architecture. Whether they count under "Whisper-family" for the lab is a
   reasonable reading but is **not confirmed** by the guide.
@@ -382,8 +383,9 @@ licence and the accuracy-comparison scope are in section 7.6.
   int8 quantisation, batching, or a faster host, all configuration; the PRD's G-7 target is the
   guide's to change.
 - Docs follow-ups (not done here; no other file is changed by this record): `docs/data-map.md`
-  question 4, `docs/design/video.md` §7 (add a line pointing to this record once the guide
-  responds), and the App-C 7 baseline record.
+  (question 4 is answered by `docs/decisions/0011-b8-5-data-handling.md`, merged in PR #104; the
+  row for what the lab endpoint keeps waits for the lab facts here), `docs/design/video.md` §7 (add a
+  line pointing to this record once it is complete), and the App-C 7 baseline record.
 - This record does not alter the Video design document, PR #85 or PR #93 (both merged).
 
 ## 12. Evidence and sources
