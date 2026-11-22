@@ -16,7 +16,7 @@ a design document per module approved. The libraries `lti`, `moodle_ws` and `mod
 uses them**, and "the Release 0 notes list where each one goes". Earlier versions of this checklist
 (and of the report in PR #105) counted those items against Release 0; they no longer are.
 
-**Sibling documents (other sessions, not duplicated):** PR #105 adds the Release 0 report, demo
+**Sibling documents (other sessions, not duplicated):** PR #105 (merged 2026-11-22) added the Release 0 report, demo
 script and traceability needs under the same folder; PR #106 the literature entries (T13); PR #98
 the speech options record (T8). PR #103 (G-6 evaluation preparation, T9) **merged** after review.
 
@@ -96,7 +96,7 @@ items 1 to 5, 7, 8, 10. The Release 0 notes must list where each one goes (not w
 | PR | State | Review | Note |
 |---|---|---|---|
 | #98 T8 STT ADR 0002 | Draft | Review required | PROPOSED, pending the guide's approval of its six points |
-| #105 T19 report and demo | Open, ready for review | Changes requested (status wording) | The requested corrections were pushed in `37466ca`; **re-review is pending** |
+| #105 T19 report and demo | **Merged** 2026-11-22 | Approved (Harshitha) | Documentation against the provisional criteria P1 to P6; not a completion claim |
 | #106 T13 literature (P1 to P12) | Merged 2026-11-22 | Approved (Harshitha, Akshita21-09) | 1 of 6 sources verified; entries P1 to P12 pending owner verification |
 | #129 Lesson Processor demo | Open | Changes requested (Akshita21-09) | One-PR exception from the guide; awaiting peer review |
 | #115 CODEOWNERS after the freeze | Draft | Review required | |

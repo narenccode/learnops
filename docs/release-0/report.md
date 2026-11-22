@@ -1,11 +1,12 @@
 # Release 0 report chapter: Foundation (T19, revision 3)
 
-**Status:** Draft for review. **Audited against:** `origin/main` at `8559c4d` (2026-11-20; first at `5f3a794`,
+**Status:** Merged in PR #105 on 2026-11-22 as a working draft: documentation against the provisional criteria P1 to P6, not a completion claim. **Audited against:** `origin/main` at `8559c4d` (2026-11-20; first at `5f3a794`,
 refreshed after #130, #142, #145 and #147 merged). **Two dates are kept apart.** The local test results and the
 hosted-CI runs in section 5 and in `demo-script.md` section 7 were produced on **2026-11-20** (at `5f3a794`) and
 were **not re-run**; they are historical results. The PR and file statuses were **refreshed on 2026-11-22**
 against `origin/main` `5126fe6` (after #104, #140, #154, #155, #156 and #106 merged); that refresh re-read
-statuses only and re-ran nothing. The previous revision audited `3abbc02`
+statuses only and re-ran nothing. A later, narrower refresh (also 2026-11-22, `origin/main` `4dc5e2c`, after #105 merged)
+updated only the lines that described #105 as unmerged. The previous revision audited `3abbc02`
 (2026-11-16); 41 commits have merged since, and **the PRD changed
 what Release 0 contains** (PRs #113 and #116), so this revision re-states the contents list. GitHub
 state (PRs, issues, runs) was queried on 2026-11-20 and changes quickly; re-check before relying on it.
@@ -23,13 +24,13 @@ because the work is probably done somewhere else.
 |---|---|
 | All files on `main` | No task tracker. `T19` appears in `docs/design/grading.md` as a **test identifier** ("T19 XSS and CSP"), a different meaning that must not be confused with this task, and in `modules/video/demo/README.md` ("the T19 branch") |
 | GitHub issues (open and closed), search "T19" | No result. Issue #107 ("Plan for tonight and tomorrow: what to show at the evaluation") defines **five demos D1 to D5** but gives no T-numbers |
-| Pull requests | Only this PR (#105) names T19 as a task |
+| Pull requests | Only PR #105 (merged 2026-11-22) names T19 as a task |
 | Other task numbers | T7, T8, T9, T10, T11, T13, T14, T17, T18, T20 appear in PR titles and bodies, but **no document defines any of them** |
 
 So the exact T19 criteria are unavailable and nothing here claims to satisfy them. The criteria
 below are **provisional**, derived only from the PRD and the wording of the task request.
 
-| ID | Provisional criterion | Source | Status in this PR |
+| ID | Provisional criterion | Source | Status in PR #105 |
 |---|---|---|---|
 | P1 | A report chapter on Release 0 | PRD App-A ("report chapter; final-demo segment") | This document. **Provisional, unreviewed** |
 | P2 | A demonstration segment | PRD App-A, E5 | `demo-script.md`. Covers only what exists; E5 as a whole is not demonstrable |
@@ -152,7 +153,7 @@ it (see `traceability-needs.md`).
 ## 5. Verification record
 
 **Local (Windows 11, Python 3.12.5, fresh virtual environment from `requirements.txt` **and** `requirements-dev.txt` (plus `mypy`), worktree
-of `origin/main` `5f3a794` plus this PR), run 2026-11-20 and not repeated on the 2026-11-22 refresh.** The command list and exit codes are in
+of `origin/main` `5f3a794` plus the files of PR #105), run 2026-11-20 and not repeated on the 2026-11-22 refresh.** The command list and exit codes are in
 section 7 of `demo-script.md`; summary: validator 26 of 26 examples passed, `pytest -q -rs` 1 failed, 4103 passed, 5 skipped (the one failure is a Windows-only case-insensitive-filesystem test; CI on Linux is the reference), CI-script
 tests 88 passed, `mypy libs` clean in 56 source files. `requirements.txt` is needed for `tzdata`: without it 32 tests fail on Windows (demo script section 7).
 
