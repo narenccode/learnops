@@ -8,12 +8,15 @@ Release 1, when the checker runs on these variants.
 from __future__ import annotations
 
 import hashlib
+import importlib.util
+import json
 import re
 from pathlib import Path
 from typing import Any
 
 import pytest
 import yaml
+from jsonschema import Draft202012Validator
 
 from contracts import DirectorySource, validate_package
 
@@ -25,7 +28,7 @@ EXPECTED = B83 / "expected-findings.yaml"
 
 CK_RULES = {f"CK-{n:02d}" for n in range(1, 14)}
 STATUSES = {"built", "planned", "pending-lab"}
-KINDS = {"package", "mbz"}
+KINDS = {"package", "model", "mbz"}
 SEVERITIES = {"error", "warning", "info"}
 REQUIRED = (
     "id",
@@ -71,7 +74,16 @@ def _variants() -> list[dict[str, Any]]:
 
 
 def _built() -> list[dict[str, Any]]:
-    return [v for v in _variants() if v["status"] == "built"]
+    """Built package variants (each has a folder of its own)."""
+    return [
+        v
+        for v in _variants()
+        if v["status"] == "built" and v["input_kind"] == "package"
+    ]
+
+
+def _models() -> list[dict[str, Any]]:
+    return [v for v in _variants() if v["input_kind"] == "model"]
 
 
 def _files(root: Path) -> dict[str, bytes]:
@@ -120,7 +132,7 @@ def test_mapping_is_provisional_until_confirmation_is_recorded() -> None:
 
 
 def test_ck_12_is_not_asserted_until_body_media_extraction_is_decided() -> None:
-    (ck12,) = [v for v in _variants() if v["rule"] == "CK-12"]
+    (ck12,) = [v for v in _variants() if v["id"] == "ck-12-full-url-media"]
     assert ck12["assertable"] is False
     assert "item 19" in ck12["notes"]
 
@@ -147,7 +159,7 @@ def test_status_matches_input_kind() -> None:
 
 
 def test_every_variant_folder_has_an_entry_and_back() -> None:
-    folders = {p.name for p in B83.iterdir() if p.is_dir()} - OTHER_FOLDERS
+    folders = {p.name for p in B83.iterdir() if p.is_dir()} - OTHER_FOLDERS - {"models"}
     assert folders == {v["id"] for v in _built()}
 
 
@@ -225,3 +237,148 @@ def test_no_secrets_or_learner_data() -> None:
 def test_no_binary_files_without_a_recorded_source() -> None:
     # .mbz variants are PENDING MOODLE LAB: none may be committed here without a README record.
     assert not list(B83.rglob("*.mbz"))
+
+
+# --- Course-model variants (B2). Built by make_models.py; not from a real Moodle backup. ---
+
+MODELS = B83 / "models"
+SCHEMA = ROOT / "contracts" / "course-model.v1.schema.json"
+
+
+def _load_generator() -> Any:
+    spec = importlib.util.spec_from_file_location("make_models", B83 / "make_models.py")
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _model(name: str) -> dict[str, Any]:
+    loaded: dict[str, Any] = json.loads(
+        (MODELS / f"{name}.model.json").read_text("utf-8")
+    )
+    return loaded
+
+
+def _activities(model: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    return {a["idnumber"]: a for s in model["sections"] for a in s["activities"]}
+
+
+def test_model_files_are_exactly_what_the_generator_builds() -> None:
+    assert _load_generator().main(["--check"]) == 0
+
+
+def test_generator_dry_run_writes_nothing(tmp_path: Path) -> None:
+    generator = _load_generator()
+    generator.OUT = tmp_path / "out"
+    assert generator.main(["--dry-run"]) == 0
+    assert not generator.OUT.exists()
+
+
+def test_every_model_entry_has_a_file_and_back() -> None:
+    names = {p.name.removesuffix(".model.json") for p in MODELS.glob("*.model.json")}
+    assert names == {v["id"] for v in _models()} | {"baseline"}
+    for v in _models():
+        assert v["status"] == "built"
+        assert v["path"] == f"models/{v['id']}.model.json"
+        assert v["id"].endswith("-model")
+
+
+@pytest.mark.parametrize("name", ["baseline", *(v["id"] for v in _models())])
+def test_model_is_a_valid_b2_course_model(name: str) -> None:
+    schema = json.loads(SCHEMA.read_text("utf-8"))
+    errors = list(Draft202012Validator(schema).iter_errors(_model(name)))
+    assert not errors, [e.message for e in errors]
+
+
+@pytest.mark.parametrize("v", _models(), ids=lambda v: v["id"])
+def test_model_variant_differs_from_the_baseline(v: dict[str, Any]) -> None:
+    assert _model(v["id"]) != _model("baseline")
+
+
+def _cmids(model: dict[str, Any]) -> set[int]:
+    return {a["cmid"] for a in _activities(model).values()}
+
+
+def test_baseline_model_is_clean_on_the_facts_each_rule_reads() -> None:
+    # Not a checker: it confirms the baseline holds nothing the 13 rules would report, so a
+    # finding on a variant can only come from its one planted change.
+    m = _model("baseline")
+    acts = _activities(m)
+    cmids = _cmids(m)
+    assert len(acts) == len(list(a for s in m["sections"] for a in s["activities"]))
+    for section in m["sections"]:
+        for c in (section["availability"] or {}).get("c", []):
+            target = acts_by_cmid(m)[c["cm"]]
+            assert target["completion"]["tracking"] != "none"
+    graded = sum((a["grade_item"] or {}).get("max_grade", 0) for a in acts.values())
+    assert graded == m["course"]["total_points"]
+    for a in acts.values():
+        if a["type"] == "assignment":
+            assert a["marking_workflow"] is True
+            assert a["marking_table"]["points_total"] == a["grade_item"]["max_grade"]
+        if a["type"] == "h5p":
+            assert a["grade_item"] is None
+        assert all(
+            not r.startswith(("http://", "https://")) for r in a.get("media_refs", [])
+        )
+    for crit in m["course_completion"]["criteria"]:
+        assert crit["cmid"] in cmids
+
+
+def acts_by_cmid(model: dict[str, Any]) -> dict[int, dict[str, Any]]:
+    return {a["cmid"]: a for a in _activities(model).values()}
+
+
+def test_model_variants_plant_what_they_declare() -> None:
+    def ids(m: dict[str, Any]) -> list[str]:
+        return [a["idnumber"] for s in m["sections"] for a in s["activities"]]
+
+    m = _model("ck-01-unreachable-by-past-date-model")
+    (cond,) = _activities(m)["wk-03-guide"]["availability"]["c"]
+    assert cond["type"] == "date" and cond["d"] == "<" and cond["t"] < 1700000000
+
+    m = _model("ck-04-unlock-missing-activity-model")
+    (sec,) = [s for s in m["sections"] if s["number"] == 6]
+    assert sec["availability"]["c"][0]["cm"] not in _cmids(m)
+
+    m = _model("ck-05-circular-unlock-model")
+    by = {
+        s["number"]: s["availability"]["c"][0]["cm"]
+        for s in m["sections"]
+        if s["availability"]
+    }
+    assert acts_by_cmid(m)[by[5]]["idnumber"] == "wk-03-task"
+    assert acts_by_cmid(m)[by[6]]["idnumber"] == "wk-02-task"
+
+    dup = ids(_model("ck-06-duplicate-idnumber-model"))
+    assert dup.count("wk-01-task") == 2
+    assert "Week 1 Task" in ids(_model("ck-06-invalid-idnumber-model"))
+
+    m = _model("ck-07-protected-item-changed-model")
+    assert _activities(m)["final-project"]["grade_item"]["max_grade"] == 80
+    assert (
+        _activities(_model("baseline"))["final-project"]["grade_item"]["max_grade"]
+        == 100
+    )
+
+    m = _model("ck-08-completion-criteria-missing-item-model")
+    assert any(c["cmid"] not in _cmids(m) for c in m["course_completion"]["criteria"])
+
+    assert (
+        _activities(_model("ck-10-no-marking-workflow-model"))["wk-01-task"][
+            "marking_workflow"
+        ]
+        is False
+    )
+    assert _activities(_model("ck-11-graded-practice-h5p-model"))["wk-01-practice"][
+        "grade_item"
+    ] == {"max_grade": 10}
+    refs = _activities(_model("ck-12-full-url-media-model"))["wk-01-guide"][
+        "media_refs"
+    ]
+    assert refs == ["https://example.invalid/diagram.png"]
+
+    m = _model("ck-13-unlock-without-completion-model")
+    assert _activities(m)["wk-01-task"]["completion"]["tracking"] == "none"
+    assert _activities(m)["wk-01-task"]["cmid"] == 112  # the cmid week 2 waits for
