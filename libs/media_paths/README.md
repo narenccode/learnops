@@ -8,6 +8,54 @@ Shared Python library for generating and validating LearnOps media paths and bui
   media signing interface (`none` baseline implementation)
 - C-08: media is stored as relative paths
 
+## Install, configure, run, check, undo
+
+PRD §D2.5 asks for these five steps in the README of each release deliverable.
+
+**Install.** There is nothing to install. The library is plain Python (3.12) using only the standard
+library, and it is not a pip package. Modules and demos import it with `libs` on the path, because
+it is imported as `media_paths`, not `libs.media_paths`:
+
+```bash
+PYTHONPATH=libs python -c "import media_paths; print(media_paths.__name__)"
+```
+
+**Configure.** Through environment variables only (PRD OPS-02), listed in `.env.example`. The library
+itself reads two of them, in `create_media_signer()`:
+
+| Variable | Used for | Baseline value |
+|---|---|---|
+| `MEDIA_SIGNING` | Selects the signer | `none` (`hmac` and `s3` raise `MediaSigningConfigError`) |
+| `MEDIA_BASE_URL` | Base URL the `none` signer puts in front of the relative path | The media store's `http://` or `https://` address; the lab value is a placeholder |
+
+`MEDIA_PATH_TEMPLATE` (also in `.env.example`) is **not** read by the library: the caller reads it
+and passes it to `check_course_lesson_template` or `check_live_class_template` once at start-up
+(see "Loading a custom template" below). No secret is needed or accepted; a base URL containing a
+user name or password is rejected.
+
+**Run.** It is a library, not a service or a command-line tool, so there is nothing to start. The
+runnable demonstration is the D4 demo, which prints every outcome and exits 0 when all of them are
+as expected:
+
+```bash
+PYTHONPATH=libs python -B modules/video/demo/paths_demo.py
+```
+
+**Check.** From the repository root:
+
+```bash
+python -m pytest libs/media_paths/tests/ -v
+python -m mypy libs
+python -m ruff check libs/media_paths
+```
+
+**Undo.** The library keeps no state: it creates no file, folder, database row or network call, so
+there is nothing to remove. To stop using it, stop importing it and revert the configuration
+(`MEDIA_SIGNING`, `MEDIA_BASE_URL`, `MEDIA_PATH_TEMPLATE`). Relative paths already stored by a tool
+are plain strings and stay valid. Changing a path template changes only the paths built afterwards;
+folders already created keep their names (slugs are immutable, PRD B6.1). The command-line rule
+(`--dry-run`, `--check`, undo, PRD C-05) does not apply, because there is no command.
+
 ## Path generation
 
 - `course_lesson_path(course_slug, module_number, module_slug, lesson_number, lesson_slug, template=DEFAULT_COURSE_LESSON_TEMPLATE)`
