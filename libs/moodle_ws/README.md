@@ -34,8 +34,8 @@ their own. `call()` returns the transport's answer unchanged.
   a whole number from 0, never `-1`; `grade` must be a plain non-negative number (`84.5` or
   `"84.5"`; not `True`, `"1e2"` or `"NaN"`). Otherwise `GradeWriteNotAllowed`.
 - **Parameters that are not plain data**, on every function. `params` must be a mapping of text,
-  numbers, booleans, `None`, lists, tuples, sets and dicts, with text or integer keys, at most 32 levels
-  deep. `bytes`, `bytearray`, generators, subclasses and other objects raise `InvalidParameters`. The
+  numbers, booleans, `None`, lists, tuples and dicts, with text or integer keys, at most 32 levels
+  deep. Sets, frozensets, NaN and infinity are refused too, because they are not valid JSON and a transport could not send them. `bytes`, `bytearray`, generators, subclasses and other objects raise `InvalidParameters`. The
   transport receives a private copy, so it cannot change the caller's data.
 - **Every direct grade write.** `call("mod_assign_save_grade", ...)` runs the guards above and then
   raises `GradeWriteNotAllowed`. The client's one internal send refuses it too, so there is no
