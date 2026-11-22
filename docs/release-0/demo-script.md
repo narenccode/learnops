@@ -268,7 +268,7 @@ satisfy T19. This script meets only P2 and P3.
 ## 7. Validation record (local, 2026-11-20)
 
 Windows 11, Python 3.12.5, fresh virtual environment from `requirements.txt` and
-`requirements-dev.txt` plus `mypy`, worktree of `origin/main` `5f3a794` merged with this PR's files.
+`requirements-dev.txt` plus `mypy`, worktree of `origin/main` `5f3a794` merged with the files of PR #105.
 Local results only; hosted CI is in report section 5.
 
 | Command | Exit | Result |
