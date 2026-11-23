@@ -264,7 +264,7 @@ transcript = speech.transcribe(audio_path, language="en")
 - **`meta`** (guide's decisions in `docs/decisions/0001-b5-model-interface-v1.md`, PR #25): `input_hash`, `temperature`, `seed` and `cost_known` are **not part of v1** (#8); they could be added later as optional fields (PRD §B.0 rule 2). Unknown token counts and cost are `null`, never 0 (#1). A local model with no billed cost reports `0.0` (#2).
 - **Speech.** Callers always receive one transcript with absolute timestamps. Whether the library uploads the whole file or splits it internally is hidden behind the interface and checked in the lab with a 90-minute file (PRD G-7) (lab). `audio_path` must be readable by the calling process; workers on other hosts need the file locally (to be stated in Module 4's design).
 - **Prompts.** Versioned files in `libs/model_interface/prompts/`, each with a `prompt_version` (PRD §B5.3). Layout (proposed): `prompts/<task>/v<N>.md` with `prompt_version` in a front-matter header; a published version is never edited; a change is a new file; a check confirms the file name and header agree.
-- **Logging.** Every call writes `meta` to `shared.model_calls` through an injectable `CallLogger` (a Postgres implementation for services, an in-memory one for tests), so consumers need no database to run unit tests. No raw learner content, prompt text or model output is logged (PRD §B5.3, OPS-04, module rule 6).
+- **Logging.** Every call, model and speech, writes `meta` to `shared.model_calls` through an injectable `CallLogger` (a Postgres implementation for services, an in-memory one for tests), so consumers need no database to run unit tests. No raw learner content, prompt text, model output, audio path or transcript text is logged (PRD §B5.3, OPS-04, module rule 6). **Confirmed by the guide (issue #186, 23 Nov 2026):** speech calls go in the same table as model calls with a `kind` column; the token and prompt-version fields may be empty for a speech row; failed calls are logged too; metadata only; nothing in `contracts/` changes (§5.2 lists the columns).
 
 ### 4.3 Proposed contract text (for the contract owners, via `/contract-change` or before the freeze)
 
@@ -335,7 +335,18 @@ job(id pk, type, site_id, moodle_course_id, version_id null, payload jsonb,
   lease_owner, lease_expires_at, idempotency_key unique, error_code, requested_by,
   created_at, started_at, finished_at)
 worker_heartbeat(worker, host, last_seen; pk (worker, host))
-shared.model_calls    -- defined with B5, owned by Module 3 (PRD §B5.3)
+shared.model_calls    -- defined with B5, owned by Module 3 (PRD §B5.3); one row per model or speech attempt
+  model_calls(id pk, kind in (model, speech), task, attempt,
+    outcome in (ok, invalid_output, provider_error, invalid_meta),
+    provider, model null, latency_ms, cost_estimate null,
+    input_tokens null, output_tokens null, prompt_version null,  -- model rows; empty for speech rows
+    duration_s null,                                             -- speech rows (audio length); empty for model rows
+    created_at)
+  -- Metadata only: there is no column for a prompt, a model output, an audio path or transcript text.
+  -- Decided by the guide (issue #186): the kind column, empty token and prompt-version fields for
+  -- speech, failed calls logged. (proposed) The other names and types: they follow the library's
+  -- CallRecord and the B5 model_result_meta and transcript_meta, and are settled when Module 3's
+  -- migration is written and Student 2 has reviewed it (§5.3, Migrations).
 shared.audit_log, shared.course_link    -- owned by Module 2, used not changed (PRD OPS-06, §B3)
 ```
 
@@ -358,7 +369,7 @@ shared.audit_log, shared.course_link    -- owned by Module 2, used not changed (
 - **Run identity** (proposed for the guide; Q70 stays open). Each grading execution gets a unique run id, linked to its jobs and audit entries, so `--run` has a defined meaning and the same run cannot be started twice by accident. How the id is stored is not decided, and no change to `job` or `shared.audit_log` is proposed here (§12.4).
 
 - **What is stored.** Check evidence (size-capped, marked `learner_originated`), capped excerpts (§9.5), fingerprints and references. No submission files and no cloned repositories are stored. Cloned repositories exist only inside the sandbox and are destroyed with it. A retention job removes expired excerpts, fingerprints and check evidence after `GRADING_RETENTION_DAYS` (the guide sets the value, Q34).
-- **Migrations.** Versioned, each with an up and a down step (PRD OPS-07), each run in one transaction. The down step drops only what its up step created. A migration touches only objects in the grading schema; the shared schema is owned by Module 2 (`course_link`, `audit_log`) and Module 3 (`model_calls`). One migration tool for the whole repository, chosen by Module 2 (Q36). Shared migrations run before module migrations.
+- **Migrations.** Versioned, each with an up and a down step (PRD OPS-07), each run in one transaction. The down step drops only what its up step created. A migration touches only objects in the grading schema; the shared schema is owned by Module 2 (`course_link`, `audit_log`) and Module 3 (`model_calls`). One migration tool for the whole repository, chosen by Module 2 (Q36). Shared migrations run before module migrations. **Confirmed by the guide (issue #186, 23 Nov 2026):** migrations are plain SQL `up` and `down` scripts with a small runner (video design Q7, confirmed 19 Nov); Student 2 settles the shared runner under Q36, so the `model_calls` migration is written in that form and Student 2 reviews it.
 - **Roles.** Application role: read and write on its own schema, read-only on `shared.course_link`, insert-only on `shared.audit_log` and `shared.model_calls`. Sandbox-host role (§9.2.6, revised, Q62): no table grants at all; `EXECUTE` only on a small set of `SECURITY DEFINER` functions that claim a `check` job, extend its lease, and submit its results (`submission_check`, `similarity_fingerprint` and README rows of `submission_excerpt`) under the job's lease token; nothing else.
 - **Media paths.** Not used by this module. Any stored file path is relative (PRD C-08).
 
@@ -810,7 +821,7 @@ With the hosted provider, these items leave the lab. They are listed in the data
 | Similarity fingerprints and flags | `grading.similarity_*` | not sent | `GRADING_RETENTION_DAYS` | Similarity flags |
 | Cloned learner repository | Per-job sandbox work volume on the sandbox host only (§9.2.2) | not sent | Deleted at the end of the run | Machine checks and fingerprints |
 | Drafts, approvals, write attempts | `grading.draft`, `grading.approval`, `write_attempt` | Moodle (approved grade and feedback only) | per project retention | Review, audit, revert |
-| Model call metadata | `shared.model_calls` | not sent | per project retention | Cost and audit; no content |
+| Model and speech call metadata | `shared.model_calls` | not sent | per project retention | Cost and audit; no content, no audio path |
 
 ### 9.5 Learner-controlled content, injection, reproducibility
 
@@ -1222,6 +1233,6 @@ Release 4 work also depends on Release 1 (CK-09) (PRD §D1).
 
 ## 14. Review and approval
 
-- [ ] Owner: I understand and can explain every section.
+- [x] Owner: I understand and can explain every section.
 - [ ] Peer reviewer: checked against the PRD chapter and the contracts; comments resolved.
 - [ ] Guide: approved (sets `Status: Approved`).
