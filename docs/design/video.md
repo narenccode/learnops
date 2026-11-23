@@ -102,7 +102,7 @@ flowchart LR
 | B3 LTI 1.3 launch | Used | Claims `sub`, `name`, `email` (if shared), `roles`, `context` (course id, title), `resource_link`, `deployment_id`; role mapping (Instructor → Mentor, Administrator → Administrator, Learner refused by baseline tools); session bound to (`sub`, context id), expires after 2 h idle; `shared.course_link` [§B3] | none. |
 | B5 Model and speech interface | Used | `model.run(task, inputs, output_schema)` → `result.data`, `result.meta` [§B5.1]; on invalid output one retry, then a clear error [§B5.2]; prompts are versioned files in `/libs/model_interface/prompts/`; every call logs `meta` to `shared.model_calls` [§B5.3]; `speech.transcribe(audio_path, language="en")` → `segments` (`start`, `end`, `text`, `words`), `meta` [§B5.4]. The B5 schema `contracts/model-interface.v1.schema.json` and decision `docs/decisions/0001-b5-model-interface-v1.md` are on `main` (PR #25); that decision still needs the guide's review. The speech engine behind the lab endpoint stays **PENDING** until the non-secret lab facts are recorded (`docs/decisions/0002-speech-options.md`, draft PR #98; Q9: no IP addresses, VM addresses or credentials are recorded) | none. |
 | B7 H5P practice output | Used, R5 only [§C4.6] | Standard `.h5p` file plus `course.yaml` entry (`type: h5p`, `idnumber`, `graded: false`); never graded; video checkpoints as a separate activity (default) and as `cues.json` entries [§B7] | none |
-| B8.5 Lecture videos | Provided (owner: Student 4) [§B8] | ≥ 5 Indian-English technical lectures (≥ 30 min total, enough for the Release 0 baseline) with reference transcripts; recorded with written consent or openly licensed (licence verified and recorded). Status on `main`: **PENDING**. Checker and tests are merged; SHA-256 values are recorded for five local files (PR #99); no file name, speaker, consent, transcript or review is recorded. Decision 0004 records the guide's temporary exceptions (four lectures, no 1800 s total) for interim work only | none. |
+| B8.5 Lecture videos | Provided (owner: Student 4) [§B8] | ≥ 5 Indian-English technical lectures (≥ 30 min total, enough for the Release 0 baseline) with reference transcripts; recorded with written consent or openly licensed (licence verified and recorded). Status on `main` (refreshed 2026-11-23): **COMPLETE** under decision 0004 since PR #169: five lectures, 2380 s, transcripts marked `checked`, four written consent lines. The durations, hashes, file names, official-set provenance and speaker briefings are the owner's statements, not independently verified; no word error rate has been measured. The guide's temporary exceptions (four lectures, no 1800 s total) are not used | none. |
 
 Lesson-folder files [§B6.2]: `720p.mp4` (main track, H.264/AAC, 1280×720; required); `360p.mp4` (optional, feature flag); `poster.jpg` (required); `captions.en.vtt` (required); `transcript.en.json` (required); `chapters.json` (required); `summary.en.md` (optional, feature flag); `slides.json` + `slides/NNN.jpg` (optional, feature flag, on by default); `cues.json` (optional); `camera.mp4`, `screen.mp4` (optional; accepted and listed, not played in v1); `lesson.json` (required).
 
@@ -362,7 +362,7 @@ Project risks from PRD Appendix D that apply to this module:
 | 2 | Contract drift between modules | No (proposed): contract tests run in CI on every pull request [§E1] | Freeze at Release 0; B.0 change rule; contract tests in CI [App-D] |
 | 3 | Scope pressure | No (proposed): a planning risk handled by release order, not by lab work | Releases are independent; stretch only after Releases 1–4 [App-D] |
 
-PRD Appendix C items that affect this module (results in `docs/decisions/`). **PRD §D1 and App-C now say** items 6 and 9 are verified in Release 0 and each other item in the first release that relies on it, so items 4, 7 and 8 belong to Release 3 for this module. Status on `main` as of 2026-11-20:
+PRD Appendix C items that affect this module (results in `docs/decisions/`). **PRD §D1 and App-C now say** items 6 and 9 are verified in Release 0 and each other item in the first release that relies on it, so items 4, 7 and 8 belong to Release 3 for this module. Status on `main` as of 2026-11-20 (the rows are historical unless one says it was refreshed; row 8 was refreshed on 2026-11-23):
 
 | App-C | Item | Needs the lab? | Status | Plan or owner |
 |---|---|---|---|---|
@@ -370,7 +370,7 @@ PRD Appendix C items that affect this module (results in `docs/decisions/`). **P
 | 5 | Exact H5P content-type versions on both Moodle versions | Yes | Decision 0008 exists; concerns FR-V-14 (Release 5) only | Student 1 owns B7 |
 | 6 | LTI 1.3 library choice and licence (§8) | No | `0001-lti-library.md` is Proposed, pending the guide | Guide |
 | 7 | Caption word-error-rate target (G-6) from a first baseline run | Yes | PENDING; evaluation preparation is merged (#103) | Student 4; §13 order 4 |
-| 8 | Licence or consent for every B8.5 video | No | PENDING; audit is PR #104 (open, ready for review) | Student 4; §13 orders 3–4 |
+| 8 | Licence or consent for every B8.5 video | No | Four written consent lines in decision 0004 (PR #169, merged); the audit #104 is merged; each speaker's briefing and the official-set provenance are the owner's statements | Student 4; §13 orders 3–4 |
 | 9 | Which AI features Moodle 5.3 itself provides (for overlap with chapters or summaries) | No | Not started. **In scope (Q16):** Student 4 checks Moodle 5.3's own AI features for overlap with chapters and summaries | Student 4 |
 
 ### Guide's answers (2026-11-19, PR #140)
@@ -414,8 +414,8 @@ One requirement (or one tightly related group) per pull request. Feature work st
 |---|---|---|---|---|
 | 1 | B6 contract: schema and at least one valid example | B6 (contract) | none | **Release 0.** **Merged**: B6.3 PR #32, B6.2 PR #93. Frozen at the end of Release 0 |
 | 2 | `media_paths` shared library, including B6.4 with the `none` implementation | B6.1, B6.4 | 1 | **Release 0.** **Merged**: PRs #84, #85, #86 (split of #38) |
-| 3 | B8.5 lecture videos | B8.5 | none | **Release 0 test data.** Dataset checker and tests merged (#82, #89, #99, #125); evidence PENDING (no consent, transcripts or names) |
-| 4 | Appendix C verification of items that concern the video pipeline | App-C #4, #7, #8 (and #6, #9, which are Release 0) | Lab; 3 for #7 and #8 | **Release 3** for #4, #7, #8 (PRD App-C: the first release that relies on them); #6 and #9 are Release 0. #4 record merged but NOT VERIFIED (#96); #7 preparation merged (#103); #8 audit in #104 (open, ready for review); speech ADR #98 (draft). Preparation may start earlier |
+| 3 | B8.5 lecture videos | B8.5 | none | **Release 0 test data.** Dataset checker and tests merged (#82, #89, #99, #125); the data (five lectures, 2380 s, transcripts, four consent lines) merged in #169 and the status is COMPLETE under decision 0004 |
+| 4 | Appendix C verification of items that concern the video pipeline | App-C #4, #7, #8 (and #6, #9, which are Release 0) | Lab; 3 for #7 and #8 | **Release 3** for #4, #7, #8 (PRD App-C: the first release that relies on them); #6 and #9 are Release 0. #4 record merged but NOT VERIFIED (#96); #7 preparation merged (#103); #8 audit #104 merged and four written consent lines in #169 (merged); speech ADR #98 (draft). Preparation may start earlier |
 | 5 | Storage adapter | FR-V-12 | Q3, Q12 (decided); 2 | Release 3. Moved before the upload because the upload stores through it |
 | 6 | Data model and job queue: migrations, `video.lesson/upload/job/step`, worker loop | §C4.5, OPS-07, OPS-10 | Q1, Q4, Q7 (decided); 5 | Release 3 |
 | 7 | Resumable upload | FR-V-01 | Q11 (decided: `tusd`); 5, 6 | Release 3 |
@@ -435,7 +435,7 @@ One requirement (or one tightly related group) per pull request. Feature work st
 | 21 | README, `.env.example`, changelog, traceability, data map, release notes | §D2 items 5–7, §E4, §E6 | All | Release 3 exit criteria |
 | 22 | *(R5, stretch)* Checkpoints | FR-V-14 | Releases 2 and 3 [§D1]; Releases 1–4 exit criteria [§C5] | Release 5. Design added before it starts |
 
-Demonstration code outside this plan: the paths demo (PR #117, merged) and the lesson processor demo (PR #129, open, ready for review) are local demonstrations, not the Release 3 pipeline. The guide answered on PR #129 (2026-11-19) that the demo may merge as an **explicit one-PR demonstration exception** to CLAUDE.md §6a.2 and §7 item 7. That exception covers that PR only: this design stays `Draft`, no design approval is implied, and feature work for the Release 3 pipeline waits until this document says `Status: Approved`.
+Demonstration code outside this plan: the paths demo (PR #117, merged) and the lesson processor demo (PR #129, merged 2026-11-23) are local demonstrations, not the Release 3 pipeline. The guide answered on PR #129 (2026-11-19) that the demo may merge as an **explicit one-PR demonstration exception** to CLAUDE.md §6a.2 and §7 item 7. That exception covers that PR only: this design stays `Draft`, no design approval is implied, and feature work for the Release 3 pipeline waits until this document says `Status: Approved`.
 
 ## 14. Review and approval
 

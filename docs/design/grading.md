@@ -177,7 +177,7 @@ minimum method; the values and thresholds here do not come from it.
 | B4 Moodle web-services usage | Provided (`contracts/moodle-ws.v1.md`) | Function list in §4.1 | Created in Release 0. Guide (PR #27): Markdown rules plus `moodle-ws.v1.schema.json` and the allow-list example `examples/moodle-ws.v1.functions.json` (Q1); normalized models and error classes are library documentation, not contract text (Q37) |
 | B5 Model and speech interface | Provided (`contracts/model-interface.v1.schema.json`) | `model.run`, `result.data`, `result.meta`, `speech.transcribe`, `transcript.segments`, `transcript.meta` | Created in Release 0. Proposed additive items in §4.2 (registry rule, error types) (Q38). `meta` follows decision 0001: no new fields in v1 (#8) |
 | B1.3 Marking table | Used | `<!-- marking-table v1 -->` markers; columns Criterion, Points, Full marks when, Check; `—` means judgement only; `data-marking-table="v1"` in the HTML rendering | Proposed: criterion key rule and argument formats (§4.3, Q39) |
-| B1.1 Course package | Used (read only) | `submission: [onlinetext, file]` on assignments | Proposed: submission-content rule (§4.3, Q6, Q32) |
+| B1.1 Course package | Used (read only) | `submission: [onlinetext, file]` on assignments | Decided: the submission-content rule is PRD B1.5 (#87), used as it stands (§4.3a) |
 | B3 LTI 1.3 launch | Used | `sub`, `name`, `roles`, `context`; Instructor → Mentor, Administrator; Learner refused; `shared.course_link` | None. Launch container decision (Q35) |
 | B8.4 Synthetic submissions | Provided (test data) | §11.3 | — |
 | B8.6 Model comparison set | Provided (test data) | §11.4 | — |
@@ -270,14 +270,9 @@ transcript = speech.transcribe(audio_path, language="en")
 
 These are drafts inside this document only. Nothing here changes a contract file.
 
-**Strict submission format** (proposed for the guide; Q32, Q33 and Q39 stay open). Whatever format is agreed should carry a version and be validated before any check or learner code runs: file names, extensions, sizes and argument formats are checked, and malformed or unexpected input is refused with a reason, never repaired. The limits and the schema are not set here, and no schema is final until Students 1 and 2 have agreed it. Nothing in this section is an approved or frozen contract.
+**Strict submission format** (proposed for the guide; Q33 and Q39 stay open; Q32 is decided by PRD B1.5). Whatever format is agreed should carry a version and be validated before any check or learner code runs: file names, extensions, sizes and argument formats are checked, and malformed or unexpected input is refused with a reason, never repaired. The limits and the schema are not set here, and no schema is final until Students 1 and 2 have agreed it. Nothing in this section is an approved or frozen contract.
 
-**(a) Submission-content rule for B1** (owner: Student 1; consumers: Students 2 and 3) (Q32).
-- Online text carries labelled lines, case-insensitive, one per line: `Repository: <https URL>`, `Demo: <https URL>`, and `Report:` followed by the report text to the end.
-- If submission types include a file, a file named `report.md` or `report.txt` is the report when no `Report:` section exists. Other uploaded files are ignored by grading in v1.
-- Markup is stripped before looking for labels, because online text may arrive as editor HTML (lab). Extraction rules are fixed by shared fixtures that have been through Moodle on both sites.
-- Mapping: `http_ok:demo_url` reads `Demo`; `repo_clone` reads `Repository`; `word_count` reads the report. A missing label records the check as `error` with reason `field_missing`.
-- Examples (at least five): all labels; labels in HTML; missing demo; report as file; report containing the word "Demo:".
+**(a) Submission-content rule for B1** (owner: Student 1; consumers: Students 2 and 3) (Q32). **Decided: PRD B1.5 (#87).** Online text carries the labelled lines `Repository:`, `Demo:` and `Report:`, and a file named `report.md` or `report.txt` is the report only when the online text has no `Report:` section. The shared vectors are `contracts/test-vectors/submission.v1.json`, and the reader of submissions is checked against them. Mapping: `http_ok:demo_url` reads `Demo`; `repo_clone` reads `Repository`; `word_count` reads the report. A missing or repeated label records the check as `error` with reason `field_missing` or `field_repeated`. **Not verified yet:** how online text arrives from Moodle as editor HTML (B1.5 rule 5) waits for the lab check (B4 check 7), so no editor-HTML case is claimed, and the B8.4 set holds none.
 
 **(b) Marking-table parser and model** (format owner Student 1; implementation proposed in `libs/contracts` first used by CK-09; Student 3 imports it; no second parser in this module) (Q39).
 - Output: `table_hash`; criteria, each with `key` (slug of the name, unique within the table), `position`, `name`, `points`, `full_marks_when`, `checks` (list of name and argument; empty for judgement only).
@@ -439,8 +434,8 @@ Variables are listed here; adding them to `.env.example` is a separate step by t
 | `MODEL_PROVIDER`, `MODEL_NAME`, `MODEL_LOCAL_URL`, `MODEL_HOSTED_API_KEY` | local in the lab | yes |
 | `SPEECH_PROVIDER`, `SPEECH_LOCAL_URL`, `SPEECH_HOSTED_API_KEY` | local in the lab | yes |
 | `MODEL_TIMEOUT_S`, `MODEL_TRANSPORT_RETRIES`, `MODEL_MAX_INPUT_TOKENS`, `MODEL_BUDGET_USD`, `SPEECH_TIMEOUT_S` | 120, 2, from the endpoint, from the guide, scaled | to add (proposed) |
-| `LEARNOPS_ENV` | `test`, `lab` or `production`; `lab` in `.env.example`; unset counts as "not test" | added by the FR-M-01 skeleton (PR #35); not on `main` |
-| `MODEL_ALLOW_FAKE` | `false` in `.env.example`; `true` only with `LEARNOPS_ENV=test`, and any other environment refuses to start | added by the FR-M-01 skeleton (PR #35); not on `main` |
+| `LEARNOPS_ENV` | `test`, `lab` or `production`; `lab` in `.env.example`; unset counts as "not test" | added by the FR-M-01 library (#170 to #176, on `main`) |
+| `MODEL_ALLOW_FAKE` | `false` in `.env.example`; `true` only with `LEARNOPS_ENV=test`, and any other environment refuses to start | added by the FR-M-01 library (#170 to #176, on `main`) |
 | `MODEL_PRICE_FILE` | none: proposed for working out `cost_estimate`; path and format not defined | no; not in `.env.example` or code on any branch (proposed) |
 | `GRADING_JOB_LEASE_S`, `GRADING_JOB_MAX_ATTEMPTS`, `GRADING_WORKER_CONCURRENCY` | 120, 5, 2 | to add (proposed) |
 | `GRADING_CHECKS_DIR`, `GRADING_CLONE_ALLOWED_HOSTS` | placeholder | to add (proposed) |
@@ -894,7 +889,7 @@ Marking table missing or invalid: the assignment is skipped; CK-09 in the checke
 
 ## 11. Test plan
 
-The T-numbered tests below are planned: none exists on `main` and none has been run. Other tests do exist: B1 contract tests are on `main`, and B4, B5 and FR-M-01 tests are on unmerged pull requests (#27, #25, #35). "Fake Moodle" is a test double that replays responses recorded in the lab, with fault injection; it is built only after the recordings exist, so it never encodes guesses (Q53).
+The T-numbered tests below are planned and none has been run against a Moodle site; some tests now exist on `main` under other names, such as the `libs/moodle_ws` tests. Other tests do exist: B1 contract tests are on `main`, and B4, B5 and FR-M-01 tests are on `main` (#27, #25, and #170 to #176, which replace #35). The `libs/moodle_ws` tests are on `main` too. "Fake Moodle" is a test double that replays responses recorded in the lab, with fault injection; it is built only after the recordings exist, so it never encodes guesses (Q53).
 
 | Level | What is tested | Test data | Requirement IDs |
 |---|---|---|---|
@@ -925,7 +920,7 @@ These also make up the grading part of the final demonstration (PRD §E5 step 4)
 
 ### 11.2 Metrics (PRD §C3.9, measured per PRD §E3)
 
-Every measurement records the data set, method, date and who measured. Numbers come from logs or recorded sessions, never estimates. Definitions below are (proposed, guide, Q44 to Q48).
+Every measurement records the data set, method, date and who measured. Numbers come from logs or recorded sessions, never estimates. Definitions below are (proposed, guide, Q44 to Q48). **The guide (issue #186, 23 Nov 2026) said to use them for the pilot and mark them provisional; they are settled when this design is approved.**
 
 - **Band (Q44).** A band is 10 % of the assignment's total points. "Within one band" means the draft total's band index differs from the reference total's by at most 1. Because that is lenient (up to about 19 percentage points), the report also shows exact-band agreement, mean absolute error in points, per-criterion agreement, and the share of drafts more than two bands above the reference (leniency risk, R2). G-5 passes only if the within-one-band rate on the test split is at least 80 %, as the PRD says; the extra figures are reported, not part of the pass rule, unless the guide decides otherwise.
 - **Rubric weights, optional guidance** (proposed for the guide; Q44 stays open; weights and thresholds need the guide's approval). Optional guidance for preparing test examples only: functional correctness 50 %, code quality 20 %, efficiency 15 %, requirements and documentation 15 %. This is not an additional grading formula and overrides no marking table: PRD B1.3 and each assignment's marking table keep their criteria and points, and the overall draft grade stays the sum of the criterion scores (FR-G-03; §12.4).
@@ -949,15 +944,22 @@ Every measurement records the data set, method, date and who measured. Numbers c
 (PRD §B8) At least 30 submissions (repo + demo link + short report) across quality levels, with reference grades from at least one mentor. No real learner data. Plan (proposed):
 - **Mix:** about one third each good, average and poor, written against the marking tables of the 4-week sample course (B8.2), so each exercises real criteria and checks. Good: every check passes, the README has the required sections, the report meets the word count and is specific. Average: some checks fail, the report is thin. Poor: several checks fail, the demo link is dead, the report is under the word count or off topic.
 - **Edge cases** (in both splits): a repository that does not clone; a missing README; a demo link that times out; a report just under the word count; one pair of near-duplicate submissions; one resubmission. A separate similarity calibration set (§3.1) and a separate malicious set (§11.1) are not part of the 30.
-- **Split (Q47):** a development split used to write and tune prompts and a sealed test split used once after prompts and thresholds are frozen, fixed by a seeded list in `testdata/`. Test-split submissions are written by someone other than the person tuning prompts where possible (Student 1 or the guide); authorship is recorded.
+- **Split (Q47):** a development split used to write and tune prompts and a sealed test split used once after prompts and thresholds are frozen, fixed by a seeded list in `testdata/`. Test-split submissions are written by someone other than the person tuning prompts where possible (Student 1 or the guide); authorship is recorded. **Decided by the guide (issue #186):** the sealed test split is written by Akshita or the guide where possible, and who wrote each submission is recorded in the manifest. The author's own 33 submissions are all in the development split.
 - **Format:** each submission follows the submission-content rule (§4.3a) and is placed through Moodle.
-- **Hosting:** all repositories, reports and names are fictional, written for this project, on an approved git host (Q69) with demo links to lab stub pages. Sources and licences are recorded in `testdata/README.md`.
-- **Reference grades:** at least one mentor grades every submission on the same marking table before seeing any draft; a second mentor grades at least 10 test submissions to measure mentor-to-mentor agreement (proposed). Who the mentors are is open (Q13). Reference grades are stored as the set's answer file.
+- **Hosting:** all repositories, reports and names are fictional, written for this project, on an approved git host (Q69) with demo links to lab stub pages. Sources and licences are recorded in `testdata/README.md`. The licence is Apache-2.0 (decided by the guide, issue #186; PRD C-11).
+- **Reference grades:** at least one mentor grades every submission on the same marking table before seeing any draft; a second mentor grades at least 10 test submissions to measure mentor-to-mentor agreement (proposed). Who the mentors are is open (Q13). Reference grades are stored as the set's answer file. **Decided by the guide (issue #186, 23 Nov 2026):** one mentor, whom the guide names, must grade the set before B8.4 counts as complete. The author's own grades may stay in the set only when labelled "author-graded, not reference grades" (25 are in `testdata/b8-4-synthetic-submissions/author-grades/`). A second mentor on at least 10 submissions is for the Release 4 measurement, not for Release 0.
 - **Reference practice** (proposed for the guide; Q13 stays open): human-reviewed reference submissions, borderline examples near each band edge, and a record of each disagreement between reviewers and how it was settled.
+- **Status on 23 Nov 2026:** the set has 33 submissions on all four B8.2 tasks (strong 8, partial 9, weak 8, incorrect 8), in the PRD B1.5 form, all in the development split (#31, #189, #190). It is not complete: there are no mentor reference grades. The author's grades are labelled as not reference grades, and six of them were removed after a review found they contradicted the current submissions (s002, s009, s012, s021, s027, s031). One submission written as editor HTML (s028) was left out because B1.5 rule 5 is unverified.
 
 ### 11.4 Test set B8.6: model comparison set
 
 (PRD §B8) Fixed inputs and expected outputs for practice drafts, grading drafts, chapters and summaries. Grading inputs come from B8.4. Practice, chapter and summary inputs must be agreed with Students 1 and 4 (Q12). The set and its rubric are fixed before any comparison run.
+
+**Proposal for the guide (Q44, Q45, Q48).** The guide said on issue #186 (23 Nov 2026) that I propose the set size, the agreement rule and the rubric here, and that he settles them when he approves this design. Nothing below is decided.
+- **Set size (proposed).** One chapters item and one summary item for each of the five B8.5 lectures (five each), five practice items, and the grading items from the B8.4 test split. For the grading items the size follows Q45: at least 60 if the authoring effort allows, with the interval always printed next to the rate. The set is fixed before any comparison run. Chapter and summary inputs come from Student 4, practice inputs from Student 1, grading inputs from Student 3, and Student 2 coordinates (Q12); the module owner who supplied an input reviews its expected output, and the guide decides any disagreement.
+- **Rubric (proposed).** A blinded mentor, who does not know the provider, rates each chapters, summary or practice output at one of three levels: acceptable (usable as it is), acceptable with edits (usable after the mentor edits it), or unusable or wrong. Grading drafts use the wrong-answer rule of §11.2 (Q48).
+- **Agreement (proposed).** For grading drafts it stays "within one band" (§11.2, Q44). For chapters, summaries and practice drafts, two rates are reported: the usable share (rated acceptable or acceptable with edits) and the strict share (rated acceptable with no edits). The wrong-answer rate stays the share rated unusable or wrong, so the usable share is one minus the wrong-answer rate for these tasks, and the strict share is the extra information. Transport failures count as reliability, not as wrong answers (§11.2).
+- **Review time (proposed).** The grading protocol of §11.2 (Q46) is reused for every task: gaps over three minutes between interface events are excluded and the number excluded is reported, and the order of manual and assisted work is counterbalanced, so that times are comparable across tasks.
 
 ### 11.5 Proposed test inventory
 
@@ -984,20 +986,20 @@ Test data to produce: fake-Moodle recordings, malicious and tampering repositori
 | R6 | Lab or AI services not ready (PRD A15.1) | yes | Release 0 work uses fake providers and fixtures |
 | R7 | The PRD itself is marked "Draft. Becomes binding when the guide approves it." | no | Guide; this document follows the current text |
 | R8 | A grade becomes visible early or overwrites a teacher's grade | yes | §10.1 preconditions, read-back and compare-and-set; lab verification |
-| R9 | Contracts freeze before B1, B4 and B5 gaps are closed | no | Settle §4.3 items before the Release 0 freeze (Q32, Q38, Q39, Q41) |
+| R9 | Contracts freeze before B1, B4 and B5 gaps are closed | no | Settle §4.3 items before the Release 0 freeze (Q38, Q39, Q41; Q32 is decided) |
 | Q1 | B4 is a Markdown file (`contracts/CLAUDE.md`), but PRD §B.0 rule 1 asks for a JSON Schema and an example for every contract | no | **Decided** by the guide (PR #27): Markdown rules plus a small schema and one allow-list example, no verified flags (§4.1) |
 | Q2 | Where the sandbox host runs | yes | Guide; see Q22, Q23 |
 | Q3 | One service account per site (B4) but one token variable in `.env.example` | yes | **Decided** with Q24 |
 | Q4 | Confirm the reading of "one container per submission; no network after the clone step" (§7) | no | Guide; the owner's proposal is one container that clones and then loses its network (Q66); the SEC-04 wording conflict is Q57 |
 | Q5 | "One band" (G-5, §C3.7) is not defined | no | Guide; proposal in §11.2 (Q44) |
-| Q6 | Where a submission carries its repository URL, demo link and report (B1.1 allows `onlinetext` and `file`; `http_ok:demo_url` has no defined source) | yes | Guide and Student 1; proposal in §4.3a (Q32) |
+| Q6 | Where a submission carries its repository URL, demo link and report (B1.1 allows `onlinetext` and `file`; `http_ok:demo_url` has no defined source) | yes | Decided: PRD B1.5 (#87); see §4.3a |
 | Q7 | B4 and `libs/moodle_ws` have no requirement ID for traceability | no | Guide; interim in §2 (Q43) |
 | Q8 | The "course's check config" for `command:<name>` had no format, location or owner | no | Guide and Student 1; proposal in §4.3c (Q33) |
 | Q9 | Formats of `readme_sections:<list>` and `word_count:<min>` | no | Guide and Student 1; proposal in §4.3b (Q39) |
 | Q10 | Does SEC-05 apply to files downloaded from Moodle? Applied anyway (§9.1) | no | Owner |
 | Q11 | Literature kept in §12.1 (here) or in `docs/literature-grading.md` | no | **Decided** by the owner: kept in `docs/literature-grading.md`, not in this document (moved from §12.1 on 2026-11-19) |
-| Q12 | B8.6 needs practice, chapter and summary inputs from Modules 1 and 4 | no | Integration lead and guide |
-| Q13 | Which mentor or mentors write the B8.4 reference grades, and when. Proposed practice: §11.3 | no | Guide |
+| Q12 | B8.6 needs practice, chapter and summary inputs from Modules 1 and 4. **Decided (guide, issue #186):** grading inputs come from B8.4 (Student 3), practice inputs from Student 1, chapter and summary inputs from Student 4, and Student 2 coordinates; expected outputs are reviewed by the module owner who supplied the input, and the guide decides any disagreement | no | Integration lead and guide |
+| Q13 | Which mentor or mentors write the B8.4 reference grades, and when. Proposed practice: §11.3. **Decided (guide, issue #186):** the guide names one mentor, and a second mentor on at least 10 is for Release 4 | no | Guide (names the mentor) |
 | Q14 | (PRD App-C 1) Every B4 function exists on 4.5 and 5.3 with the parameters used, including `workflowstate`; minimum capabilities | yes | Owner, Release 0; list in §4.1 |
 | Q15 | (PRD App-C 9) Which AI features Moodle 5.3 itself provides, so LearnOps does not duplicate them | yes | Owner, Release 0 |
 | Q16 | Is a stronger sandbox runtime (e.g. gVisor) acceptable? It is a new tool | no | Guide; evaluation proposal in Q61 |
@@ -1019,18 +1021,18 @@ Test data to produce: fake-Moodle recordings, malicious and tampering repositori
 | Q27 | [D6] Dependency policy for `command:`: pre-baked images, no package mirror in v1 | no | Guide |
 | Q28, Q29 | [D5, D8] Which git hosts are approved destinations (depends on Q69); revert allowed only before release | no | Guide |
 | Q30, Q31 | [D9, D10] Independent review of the sandbox before any learner code runs, and who reviews; is the service account recorded as grader acceptable to the adopting site | yes | Guide |
-| Q32 | [E1] Submission content rule (§4.3a) | yes | Guide and Student 1 |
+| Q32 | [E1] Submission content rule (§4.3a). **Decided:** PRD B1.5 (#87) | yes | Closed |
 | Q33 | [E2] Check config as a YAML file on the tools host (§4.3c); Studio generation later | no | Guide and Student 1 |
 | Q34 | [E3] Store capped excerpts (amends "no full report text"); retention days | no | Guide |
 | Q35 | [E4, E4b] Tool opens in a new window; Administrator means any course through its own launch | yes | Guide and Student 2 |
 | Q36 | [E5, E9] One migration tool chosen by Student 2; per-schema ownership; document `shared.course_link`; identity scheme in §5.1 | no | Student 2 and guide |
 | Q38 | [E7] B5 additions in §4.2 | no | Guide; reviewers Students 1 and 4. (Q37, B4 models as contract text, was decided by the guide in PR #27: not contract text; see §4.1) |
-| Q39 | [E8] Parser ownership: format by Student 1, implementation in `libs/contracts`, imported by Module 3 | no | Guide, Students 1 and 2 |
+| Q39 | [E8] Parser ownership: format by Student 1, implementation in `libs/contracts`, imported by Module 3. **Guide (issue #186):** for `word_count` and `readme_sections`, Student 1 proposes one counting and matching rule, Students 2 and 3 check it against the parser in `libs/contracts`, and the guide confirms it through `/contract-change` | no | Guide, Students 1 and 2 |
 | Q40 | Not used (number skipped; kept so later numbers and references stay unchanged) | — | — |
 | Q41 | [E10] One model call per submission version | no | Guide |
 | Q42 | [E11] Plain-text feedback template; refuse a write on grade scale mismatch | yes | Guide |
 | Q43 | [E12] Requirement IDs for B4 and `libs/moodle_ws` | no | Guide; interim in §2 |
-| Q44 to Q48 | [F1 to F5] Band definition (§11.2); test split size (keep 30 or raise to 60, always publish the interval); timing protocol (3-minute idle rule, counterbalancing); development and sealed test split, second mentor on at least 10, test split not authored by the prompt author; wrong-answer rubric and tolerance, blind mentors, transport failures counted separately | no | Guide |
+| Q44 to Q48 | **Guide (issue #186):** use the proposals in §11.2 for the pilot and mark them provisional; settled when this design is approved. [F1 to F5] Band definition (§11.2); test split size (keep 30 or raise to 60, always publish the interval); timing protocol (3-minute idle rule, counterbalancing); development and sealed test split, second mentor on at least 10, test split not authored by the prompt author; wrong-answer rubric and tolerance, blind mentors, transport failures counted separately | no | Guide |
 | Q49 | [F6] Similarity method and thresholds (§3.1); cohort size limit | no | Guide |
 | Q50 | [F7] Moodle semantics policy (§4.1): submitted only, groups unsupported, points only, suspended skipped | yes | Guide, lab |
 | Q51 to Q55 | [F8 to F12] Worker health through a heartbeat table (adjusts OPS-03); best-effort excerpt scrubbing; fake Moodle built only from lab recordings; work breakdown in §13 with the review gate before PR 18; literature cited in §12.1 only, with all six sources verified by the owner | no | Guide and owner |
@@ -1184,28 +1186,28 @@ PRD, the release table or §13 until the guide decides.
 
 One requirement (or one tightly related group) per pull request. "Gate" is something that must be true before the pull request is merged or before its artifact is run. Every pull request updates `docs/traceability.md` and the README where relevant. The order below changes the earlier order so that lab verification comes before any fixture recorded from Moodle.
 
-**Release 0** (foundation; allowed before this document is approved, except where noted):
+**Release 0** (foundation; allowed before this document is approved, except where noted). **Status on 23 Nov 2026:** PRD D1, which changed after this plan was written, moves `libs/lti`, `libs/moodle_ws` and `libs/model_interface` (FR-M-01, FR-M-02) out of Release 0 into the first release that uses them, which for this module is Release 4. Rows 5a to 5g, 7 and 8 are therefore Release 4 work that was done early; the other rows stay Release 0.
 
 | Order | Pull request | Requirements | Depends on | Notes |
 |---|---|---|---|---|
-| 1 | B1 submission rule, check-config schema, examples (Student 1) | B1 | Q32, Q33 | Release 0; examples validate (T35) |
+| 1 | B1 submission rule, check-config schema, examples (Student 1) | B1 | Q33 (Q32 is decided: PRD B1.5, #87) | Release 0; the submission rule is merged (#87); examples validate (T35) |
 | 2 | Marking-table parser in `libs/contracts` (Student 2) | B1.3, CK-09 | 1 | Release 0; T01 |
-| 3 | Lab verification records for the ten B4 §5 checks and §4.1 item 11, and recorded fixtures (with Student 2) | App-C 1 | lab ready | Release 0; results in `docs/decisions/` |
-| 4 | B4 rules, schema and allow-list example (`contracts/moodle-ws.v1.*`; not frozen) | B4 | — | Release 0; T35; the guide allows a draft merge before the lab, but B4 cannot be frozen until row 3's checks pass; all four students approve before the freeze |
-| 5a | `libs/moodle_ws`: errors and messages | B4 (interim FR-G-01, FR-G-06; Q43) | 4 | Release 0; proposed, see the note below |
-| 5b | `libs/moodle_ws`: token wrapper and redaction | B4 (interim FR-G-01, FR-G-06; Q43) | 5a | Release 0; proposed; T05 |
-| 5c | `libs/moodle_ws`: site settings, one token per site | B4 (interim FR-G-01, FR-G-06; Q43) | 5b | Release 0; proposed |
-| 5d | `libs/moodle_ws`: allow-list | B4 (interim FR-G-01, FR-G-06; Q43) | 5c | Release 0; proposed; T04 |
-| 5e | `libs/moodle_ws`: client, transport protocol and draft rule | B4 (interim FR-G-01, FR-G-06; Q43) | 5d | Release 0; proposed; fake transport only |
-| 5f | `libs/moodle_ws`: client adversarial tests and final documentation | B4 (interim FR-G-01, FR-G-06; Q43) | 5e | Release 0; proposed |
-| 5g | `libs/moodle_ws`: real transport, error mapping, normalized models, file download, tests against recorded fixtures | B4 (interim FR-G-01, FR-G-06; Q43) | 3, 5f | Release 0; needs the lab |
-| 6 | B5 contract, PRD text and examples (`contracts/model-interface.v1.schema.json`, decision 0001; not frozen) | FR-M-01, FR-M-02 | Q38 | Release 0; reviewed by Students 1 and 4; T35 |
-| 7, 8 | `libs/model_interface` (registry, errors, retries, budget, `CallLogger`, fake and local providers) and the speech interface (90-minute dry run) | FR-M-01, FR-M-02 | 6 | Release 0; no keys anywhere; T06 to T09; the FR-M-01 skeleton is in PR #35 (see GitHub for its state), which exceeds the 800-line limit; a split into seven stacked pull requests is proposed, not agreed; speech is not started |
-| 9 | Shared schema, migration tool, `shared.course_link` columns documented (Student 2) | OPS-06, OPS-07 | Q36 | Release 0; T11 |
-| 10, 11 | B8.4 generator, development and test splits, reference grades; B8.6 set and rubric (with Students 1 and 4) | B8.4, B8.6 | 1, 2, Q12, Q13 | Release 0; splits sealed |
+| 3 | Lab verification records for the 18 B4 §5 checks (the contract's list), and recorded fixtures (with Student 2) | App-C 1 | lab ready | Release 0; results in `docs/decisions/` |
+| 4 | B4 rules, schema and allow-list example (`contracts/moodle-ws.v1.*`; merged as #27, #64, #150 and #167; the contract still says Draft and is not frozen) | B4 | — | Release 0; T35; the guide allows a draft merge before the lab, but B4 cannot be frozen until row 3's checks pass; all four students approve before the freeze |
+| 5a | `libs/moodle_ws`: errors and messages | B4 (interim FR-G-01, FR-G-06; Q43) | 4 | Release 4 (PRD D1); merged (#151) |
+| 5b | `libs/moodle_ws`: token wrapper and redaction | B4 (interim FR-G-01, FR-G-06; Q43) | 5a | Release 4 (PRD D1); merged (#151 token, #152 redaction); T05 |
+| 5c | `libs/moodle_ws`: site settings, one token per site | B4 (interim FR-G-01, FR-G-06; Q43) | 5b | Release 4 (PRD D1); merged (#151; https only and a refusal of the same token on both sites in #168) |
+| 5d | `libs/moodle_ws`: allow-list | B4 (interim FR-G-01, FR-G-06; Q43) | 5c | Release 4 (PRD D1); merged (#153); T04 |
+| 5e | `libs/moodle_ws`: client, transport protocol and draft rule | B4 (interim FR-G-01, FR-G-06; Q43) | 5d | Release 4 (PRD D1); merged (#153 transport interface, #161 and #162 client guards, #164 outcomes, #165 and #166 the guarded write); fake transport only |
+| 5f | `libs/moodle_ws`: client adversarial tests and final documentation | B4 (interim FR-G-01, FR-G-06; Q43) | 5e | Release 4 (PRD D1); merged with the pieces above (#161 to #168) |
+| 5g | `libs/moodle_ws`: real transport, error mapping, normalized models, file download, tests against recorded fixtures | B4 (interim FR-G-01, FR-G-06; Q43) | 3, 5f | Release 4 (PRD D1); not built; needs the lab |
+| 6 | B5 contract, PRD text and examples (`contracts/model-interface.v1.schema.json`, decision 0001; not frozen) | FR-M-01, FR-M-02 | Q38 | Release 0; merged (#25; not frozen); reviewed by Students 1 and 4; T35 |
+| 7, 8 | `libs/model_interface` (registry, errors, retries, budget, `CallLogger`, fake and local providers) and the speech interface (90-minute dry run) | FR-M-01, FR-M-02 | 6 | Release 4 (PRD D1); no keys anywhere; T06 to T09; FR-M-01 is merged as seven pull requests, #170 to #176 (they replace #35, which is closed); the FR-M-02 speech skeleton is merged (#182); speech logging is in review (#187); a real speech service waits for ADR 0002 (#98) and the lab |
+| 9 | Shared schema, migration tool, `shared.course_link` columns documented (Student 2) | OPS-06, OPS-07 | Q36 | Release 0; T11; not done. Who owns the `shared.course_link` columns is not agreed: the B3 contract says B4, this document says Module 2, and the guide has not decided |
+| 10, 11 | B8.4 generator, development and test splits, reference grades; B8.6 set and rubric (with Students 1 and 4) | B8.4, B8.6 | 1, 2, Q12, Q13 | Release 0; splits sealed. B8.4 is merged (33 submissions in the B1.5 form, #31, #189 and #190, with 25 author grades that are labelled as not reference grades); it is not complete without mentor reference grades (Q13). B8.6 is in #33 (draft) |
 | 12 | Contract freeze gate (Student 2) | PRD §B.0 | 1 to 11 | Release 0; examples, fixtures, round trip, consumer tests pass; lab list recorded; guide approves the PRD amendments |
 
-**Rows 5a to 5f are a proposed sequence, not an approved one.** They divide the library into stacked pull requests, each under the 800-line limit. Row 5a is stacked on PR #27, and none can merge before it. Rows 5a to 5g each name `B4` in the title or description, because the library has no requirement ID of its own (Q43). FR-G-01 and FR-G-06 are interim traces only, and no row here implements them. Nothing in them has been checked against Moodle.
+**Rows 5a to 5g were proposed as a sequence of stacked pull requests.** CLAUDE.md §7 item 9 now says a pull request is built on `main`, never on another unmerged one, so the library merged as separate pull requests built on `main` (#151 to #153 and #161 to #168), each under the 800-line limit. Rows 5a to 5g each name `B4` in the title or description, because the library has no requirement ID of its own (Q43). FR-G-01 and FR-G-06 are interim traces only, and no row here implements them. Nothing in them has been checked against a Moodle site: the B4 lab checks are open.
 
 **Release 4** (starts only when this document is approved):
 

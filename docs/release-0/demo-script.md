@@ -29,7 +29,7 @@ export PYTHONPATH=.
 | A2 | A course package validates; planted errors are caught | 3 |
 | A3 | The lesson manifest schema refuses unsafe input | 2 |
 | A4 | Media paths: unsafe paths refused; a relative path becomes a URL | 2 |
-| A5 | The B8.5 checker reports the data set honestly as PENDING | 1 |
+| A5 | The B8.5 checker reports the committed data set and its COMPLETE status | 1 |
 | A6 | Whole test suite, type check | 2 |
 
 ### A1. Contract examples validate
@@ -186,16 +186,16 @@ fails with `MediaSigningConfigError - MEDIA_SIGNING='hmac' is defined in PRD B6.
 - **Evidence:** PRs #84, #85 and #86 (base `main`).
 - **Limitations:** the import is `media_paths`, not `libs.media_paths`, which is why `PYTHONPATH=libs` is set (`libs/media_paths/__init__.py` imports its own modules as `media_paths.signing`, so the package must be importable under that name). Only `none` is implemented. Path templates (B6.1 folder builder, merged in #85) are **not** shown here; they are in the D4 demo (section 6). The host is a placeholder.
 
-### A5. B8.5 checker says PENDING
+### A5. B8.5 checker says COMPLETE
 
-- **Objective:** show that the checker and its tests are real while the data set is honestly not complete.
-- **Command:** `python -m pytest -q libs/contracts/tests/test_b8_5_dataset.py`, then `grep -n -m1 "Status" testdata/README.md` and `grep -n "No consent lines" docs/decisions/0004-b8-5-lecture-videos.md`.
-- **Expected:** all pass; the two files say PENDING and "No consent lines yet".
-- **Actual (verified):** `71 passed` (exit 0); `31:- **Status:** PENDING. Five local recording files were identified in earlier work (PR #99` (the Status line now says five local files are identified and hashed, none is accepted); `57:No consent lines yet.`
+- **Objective:** show that the checker and its tests are real, and what the COMPLETE status does and does not mean.
+- **Command:** `python -m pytest -q libs/contracts/tests/test_b8_5_dataset.py`, then `grep -n -E "^- \*\*Status:\*\* (PENDING|COMPLETE)" testdata/README.md` and `grep -n "^- speaker-0" docs/decisions/0004-b8-5-lecture-videos.md`.
+- **Expected:** all pass; the Status line says COMPLETE; four consent lines (speaker-01 to speaker-04).
+- **Actual (verified 2026-11-23, at `origin/main` `dedf578`):** `71 passed`; `86:- **Status:** COMPLETE. Five recordings are listed in the inventory below ...`; consent lines on lines 59 to 62 of decision 0004.
 - **Implementation:** the checker lives in the test file `libs/contracts/tests/test_b8_5_dataset.py`.
-- **Evidence:** PRs #82, #89 and #99 (base `main`).
-- **Say clearly:** the passing tests prove that the committed placeholders are well formed and that PENDING is true. They do **not** show a recording, a consent line, a transcript, a word error rate or B8.5 acceptance. None of those is on `main`. Official B8.5 evidence is outside this PR (the audit PR #104, merged, reports on it).
-- **Limitations:** decision 0004 records two temporary exceptions (no 1800 s total; four lectures instead of five for interim work), citing the guide's confirmation on issue #121 (PR #125). They are not waivers: the set is complete only with five consented lectures.
+- **Evidence:** PRs #82, #89 and #99 (checker, tests, inventory) and #169 (the data), all on `main`.
+- **Say clearly:** COMPLETE means the committed data meets the written criteria in decision 0004: five lectures, 2380 s, transcripts marked `checked`, four written consent lines. The tests prove the data is well formed and that the status is true under those criteria. They do **not** show a word error rate, that the speakers understood the briefing, or that the recordings are the official set: those are the owner's statements in PR #169. The recordings themselves are not in Git.
+- **Limitations:** the two temporary exceptions in decision 0004 (no 1800 s total; four lectures) are not used by this set. No speech measurement has been run, and the method and normalisation are still to be approved (App-C 7).
 
 ### A6. Whole suite and type check
 
@@ -214,7 +214,7 @@ fails with `MediaSigningConfigError - MEDIA_SIGNING='hmac' is defined in PRD B6.
 | `libs/model_interface` skeleton | Open draft #35 (the B5 contract itself is merged, #25) | Partial FR-M-01 only; not Release 0 |
 | WER tooling `libs/speech_eval` | Merged (#103), but its `official` mode is refused today | Synthetic tests only; not evidence of any speech model |
 | BigBlueButton check script | On `main` (#96), but the records say NOT VERIFIED | No lab run |
-| Lesson Processor demo | Open PR #129 (a demonstration, one-PR exception from the guide) | Not on `main`; FR-V-01, FR-V-03, FR-V-08 in part only |
+| Lesson Processor demo | Merged in #129 (2026-11-23): a demonstration, one-PR exception from the guide (decision 0013 for `libx264`) | On `main`; FR-V-01, FR-V-03, FR-V-08 in part only; not Release 3 |
 
 ## 3. Requirement mapping
 
@@ -224,7 +224,7 @@ fails with `MediaSigningConfigError - MEDIA_SIGNING='hmac' is defined in PRD B6.
 | A2 | B1.1, B1.2 rule 6 (half), B1.4, EXT-09 | `libs/contracts/validate.py`, `course_rules.py` | `test_validate_course.py`, `test_validate_package.py` | #23, #37, #48, #49 (main) | 1 |
 | A3 | B6.3, C-08 | `contracts/lesson-manifest.v1.schema.json` | `test_lesson_manifest_v1.py` | #32 (main) | 1 |
 | A4 | B6.1 (validation; templates are in D4), B6.4, C-08 | `libs/media_paths/validation.py`, `signing.py` | `test_validation.py`, `test_signing.py` | #84, #85, #86 (main) | 1 |
-| A5 | B8.5, App-C 8 (checker only) | `test_b8_5_dataset.py` | same | #82, #89, #99, #125, #126 (main) | 1 (checker); data 5 |
+| A5 | B8.5, App-C 8 (checker only) | `test_b8_5_dataset.py` | same | #82, #89, #99, #125, #126, #169 (main) | 1 (checker); data 2 |
 | A6 | E1 | `.github/workflows/ci.yml` | whole suite | n/a | 1 |
 
 ## 4. Part C: not demonstrable (PRD §E5)
@@ -243,8 +243,8 @@ fails with `MediaSigningConfigError - MEDIA_SIGNING='hmac' is defined in PRD B6.
 - Run it once on the presenting machine first; the install needs network once.
 - Questions you cannot answer from evidence: lab status, BigBlueButton, word error rate, Moodle
   4.5 versus 5.3 results. Say "not verified yet" and point to report sections 2 and 7.
-- Describe the B8.5 exceptions (no 1800 s total; four lectures for interim work) as **temporary and recorded** by the guide's answer on issue #121, never as a completed set.
-- #85 and #103 are on `main`. Do not present #35 (open draft) or #129 (open) as part of `main`.
+- Describe B8.5 as COMPLETE under the written criteria in decision 0004, with no word error rate; the two temporary exceptions (no 1800 s total; four lectures) are not used by this set.
+- #85, #103 and #129 are on `main`; #129 is a demonstration, not Release 3. Do not present #35 (open draft) as part of `main`.
 
 ## 5b. Part D: the evaluation demos that exist on `main` (issue #107)
 
