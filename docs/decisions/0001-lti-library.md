@@ -1,6 +1,6 @@
 # ADR 0001: LTI 1.3 Launch Library Selection
 
-**Status:** Proposed — pending guide review and approval
+**Status:** **Stage 1 approved by the guide as option A** (keep the PyJWT-based launch validation in `libs/lti/launch.py` and use no LTI-specific library; PyLTI1p3Next stays here as the fallback), and **Stage 2 accepted as implemented, subject to a review** (guide, issue #146, 20 November 2026; section 0). **The implementation is not approved** until that review and the lab check are recorded. This ADR itself is not `Approved`: only the guide sets that status.
 
 **Date:** 9 November 2026 (revised 15 November 2026 to record the B3 contract and the guide's decisions)
 
@@ -10,13 +10,45 @@
 
 **Scope:** Selection and use of the Python LTI 1.3 library behind `libs/lti`
 
-> **Decision boundary:** This ADR records a proposed library choice and the controls needed to use it safely. It does not approve dependency installation, application integration, or implementation. Those remain subject to the outstanding decisions and approval conditions below.
+> **Decision boundary:** This ADR records the library choice the guide approved on 20 November 2026 (section 0) and the controls needed to use it safely. It does not approve application integration or release of the implementation. Those remain subject to the conditions in section 0.
 
-> **Two approval stages.** **Stage 1** approves the library choice and the pinned dependency and licence record (§17.2). **Stage 2** approves the security design, before any `libs/lti` implementation (§17.3). Neither stage has been approved. A one-page summary is in Appendix A.
+> **Two approval stages.** **Stage 1** approves the library choice and the pinned dependency and licence record (§17.2). **Stage 2** approves the security design, before any `libs/lti` implementation (§17.3). On 20 November 2026 the guide approved Stage 1 (option A) and accepted Stage 2 as implemented, subject to a review (section 0). A one-page summary is in Appendix A and still describes the original proposal.
+
+---
+
+## 0. Outcome of the guide's review (issue #146, 20 November 2026)
+
+This section records, as the guide gave them, the answers to issue #146 (Shraddha's request for the Stage 1 and Stage 2 approvals). **The rest of this document is the original evaluation and still reads as a proposal** (PyLTI1p3Next as the preferred candidate); where it conflicts with this section, this section wins. The guide's comment is the source: <https://github.com/narenccode/learnops/issues/146>.
+
+**Stage 1, library: approved as option A.** Keep the PyJWT-based launch validation in `libs/lti/launch.py` and use no LTI-specific library. PyLTI1p3Next stays in this ADR as the fallback. Conditions:
+
+1. Pin PyJWT and `cryptography` with a version floor, and run a vulnerability scan in CI. Record each package's licence from its own licence file or metadata, and the Python 3.12 check, in this ADR. **Not done yet.**
+2. A reviewer who did not write the code checks `launch.py` against section 12 and lists, for each section 12 test, where it lives. The reviewer is named in this ADR (**not yet named**). The review must show that the posted state matches the browser's state cookie; if no test shows it, one is added. **Not done yet.**
+3. This ADR says the Stage 1 choice, with the reasons. This section records the choice. **The reasons are not recorded by the guide: his comment gives none.** The ADR owner proposes these, for the guide to confirm: (a) the authentication implementation already uses PyJWT directly (issue #146); (b) the static review of PyLTI1p3Next (sections 1, 5.2, 6.7, 6.8 and 8.7) found that it does not consume OIDC state and records a successful state as reusable, does not show atomic single-use nonce consumption, needs its own session-ID cookie, has no FastAPI adapter and has an LGPL dependency (`jwcrypto`). **Not confirmed yet.**
+
+**Stage 2, as implemented and subject to that review:**
+
+| Item | Decision |
+|---|---|
+| OI-03, OI-04, OI-05 | Accepted as coded: state and nonce used up once after the signature verifies; `exp` and `iat` required; leeway of 60 seconds; `aud` and `azp` as in `launch.py` |
+| OI-06, OI-07 | In-memory storage is allowed for local tests and the lab, one process only. A PostgreSQL store is required before any deployment that runs more than one process or must survive a restart. Required: the gateway must refuse to start with the in-memory store unless a lab setting is on. Student 2 owns the shared schema and its migrations |
+| OI-20 | The launch POST comes from Moodle across sites, so it is protected by state, nonce and the state cookie, not a CSRF token. For state-changing requests after the launch, a token tied to the server session is sent in a header, with the `SameSite=Lax` session cookie and an Origin check |
+| OI-24 | Not needed, because the extra cookie belongs to the library's cache storage |
+| OI-15 | Decided before (issue #58, point 7 of the guide's first answer and his answer to Q1). **The `shared.course_link` columns stay with the B4 owner (Student 3)**, who records them in a decision record |
+| OI-25 | Confirmed: baseline tools refuse Learner. Learner access stays deferred to Release 6 and depends on a contract decision |
+| OI-26 | Record the evidence in this ADR (condition 1) |
+
+**Verification boundary: agreed.** The LTI work stays "not verified against Moodle" until the four-persona role check passes on 5.3 and the tools host has HTTPS. The Moodle 4.5 policy is the guide's to decide when Release 1 starts.
+
+**Deferred, with owner:** trusted-proxy configuration (Student 2, before any deployment); the lab certificate (the guide).
+
+**The implementation is not approved** until the review in condition 2 and the lab check are recorded.
 
 ---
 
 ## 1. Executive summary
+
+**Update, 20 November 2026:** the guide chose option A (section 0): no LTI-specific library, with the PyJWT-based validation in `libs/lti/launch.py`. The evaluation below, which proposed PyLTI1p3Next, is kept as the evidence for the fallback.
 
 The preferred candidate for LearnOps LTI 1.3 launch handling is **PyLTI1p3Next**, a maintained fork of the original `pylti1p3` project.
 
@@ -34,7 +66,7 @@ The static source review also identified gaps between the candidate's inspected 
 - `typing_extensions`, a direct runtime dependency, is PSF-2.0 licensed (verified for version 4.16.0, §5.1). The guide has since decided a broader licence policy that permits PSF-2.0 (§3.4, OI-01).
 - The repository had no runtime dependency convention; the guide has since decided one: a root `requirements.txt` with exact pins (§3.4, OI-02).
 
-**Proposed decision:** Select PyLTI1p3Next as the preferred candidate, conditional on implementing the LearnOps-specific controls and tests described here. The two dependency-policy questions have been decided by the guide (OI-01, OI-02). The licence policy is now written into PRD C-11 and root `CLAUDE.md` by PR #60 (`f8f6e35`); the root `requirements.txt` has not yet been created (§3.4, §5.4).
+**Proposed decision:** Select PyLTI1p3Next as the preferred candidate, conditional on implementing the LearnOps-specific controls and tests described here. The two dependency-policy questions have been decided by the guide (OI-01, OI-02). The licence policy is now written into PRD C-11 and root `CLAUDE.md` by PR #60 (`f8f6e35`); the root `requirements.txt` exists on `main` and pins other packages, but the LTI dependencies are not in it yet (§3.4, §5.4).
 
 The most important blockers for guide review are:
 
@@ -179,7 +211,7 @@ Evidence: the guide's comment on Issue #58, dated 10 November 2026, is the sourc
 
 **Policy documented:** PR #60 (`f8f6e35`, 10 November 2026) implemented these policy decisions in PRD C-11 (§3.1), root `CLAUDE.md` rule 10, `docs/design/TEMPLATE.md`, and CI (`.github/workflows/ci.yml` installs `requirements.txt` when the file exists).
 
-**Not yet implemented:** the root `requirements.txt` has not yet been created, and no runtime dependency is pinned (§5.4, OI-02).
+**Not yet implemented for LTI:** the root `requirements.txt` exists on `main` and pins other packages, but no LTI dependency is pinned in it yet (§5.4, OI-02, section 0 condition 1).
 
 **OI-01, dependency licensing.** The guide replaced the earlier C-11 licence restriction with this policy (now PRD C-11):
 
@@ -359,7 +391,7 @@ Only `jwcrypto` (LGPL) and `certifi` (MPL-2.0) are weak copyleft; both must stay
 
 **Guide decision (§3.4, OI-02):** runtime dependencies go in one root `requirements.txt`, alongside the existing `requirements-dev.txt`. Every line has an exact `==` pin and a licence comment, and dependencies are grouped by the library or module that needs them. These pinned files are the lock for now, and no additional tool is needed. CI will install both files together. The Studio design document's "lock file" means the root `requirements.txt`.
 
-**Not yet done:** `requirements.txt` does not exist on this branch, and this ADR does not create it. PyLTI1p3Next and its dependencies are added to it only after this ADR is approved (§17.2).
+**Not yet done:** the LTI dependencies are not in `requirements.txt`, and this ADR does not add them. PyJWT and `cryptography` are pinned with a version floor, with a vulnerability scan in CI, as condition 1 of section 0 requires (§17.2).
 
 ---
 
@@ -963,7 +995,7 @@ The service-account visibility requirement remains a lab check.
 
 **Added by B3 in the same section, not part of that confirmation:** the issuer is compared exactly (no trimming, case folding or trailing-slash normalisation), unknown issuers are refused, and the `iss` of an unverified token is used only to locate the candidate registered-platform configuration for signature verification; it is trusted only after the signature verifies. These need the reviewers' agreement with the rest of the contract.
 
-**Approved by the guide (OI-15):** the gateway is approved as a consumer of B4 (guide decision, recorded 18 November 2026; source link to be added). The course-link identity key stays `(iss, context.id)`. **This approval does not approve or freeze the `shared.course_link` columns:** B4 owns them, and their approval is separate. B4 pull request #27 is merged; the columns are to be recorded in B4's follow-up #72, or in a decision record, once B4 agrees them. They are **not finalised**.
+**Approved by the guide (OI-15):** the gateway is approved as a consumer of B4 (guide decision, recorded 18 November 2026; source link to be added). The course-link identity key stays `(iss, context.id)`. **This approval does not approve or freeze the `shared.course_link` columns:** B4 owns them, and their approval is separate. B4 pull request #27 is merged. The columns are to be recorded in a decision record by the B4 owner. The guide confirmed on issue #146 (20 November 2026) that they stay with the B4 owner. They are **not finalised**.
 
 ---
 
@@ -1025,6 +1057,8 @@ The proposed overrides (§6.9) rely on undocumented per-step methods and protect
 
 **The items below are unresolved. They are not approved implementation decisions.** The guide and affected owners must resolve them before the dependent work proceeds.
 
+**Update, 20 November 2026:** the guide answered issue #146 (section 0). The rows below were written before his answers: where a row says "awaiting guide" or "blocking" for OI-03 to OI-07, OI-20, OI-24, OI-25 or OI-26, section 0 is the current status, and the Priority column is not updated.
+
 | ID | Outstanding item | Why it matters | Decision or confirmation needed | Priority |
 |---|---|---|---|---|
 | OI-01 | `typing_extensions` is PSF-2.0 licensed (verified for 4.16.0, §5.1), which the earlier C-11 wording did not list | Dependency licences must comply with policy | **Decided by the guide (§3.4):** new licence policy permits PSF-2.0 for all dependency types; no exception record needed. Policy documented in PRD C-11 and root `CLAUDE.md` by PR #60 (`f8f6e35`). Remaining: B3 records each licence beside its pin in `requirements.txt` (not yet created), checked by the reviewer | Decided; policy documented (PR #60); licence recording pending |
@@ -1041,7 +1075,7 @@ The proposed overrides (§6.9) rely on undocumented per-step methods and protect
 | OI-12 | No FastAPI adapter was identified | LearnOps uses FastAPI | Guide: approve thin adapter and sync/thread-pool integration approach, including the four proposed `MessageLaunch` overrides and their safeguards (§6.9, §15.5) | High |
 | OI-13 | Trusted-proxy configuration is not established by current setup documentation | Untrusted forwarded headers can undermine secure-request detection | Guide: confirm trusted proxy configuration and ownership | **Blocking deployment security** |
 | OI-14 | Lab HTTPS certificate is pending | HTTPS is mandatory in the lab | Guide: confirm certificate provision and lab readiness | **Blocking lab acceptance** |
-| OI-15 | `shared.course_link` columns are not yet agreed | B3 and B4 need a consistent course identity and record | B4 owner: confirm columns and issuer/context identity. **Update:** the B4 owner has confirmed the registered-issuer and B4-client binding rule (§13, contract §7.1). **Approved by the guide:** the gateway as a B4 consumer, with the identity key `(iss, context.id)` (§13). **Still pending:** the `shared.course_link` columns, which B4 owns; that approval is separate and not given. B4 #27 is merged; the columns are to be recorded in #72 or a decision record once B4 agrees them | High; consumer approved, columns pending (B4) |
+| OI-15 | `shared.course_link` columns are not yet agreed | B3 and B4 need a consistent course identity and record | B4 owner: confirm columns and issuer/context identity. **Update:** the B4 owner has confirmed the registered-issuer and B4-client binding rule (§13, contract §7.1). **Approved by the guide:** the gateway as a B4 consumer, with the identity key `(iss, context.id)` (§13). **Still pending:** the `shared.course_link` columns, which B4 owns; that approval is separate and not given. B4 #27 is merged; the columns are to be recorded in a decision record once B4 agrees them (the guide confirmed on #146 that they stay with the B4 owner) | High; consumer approved, columns pending (B4) |
 | OI-16 | Moodle role URI observations still need lab confirmation | Source review is not a substitute for a real Moodle launch | Guide/B3: verify actual launch claims in lab. **Decided by the guide:** `mod/lti:admin` is not granted to non-site-administrators on the lab sites; the mapping stays (institution administrator → `administrator`; system administrator URI ignored). **Still pending:** the lab check of what Moodle sends for the four personas (§10.2a, Appendix B V7); the source observation stays unverified until then | High; lab check pending |
 | OI-17 | Service-account course visibility remains unverified | B4 course lookup depends on visibility | Guide/B4: verify with lab test | High |
 | OI-18 | Upload-resume identity must be confirmed with Video | Upload records must survive session expiry and relaunch | Video owner: confirm `(iss, sub, context id)` identity | High |
@@ -1055,6 +1089,8 @@ The proposed overrides (§6.9) rely on undocumented per-step methods and protect
 | OI-26 | Which artefact is pinned (release `2.0.2` or a Git commit), its full SHA, and the `jwcrypto` licence evidence are unverified (§4.1, §5.2) | Stage 1 approval needs a pinned, evidenced dependency record | B3 to verify (Appendix B); guide to review the `jwcrypto` LGPL disclosure under PRD C-11. **Update, 17 Nov 2026:** full SHAs recorded, the security-relevant source files are unchanged between tag `2.0.2` and the reviewed commit, and PyPI metadata agrees on the `jwcrypto` licence (§4.1, §5.2, Appendix C); the artefact choice, the download comparison, the Python 3.12 tree and licence files, and the advisory scan with version floors are still open | **Blocking Stage 1 approval** |
 
 ### 16.1 Resolution order
+
+*This is the original resolution order. The guide's answers of 20 November 2026 are in section 0.*
 
 **Before dependency approval**
 - OI-01: licence policy, decided by the guide (§3.4) and documented in PRD C-11 and root `CLAUDE.md` by PR #60 (`f8f6e35`); B3 still records each licence beside its pin.
@@ -1081,7 +1117,7 @@ The proposed overrides (§6.9) rely on undocumented per-step methods and protect
 **Before lab and downstream acceptance**
 - OI-12: FastAPI adapter approach.
 - OI-14 and OI-16: lab certificate, and the four-persona Moodle role-claim check (§10.2a); the `mod/lti:admin` restriction is decided.
-- OI-15: the gateway is approved as a B4 consumer; the `shared.course_link` columns, which B4 owns, are still to be agreed and recorded (#72 or a decision record).
+- OI-15: the gateway is approved as a B4 consumer; the `shared.course_link` columns, which B4 owns, are still to be agreed and recorded in a decision record.
 - OI-17: service-account course visibility.
 - OI-18: Video upload-resume identity.
 - OI-19: per-tool accepted-role declarations.
@@ -1102,12 +1138,14 @@ Encapsulate it behind `libs/lti`. Downstream modules consume the normalized laun
 
 | Stage | What the guide approves | Needed before | Status |
 |---|---|---|---|
-| **Stage 1** | The library choice (PyLTI1p3Next, behind `libs/lti`) and the pinned dependency and licence record, including the `jwcrypto` LGPL disclosure (§5.2) | Adding anything to `requirements.txt` | Not approved |
-| **Stage 2** | The security design (§6 to §8, §12), including storage ownership and migrations (OI-06, OI-07), the CSRF mechanism (OI-20) and the `lti1p3-session-id` cookie (OI-24) | Any `libs/lti` implementation | Not approved |
+| **Stage 1** | The library choice (originally PyLTI1p3Next, behind `libs/lti`) and the pinned dependency and licence record, including the `jwcrypto` LGPL disclosure (§5.2) | Adding anything to `requirements.txt` | **Approved as option A** (PyJWT-based validation, no LTI-specific library; PyLTI1p3Next the fallback), with conditions (section 0). The `jwcrypto` disclosure concerns PyLTI1p3Next, now the fallback |
+| **Stage 2** | The security design (§6 to §8, §12), including storage ownership and migrations (OI-06, OI-07), the CSRF mechanism (OI-20) and the `lti1p3-session-id` cookie (OI-24) | Any `libs/lti` implementation | **Accepted as implemented, subject to the review in section 0 condition 2** |
 
-Stage 2 does not follow automatically from Stage 1, and neither stage is approved by this contract PR. The contract PR approves the contract only (PRD §B.0).
+Stage 2 does not follow automatically from Stage 1. The guide gave both answers on issue #146 on 20 November 2026 (section 0). This contract PR approved the contract only (PRD §B.0).
 
 ### 17.2 Before dependency installation (Stage 1)
+
+**Superseded by section 0 (20 November 2026):** the guide approved option A (PyJWT-based launch validation, no LTI-specific library). PyLTI1p3Next is the fallback and is not added to `requirements.txt`. The steps below describe the original PyLTI1p3Next plan. For option A, condition 1 of section 0 applies: pin PyJWT and `cryptography` with a version floor, run a vulnerability scan in CI, and record each licence and the Python 3.12 check in this ADR.
 
 PyLTI1p3Next is the preferred candidate, not an approved dependency. It is not installed and not pinned anywhere. Do not install or add the runtime dependency until:
 
@@ -1118,6 +1156,8 @@ PyLTI1p3Next is the preferred candidate, not an approved dependency. It is not i
 5. PyLTI1p3Next and its dependencies are then added to `requirements.txt` with exact `==` pins and a licence comment beside each.
 
 ### 17.3 Before implementation (Stage 2) and before launch integration is accepted
+
+**Superseded by section 0 (20 November 2026):** the guide accepted Stage 2 as implemented, subject to the review in condition 2, so "No `libs/lti` code is written until Stage 2 is approved" no longer holds as written. The list below is what that review and the lab check must show.
 
 No `libs/lti` code is written until Stage 2 is approved. Once it is, the implementation must demonstrate:
 
@@ -1148,9 +1188,9 @@ Before B4, Video, Studio, Checker, or Grading relies on the LTI boundary:
 
 ### 17.5 Approval status
 
-This ADR is **Proposed**. The guide alone sets the final Approved status under the repository workflow.
+The guide approved Stage 1 (option A) and accepted Stage 2 subject to a review on 20 November 2026 (section 0), but **this ADR is not `Approved`**: the guide alone sets that status under the repository workflow, and he said not to mark the implementation approved until the review and the lab check are recorded.
 
-Approval of PyLTI1p3Next as the preferred candidate does not itself approve the implementation design or installation. Those items require their own explicit resolution. The licence policy and runtime requirements convention have been decided by the guide (§3.4, OI-01, OI-02); they do not by themselves approve this ADR.
+The original text below proposed PyLTI1p3Next, which is now the fallback; approval of option A does not itself approve the implementation design or release. Those items require their own explicit resolution. The licence policy and runtime requirements convention have been decided by the guide (§3.4, OI-01, OI-02); they do not by themselves approve this ADR.
 
 ---
 
@@ -1216,34 +1256,35 @@ Before this ADR is marked Approved, every external source cited in it must be op
 
 ## 19. Review checklist
 
-- [ ] Guide approves PyLTI1p3Next as the preferred candidate.
+- [x] Superseded: the guide chose option A (no LTI-specific library); PyLTI1p3Next is the fallback (issue #146, 20 November 2026; section 0).
 - [x] Guide decides the dependency licence policy (OI-01; decision received, §3.4).
 - [x] Guide decides the runtime dependency convention (OI-02; decision received, §3.4).
 - [x] Location of the guide's OI-01/OI-02 response is cited in §3.4.
 - [x] Guide updates PRD C-11 and root `CLAUDE.md` to the new licence policy (PR #60, `f8f6e35`).
 - [ ] Complete direct and transitive dependency tree has been reviewed for licence compatibility and security advisories.
 - [ ] Exact approved dependency versions and licence evidence are recorded.
-- [ ] After ADR approval, PyLTI1p3Next and its dependencies are added to `requirements.txt` with exact `==` pins and licence comments.
-- [ ] Guide approves the server-side launch-data storage approach.
-- [ ] Guide approves the atomic single-use state and nonce strategy and the launch transaction boundary (OI-03).
-- [ ] Guide approves mandatory expiry and audience/authorized-party enforcement, including the claim policy, leeway, and maximum token age (OI-04, OI-05).
-- [ ] Guide approves or rejects the library session-ID cookie and its lifecycle (OI-24).
-- [ ] Guide approves the FastAPI integration approach, including the four proposed overrides and their safeguards.
-- [ ] HTTPS, CSRF, and trusted-proxy responsibilities are confirmed.
+- [ ] PyJWT and `cryptography` are pinned in `requirements.txt` with a version floor, and a vulnerability scan runs in CI (condition 1 of section 0). Not done. (The original item was about PyLTI1p3Next, now the fallback.)
+- [x] Guide decided the storage approach (OI-06, OI-07; issue #146, 20 November 2026): in-memory only for local tests and the lab, one process; PostgreSQL before more than one process or a restart.
+- [x] Guide accepted the single-use state and nonce strategy as coded, subject to the review (OI-03; issue #146).
+- [x] Guide accepted as coded: `exp` and `iat` required, leeway of 60 seconds, `aud` and `azp` as in `launch.py` (OI-04, OI-05; issue #146).
+- [x] Guide decided OI-24: not needed, because the extra cookie belongs to the library's cache storage (issue #146).
+- [ ] Guide approves the FastAPI integration approach. The four overrides were for PyLTI1p3Next; under option A this is covered by Stage 2, subject to the review of `launch.py`.
+- [ ] HTTPS and trusted-proxy responsibilities are confirmed (trusted-proxy configuration: Student 2, before any deployment; the lab certificate: the guide). CSRF is decided (OI-20; issue #146).
 - [x] Guide answers OI-22: unlisted role URIs are ignored; refuse only if no recognised role remains (decision recorded in §3.2; PRD §A5 amended in this change).
 - [x] Guide decides OI-21: session identity `(iss, sub, context id)` (PRD B3 amended in this change).
 - [x] B3 contract structure and paths decided by the guide and implemented in this draft (OI-23): Markdown contract, schema, valid examples, and the `contracts/CLAUDE.md` row.
 - [ ] One owner of an affected module formally approves the contract, schema and examples through the contract PR (PRD §B.0 rule 3).
 - [ ] The guide formally approves the PRD changes in the contract PR.
 - [ ] The guide reviews the complete contract set at the Release 0 gate.
-- [ ] Guide decides OI-25 (open): how and when `learner` could be admitted to the `role` enum for Release 6. Until then no Release 6 Learner support without a contract change is claimed.
-- [ ] B3 verifies OI-26: pinned artefact, full SHA, and `jwcrypto` licence evidence; guide reviews the `jwcrypto` LGPL disclosure.
-- [ ] Guide approves Stage 1 (library choice and pinned dependency and licence record).
-- [ ] Guide approves Stage 2 (security design), including storage ownership and migrations, the CSRF mechanism, and the `lti1p3-session-id` cookie.
+- [x] Guide decided OI-25 (issue #146, 20 November 2026): baseline tools refuse Learner; Learner access stays deferred to Release 6 and depends on a contract decision. No Release 6 Learner support without a contract change is claimed.
+- [ ] OI-26: the pinned versions and licence evidence are recorded in this ADR (condition 1 of section 0). The `jwcrypto` LGPL disclosure concerns PyLTI1p3Next, now the fallback.
+- [x] Guide approves Stage 1 as option A, with conditions (issue #146, 20 November 2026; section 0).
+- [x] Guide accepts Stage 2 as implemented, subject to the review in condition 2 (issue #146, 20 November 2026). That review is not done.
+- [ ] A reviewer who did not write `launch.py` is named and reviews it against section 12, listing for each section 12 test where it lives (condition 2 of section 0). Not done.
 - [x] Guide decides OI-16's lab rule: `mod/lti:admin` is not granted to non-site-administrators on the lab sites.
 - [ ] Moodle role URIs are confirmed through a lab launch: the four-persona checklist (§10.2a) is run on Moodle 4.5 and 5.3 and recorded in the release harness report.
 - [x] Guide approves the gateway as a B4 consumer, with the identity key `(iss, context.id)` (OI-15).
-- [ ] B4 agrees and records the `shared.course_link` columns, which it owns (#72 or a decision record).
+- [ ] B4 agrees and records the `shared.course_link` columns, which it owns, in a decision record.
 - [ ] B4 confirms service-account course visibility.
 - [ ] Video confirms upload-resume identity.
 - [ ] Each module confirms its accepted roles.
@@ -1251,7 +1292,7 @@ Before this ADR is marked Approved, every external source cited in it must be op
 - [ ] All references are opened and verified.
 - [ ] Guide grants final ADR approval.
 
-**Final status: Proposed — pending guide review and approval (Stage 1 and Stage 2). No dependency installation or LTI implementation is authorized by this ADR.**
+**Final status: Stage 1 approved as option A and Stage 2 accepted as implemented, subject to a review (guide, issue #146, 20 November 2026; section 0). The ADR is not `Approved`, and the implementation is not approved until the review of `launch.py` (condition 2) and the lab check are recorded.**
 
 ---
 

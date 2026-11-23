@@ -161,7 +161,7 @@ then no Learner support is claimed.
 - A user sees only data for the course (LTI context) they launched from, except administrators
   (PRD A5). Every request is authorised from the session's role and course context (PRD SEC-02).
 - `shared.course_link` is keyed by **`iss` plus context id**. Its columns are owned by B4
-  (Student 3) and are agreed and recorded in B4's records (#72 or a decision record); this
+  (Student 3) and are agreed and recorded in B4's records (a decision record); this
   contract does not define them.
 
 ### 7.1 `iss` must identify a registered platform
