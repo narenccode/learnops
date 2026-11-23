@@ -1,7 +1,7 @@
 """speech.transcribe(audio_path, language) (PRD B5.4, FR-M-02 skeleton).
 
 Mock-tested only: the fake provider is built from the B5 contract example, and local and hosted
-refuse until a real transport exists (design Q19). No audio is decoded and no server is called.
+refuse until a real transport exists (ADR 0002, PR #98). No audio is decoded and no server is called.
 The audio files here are a few synthetic bytes, never a real recording (CLAUDE.md rule 4).
 """
 
@@ -129,7 +129,10 @@ def test_local_and_hosted_refuse_until_a_transport_exists(
     assert isinstance(create_speech_provider(), cls)
     with pytest.raises(ProviderUnavailable) as raised:
         transcribe(audio)
-    assert "Q19" in str(raised.value)
+    assert "ADR 0002" in str(raised.value)
+    assert "Q19" not in str(
+        raised.value
+    )  # Q19 is the model provider, not the speech service
 
 
 def test_an_unset_speech_provider_is_a_clear_error(audio: Path) -> None:

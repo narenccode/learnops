@@ -10,9 +10,9 @@ latency_ms is LearnOps's own measurement, rounded to whole milliseconds (guide, 
 0001 row 2). Not checked, by the guide's decision (rows 10 and 11): time order, and times past
 duration_s.
 
-Not in this skeleton (design proposals or guide questions, not decided): logging speech calls to
-shared.model_calls, SPEECH_TIMEOUT_S and the budget, and how long audio is split (a lab check with
-a 90-minute file). Provider failures are not retried here.
+Not in this skeleton: logging speech calls to shared.model_calls (decided by the guide on issue
+#186, 23 Nov 2026, and built in PR #187), SPEECH_TIMEOUT_S and the budget (design proposals), and how
+long audio is split (a lab check with a 90-minute file). Provider failures are not retried here.
 """
 
 from __future__ import annotations

@@ -119,6 +119,6 @@ SPEECH_PROVIDER_PASSED: Final = (
 )
 SPEECH_NO_TRANSPORT: Final = (
     "SPEECH_PROVIDER is '{provider}', but the {provider} speech service is not integrated yet "
-    "(design Q19: its protocol, and the lab endpoint). Nothing was sent. Use the fake provider in "
-    "automated tests only."
+    "(ADR 0002, PR #98: the speech service waits for lab facts). Nothing was sent. Use the fake "
+    "provider in automated tests only."
 )

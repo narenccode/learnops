@@ -1062,6 +1062,6 @@ until it is complete.
 
 | What | PRD | Waits for |
 |---|---|---|
-| A real local (lab Whisper-family) or hosted speech service | B5.4 | Q19 and the lab |
-| Logging speech calls to `shared.model_calls` | B5.3 (written for model calls) | A guide decision; the transcript meta has no token counts or `prompt_version` |
+| A real local (lab Whisper-family) or hosted speech service | B5.4 | ADR 0002 (PR #98) and the lab (design Q19 is the model provider, not this) |
+| Logging speech calls to `shared.model_calls` | B5.3 | **Decided by the guide** (issue #186, 23 Nov 2026: a `kind` column, metadata only, failed calls logged); the code is in PR #187, the PostgreSQL logger waits on Q36 |
 | `SPEECH_TIMEOUT_S`, the budget, and splitting long audio (90-minute dry run) | — | Design proposals (grading.md §4.2); lab check |
