@@ -14,6 +14,7 @@ from .call_log import (
     get_call_logger,
 )
 from .errors import (
+    AudioNotReadable,
     CallLoggerMissing,
     DuplicateTask,
     InvalidInput,
@@ -32,8 +33,10 @@ from .registry import TaskRegistry, TaskSpec, get_task, register_task
 # The module is runner.py, not run.py: a module named run would be shadowed by this function, so
 # "import model_interface.run" would quietly return the function instead of a module.
 from .runner import Result, run
+from .speech import Transcript, transcribe
 
 __all__ = [
+    "AudioNotReadable",
     "CallLogger",
     "CallLoggerMissing",
     "CallRecord",
@@ -50,6 +53,7 @@ __all__ = [
     "SchemaMismatch",
     "TaskRegistry",
     "TaskSpec",
+    "Transcript",
     "UnregisteredTask",
     "configure_call_logger",
     "configure_provider",
@@ -59,4 +63,5 @@ __all__ = [
     "get_task",
     "register_task",
     "run",
+    "transcribe",
 ]

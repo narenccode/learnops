@@ -1042,3 +1042,26 @@ reported by `pytest -rs`, when ffmpeg or ffprobe is not installed.
 | FR-V-01 (R3) | **In part** | Accepts only `.mp4`, `.mov`, `.mkv`, `.webm`; refuses an empty file, a file over the limit (default 4 GB, `LESSON_MAX_UPLOAD_BYTES`) and a file that is not really a video. **Not implemented:** resumable chunked upload (tus), the 90 MB chunk size and resuming after interruption. The upload is one request that sends the whole file. | `test_unsupported_extension_rejected`, `test_empty_file_rejected`, `test_oversize_rejected`, `test_fake_video_content_rejected`, `test_supported_input_accepted`, `test_rejects_bad_extension`, `test_fake_upload_fails_cleanly` |
 | FR-V-03 (R3) | **In part** | Always converts the upload to `720p.mp4` (H.264/AAC, 720 lines high; it does not check whether the source already qualifies) and extracts `poster.jpg` from 10 % into the video. It checks the result is H.264, 720 lines, AAC when the source has audio, and within 2 s of the source length. **Not implemented:** the optional `360p.mp4` copy and its feature flag, and "when needed" (no skip when the source is already 720p H.264/AAC). | `test_end_to_end_conversion_poster_manifest`, `test_truncated_video_leaves_no_lesson`, `test_real_ffmpeg_failure_cleans_up`, `test_ffmpeg_failure_is_reported_and_cleaned` |
 | FR-V-08 (R3) | **In part** | Writes `lesson.json` last, in a temporary folder, only when `720p.mp4`, `poster.jpg`, `captions.en.vtt`, `transcript.en.json` and `chapters.json` exist and the manifest validates against the B6.3 schema; then moves the folder into place with one rename. A failed run leaves no lesson folder. **Not met in full:** three of the required files are empty placeholders, `slides`, `cues` and `summary` are not produced, and the step is not a retryable job. | `test_end_to_end_conversion_poster_manifest`, `test_truncated_video_leaves_no_lesson`, `test_real_ffmpeg_failure_cleans_up`, `test_ffmpeg_failure_is_reported_and_cleaned`, `test_manifest_without_required_field_is_rejected`, `test_list_lessons_ignores_unfinished_folder`, `test_second_lesson_does_not_overwrite_first` |
+
+## FR-M-02 speech interface library (skeleton, partial), Release 0 foundation
+
+FR-M-02 ("Speech interface library (B5.4)", R0) is partial: the call, the provider rules and the
+checks exist and are mock-tested; no real speech service is called. It is not in the top table
+until it is complete.
+
+| Rule | PRD | Code | Test(s) |
+|---|---|---|---|
+| `transcribe(audio_path, language="en")` returns a B5 transcript (segments and meta) | B5.4 | `libs/model_interface/speech.py` | `test_speech.py`: `test_the_fake_returns_a_valid_b5_transcript`, `test_language_defaults_to_english`, `test_the_package_exports_transcribe` |
+| The provider is chosen by `SPEECH_PROVIDER` with the fake-provider rule; `local` and `hosted` refuse until integrated; a passed provider is for test runs only | B5.2, B5.4, decision 0001 (3) | `speech_providers.py`, `speech.py` | `test_fake_is_refused_outside_a_test_run`, `test_local_and_hosted_refuse_until_a_transport_exists`, `test_an_unset_speech_provider_is_a_clear_error`, `test_passing_a_provider_is_for_test_runs_only` |
+| A bad language or an unreadable audio file is refused before any provider call; the path is never echoed | B5.4, OPS-04 | `speech.py` | `test_a_missing_file_is_refused_before_the_provider_is_called`, `test_a_folder_is_not_an_audio_file`, `test_language_must_be_a_non_empty_string` |
+| The answer is checked against the B5 schema and the time rule; one retry, then `InvalidOutput` with no transcript text; provider failures are not retried | B5.2, B5.4, decision 0001 (5, 9) | `speech.py`, `transcript.py` | `test_one_invalid_answer_is_retried_once`, `test_two_invalid_answers_raise_and_return_nothing`, `test_a_provider_failure_is_not_retried` |
+| `latency_ms` is measured by LearnOps, as a whole number | B5.4, decision 0001 (2) | `speech.py`, `validation.py` | `test_latency_ms_is_measured_here_as_a_whole_number` |
+| Not a rule: time order, and times past `duration_s`; silent audio gives `segments: []` | B5.4, decision 0001 (4, 10, 11) | `speech.py` | `test_segments_out_of_time_order_are_accepted`, `test_times_past_duration_are_accepted`, `test_silent_audio_gives_an_empty_transcript` |
+
+### Not implemented, and therefore not claimed
+
+| What | PRD | Waits for |
+|---|---|---|
+| A real local (lab Whisper-family) or hosted speech service | B5.4 | ADR 0002 (PR #98) and the lab (design Q19 is the model provider, not this) |
+| Logging speech calls to `shared.model_calls` | B5.3 | **Decided by the guide** (issue #186, 23 Nov 2026: a `kind` column, metadata only, failed calls logged); the code is in PR #187, the PostgreSQL logger waits on Q36 |
+| `SPEECH_TIMEOUT_S`, the budget, and splitting long audio (90-minute dry run) | — | Design proposals (grading.md §4.2); lab check |

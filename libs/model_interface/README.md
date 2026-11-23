@@ -188,6 +188,32 @@ its records never reach `shared.model_calls`.
 
 No key or token is ever stored in the repository.
 
+## Speech interface (FR-M-02, skeleton)
+
+```python
+from model_interface import transcribe
+
+transcript = transcribe(audio_path, language="en")
+transcript.segments  # [{start, end, text, words: [{start, end, word}]}]
+transcript.meta      # provider, model, duration_s, latency_ms, cost_estimate
+```
+
+- The provider is chosen by `SPEECH_PROVIDER`, under the same fake-provider rule as
+  `MODEL_PROVIDER`. `local` and `hosted` refuse with a clear error until a real speech service is
+  integrated (ADR 0002, PR #98: the speech service waits for lab facts); nothing is sent. `fake` is
+  for automated tests only. (Design Q19 is the model provider, not the speech service.)
+- Before any provider call, the language must be non-empty text and the audio file must exist and
+  be readable on this host. The path is never echoed in an error.
+- The answer is checked against the B5 transcript schema and the time rule (a segment and a word end
+  at or after their start). One invalid answer is retried once; a second raises `InvalidOutput`
+  and returns nothing.
+- `latency_ms` is measured here, rounded to whole milliseconds. Time order and times past
+  `duration_s` are not checked (guide's decisions, `docs/decisions/0001`, rows 10 and 11): sort by
+  `start` yourself.
+- Not in this skeleton: logging speech calls to `shared.model_calls` (decided by the guide on issue
+  #186; PR #187 builds it), `SPEECH_TIMEOUT_S` and the budget, and how long audio is split (checked
+  in the lab with a 90-minute file).
+
 ## Not implemented
 
 | Item | Waiting for |
@@ -197,4 +223,5 @@ No key or token is ever stored in the repository.
 | PostgreSQL logger for `shared.model_calls`. **Until it exists, no lab or production service can make a logged model call.** | Q36 (migration tool, shared schema) |
 | Pydantic models for task schemas | Guide's decision |
 | Timeouts from the environment, transport retries, budget guard | Design proposals only (`docs/design/grading.md` §4.2) |
-| Speech interface `speech.transcribe` | FR-M-02 (separate work) |
+| A real speech service behind `transcribe()` (local or hosted), `SPEECH_TIMEOUT_S`, splitting long audio | ADR 0002 (PR #98) and the lab |
+| Logging speech calls to `shared.model_calls`. **Decided by the guide** (issue #186, 23 Nov 2026): the same table with a `kind` column, metadata only, failed calls logged. Not in this skeleton | PR #187 builds it; the PostgreSQL logger and the `kind` column wait on Q36 |
