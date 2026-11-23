@@ -9,7 +9,7 @@
 # (the `checks` job) without idna. Revisit when the Video module gets its real web service.
 # One pinned version per package, licence in a comment (CLAUDE.md §2.10).
 fastapi==0.121.0   # MIT. Replaces 0.115.6, which allowed Starlette below 0.42 (CVE-2025-62727, fixed in Starlette 0.49.1)
-starlette==0.49.3  # BSD-3-Clause. Pinned on purpose: >= 0.49.1 fixes CVE-2025-62727 (Range header DoS in FileResponse, used by /media); fastapi 0.121.0 allows < 0.50
+starlette==1.3.1  # BSD-3-Clause. Pinned on purpose: >= 0.49.1 fixes CVE-2025-62727 (Range header DoS in FileResponse, used by /media); fastapi 0.121.0 allows < 0.50
 uvicorn==0.34.0    # BSD-3-Clause
 httpx==0.28.1      # BSD-3-Clause. FastAPI's TestClient needs it (modules/video/demo/tests)
 #
