@@ -72,11 +72,12 @@ and is not yet confirmed by the guide.
 - **Where:** `b8-4-synthetic-submissions/` (details, format and open decisions in its README).
 - **Source:** written for this project by Student 3. Entirely fictional: placeholder learners,
   invented organisations, reserved `.invalid` URLs. No real learner data, no real course content.
-- **Licence:** not yet decided (open decision O8; proposal: Apache-2.0, like the repository).
+- **Licence:** Apache-2.0 (decided by the guide, issue #186; PRD C-11).
 - **Status:** 33 submissions against the marking tables of all four B8.2 tasks, in the submission
   form of PRD B1.5, all in the development split. The count meets the PRD minimum of 30, but there
   are no mentor reference grades, so the set is not complete (the guide names the mentor, O3). The
-  format still needs an owner's approval (O7).
+  format still needs an owner's approval (O7). The author's own grades for 25 of them are in
+  `author-grades/`, labelled "author-graded, not reference grades" (guide, issue #186).
 
 ## B8.5 Lecture videos (owner: Student 4), COMPLETE
 

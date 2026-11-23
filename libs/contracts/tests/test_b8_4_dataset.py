@@ -6,7 +6,8 @@ agreed (see that folder's README, "Open decisions").
 
 AUTOMATED here:
   * the four schemas are valid Draft 2020-12 schemas; the manifest, every submission.yaml and
-    every expected.yaml validate; any reference-grade file validates (none exists yet);
+    every expected.yaml validate; any reference-grade file validates (none exists yet); every
+    author grade validates and is labelled "author", never a mentor's;
   * manifest ids are unique and match the submission folders one to one; rubric,
     near_duplicate_of and resubmission_of references resolve;
   * each rubric's course package and task body exist, the assignment idnumber is in the course
@@ -50,8 +51,15 @@ SET_DIR = ROOT / "testdata" / "b8-4-synthetic-submissions"
 SCHEMA_DIR = SET_DIR / "schemas"
 SUBMISSIONS_DIR = SET_DIR / "submissions"
 REFERENCE_GRADES_DIR = SET_DIR / "reference-grades"
+AUTHOR_GRADES_DIR = SET_DIR / "author-grades"
 
-SCHEMA_NAMES = ("manifest", "submission", "expected-outcome", "reference-grade")
+SCHEMA_NAMES = (
+    "manifest",
+    "submission",
+    "expected-outcome",
+    "reference-grade",
+    "author-grade",
+)
 CHECK_NAMES = {
     "repo_clone",
     "repo_file",
@@ -388,6 +396,100 @@ def test_reference_grade_rules_catch_bad_grades(
 
     grade["mentor_ref"] = "Dr. Real Name"
     assert errors(validators["reference-grade"], grade) != []
+
+
+# --- the author's own grades: labelled, never mistaken for reference grades ----------------
+
+
+def test_author_grade_files_are_valid_and_labelled(
+    validators: dict[str, Draft202012Validator],
+    manifest: Doc,
+    tables: dict[str, list[tuple[str, int, list[str]]]],
+) -> None:
+    by_id = {s["id"]: s for s in manifest["submissions"]}
+    paths = sorted(AUTHOR_GRADES_DIR.glob("*.yaml"))
+    assert paths
+    for path in paths:
+        grade = load_yaml(path)
+        assert errors(validators["author-grade"], grade) == [], path
+        assert path.stem == grade["submission_id"] and path.stem in by_id, path
+        assert grade["rubric"] == by_id[path.stem]["rubric"], path
+        assert reference_grade_problems(grade, tables[grade["rubric"]]) == [], path
+        assert grade["graded_by"] == "author" and grade["reference_grade"] is False
+        assert "mentor_ref" not in grade, path
+
+
+# Ungraded on purpose. s033 and s034 were added later and the author has not graded them. The other
+# six had a grade whose full marks contradicted the current files (review of #190): the grade is
+# removed, not rewritten, until the author regrades them.
+UNGRADED_ADDED_LATER = {"s033", "s034"}
+UNGRADED_AFTER_REVIEW = {"s002", "s009", "s012", "s021", "s027", "s031"}
+
+
+def test_the_ungraded_submissions_are_exactly_the_listed_ones(manifest: Doc) -> None:
+    graded = {p.stem for p in AUTHOR_GRADES_DIR.glob("*.yaml")}
+    ungraded = {s["id"] for s in manifest["submissions"]} - graded
+    assert ungraded == UNGRADED_ADDED_LATER | UNGRADED_AFTER_REVIEW
+
+
+def author_grade_drift(
+    grade: Doc, expected: Doc, rows: list[tuple[str, int, list[str]]]
+) -> list[str]:
+    """A full mark on a criterion whose expected outcome has a failing or erroring check, or that
+    is judged not met, contradicts the files: the reason would have to be false (review of #190)."""
+    points = {name: pts for name, pts, _ in rows}
+    by_criterion = {c["criterion"]: c for c in expected["criteria"]}
+    problems = []
+    for item in grade["criteria"]:
+        outcome = by_criterion[item["criterion"]]
+        results = {c["expected"] for c in outcome["checks"]}
+        if item["score"] == points[item["criterion"]] and (
+            results & {"fail", "error"} or outcome["judgement"] == "does_not_meet"
+        ):
+            problems.append(
+                f"{item['criterion']}: full marks, but the expected outcome is not met"
+            )
+    return problems
+
+
+def test_a_full_mark_never_contradicts_the_expected_outcome(
+    tables: dict[str, list[tuple[str, int, list[str]]]],
+) -> None:
+    for path in sorted(AUTHOR_GRADES_DIR.glob("*.yaml")):
+        grade = load_yaml(path)
+        expected = load_yaml(SUBMISSIONS_DIR / grade["submission_id"] / "expected.yaml")
+        assert author_grade_drift(grade, expected, tables[grade["rubric"]]) == [], path
+
+
+def test_the_drift_rule_catches_a_false_full_mark(
+    tables: dict[str, list[tuple[str, int, list[str]]]],
+) -> None:
+    grade = load_yaml(AUTHOR_GRADES_DIR / "s001.yaml")
+    expected = load_yaml(SUBMISSIONS_DIR / "s001" / "expected.yaml")
+    rows = tables[grade["rubric"]]
+    assert author_grade_drift(grade, expected, rows) == []
+    # In memory: a failing check under a criterion that still gets full marks is refused.
+    expected["criteria"][0]["checks"] = [
+        {"check": "http_ok:demo_url", "expected": "fail", "reason": "x"}
+    ]
+    grade["criteria"][0]["score"] = rows[0][1]
+    assert author_grade_drift(grade, expected, rows)
+
+
+def test_an_author_grade_cannot_pass_as_a_mentor_grade(
+    validators: dict[str, Draft202012Validator],
+) -> None:
+    grade = load_yaml(AUTHOR_GRADES_DIR / "s001.yaml")
+    assert errors(validators["author-grade"], grade) == []
+    assert errors(validators["reference-grade"], grade) != []  # not a reference grade
+    for change in (
+        {"mentor_ref": "mentor-01"},
+        {"reference_grade": True},
+        {"graded_by": "mentor"},
+    ):
+        assert errors(validators["author-grade"], {**grade, **change}) != [], change
+    without = {k: v for k, v in grade.items() if k != "graded_by"}
+    assert errors(validators["author-grade"], without) != []
 
 
 # --- links between submissions, rubrics and expected outcomes ------------------------------

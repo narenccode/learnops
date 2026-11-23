@@ -1,0 +1,19 @@
+# Author grade. NOT a reference grade: no mentor has graded this submission (guide, issue #186).
+schema: learnops.testdata.b8-4.author-grade/v1
+submission_id: s005
+rubric: b8-2-wk-01-task
+graded_by: author
+reference_grade: false
+graded_at: '2026-11-17'
+blind_to_drafts: true
+criteria:
+- criterion: Working demo
+  score: 0
+  reason: Nothing is served at the demo link.
+- criterion: Repository and README
+  score: 2
+  reason: Repo clones, but there is no README and no Setup section.
+- criterion: Reflection
+  score: 1
+  reason: Very short (~60 words), far below 150.
+total: 3

@@ -1,0 +1,19 @@
+# Author grade. NOT a reference grade: no mentor has graded this submission (guide, issue #186).
+schema: learnops.testdata.b8-4.author-grade/v1
+submission_id: s030
+rubric: b8-2-wk-04-task
+graded_by: author
+reference_grade: false
+graded_at: '2026-11-17'
+blind_to_drafts: true
+criteria:
+- criterion: Final demo
+  score: 0
+  reason: Demo gives no answer within 10 seconds.
+- criterion: README
+  score: 4
+  reason: README has Setup and Usage but no Limits section.
+- criterion: Reflection
+  score: 4
+  reason: Some reflection (~80 words) but far below 250 and superficial.
+total: 8
