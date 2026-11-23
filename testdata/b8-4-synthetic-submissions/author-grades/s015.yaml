@@ -1,0 +1,22 @@
+# Author grade. NOT a reference grade: no mentor has graded this submission (guide, issue #186).
+schema: learnops.testdata.b8-4.author-grade/v1
+submission_id: s015
+rubric: b8-2-wk-02-task
+graded_by: author
+reference_grade: false
+graded_at: '2026-11-17'
+blind_to_drafts: true
+criteria:
+- criterion: Repository
+  score: 5
+  reason: The repository link clones.
+- criterion: Document answers
+  score: 0
+  reason: Demo shows unrelated content (joke bot); no document Q&A.
+- criterion: README
+  score: 5
+  reason: README has Setup and Usage sections.
+- criterion: Weak answers
+  score: 0
+  reason: No weak answers identified; project abandoned the document-assistant task.
+total: 10

@@ -1,0 +1,32 @@
+# Author's expected outcome. NOT a reference grade: no scores.
+# Rubric: B8.2 b8-2-wk-02-task (PR #61).
+schema: learnops.testdata.b8-4.expected-outcome/v1
+submission_id: s013
+rubric: b8-2-wk-02-task
+provisional: true
+criteria:
+- criterion: Repository
+  checks:
+  - check: repo_clone
+    expected: pass
+    reason: hosting.publish_repo is true.
+  judgement: meets
+  rationale: The repository link clones.
+- criterion: Document answers
+  checks:
+  - check: http_ok:demo_url
+    expected: fail
+    reason: 'hosting.demo_stub is none: nothing is served.'
+  judgement: does_not_meet
+  rationale: Nothing is served at the demo link.
+- criterion: README
+  checks:
+  - check: readme_sections:Setup,Usage
+    expected: fail
+    reason: The repository has no README.md.
+  judgement: does_not_meet
+  rationale: The repository has no README.
+- criterion: Weak answers
+  checks: []
+  judgement: does_not_meet
+  rationale: One weak answer is hinted at but not explained, and the task asks for at least two.

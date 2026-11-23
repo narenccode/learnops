@@ -3,7 +3,8 @@
 This is the engine of the repository-wide validator, `validate_examples.py` (a separate pull
 request, so nothing runs this module yet). It loads one JSON Schema and checks a list of example
 files against it. It only reads files. Content it cannot use is returned as a `Problem` with a
-message and a hint instead of being raised: bad JSON or YAML, a file that is not UTF-8, a schema
+message and a hint instead of being raised: bad JSON or YAML (including a key repeated in one
+object, and NaN, Infinity or -Infinity in JSON), a file that is not UTF-8, a schema
 that is not valid (including a non-string `$schema`), content nested too deeply, and a `$ref` that
 cannot be resolved. What it does not promise:
 
@@ -203,6 +204,14 @@ def _reason(exc: BaseException) -> str:
         return messages.EX_NESTED_TOO_DEEP
     if isinstance(exc, SchemaError):
         return _short(exc.message)
+    if (
+        isinstance(exc, yaml.constructor.ConstructorError)
+        and exc.context is None
+        and exc.problem_mark is not None
+    ):
+        # A repeated key: say where, without PyYAML's "<unicode string>" and echoed source line.
+        mark = exc.problem_mark
+        return f"{exc.problem} (line {mark.line + 1}, column {mark.column + 1})"
     return _one_line(exc)
 
 
@@ -210,8 +219,57 @@ def _parse(path: Path) -> Any:
     text = path.read_text(encoding="utf-8")
     if path.suffix.lower() in YAML_SUFFIXES:
         # The value is used exactly as parsed: an unquoted date stays a date, and B1 rejects it.
-        return yaml.safe_load(text)
-    return json.loads(text)
+        return yaml.load(text, Loader=_UniqueKeyLoader)  # noqa: S506  (a SafeLoader subclass)
+    return json.loads(
+        text, object_pairs_hook=_unique_keys, parse_constant=_refuse_constant
+    )
+
+
+def _unique_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    """JSON objects: a repeated key would silently keep only its last value, so refuse it."""
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(messages.EX_DUPLICATE_KEY.format(key=key))
+        result[key] = value
+    return result
+
+
+def _refuse_constant(name: str) -> Any:
+    """`NaN`, `Infinity` and `-Infinity` are accepted by Python's parser but are not JSON."""
+    raise ValueError(messages.EX_NOT_STRICT_JSON.format(value=name))
+
+
+class _UniqueKeyLoader(yaml.SafeLoader):
+    """A SafeLoader that refuses a key repeated in one mapping (PyYAML keeps the last silently)."""
+
+
+def _construct_unique_mapping(
+    loader: _UniqueKeyLoader, node: yaml.MappingNode, deep: bool = False
+) -> dict[Any, Any]:
+    seen: set[Any] = set()
+    for key_node, _ in node.value:
+        if key_node.tag == "tag:yaml.org,2002:merge":
+            continue  # `<<: *anchor` merges are not repeated keys
+        key = loader.construct_object(key_node, deep=deep)
+        try:
+            repeated = key in seen
+            seen.add(key)
+        except TypeError:
+            continue  # an unhashable key: the base constructor reports it
+        if repeated:
+            raise yaml.constructor.ConstructorError(
+                None,
+                None,
+                messages.EX_DUPLICATE_KEY.format(key=key),
+                key_node.start_mark,
+            )
+    return yaml.SafeLoader.construct_mapping(loader, node, deep=deep)
+
+
+_UniqueKeyLoader.add_constructor(
+    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _construct_unique_mapping
+)
 
 
 def _place(location: tuple[str | int, ...]) -> str:

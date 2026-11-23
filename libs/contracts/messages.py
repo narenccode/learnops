@@ -249,6 +249,29 @@ EX_UNREADABLE_EXAMPLE_HINT = (
     "Fix the problem described above: save the example as UTF-8 and use JSON or YAML syntax "
     "(the reason gives a line and column when the parser reports one)."
 )
+EX_DUPLICATE_KEY = "the key {key!r} appears more than once in the same object"
+EX_NOT_STRICT_JSON = "{value} is not valid JSON; write null or a finite number"
+EX_ORPHAN_EXAMPLE = "No schema matches this example file, so it is not checked."
+EX_ORPHAN_EXAMPLE_HINT = (
+    "Name it <schema name>.<suffix>.json, .yaml or .yml for an existing "
+    "contracts/<schema name>.schema.json, or remove it. A new schema is added only through "
+    "/contract-change (PRD B.0)."
+)
+EX_ORPHAN_FOLDER = (
+    "No schema matches this example folder: contracts/{name}.schema.json does not exist, so "
+    "its examples are not checked."
+)
+EX_ORPHAN_FOLDER_HINT = (
+    "Rename the folder after an existing schema, or remove it. A new schema is added only "
+    "through /contract-change (PRD B.0)."
+)
+EX_UNSUPPORTED_FILE = (
+    "This file is not a .json, .yaml or .yml example, so it is not checked."
+)
+EX_UNSUPPORTED_FILE_HINT = (
+    "Examples are .json, .yaml or .yml files. Move a supporting file into a subfolder (such as "
+    "weeks/), which this validator does not check, or remove it."
+)
 EX_LINE_WITH_SCHEMA = "FAIL {target} (schema {schema}): {message}"
 EX_LINE = "FAIL {target}: {message}"
 EX_LINE_HINT = "     next: {hint}"

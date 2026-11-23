@@ -1,0 +1,13 @@
+# PROVISIONAL submission. Fictional; written for this project (Apache-2.0).
+schema: learnops.testdata.b8-4.submission/v1
+id: s014
+onlinetext: |-
+  repository: https://git.lab.invalid/learner-14/choir-faq.git
+  DEMO: https://demo.lab.invalid/learner-14/
+  Report: My assistant mostly works and answers the rehearsal question correctly. I did not find
+  any questions that it answers badly, but I only tried three.
+onlinetext_format: plain
+repo_dir: repo
+hosting:
+  publish_repo: true
+  demo_stub: timeout

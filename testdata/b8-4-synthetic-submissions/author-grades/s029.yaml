@@ -1,0 +1,19 @@
+# Author grade. NOT a reference grade: no mentor has graded this submission (guide, issue #186).
+schema: learnops.testdata.b8-4.author-grade/v1
+submission_id: s029
+rubric: b8-2-wk-04-task
+graded_by: author
+reference_grade: false
+graded_at: '2026-11-17'
+blind_to_drafts: true
+criteria:
+- criterion: Final demo
+  score: 0
+  reason: Nothing is served at the demo link.
+- criterion: README
+  score: 2
+  reason: README has only a Setup section — Usage and Limits missing.
+- criterion: Reflection
+  score: 1
+  reason: Very short (~35 words), far below 250.
+total: 3

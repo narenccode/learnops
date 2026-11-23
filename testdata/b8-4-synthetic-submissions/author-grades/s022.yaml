@@ -1,0 +1,19 @@
+# Author grade. NOT a reference grade: no mentor has graded this submission (guide, issue #186).
+schema: learnops.testdata.b8-4.author-grade/v1
+submission_id: s022
+rubric: b8-2-wk-03-task
+graded_by: author
+reference_grade: false
+graded_at: '2026-11-17'
+blind_to_drafts: true
+criteria:
+- criterion: Test list
+  score: 0
+  reason: No TESTS.md or any test file in the repository.
+- criterion: Demo still works
+  score: 0
+  reason: Nothing is served at the demo link.
+- criterion: Fixes
+  score: 1
+  reason: Says words were changed but records no questions or explanations.
+total: 1
