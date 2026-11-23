@@ -1,0 +1,26 @@
+# Author's expected outcome. NOT a reference grade: no scores.
+# Rubric: B8.2 b8-2-wk-03-task (PR #61).
+schema: learnops.testdata.b8-4.expected-outcome/v1
+submission_id: s023
+rubric: b8-2-wk-03-task
+provisional: true
+criteria:
+- criterion: Test list
+  checks:
+  - check: repo_file:TESTS.md
+    expected: error
+    reason: 'hosting.publish_repo is false: nothing to clone, so this check cannot run (error, not fail;
+      design §4.3d).'
+  judgement: does_not_meet
+  rationale: The repository cannot be reached; the local copy's test list has one unrelated question.
+- criterion: Demo still works
+  checks:
+  - check: http_ok:demo_url
+    expected: pass
+    reason: hosting.demo_stub is unrelated_page, which returns HTTP 200.
+  judgement: does_not_meet
+  rationale: The link opens a video page, not the assistant. The passing check does not meet the criterion.
+- criterion: Fixes
+  checks: []
+  judgement: does_not_meet
+  rationale: No fixes; the report is about something else.

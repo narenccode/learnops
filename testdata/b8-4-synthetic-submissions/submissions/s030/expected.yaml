@@ -1,0 +1,28 @@
+# Author's expected outcome. NOT a reference grade: no scores.
+# Rubric: B8.2 b8-2-wk-04-task (PR #61).
+schema: learnops.testdata.b8-4.expected-outcome/v1
+submission_id: s030
+rubric: b8-2-wk-04-task
+provisional: true
+criteria:
+- criterion: Final demo
+  checks:
+  - check: http_ok:demo_url
+    expected: fail
+    reason: 'hosting.demo_stub is timeout: no HTTP 2xx within 10 s (PRD C3.5).'
+  judgement: does_not_meet
+  rationale: The demo does not answer within 10 seconds.
+- criterion: README
+  checks:
+  - check: readme_sections:Setup,Usage,Limits
+    expected: fail
+    reason: repo/README.md has no heading Limits.
+  judgement: partly_meets
+  rationale: Setup and Usage are present; Limits is missing.
+- criterion: Reflection
+  checks:
+  - check: word_count:250
+    expected: fail
+    reason: The report has 47 words; the minimum is 250 (PROVISIONAL counting rule).
+  judgement: does_not_meet
+  rationale: Under 250 words and does not say concretely what would change.

@@ -1,4 +1,4 @@
-"""B8.4 synthetic submissions (PRD B8): the PROVISIONAL pilot set and its proposed format.
+"""B8.4 synthetic submissions (PRD B8): the PROVISIONAL set and its proposed format.
 
 The set lives in testdata/b8-4-synthetic-submissions/. Its format (manifest, submission,
 expected-outcome and reference-grade schemas) is a Release 0 proposal by Student 3 and is not yet
@@ -19,12 +19,14 @@ AUTOMATED here:
     tags agree with the expected outcomes;
   * synthetic-data guards: every URL is on a reserved .invalid host, no email address, no file
     over 64 KiB, learner references are placeholders (schema pattern);
-  * the pilot covers all four intended levels.
+  * the set has at least 30 submissions (PRD B8.4), covers all four intended levels on each of the
+    four B8.2 tasks, belongs to the development split, and holds no editor-HTML submission.
 
 NOT automated, and therefore NOT claimed:
-  * PRD B8 size (at least 30 submissions) and reference grades from at least one mentor. The
-    pilot has 6 and no reference grades (mentor not named, design Q13). These are release-gate
-    checks to add when the set is complete;
+  * reference grades from at least one mentor (PRD B8.4). None exists (mentor not named, design
+    Q13), so the set is not complete. This is a release-gate check to add when a mentor has graded;
+  * the sealed test split (design Q47): every submission is by the same author, so all are
+    development;
   * that a submission extractor (Module 3) reads these files: the reader below is a stand-in, checked against the shared vectors;
   * the Moodle form of a submission as editor HTML (B1.5 rule 5 is unverified until the lab check);
   * machine-check behaviour on real infrastructure (lab git server and demo stubs, not ready);
@@ -218,7 +220,7 @@ def predict_check(check: str, folder: Path, submission: Doc) -> str:
     if name == "http_ok":
         if "error" in parts["demo"]:
             return "error"  # B1.5 rule 7: the label is missing or repeated
-        return "fail" if hosting["demo_stub"] == "none" else "pass"
+        return "fail" if hosting["demo_stub"] in {"none", "timeout"} else "pass"
     if name == "word_count":
         if "error" in parts["report"]:
             return "error"
@@ -525,9 +527,23 @@ def test_every_edge_case_tag_agrees_with_the_files(sid: str, manifest: Doc) -> N
         hosting["publish_repo"] and readme_exists and failed("readme_sections")
     ), sid
     assert ("demo_unreachable" in tags) == (hosting["demo_stub"] == "none"), sid
+    assert ("demo_timeout" in tags) == (hosting["demo_stub"] == "timeout"), sid
     assert ("report_under_word_count" in tags) == failed("word_count"), sid
+    assert ("repo_file_missing" in tags) == (
+        hosting["publish_repo"] and failed("repo_file")
+    ), sid
     assert ("repo_not_cloneable" in tags) == (not hosting["publish_repo"]), sid
     parts = parts_of(folder, submission)
+    minimum = next(
+        (int(c.split(":")[1]) for _, c, _ in checks if c.startswith("word_count:")),
+        None,
+    )
+    just_over = (
+        minimum is not None
+        and "words" in parts["report"]
+        and parts["report"]["words"] == minimum + 1
+    )
+    assert ("report_just_over_word_count" in tags) == just_over, sid
     missing = {
         k for k in ("repository", "demo") if parts[k].get("error") == "field_missing"
     }
@@ -609,7 +625,7 @@ README_CASES = [
 def test_the_stand_in_reader_gives_the_expected_parts_of_every_plain_vector(
     case: Doc,
 ) -> None:
-    """The reader below the pilot is only trusted as far as it agrees with the shared vectors."""
+    """The reader below is only trusted as far as it agrees with the shared vectors."""
     files = {f["name"]: f["text"] for f in case["input"]["files"]}
     parts = read_submission(case["input"]["onlinetext"], files)
     assert parts == case["expected"], case["id"]
@@ -626,7 +642,7 @@ def test_the_stand_in_heading_rule_gives_the_expected_result_of_every_readme_vec
     assert readme_sections_result(check.partition(":")[2], readme) == case["expected"]
 
 
-def test_the_pilot_exercises_the_b15_forms_and_failures(manifest: Doc) -> None:
+def test_the_set_exercises_the_b15_forms_and_failures(manifest: Doc) -> None:
     sources: set[str] = set()
     errors_seen: set[str] = set()
     for s in manifest["submissions"]:
@@ -638,8 +654,31 @@ def test_the_pilot_exercises_the_b15_forms_and_failures(manifest: Doc) -> None:
     assert errors_seen == {"field_missing", "field_repeated"}
 
 
-def test_pilot_covers_every_intended_level(manifest: Doc) -> None:
+def test_the_set_covers_every_intended_level(manifest: Doc) -> None:
     assert {s["intended_level"] for s in manifest["submissions"]} == LEVELS
+
+
+def test_the_set_has_at_least_30_submissions_on_all_four_tasks(manifest: Doc) -> None:
+    """PRD B8.4 asks for at least 30; the four B8.2 tasks each get every intended level."""
+    submissions = manifest["submissions"]
+    assert len(submissions) >= 30
+    assert {s["rubric"] for s in submissions} == {r["id"] for r in manifest["rubrics"]}
+    assert len(manifest["rubrics"]) == 4
+    for rubric in manifest["rubrics"]:
+        levels = {
+            s["intended_level"] for s in submissions if s["rubric"] == rubric["id"]
+        }
+        assert levels == LEVELS, rubric["id"]
+
+
+def test_every_submission_is_development_and_none_is_editor_html(manifest: Doc) -> None:
+    # The author wrote every submission, so none can be in the sealed test split (design Q47).
+    assert {s["split"] for s in manifest["submissions"]} == {"development"}
+    assert {s["authored_by"] for s in manifest["submissions"]} == {"Student 3"}
+    for s in manifest["submissions"]:
+        folder = SUBMISSIONS_DIR / s["id"]
+        assert load_yaml(folder / "submission.yaml")["onlinetext_format"] == "plain"
+        assert not list(folder.glob("*.html")), s["id"]  # B1.5 rule 5: unverified
 
 
 # --- synthetic-data guards -----------------------------------------------------------------

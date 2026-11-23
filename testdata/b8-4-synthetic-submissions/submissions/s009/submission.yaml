@@ -1,12 +1,24 @@
-# PROVISIONAL pilot submission. Fictional; written for this project.
+# PROVISIONAL submission. Fictional; written for this project (Apache-2.0).
 schema: learnops.testdata.b8-4.submission/v1
 id: s009
 onlinetext: |-
-  Repository: https://git.lab.invalid/learner-09/river-walk-bot.git
-  Report: My assistant answers questions about the fictional River Walk volunteer guide. Two
-  questions it answers badly: "When is the next walk?" because dates are in a table, and "Do I need
-  boots?" because the guide says "sturdy shoes".
+  Repository: https://git.lab.invalid/learner-09/bike-coop-answers.git
   Demo: https://demo.lab.invalid/learner-09/
+  Report: I built an assistant for a bike co-op that answers questions about the workshop,
+  tools and second-hand bikes. The co-op text is very short, so the assistant reads it on every
+  question.
+
+  What worked well was publishing the demo. I followed the guide and it ran on the first try. The
+  answer to "when is the workshop open" is correct and quick. Every answer arrives in under a
+  second on the demo server.
+
+  What did not work: a question about prices returns the paragraph about tools, because both
+  mention bikes. I tried giving more weight to rare words but it made other answers worse, so I
+  removed it again. I also wrote the first version with the text inside the code, which made
+  changes slow.
+
+  Next week I will move the text into a document and keep a list of questions it gets wrong, so I
+  can test changes.
 onlinetext_format: plain
 repo_dir: repo
 hosting:

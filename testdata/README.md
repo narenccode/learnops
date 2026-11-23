@@ -67,15 +67,16 @@ the open question of whether CK-01 is reported or suppressed when another rule a
 unreachable item (checker design §12 item 13). The mapping comes from `docs/design/checker.md` §11.3
 and is not yet confirmed by the guide.
 
-## B8.4 Synthetic submissions (owner: Student 3), PROVISIONAL pilot
+## B8.4 Synthetic submissions (owner: Student 3), PROVISIONAL
 
 - **Where:** `b8-4-synthetic-submissions/` (details, format and open decisions in its README).
 - **Source:** written for this project by Student 3. Entirely fictional: placeholder learners,
   invented organisations, reserved `.invalid` URLs. No real learner data, no real course content.
 - **Licence:** not yet decided (open decision O8; proposal: Apache-2.0, like the repository).
-- **Status:** 9 pilot submissions against B8.2's week 1 and week 2 marking tables, in the
-  submission form of PRD B1.5. No reference grades yet. To be extended to at least 30 (PRD §B8)
-  once the mentor (O3) and the format (O7) are agreed.
+- **Status:** 33 submissions against the marking tables of all four B8.2 tasks, in the submission
+  form of PRD B1.5, all in the development split. The count meets the PRD minimum of 30, but there
+  are no mentor reference grades, so the set is not complete (the guide names the mentor, O3). The
+  format still needs an owner's approval (O7).
 
 ## B8.5 Lecture videos (owner: Student 4), COMPLETE
 

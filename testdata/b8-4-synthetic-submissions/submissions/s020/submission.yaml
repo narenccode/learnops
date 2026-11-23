@@ -1,0 +1,18 @@
+# PROVISIONAL submission. Fictional; written for this project (Apache-2.0).
+schema: learnops.testdata.b8-4.submission/v1
+id: s020
+onlinetext: |-
+  Repository: https://git.lab.invalid/learner-20/chess-club.git
+  Demo: https://demo.lab.invalid/learner-20/
+  Report: I kept my test questions in test-questions.txt.
+
+  Fix 1: "How long do tournament games take?" returned club night. I added "long" and "time" to the
+  words that count for the clock paragraph.
+
+  Fix 2: "Can children play?" returned nothing. The rules say "juniors", so I now treat "children"
+  and "kids" as the same as "juniors".
+onlinetext_format: plain
+repo_dir: repo
+hosting:
+  publish_repo: true
+  demo_stub: answers

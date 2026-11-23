@@ -1,15 +1,13 @@
-# Pantry bot
+# Pool rules helper
 
-Answers questions about a fictional handbook (`handbook.md`) by returning the paragraph that
-shares the most words with the question.
+Answers questions about the fictional Riverbend Community Pool rules.
 
 ## Setup
 
-1. Install Python 3.12.
-2. No other packages are needed.
+Install Python 3.12. No other packages are needed.
 
 ## Usage
 
 ```
-python assistant.py "your question"
+python helper.py "When does the pool open?"
 ```

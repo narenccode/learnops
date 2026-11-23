@@ -1,0 +1,13 @@
+# PROVISIONAL submission. Fictional; written for this project (Apache-2.0).
+schema: learnops.testdata.b8-4.submission/v1
+id: s024
+onlinetext: |-
+  Repository: https://git.lab.invalid/learner-24/toy-library.git
+  Demo: https://demo.lab.invalid/learner-24/
+  Report: This week I changed the colours of the demo page to green and made the font bigger.
+  It looks much nicer now.
+onlinetext_format: plain
+repo_dir: repo
+hosting:
+  publish_repo: true
+  demo_stub: answers

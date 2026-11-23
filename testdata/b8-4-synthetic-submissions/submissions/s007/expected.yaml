@@ -1,37 +1,31 @@
-# PROVISIONAL author's expected outcome. NOT a reference grade: no scores.
-# Rubric: B8.2 wk-02-task. Exercises B1.5 rule 6 or 7 (a label the reader cannot use).
+# Author's expected outcome. NOT a reference grade: no scores.
+# Rubric: B8.2 b8-2-wk-01-task (PR #61).
 schema: learnops.testdata.b8-4.expected-outcome/v1
 submission_id: s007
-rubric: b8-2-wk-02-task
+rubric: b8-2-wk-01-task
 provisional: true
 criteria:
-  - criterion: Repository
-    checks:
-      - check: repo_clone
-        expected: pass
-        reason: >-
-          hosting.publish_repo is true.
-    judgement: meets
-    rationale: >-
-      The repository link clones.
-  - criterion: Document answers
-    checks:
-      - check: http_ok:demo_url
-        expected: error
-        reason: >-
-          The online text has no line that starts with Demo:. The link is written inside another line, and B1.5 rule 6 says nothing is repaired, so the check that reads it is recorded as error with reason field_missing.
-    judgement: ambiguous
-    rationale: >-
-      The check cannot read the link because it is not on its own labelled line, but a mentor can see it and open it. Whether that earns the marks is for the mentor's reference grade.
-  - criterion: README
-    checks:
-      - check: readme_sections:Setup,Usage
-        expected: pass
-        reason: >-
-          repo/README.md has Setup and Usage headings.
-    judgement: meets
-    rationale: The README has the two sections the criterion asks for.
-  - criterion: Weak answers
-    checks: []
-    judgement: meets
-    rationale: The report names two questions the assistant answers badly and says why.
+- criterion: Working demo
+  checks:
+  - check: http_ok:demo_url
+    expected: pass
+    reason: hosting.demo_stub is answers.
+  judgement: meets
+  rationale: The demo link opens and the helper answers a test question about opening hours.
+- criterion: Repository and README
+  checks:
+  - check: repo_clone
+    expected: pass
+    reason: hosting.publish_repo is true.
+  - check: readme_sections:Setup
+    expected: pass
+    reason: repo/README.md has the headings Setup.
+  judgement: meets
+  rationale: The repository clones and the README has a Setup section that says what to install.
+- criterion: Reflection
+  checks:
+  - check: word_count:150
+    expected: pass
+    reason: The report has 154 words; the minimum is 150 (PROVISIONAL counting rule).
+  judgement: meets
+  rationale: Over 150 words on what was built and two concrete things that went wrong.

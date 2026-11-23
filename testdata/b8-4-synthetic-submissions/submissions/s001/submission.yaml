@@ -1,11 +1,26 @@
-# PROVISIONAL pilot submission. Fictional; written for this project.
+# B8.4 pilot submission (s001-s006). Fictional; written for LearnOps (Apache-2.0).
+# PROVISIONAL submission. Fictional; written for this project (Apache-2.0).
 schema: learnops.testdata.b8-4.submission/v1
 id: s001
 onlinetext: |-
   Repository: https://git.lab.invalid/learner-01/handbook-assistant.git
   Demo: https://demo.lab.invalid/learner-01/
+  Report: This week I made my assistant answer questions from a document, the Zephyr Lane Tool Library
+  handbook. It splits the handbook into paragraphs and returns the paragraph that shares the most
+  words with the question. I tested it with ten questions that I wrote before looking at the output.
+
+  Two questions it answers badly:
+
+  1. "Can I take a sander home for two weeks?" It returns the paragraph about borrowing, which says
+  seven days, but it never says "no". The assistant only returns text; it cannot compare two weeks
+  with seven days, so the learner has to work out the answer.
+
+  2. "When are you open on Sunday?" It returns the Saturday opening hours, because "open" matches.
+  The handbook says nothing about Sunday, so the honest answer is "the handbook does not say". Word
+  overlap cannot tell a near match from a correct one.
+
+  Next week I want to add a minimum overlap score so that weak matches return "I don't know".
 onlinetext_format: plain
-files: [report.md]
 repo_dir: repo
 hosting:
   publish_repo: true
