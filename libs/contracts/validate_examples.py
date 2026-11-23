@@ -6,7 +6,7 @@ Run from the repository root:  python libs/contracts/validate_examples.py
 `contracts/examples/<name>.v<N>/` and with the flat files
 `contracts/examples/<name>.v<N>.<suffix>.json` (or .yaml, .yml). Each schema and its examples are
 checked by the engine, `example_check.py`. Exit codes: 0 when every example passes, 1 when any
-problem is found, 2 for a usage error or a missing contracts folder. Read-only: `--check` and
+problem is found (including an example no schema takes, and a file that is not an example), 2 for a usage error or a missing contracts folder. Read-only: `--check` and
 `--dry-run` behave the same. What is and is not checked: libs/contracts/README.md.
 
 This is not the B1 package validator (`validate.py`), which also checks course-level rules.
@@ -27,7 +27,7 @@ if __name__ == "__main__" and not __package__:
 
 import argparse  # noqa: E402
 import re  # noqa: E402
-from collections.abc import Sequence  # noqa: E402
+from collections.abc import Callable, Sequence  # noqa: E402
 from dataclasses import dataclass  # noqa: E402
 
 from contracts import messages  # noqa: E402
@@ -131,6 +131,7 @@ def validate_all(contracts_dir: Path) -> ExampleReport:
         schema_rel = rel(case.schema_path)
         examples = _list_examples(case)
         example_count += len(examples)
+        problems += _unsupported_in_folder(case, rel)
         check = check_schema_examples(
             case.schema_path, schema_rel, [(path, rel(path)) for path in examples]
         )
@@ -148,6 +149,8 @@ def validate_all(contracts_dir: Path) -> ExampleReport:
             )
         passed += [(example, schema_rel) for example in check.passed]
         failed += check.failed
+
+    problems += _unmatched_entries(contracts_dir, cases, rel)
 
     return ExampleReport(
         problems=tuple(problems),
@@ -181,6 +184,76 @@ def _list_examples(case: ContractCase) -> list[Path]:
             and m["stem"] == case.stem
         )
     return found
+
+
+def _unsupported_in_folder(
+    case: ContractCase, rel: Callable[[Path], str]
+) -> list[Problem]:
+    """Top-level files of a schema's example folder that are not .json, .yaml or .yml.
+
+    Subfolders (B1's weeks/) and hidden files (.gitkeep) are not examples and are not reported."""
+    if not case.example_dir.is_dir():
+        return []
+    return [
+        Problem(
+            "unsupported_file",
+            messages.EX_UNSUPPORTED_FILE,
+            messages.EX_UNSUPPORTED_FILE_HINT,
+            example=rel(path),
+            schema=rel(case.schema_path),
+        )
+        for path in sorted(case.example_dir.iterdir())
+        if not path.is_dir()
+        and not path.name.startswith(".")
+        and path.suffix.lower() not in EXAMPLE_SUFFIXES
+    ]
+
+
+def _unmatched_entries(
+    contracts_dir: Path, cases: Sequence[ContractCase], rel: Callable[[Path], str]
+) -> list[Problem]:
+    """What sits directly in contracts/examples/ and belongs to no schema: a folder with no
+    schema of that name, a JSON or YAML file that is not `<stem>.<suffix>.<ext>` of a schema,
+    and any other file. Each is reported, so no example is skipped without a word."""
+    examples_dir = contracts_dir / "examples"
+    if not examples_dir.is_dir():
+        return []
+    stems = {case.stem for case in cases}
+    problems: list[Problem] = []
+    for entry in sorted(examples_dir.iterdir()):
+        if entry.name.startswith("."):
+            continue
+        if entry.is_dir():
+            if entry.name not in stems:
+                problems.append(
+                    Problem(
+                        "orphan_example_folder",
+                        messages.EX_ORPHAN_FOLDER.format(name=entry.name),
+                        messages.EX_ORPHAN_FOLDER_HINT,
+                        example=rel(entry),
+                    )
+                )
+        elif entry.suffix.lower() in EXAMPLE_SUFFIXES:
+            match = FLAT_EXAMPLE_NAME.match(entry.name)
+            if not (match and match["stem"] in stems):
+                problems.append(
+                    Problem(
+                        "orphan_example",
+                        messages.EX_ORPHAN_EXAMPLE,
+                        messages.EX_ORPHAN_EXAMPLE_HINT,
+                        example=rel(entry),
+                    )
+                )
+        else:
+            problems.append(
+                Problem(
+                    "unsupported_file",
+                    messages.EX_UNSUPPORTED_FILE,
+                    messages.EX_UNSUPPORTED_FILE_HINT,
+                    example=rel(entry),
+                )
+            )
+    return problems
 
 
 def _print_report(report: ExampleReport) -> None:
