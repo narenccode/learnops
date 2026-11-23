@@ -76,7 +76,8 @@ and is not yet confirmed by the guide.
 - **Status:** 33 submissions against the marking tables of all four B8.2 tasks, in the submission
   form of PRD B1.5, all in the development split. The count meets the PRD minimum of 30, but there
   are no mentor reference grades, so the set is not complete (the guide names the mentor, O3). The
-  format still needs an owner's approval (O7).
+  format still needs an owner's approval (O7). The author's own grades for 31 of them are in
+  `author-grades/`, labelled "author-graded, not reference grades" (guide, issue #186).
 
 ## B8.5 Lecture videos (owner: Student 4), COMPLETE
 

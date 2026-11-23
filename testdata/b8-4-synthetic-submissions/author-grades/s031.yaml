@@ -1,0 +1,20 @@
+# Author grade. NOT a reference grade: no mentor has graded this submission (guide, issue #186).
+schema: learnops.testdata.b8-4.author-grade/v1
+submission_id: s031
+rubric: b8-2-wk-04-task
+graded_by: author
+reference_grade: false
+graded_at: '2026-11-17'
+blind_to_drafts: true
+criteria:
+- criterion: Final demo
+  score: 0
+  reason: Demo shows unrelated content (weather widget).
+- criterion: README
+  score: 7
+  reason: README has Setup, Usage and Limits sections.
+- criterion: Reflection
+  score: 9
+  reason: Long (~300 words), thoughtful; docked slightly as the project is not the document-assistant
+    task.
+total: 16

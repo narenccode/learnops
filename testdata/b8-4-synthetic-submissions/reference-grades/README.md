@@ -2,7 +2,8 @@
 
 **Empty on purpose.** PRD §B8 requires reference grades "from at least one mentor". No mentor has
 been named yet (design Q13), so this folder has no grade files. Nobody else may write one, and
-neither may an AI tool. The author's `expected.yaml` files are not grades.
+neither may an AI tool. The author's `expected.yaml` files are not grades, and the author's own
+grades are in `../author-grades/`, labelled as author grades. They are not reference grades.
 
 When a mentor grades:
 

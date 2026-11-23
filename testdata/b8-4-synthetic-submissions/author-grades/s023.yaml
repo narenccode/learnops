@@ -1,0 +1,19 @@
+# Author grade. NOT a reference grade: no mentor has graded this submission (guide, issue #186).
+schema: learnops.testdata.b8-4.author-grade/v1
+submission_id: s023
+rubric: b8-2-wk-03-task
+graded_by: author
+reference_grade: false
+graded_at: '2026-11-17'
+blind_to_drafts: true
+criteria:
+- criterion: Test list
+  score: 2
+  reason: TESTS.md exists but contains a single unrelated question ("What is 2 + 2?").
+- criterion: Demo still works
+  score: 0
+  reason: Demo shows unrelated content (skateboard video page).
+- criterion: Fixes
+  score: 0
+  reason: No fixes; report says no work was done on the assistant.
+total: 2

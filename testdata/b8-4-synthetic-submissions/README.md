@@ -25,8 +25,9 @@ written against all four tasks of the B8.2 sample course (#61), in the submissio
 ## Why the set is provisional
 
 1. **No reference grades.** PRD B8.4 asks for reference grades from at least one mentor. The guide
-   (issue #186, 23 Nov 2026) will name the mentor. The author's own grades, if added, are labelled
-   "author-graded, not reference grades". Until a mentor has graded, the set is not complete.
+   (issue #186, 23 Nov 2026) will name the mentor. The author's own grades are in `author-grades/`,
+   labelled "author-graded, not reference grades" (see "Author grades" below). Until a mentor has
+   graded, the set is not complete.
 2. **Development split only.** The author wrote every submission, so all are in the development split.
    The sealed test split (design Q47) is to be written by someone else (Student 1 or the guide) where
    possible; authorship is recorded in `manifest.yaml`.
@@ -51,6 +52,7 @@ submissions/sNNN/
   repo/                          the fictional repository content
   expected.yaml                  author's expected outcome per criterion (no scores)
 reference-grades/                mentor reference grades (empty, see its README)
+author-grades/                   the author's own grades, labelled "author", NOT reference grades
 ```
 
 How a submission links to its question, rubric and reference grade:
@@ -123,6 +125,25 @@ answer depends on a rubric reading that is not decided. Those cases are left to 
 Not covered yet: a resubmission (needs the submission-version rules, design §5.4), online text as editor
 HTML (B1.5 rule 5; add a case only after the lab check), and a `command:<name>` check (B8.2 uses none,
 so the tag `command_check_undetermined` is not exercised either). s028 is left out for the HTML reason.
+
+## Author grades (not reference grades)
+
+`author-grades/<submission id>.yaml` holds the author's own grade (Student 3) for 31 of the 33
+submissions, graded by hand on the B8.2 marking tables on 17 Nov 2026. s033 and s034 were added later
+and are not graded. **They are not reference grades.** PRD B8.4 asks for reference grades from at
+least one mentor, and the guide decided on issue #186 (23 Nov 2026) that the author's grades may stay in
+the set only when labelled "author-graded, not reference grades". The label is part of every file and of
+the schema (`schemas/author-grade.schema.json`):
+
+- `graded_by` is `author` and `reference_grade` is `false`;
+- a `mentor_ref` is refused, so an author grade cannot pass as a mentor's;
+- an author grade does not validate as a reference grade (`schemas/reference-grade.schema.json`), and
+  the tests check that.
+
+The criteria must match the marking table in order, no score may exceed its criterion's points, and
+`total` is the sum, as for a reference grade. The set stays not complete until a mentor, named by the
+guide, has graded it: the mentor's files go in `reference-grades/`, and the author grades stay as
+they are.
 
 ## Provisional rules used by the tests
 
