@@ -1,15 +1,13 @@
-# Bike share bot
+# Makerspace bot
 
-Answers questions about a fictional handbook (`handbook.md`) by returning the paragraph that
-shares the most words with the question.
+Answers questions about the fictional Maple Street Makerspace.
 
-## Setup
+## Install
 
-1. Install Python 3.12.
-2. No other packages are needed.
+Python 3.12 is enough.
 
-## Usage
+## Run
 
 ```
-python assistant.py "your question"
+python bot.py "Can I use the laser cutter?"
 ```

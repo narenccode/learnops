@@ -1,11 +1,15 @@
-# PROVISIONAL pilot submission. Fictional; written for this project.
+# B8.4 pilot submission (s001-s006). Fictional; written for LearnOps (Apache-2.0).
+# PROVISIONAL submission. Fictional; written for this project (Apache-2.0).
 schema: learnops.testdata.b8-4.submission/v1
 id: s005
 onlinetext: |-
   Repository: https://git.lab.invalid/learner-05/my-assistant.git
   Demo: https://demo.lab.invalid/learner-05/
+  Report: I made a bot that answers two questions. It uses a dictionary. It was ok. The hard part was
+  putting it online and I did not finish that part because I ran out of time this week. Next time I
+  will start earlier. I learned how a dictionary works in Python and how to read input from the
+  user.
 onlinetext_format: plain
-files: [report.md]
 repo_dir: repo
 hosting:
   publish_repo: true

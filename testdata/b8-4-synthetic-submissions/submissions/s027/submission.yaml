@@ -1,0 +1,30 @@
+# PROVISIONAL submission. Fictional; written for this project (Apache-2.0).
+schema: learnops.testdata.b8-4.submission/v1
+id: s027
+onlinetext: |-
+  Repository: https://git.lab.invalid/learner-27/ski-club-assistant.git
+  Demo: https://demo.lab.invalid/learner-27/
+  Report: In this course I built an assistant that answers questions about the rules of a
+  fictional ski club. It reads the rules from a document and picks the paragraph that shares the
+  most words with the question.
+
+  What I would change: the assistant still struggles with questions that use other words than the
+  rules. Asking about "lift passes" works, but asking about "tickets for the lift" does not. I fixed
+  some of these with a list of other words, but that list keeps growing and is hard to keep up to
+  date. If I started again I would collect real questions from club members first and build the
+  test list from them, instead of guessing which questions people would ask. The test list now has twelve questions,
+  and I run it before every change. It takes less than a second, so there is no excuse to skip it.
+
+  I would also publish earlier. My demo went online only in week 3, and I found two problems on the
+  server that never happened on my laptop: the document path was wrong and the clock was in another
+  time zone.
+
+  What I learned: small, checkable steps are worth it. Each week I could show something that
+  worked, and the marking table told me exactly what was expected. Writing the Limits section was
+  harder than expected, because I had to admit what the assistant cannot do. It cannot answer
+  questions about snow conditions, because the rules do not change with the weather.
+onlinetext_format: plain
+repo_dir: repo
+hosting:
+  publish_repo: true
+  demo_stub: answers

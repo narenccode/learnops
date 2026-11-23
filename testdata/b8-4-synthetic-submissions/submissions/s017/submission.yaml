@@ -1,0 +1,19 @@
+# PROVISIONAL submission. Fictional; written for this project (Apache-2.0).
+schema: learnops.testdata.b8-4.submission/v1
+id: s017
+onlinetext: |-
+  Repository: https://git.lab.invalid/learner-17/climbing-gym-helper.git
+  Demo: https://demo.lab.invalid/learner-17/
+  Report: Fix 1: "Can my nine-year-old climb?" returned the bouldering paragraph, because the
+  rules say "under twelve", not an age in words. I added a small list of number words to the
+  question before matching, so "nine-year-old" now also matches "children". The test list has
+  this question so I can see it stays fixed.
+
+  Fix 2: "Can I hire shoes?" sometimes returned the rope paragraph when two paragraphs had the same
+  score. I now break ties by the paragraph that contains the rarest shared word, which picks the
+  shoes rule. I checked all six questions in TESTS.md before and after each change.
+onlinetext_format: plain
+repo_dir: repo
+hosting:
+  publish_repo: true
+  demo_stub: answers

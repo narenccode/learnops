@@ -1,0 +1,14 @@
+# PROVISIONAL submission. Fictional; written for this project (Apache-2.0).
+schema: learnops.testdata.b8-4.submission/v1
+id: s030
+onlinetext: |-
+  Repository: https://git.lab.invalid/learner-30/study-room-booking.git
+  Demo: https://demo.lab.invalid/learner-30/
+  Report: This course was useful. My assistant answers questions about study room bookings. The
+  demo is slow sometimes. I would like to make it faster and add more rooms. I learned how to use
+  GitHub and how to write a README. I also learned that testing is important.
+onlinetext_format: plain
+repo_dir: repo
+hosting:
+  publish_repo: true
+  demo_stub: timeout

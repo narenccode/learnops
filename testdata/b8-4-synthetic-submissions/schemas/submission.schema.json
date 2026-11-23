@@ -34,8 +34,8 @@
           "description": "false: the repository is not published, so the repository link does not clone."
         },
         "demo_stub": {
-          "enum": ["answers", "unrelated_page", "none"],
-          "description": "answers: a stub page that answers the test question; unrelated_page: returns HTTP 200 with unrelated content; none: nothing is served."
+          "enum": ["answers", "unrelated_page", "timeout", "none"],
+          "description": "answers: a stub page that answers the test question; unrelated_page: returns HTTP 200 with unrelated content; timeout: no HTTP 2xx within the check's time limit; none: nothing is served."
         }
       }
     }

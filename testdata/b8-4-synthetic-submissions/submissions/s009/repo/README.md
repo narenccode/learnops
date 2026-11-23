@@ -1,15 +1,13 @@
-# River walk bot
+# Bike co-op answers
 
-Answers questions about a fictional handbook (`handbook.md`) by returning the paragraph that
-shares the most words with the question.
+Answers questions about the fictional Hilltop Bike Co-op.
 
 ## Setup
 
-1. Install Python 3.12.
-2. No other packages are needed.
+Install Python 3.12.
 
 ## Usage
 
 ```
-python assistant.py "your question"
+python answers.py "When is the workshop open?"
 ```

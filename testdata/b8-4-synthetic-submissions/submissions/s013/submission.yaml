@@ -1,0 +1,13 @@
+# PROVISIONAL submission. Fictional; written for this project (Apache-2.0).
+schema: learnops.testdata.b8-4.submission/v1
+id: s013
+onlinetext: |-
+  Repository: https://git.lab.invalid/learner-13/cinema-club.git
+  Demo: https://demo.lab.invalid/learner-13/
+  Report: Sometimes it gives the wrong answer, for example about tickets. I think the document
+  is too short.
+onlinetext_format: plain
+repo_dir: repo
+hosting:
+  publish_repo: true
+  demo_stub: none
