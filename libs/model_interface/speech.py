@@ -10,8 +10,14 @@ latency_ms is LearnOps's own measurement, rounded to whole milliseconds (guide, 
 0001 row 2). Not checked, by the guide's decision (rows 10 and 11): time order, and times past
 duration_s.
 
-Not in this skeleton: logging speech calls to shared.model_calls (decided by the guide on issue
-#186, 23 Nov 2026, and built in PR #187), SPEECH_TIMEOUT_S and the budget (design proposals), and how
+Every attempt is logged (PRD B5.3 "every call"; guide, issue #186, 23 Nov 2026): one CallRecord
+with kind "speech" per attempt, also a failed one, holding the transcript meta only (no audio path,
+no transcript text). A provider failure and a broken meta are logged with unknown (null) values.
+If the logger fails, that error is raised, so a call that could not be logged never returns a
+transcript. With no logger configured outside a test run the call is refused before the provider is
+called.
+
+Not in this skeleton (design proposals, not decided): SPEECH_TIMEOUT_S and the budget, and how
 long audio is split (a lab check with a 90-minute file). Provider failures are not retried here.
 """
 
@@ -25,15 +31,22 @@ from pathlib import Path
 from typing import Any, Final
 
 from . import messages
-from .call_log import is_test_run
+from .call_log import CallLogger, CallRecord, is_test_run, resolve_call_logger
 from .config import ConfigError
 from .errors import AudioNotReadable, InvalidInput, InvalidOutput
-from .speech_providers import SpeechProvider, SpeechReply, create_speech_provider
+from .speech_providers import (
+    SpeechProvider,
+    SpeechReply,
+    create_speech_provider,
+    ensure_integrated,
+)
 from .transcript import time_errors
 from .validation import b5_validator, elapsed_ms, first_problem
 
 # PRD B5.2 ("same rules" for speech, B5.4): one retry on invalid output.
 MAX_ATTEMPTS: Final = 2
+
+TASK: Final = "speech.transcribe"  # the task name in the call log
 
 
 @dataclass(frozen=True)
@@ -86,23 +99,80 @@ def _problem(document: dict[str, Any]) -> str | None:
     return problem
 
 
+def _meta(
+    provider: SpeechProvider,
+    latency_ms: int,
+    document: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """The transcript meta to log. Without a usable answer the model, the audio length and the cost
+    are not known, so they are null, never 0. Nothing but these five fields is ever logged."""
+    meta = document["meta"] if document is not None else {}
+    return {
+        "provider": provider.name,
+        "model": meta.get("model"),
+        "duration_s": meta.get("duration_s"),
+        "latency_ms": latency_ms,
+        "cost_estimate": meta.get("cost_estimate"),
+    }
+
+
+def _meta_is_valid(meta: dict[str, Any]) -> bool:
+    # The meta alone, in a transcript with no segments, so a bad meta is told from bad segments.
+    return first_problem(b5_validator(), {"segments": [], "meta": meta}) is None
+
+
 def transcribe(
     audio_path: str | os.PathLike[str],
     language: str = "en",
     *,
     provider: SpeechProvider | None = None,
+    logger: CallLogger | None = None,
 ) -> Transcript:
-    """One transcript with times from the start of the original audio (PRD B5.4)."""
+    """One transcript with times from the start of the original audio (PRD B5.4).
+
+    Services pass neither provider nor logger and get the configured ones; passing a different
+    provider or logger is for test runs only. The logger receives one CallRecord per attempt."""
     if not isinstance(language, str) or not language.strip():
         raise InvalidInput(messages.SPEECH_BAD_LANGUAGE)
     path = _readable_file(audio_path)
     chosen = _resolve(provider)
+    # The clear "not integrated" error comes before the call log is read.
+    ensure_integrated(chosen)
+    call_logger = resolve_call_logger(logger)
     problem: str | None = None
-    for _ in range(MAX_ATTEMPTS):
+    for attempt in range(1, MAX_ATTEMPTS + 1):
         started = time.perf_counter()
-        reply = chosen.transcribe(path, language)
+        try:
+            reply = chosen.transcribe(path, language)
+        except Exception:
+            meta = _meta(chosen, elapsed_ms(started))
+            call_logger.record(
+                CallRecord(TASK, attempt, "provider_error", meta, "speech")
+            )
+            raise
         document = _document(chosen, reply, elapsed_ms(started))
         problem = _problem(document)
         if problem is None:
+            call_logger.record(
+                CallRecord(
+                    TASK,
+                    attempt,
+                    "ok",
+                    _meta(chosen, document["meta"]["latency_ms"], document),
+                    "speech",
+                )
+            )
             return Transcript(segments=document["segments"], meta=document["meta"])
+        # A broken answer: keep the reported meta only if it is itself valid.
+        usable = document if _meta_is_valid(document["meta"]) else None
+        latency_ms = document["meta"]["latency_ms"]
+        call_logger.record(
+            CallRecord(
+                TASK,
+                attempt,
+                "invalid_output",
+                _meta(chosen, latency_ms, usable),
+                "speech",
+            )
+        )
     raise InvalidOutput(messages.SPEECH_INVALID_OUTPUT.format(problem=problem))
