@@ -10,7 +10,7 @@
     "schema": { "const": "learnops.testdata.b8-4/v1" },
     "status": {
       "enum": ["provisional", "final"],
-      "description": "provisional until B8.2 is merged, Q32 is resolved and the format is agreed."
+      "description": "provisional until a mentor has graded the set (PRD B8.4: reference grades from at least one mentor) and the format is accepted as part of the B8 contract. B8.2 is merged and the submission form is decided (PRD B1.5)."
     },
     "rubrics": {
       "type": "array",

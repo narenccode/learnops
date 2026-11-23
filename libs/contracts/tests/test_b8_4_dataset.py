@@ -419,10 +419,61 @@ def test_author_grade_files_are_valid_and_labelled(
         assert "mentor_ref" not in grade, path
 
 
-def test_only_the_two_label_cases_have_no_author_grade(manifest: Doc) -> None:
+# Ungraded on purpose. s033 and s034 were added later and the author has not graded them. The other
+# six had a grade whose full marks contradicted the current files (review of #190): the grade is
+# removed, not rewritten, until the author regrades them.
+UNGRADED_ADDED_LATER = {"s033", "s034"}
+UNGRADED_AFTER_REVIEW = {"s002", "s009", "s012", "s021", "s027", "s031"}
+
+
+def test_the_ungraded_submissions_are_exactly_the_listed_ones(manifest: Doc) -> None:
     graded = {p.stem for p in AUTHOR_GRADES_DIR.glob("*.yaml")}
     ungraded = {s["id"] for s in manifest["submissions"]} - graded
-    assert ungraded == {"s033", "s034"}  # added later; the author has not graded them
+    assert ungraded == UNGRADED_ADDED_LATER | UNGRADED_AFTER_REVIEW
+
+
+def author_grade_drift(
+    grade: Doc, expected: Doc, rows: list[tuple[str, int, list[str]]]
+) -> list[str]:
+    """A full mark on a criterion whose expected outcome has a failing or erroring check, or that
+    is judged not met, contradicts the files: the reason would have to be false (review of #190)."""
+    points = {name: pts for name, pts, _ in rows}
+    by_criterion = {c["criterion"]: c for c in expected["criteria"]}
+    problems = []
+    for item in grade["criteria"]:
+        outcome = by_criterion[item["criterion"]]
+        results = {c["expected"] for c in outcome["checks"]}
+        if item["score"] == points[item["criterion"]] and (
+            results & {"fail", "error"} or outcome["judgement"] == "does_not_meet"
+        ):
+            problems.append(
+                f"{item['criterion']}: full marks, but the expected outcome is not met"
+            )
+    return problems
+
+
+def test_a_full_mark_never_contradicts_the_expected_outcome(
+    tables: dict[str, list[tuple[str, int, list[str]]]],
+) -> None:
+    for path in sorted(AUTHOR_GRADES_DIR.glob("*.yaml")):
+        grade = load_yaml(path)
+        expected = load_yaml(SUBMISSIONS_DIR / grade["submission_id"] / "expected.yaml")
+        assert author_grade_drift(grade, expected, tables[grade["rubric"]]) == [], path
+
+
+def test_the_drift_rule_catches_a_false_full_mark(
+    tables: dict[str, list[tuple[str, int, list[str]]]],
+) -> None:
+    grade = load_yaml(AUTHOR_GRADES_DIR / "s001.yaml")
+    expected = load_yaml(SUBMISSIONS_DIR / "s001" / "expected.yaml")
+    rows = tables[grade["rubric"]]
+    assert author_grade_drift(grade, expected, rows) == []
+    # In memory: a failing check under a criterion that still gets full marks is refused.
+    expected["criteria"][0]["checks"] = [
+        {"check": "http_ok:demo_url", "expected": "fail", "reason": "x"}
+    ]
+    grade["criteria"][0]["score"] = rows[0][1]
+    assert author_grade_drift(grade, expected, rows)
 
 
 def test_an_author_grade_cannot_pass_as_a_mentor_grade(
