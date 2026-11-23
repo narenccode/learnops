@@ -136,9 +136,8 @@ def transcribe(
         raise InvalidInput(messages.SPEECH_BAD_LANGUAGE)
     path = _readable_file(audio_path)
     chosen = _resolve(provider)
-    ensure_integrated(
-        chosen
-    )  # the clear "not integrated" error comes before the call log is read
+    # The clear "not integrated" error comes before the call log is read.
+    ensure_integrated(chosen)
     call_logger = resolve_call_logger(logger)
     problem: str | None = None
     for attempt in range(1, MAX_ATTEMPTS + 1):
