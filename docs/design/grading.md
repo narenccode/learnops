@@ -1233,6 +1233,6 @@ Release 4 work also depends on Release 1 (CK-09) (PRD §D1).
 
 ## 14. Review and approval
 
-- [ ] Owner: I understand and can explain every section.
+- [x] Owner: I understand and can explain every section.
 - [ ] Peer reviewer: checked against the PRD chapter and the contracts; comments resolved.
 - [ ] Guide: approved (sets `Status: Approved`).
