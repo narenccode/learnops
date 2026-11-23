@@ -57,14 +57,19 @@ measures:
     required_by: PRD FR-M-03
     definition: >-
       Grading drafts: draft total within one band of the mentor reference total (band proposed as
-      10 % of total points, design §11.2, Q44). Chapters, summaries and practice: not defined.
-    decision: open
+      10 % of total points, design §11.2, Q44). Chapters, summaries and practice: two rates, the
+      usable share (a blinded mentor rates the output acceptable or acceptable_with_edits) and the strict
+      share (acceptable with no edits). The usable share is one minus the wrong-answer rate for these
+      tasks (design §11.4). The guide settles it when he approves the design (issue #186).
+    decision: proposed
   - id: mentor_review_time
     required_by: PRD FR-M-03
     definition: >-
-      Time a blinded mentor spends reviewing one output, from the tool's logs. The timing
-      protocol (idle gaps, counterbalancing) is proposed only for grading (design §11.2, Q46).
-    decision: open
+      Time a blinded mentor spends reviewing one output, from the tool's logs. The grading
+      protocol of design §11.2 (idle gaps over three minutes excluded and reported, counterbalanced
+      order, Q46) is reused for every task (design §11.4). The guide settles it when he approves the
+      design (issue #186).
+    decision: proposed
   - id: cost_per_task
     required_by: PRD FR-M-03
     definition: >-

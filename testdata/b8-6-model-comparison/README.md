@@ -72,19 +72,21 @@ These are authoring rules for the expected outputs, not requirements from the PR
 - Expected chapters are not empty, lie within the transcript, and start on a segment boundary.
   Order, overlap and `end > start` are B6.2's rules, checked by its validator.
 
-## Open decisions (not decided here)
+## Open decisions
+
+The guide answered some of these on issue #186 (23 Nov 2026), and the grading design (§11.4, #197) proposes the rest. What is decided is marked **Decided**; what is proposed in the design is marked **Proposed**; the guide settles the proposals when he approves the design.
 
 | # | Decision | Ref | Who |
 |---|---|---|---|
-| O1 | Chapter, summary and practice inputs: which lectures, how many, who supplies them. **Student 4 on PR #33**: keep the fictional t001 for now; B8.5 is PENDING (no consent, placeholder transcripts), so no B8.5 file is an input yet; a transcript marked `checked` in the B8.5 inventory may be added as a second input by its lecture id; she proposes one or two, not all five, and will confirm when the first is checked. **Issue #121 (the guide's answer, 17 Nov)**: for the interim demonstration and testing B8.5 may proceed with four lecture recordings, ideally from four speakers, as a temporary exception; B8.5 is complete only at five (PRD B8.5 keeps at least 5) and the 1,800-second rule stays. This set follows B8.5's completion rule and changes nothing because of it | design Q12 | Students 1 and 4, integration lead, guide |
-| O2 | Who writes and who reviews the expected outputs; how "reviewed" is recorded | — | Guide |
+| O1 | **Decided (guide, issue #186):** grading inputs come from B8.4 (Student 3), practice inputs from Student 1, chapter and summary inputs from Student 4, and Student 2 coordinates. The input t001 stays for now (Student 4 on PR #33); a checked B8.5 transcript is added later. | design Q12 | Students 1 and 4, integration lead, guide |
+| O2 | **Decided (guide, issue #186):** the module owner who supplied an input reviews its expected output, and the guide decides any disagreement. How "reviewed" is recorded stays in the manifest (`expected_review`). | — | Guide |
 | O3 | Review rubric: the three output levels and the grading-draft wrong rule | design §11.2, Q48 | Guide |
-| O4 | Agreement for chapters, summaries and practice (undefined); band for grading (Q44) | Q44, Q48 | Guide |
-| O5 | Mentor review time protocol for non-grading outputs (only grading has one, Q46) | Q46 | Guide |
-| O6 | Grading-draft items: B8.4 merged, its submission-content rule (Q32), reference grades (Q13), `GradeDraftV1` (Q41) | §4.3a, §4.3d | Guide, Students 1 and 3 |
+| O4 | Agreement for grading drafts: within one band (Q44). For chapters, summaries and practice: **proposed in design §11.4** (#197): a usable share and a strict share, with the wrong-answer rate separate. The guide settles it when he approves the design | Q44, Q48 | Guide |
+| O5 | Mentor review time for non-grading outputs: **proposed in design §11.4** (#197): reuse the grading protocol (Q46) for every task. The guide settles it when he approves the design | Q46 | Guide |
+| O6 | Grading-draft items: B8.4 merged, its submission-content rule (decided: PRD B1.5), reference grades (Q13), `GradeDraftV1` (Q41) | §4.3a, §4.3d | Guide, Students 1 and 3 |
 | O7 | Practice: task shape and output format (B7, FR-S-12, Release 5 stretch). **Proposed by Student 1 on PR #33**: multiple-choice checkpoint questions (H5P question set) in the review-card shape; ordering optional, branching scenario left out, no short answer; B7 defines no draft format. Format confirmed by the guide (reported by Harshitha on 18 Nov; the link to his answer is still to be added); the lecture input is still open | Q12 | Students 1 and 4, guide |
-| O8 | Size of the set per task (the PRD gives none) | — | Guide |
-| O9 | Licence of the test content (proposal: Apache-2.0, like the repository) | root `CLAUDE.md` §2.10 | Guide |
+| O8 | Size of the set per task (the PRD gives none). **Proposed in design §11.4** (#197): five chapters and five summary items (one per B8.5 lecture), five practice items, and the grading items from the B8.4 test split (Q45). The guide settles it when he approves the design | — | Guide |
+| O9 | **Decided (guide, issue #186):** Apache-2.0, like the repository (PRD C-11) | root `CLAUDE.md` §2.10 | Guide |
 | O10 | Accept this format as the B8.6 part of the B8 contract before the Release 0 freeze | `contracts/CLAUDE.md` | All four students, guide |
 | O11 | ~~Chapters content schema~~ **Closed:** B6.2 now defines it (`contracts/chapters.v1.schema.json`); this set uses it and keeps no schema of its own | PR #32 | Student 4 |
 
