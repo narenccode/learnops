@@ -1,0 +1,45 @@
+# PROVISIONAL author's expected outcome. NOT a reference grade: no scores.
+# Rubric: B8.2 wk-01-task.
+# Machine checks and the criterion disagree on purpose: http_ok and word_count pass, but the work
+# does not answer the task (an assistant that answers a question).
+schema: learnops.testdata.b8-4.expected-outcome/v1
+submission_id: s006
+rubric: b8-2-wk-01-task
+provisional: true
+criteria:
+  - criterion: Working demo
+    checks:
+      - check: http_ok:demo_url
+        expected: pass
+        reason: hosting.demo_stub is unrelated_page, which returns HTTP 200.
+    judgement: does_not_meet
+    rationale: >-
+      The link opens, but the page is about running, not an assistant answering a test question.
+      A passing check alone must not earn the marks.
+  - criterion: Repository and README
+    checks:
+      - check: repo_clone
+        expected: fail
+        reason: hosting.publish_repo is false, so the repository link does not clone.
+      - check: readme_sections:Setup
+        expected: error
+        reason: >-
+          The repository cannot be cloned, so the README cannot be read (error, not fail; design
+          §4.3d).
+    judgement: does_not_meet
+    rationale: >-
+      The repository is not reachable. The local copy is a unit converter, not the assistant
+      the task asks for.
+  - criterion: Reflection
+    checks:
+      - check: word_count:150
+        expected: pass
+        reason: >-
+          report.md has more than 150 words under the PROVISIONAL counting rule
+          (whitespace-separated tokens of the whole file).
+    judgement: ambiguous
+    rationale: >-
+      Read literally, "150+ words on what you built and what went wrong" is met. But the report
+      is about a different project, so it does not reflect on building the assistant the task
+      asks for (off topic). Whether "Full marks when" is read literally or against the task text
+      is for the mentor's reference grade, not decided here.

@@ -1,0 +1,35 @@
+# PROVISIONAL author's expected outcome. NOT a reference grade: no scores.
+# Rubric: B8.2 wk-01-task.
+schema: learnops.testdata.b8-4.expected-outcome/v1
+submission_id: s005
+rubric: b8-2-wk-01-task
+provisional: true
+criteria:
+  - criterion: Working demo
+    checks:
+      - check: http_ok:demo_url
+        expected: fail
+        reason: hosting.demo_stub is none, so nothing answers at the demo link.
+    judgement: does_not_meet
+    rationale: The report itself says the demo was not put online.
+  - criterion: Repository and README
+    checks:
+      - check: repo_clone
+        expected: pass
+        reason: hosting.publish_repo is true.
+      - check: readme_sections:Setup
+        expected: fail
+        reason: The repository clones but has no README.md, so there is no Setup heading.
+    judgement: partly_meets
+    rationale: The repository clones, but there is no README, so setup is not explained.
+  - criterion: Reflection
+    checks:
+      - check: word_count:150
+        expected: fail
+        reason: >-
+          report.md is far below 150 words under the PROVISIONAL counting rule (whitespace-separated
+          tokens of the whole file).
+    judgement: does_not_meet
+    rationale: >-
+      Short and general. It mentions one thing that did not work (publishing) without saying
+      why, and nothing specific that worked.

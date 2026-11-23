@@ -1,0 +1,12 @@
+# PROVISIONAL pilot submission. Fictional; written for this project.
+schema: learnops.testdata.b8-4.submission/v1
+id: s001
+onlinetext: |-
+  Repository: https://git.lab.invalid/learner-01/handbook-assistant.git
+  Demo: https://demo.lab.invalid/learner-01/
+onlinetext_format: plain
+files: [report.md]
+repo_dir: repo
+hosting:
+  publish_repo: true
+  demo_stub: answers
