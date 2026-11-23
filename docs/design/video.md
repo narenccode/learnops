@@ -370,7 +370,7 @@ PRD Appendix C items that affect this module (results in `docs/decisions/`). **P
 | 5 | Exact H5P content-type versions on both Moodle versions | Yes | Decision 0008 exists; concerns FR-V-14 (Release 5) only | Student 1 owns B7 |
 | 6 | LTI 1.3 library choice and licence (§8) | No | `0001-lti-library.md` is Proposed, pending the guide | Guide |
 | 7 | Caption word-error-rate target (G-6) from a first baseline run | Yes | PENDING; evaluation preparation is merged (#103) | Student 4; §13 order 4 |
-| 8 | Licence or consent for every B8.5 video | No | PENDING; audit is PR #104 (open, ready for review) | Student 4; §13 orders 3–4 |
+| 8 | Licence or consent for every B8.5 video | No | Four written consent lines in decision 0004 (PR #169, merged); the audit #104 is merged; each speaker's briefing and the official-set provenance are the owner's statements | Student 4; §13 orders 3–4 |
 | 9 | Which AI features Moodle 5.3 itself provides (for overlap with chapters or summaries) | No | Not started. **In scope (Q16):** Student 4 checks Moodle 5.3's own AI features for overlap with chapters and summaries | Student 4 |
 
 ### Guide's answers (2026-11-19, PR #140)
@@ -414,7 +414,7 @@ One requirement (or one tightly related group) per pull request. Feature work st
 |---|---|---|---|---|
 | 1 | B6 contract: schema and at least one valid example | B6 (contract) | none | **Release 0.** **Merged**: B6.3 PR #32, B6.2 PR #93. Frozen at the end of Release 0 |
 | 2 | `media_paths` shared library, including B6.4 with the `none` implementation | B6.1, B6.4 | 1 | **Release 0.** **Merged**: PRs #84, #85, #86 (split of #38) |
-| 3 | B8.5 lecture videos | B8.5 | none | **Release 0 test data.** Dataset checker and tests merged (#82, #89, #99, #125); evidence PENDING (no consent, transcripts or names) |
+| 3 | B8.5 lecture videos | B8.5 | none | **Release 0 test data.** Dataset checker and tests merged (#82, #89, #99, #125); the data (five lectures, 2380 s, transcripts, four consent lines) merged in #169 and the status is COMPLETE under decision 0004 |
 | 4 | Appendix C verification of items that concern the video pipeline | App-C #4, #7, #8 (and #6, #9, which are Release 0) | Lab; 3 for #7 and #8 | **Release 3** for #4, #7, #8 (PRD App-C: the first release that relies on them); #6 and #9 are Release 0. #4 record merged but NOT VERIFIED (#96); #7 preparation merged (#103); #8 audit in #104 (open, ready for review); speech ADR #98 (draft). Preparation may start earlier |
 | 5 | Storage adapter | FR-V-12 | Q3, Q12 (decided); 2 | Release 3. Moved before the upload because the upload stores through it |
 | 6 | Data model and job queue: migrations, `video.lesson/upload/job/step`, worker loop | §C4.5, OPS-07, OPS-10 | Q1, Q4, Q7 (decided); 5 | Release 3 |
@@ -435,7 +435,7 @@ One requirement (or one tightly related group) per pull request. Feature work st
 | 21 | README, `.env.example`, changelog, traceability, data map, release notes | §D2 items 5–7, §E4, §E6 | All | Release 3 exit criteria |
 | 22 | *(R5, stretch)* Checkpoints | FR-V-14 | Releases 2 and 3 [§D1]; Releases 1–4 exit criteria [§C5] | Release 5. Design added before it starts |
 
-Demonstration code outside this plan: the paths demo (PR #117, merged) and the lesson processor demo (PR #129, open, ready for review) are local demonstrations, not the Release 3 pipeline. The guide answered on PR #129 (2026-11-19) that the demo may merge as an **explicit one-PR demonstration exception** to CLAUDE.md §6a.2 and §7 item 7. That exception covers that PR only: this design stays `Draft`, no design approval is implied, and feature work for the Release 3 pipeline waits until this document says `Status: Approved`.
+Demonstration code outside this plan: the paths demo (PR #117, merged) and the lesson processor demo (PR #129, merged 2026-11-23) are local demonstrations, not the Release 3 pipeline. The guide answered on PR #129 (2026-11-19) that the demo may merge as an **explicit one-PR demonstration exception** to CLAUDE.md §6a.2 and §7 item 7. That exception covers that PR only: this design stays `Draft`, no design approval is implied, and feature work for the Release 3 pipeline waits until this document says `Status: Approved`.
 
 ## 14. Review and approval
 

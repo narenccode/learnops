@@ -6,7 +6,7 @@ hosted-CI runs in section 5 and in `demo-script.md` section 7 were produced on *
 were **not re-run**; they are historical results. The PR and file statuses were **refreshed on 2026-11-22**
 against `origin/main` `5126fe6` (after #104, #140, #154, #155, #156 and #106 merged); that refresh re-read
 statuses only and re-ran nothing. A later, narrower refresh (also 2026-11-22, `origin/main` `4dc5e2c`, after #105 merged)
-updated only the lines that described #105 as unmerged. The previous revision audited `3abbc02`
+updated only the lines that described #105 as unmerged. A fourth narrow refresh (2026-11-23, `origin/main` `dedf578`, after #169 and #129 merged) updated only the B8.5 data row and the 1800 s exception row; no other status was re-read. The previous revision audited `3abbc02`
 (2026-11-16); 41 commits have merged since, and **the PRD changed
 what Release 0 contains** (PRs #113 and #116), so this revision re-states the contents list. GitHub
 state (PRs, issues, runs) was queried on 2026-11-20 and changes quickly; re-check before relying on it.
@@ -97,7 +97,7 @@ as a freeze, and draft PR #115 prepares the post-freeze CODEOWNERS rule.
 | B8.3 planted-error courses | **7** | No PR or file found |
 | B8.4 synthetic submissions | **4** | #31 (provisional pilot of 6; the PRD asks for at least 30) |
 | B8.5 lecture videos: checker and tests | **1** | #82, #89; decision 0004 and the inventory hashes (#99) |
-| B8.5 lecture videos: data | **5 Pending** | `main` says PENDING: five hashes and five durations (62, 82, 43, 68, 83 s; PR #154), no consent line, no transcript. Decision 0004 records the guide's temporary exceptions (four lectures, no 1800 s total; issue #121, PR #125). The audit #104 (merged, approved by Harshitha) reports 5 local files with matching hashes, 338 s of 1800 s and 0 of 5 consent lines; it grants nothing |
+| B8.5 lecture videos: data | **2** | Merged in #169: five lectures (2380 s), outlines, reference transcripts marked `checked`, four written consent lines; status COMPLETE under decision 0004 (the two temporary exceptions are not used). Not independently verified: the durations, hashes, file names, transcripts, official-set provenance (G-8) and speaker briefings are the owner's statements. It shows no word error rate. The earlier audit #104 (338 s, 0 of 5 consent lines) is superseded for the data |
 | B8.6 model comparison set | **4** | #33 (draft, "one transcript") |
 
 **2c. App-C.**
@@ -174,7 +174,7 @@ not re-fetched: pre-commit, gitleaks over the whole history, mypy, contract exam
 | App-C 4: #96 and #97 open | #96 merged (NOT VERIFIED); #97 closed as superseded |
 | WER tooling "draft #103" | Merged |
 | Release 0 includes `lti`, `moodle_ws`, `model_interface` and App-C items 1 to 10 | PRD §D1 now limits Release 0 to `contracts`, `media_paths` and App-C 6 and 9 |
-| 1800 s exception: "PENDING, reported by the developer" | Decision 0004 cites the guide's confirmation on issue #121 (PR #125) and adds a four-lecture exception; the set is still not complete |
+| 1800 s exception: "PENDING, reported by the developer" | Decision 0004 cites the guide's confirmation on issue #121 (PR #125). Since #169 the set totals 2380 s with five lectures, so the exceptions are not used (refreshed 2026-11-23) |
 | "No lecture is recorded" | Corrected on `main` (#126): five local files are identified and hashed |
 
 ## 7. Decisions and dependencies (not resolved here)
