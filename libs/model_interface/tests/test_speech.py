@@ -129,7 +129,10 @@ def test_local_and_hosted_refuse_until_a_transport_exists(
     assert isinstance(create_speech_provider(), cls)
     with pytest.raises(ProviderUnavailable) as raised:
         transcribe(audio)
-    assert "Q19" in str(raised.value)
+    assert "ADR 0002" in str(raised.value)
+    assert "Q19" not in str(
+        raised.value
+    )  # Q19 is the model provider, not the speech service
 
 
 def test_an_unset_speech_provider_is_a_clear_error(audio: Path) -> None:

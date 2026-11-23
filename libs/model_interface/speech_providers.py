@@ -4,7 +4,7 @@ create_speech_provider() builds the provider named by SPEECH_PROVIDER, through t
 fake-provider rule as the model providers (config.provider_from_env, decision record 0001 #3).
 There is no fallback: the selected provider is used or the call fails.
 
-The local (lab Whisper-family) and hosted speech services are not integrated yet (design Q19), so
+The local (lab Whisper-family) and hosted speech services are not integrated yet (ADR 0002, PR #98), so
 both refuse with a clear error and send nothing. The fake provider is for automated tests: it calls
 no model and is built from the B5 contract example.
 """
@@ -47,13 +47,22 @@ class SpeechProvider(Protocol):
 
 
 class _NotIntegrated:
-    """A real speech service whose protocol is not decided yet (design Q19)."""
+    """A real speech service that is not chosen yet (ADR 0002, PR #98: it waits for lab facts)."""
 
     name: Provider
 
     def transcribe(self, audio_path: Path, language: str) -> SpeechReply:
         raise ProviderUnavailable(
             messages.SPEECH_NO_TRANSPORT.format(provider=self.name)
+        )
+
+
+def ensure_integrated(provider: SpeechProvider) -> None:
+    """Refuse a speech service that is not integrated, with its clear error, before anything else
+    (so the call log is not looked at first). A real provider passes."""
+    if isinstance(provider, _NotIntegrated):
+        raise ProviderUnavailable(
+            messages.SPEECH_NO_TRANSPORT.format(provider=provider.name)
         )
 
 
