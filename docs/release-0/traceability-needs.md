@@ -43,11 +43,13 @@ re-read statuses only: the line count and the CI result named below are from 202
   is now my decision as well as the assistant's"). The instruction is unchanged; a line
   must not run ahead of reviewed evidence. The five measured durations were on
   the branch `video/b8-5-dataset-evidence` (commit `9c6d703`) and were carried to `main` by PR #154 (merged); before it, no PR carried
-  them.
+  them. **Update 2026-11-23:** PR #169 (merged, after review) made `main` COMPLETE (five lectures, 2380 s, four consent lines) and
+  updated the B8.5 status sentence in `docs/traceability.md`; the text above describes the state before it.
 - **Video demo.** PR #117 (D4 paths demo) and PR #129 (Lesson Processor demo, FR-V-01, FR-V-03 and
   FR-V-08 in part, one-PR exception from the guide) each add demo text. #129 adds its own
   "Video lesson processor demo" section with rows for FR-V-01, FR-V-03 and FR-V-08, marked "in
-  part"; they must not be read as Release 3 coverage.
+  part"; they must not be read as Release 3 coverage. PR #129 merged on 2026-11-23; decision 0013 records the
+  `libx264` exception.
 
 ## 4. Incorrect or stale references
 

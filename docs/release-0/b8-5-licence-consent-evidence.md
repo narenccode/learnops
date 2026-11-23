@@ -1,7 +1,12 @@
 # B8.5 licence and consent evidence: inventory, gap report and handling rules
 
-**Status: PENDING. B8.5 is NOT complete. App-C 8 is NOT met.** This document records evidence and
+**Status at the audit date (2026-11-20): PENDING. B8.5 was NOT complete.** This document records evidence and
 gaps. It does not grant, infer or approve anything.
+**Update 2026-11-23.** PR #169 (merged) put the five lectures' outlines, transcripts, speaker names and four written
+consent lines on `main`, and the B8.5 Status in `testdata/README.md` is now COMPLETE (decision 0004). The sections
+below are the 2026-11-20 audit, kept as history, and are **not** updated. This document does not decide App-C 8:
+the written consent lines exist, but each speaker's briefing and the official-set provenance (audit gap G-8) are
+the owner's confirmations in PR #169, not evidence checked here.
 **Audit date:** 2026-11-20, re-audited at `origin/main` `5f3a794`. The local file check in section 2
 was made on 2026-11-16 and was not repeated; everything about the repository was re-read on the
 audit date. **Scope note (PRD §D1, PRs #113 and #116):** App-C 8 is no longer a Release 0 item; it

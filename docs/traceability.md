@@ -632,8 +632,8 @@ agreement criterion (G-5), which belongs to Release 4 work that does not exist y
 
 ## B8.5 lecture video test data set, Release 0 foundation
 
-Files: `testdata/b8-5-lecture-videos/` (README, folder `.gitignore`, placeholder outlines and
-transcripts), the B8.5 inventory in `testdata/README.md`, the guide's decision
+Files: `testdata/b8-5-lecture-videos/` (README, folder `.gitignore`, the five lectures' outlines and
+reference transcripts), the B8.5 inventory in `testdata/README.md`, the guide's decision
 `docs/decisions/0004-b8-5-lecture-videos.md`, and the validation test
 `libs/contracts/tests/test_b8_5_dataset.py`. B8.5 is a test data set (PRD B8), not a functional
 requirement, so it has no FR ID and no row in the table at the top. It is the data for PRD G-6
@@ -1011,7 +1011,7 @@ Files: `libs/speech_eval/` (WER arithmetic, input validation, report, CLI),
 `libs/speech_eval/tests/test_speech_eval.py`, `docs/evaluation/g6-wer-procedure.md`,
 `docs/evaluation/g6-wer-report-template.md`. Requirements: PRD G-6, §C4.7 (third box), App-C 7.
 
-**Status: PENDING.** The official G-6 evaluation has **not** been run. The B8.5 set is PENDING,
+**Status: PENDING.** The official G-6 evaluation has **not** been run. The B8.5 set is COMPLETE (#169), but
 the normalisation rules and the WER target are not decided, and ADR 0002 (T8) is not approved.
 
 | Rule | Source | Test(s) |
