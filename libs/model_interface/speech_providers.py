@@ -57,6 +57,15 @@ class _NotIntegrated:
         )
 
 
+def ensure_integrated(provider: SpeechProvider) -> None:
+    """Refuse a speech service that is not integrated, with its clear error, before anything else
+    (so the call log is not looked at first). A real provider passes."""
+    if isinstance(provider, _NotIntegrated):
+        raise ProviderUnavailable(
+            messages.SPEECH_NO_TRANSPORT.format(provider=provider.name)
+        )
+
+
 class LocalSpeechProvider(_NotIntegrated):
     name: Provider = "local"
 

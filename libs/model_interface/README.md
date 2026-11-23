@@ -210,9 +210,18 @@ transcript.meta      # provider, model, duration_s, latency_ms, cost_estimate
 - `latency_ms` is measured here, rounded to whole milliseconds. Time order and times past
   `duration_s` are not checked (guide's decisions, `docs/decisions/0001`, rows 10 and 11): sort by
   `start` yourself.
-- Not in this skeleton: logging speech calls to `shared.model_calls` (decided by the guide on issue
-  #186; PR #187 builds it), `SPEECH_TIMEOUT_S` and the budget, and how long audio is split (checked
-  in the lab with a 90-minute file).
+- **Every attempt is logged** (PRD B5.3 "every call"; guide, issue #186, 23 Nov 2026) through the same
+  call logger as `run()`: one `CallRecord` with `kind="speech"` and `task="speech.transcribe"` per
+  attempt, also a failed one. The record holds the transcript meta only (provider, model,
+  `duration_s`, `latency_ms`, `cost_estimate`): no audio path, no transcript text, no token counts.
+  A provider failure, or a reply whose meta breaks the contract, is logged with the unknown values
+  null (never 0). If the logger fails, that error is raised and no transcript is returned. With no
+  logger configured outside a test run the call is refused before the provider is called.
+  Model records have `kind="model"` (the default), so existing code is unchanged. For
+  `shared.model_calls` this means a `kind` column, with the token and `prompt_version` columns
+  empty for speech rows (the table is Module 3's, grading design §5.3).
+- Not built yet: `SPEECH_TIMEOUT_S` and the budget, and how long audio is split (checked in the
+  lab with a 90-minute file).
 
 ## Not implemented
 
@@ -220,8 +229,7 @@ transcript.meta      # provider, model, duration_s, latency_ms, cost_estimate
 |---|---|
 | Real request to the lab endpoint. `LocalProvider` needs an injected `LocalTransport`; none exists for the real endpoint. | Q19 (endpoint protocol) |
 | Real hosted API call. `HostedProvider` needs an injected `HostedTransport`; none exists, so `MODEL_PROVIDER=hosted` raises `ProviderUnavailable`. | Q19 (provider, SDK, licence), spending-cap key |
-| PostgreSQL logger for `shared.model_calls`. **Until it exists, no lab or production service can make a logged model call.** | Q36 (migration tool, shared schema) |
+| PostgreSQL logger for `shared.model_calls` (model and speech records, with the `kind` column). **Until it exists, no lab or production service can make a logged model or speech call.** | Q36 (migration tool, shared schema) |
 | Pydantic models for task schemas | Guide's decision |
 | Timeouts from the environment, transport retries, budget guard | Design proposals only (`docs/design/grading.md` §4.2) |
 | A real speech service behind `transcribe()` (local or hosted), `SPEECH_TIMEOUT_S`, splitting long audio | ADR 0002 (PR #98) and the lab |
-| Logging speech calls to `shared.model_calls`. **Decided by the guide** (issue #186, 23 Nov 2026): the same table with a `kind` column, metadata only, failed calls logged. Not in this skeleton | PR #187 builds it; the PostgreSQL logger and the `kind` column wait on Q36 |
