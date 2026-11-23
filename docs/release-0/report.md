@@ -6,7 +6,7 @@ hosted-CI runs in section 5 and in `demo-script.md` section 7 were produced on *
 were **not re-run**; they are historical results. The PR and file statuses were **refreshed on 2026-11-22**
 against `origin/main` `5126fe6` (after #104, #140, #154, #155, #156 and #106 merged); that refresh re-read
 statuses only and re-ran nothing. A later, narrower refresh (also 2026-11-22, `origin/main` `4dc5e2c`, after #105 merged)
-updated only the lines that described #105 as unmerged. The previous revision audited `3abbc02`
+updated only the lines that described #105 as unmerged. A fourth narrow refresh (2026-11-23, `origin/main` `dedf578`, after #169 and #129 merged) updated only the B8.5 data row and the 1800 s exception row; no other status was re-read. The previous revision audited `3abbc02`
 (2026-11-16); 41 commits have merged since, and **the PRD changed
 what Release 0 contains** (PRs #113 and #116), so this revision re-states the contents list. GitHub
 state (PRs, issues, runs) was queried on 2026-11-20 and changes quickly; re-check before relying on it.
@@ -97,7 +97,7 @@ as a freeze, and draft PR #115 prepares the post-freeze CODEOWNERS rule.
 | B8.3 planted-error courses | **7** | No PR or file found |
 | B8.4 synthetic submissions | **4** | #31 (provisional pilot of 6; the PRD asks for at least 30) |
 | B8.5 lecture videos: checker and tests | **1** | #82, #89; decision 0004 and the inventory hashes (#99) |
-| B8.5 lecture videos: data | **5 Pending** | `main` says PENDING: five hashes and five durations (62, 82, 43, 68, 83 s; PR #154), no consent line, no transcript. Decision 0004 records the guide's temporary exceptions (four lectures, no 1800 s total; issue #121, PR #125). The audit #104 (merged, approved by Harshitha) reports 5 local files with matching hashes, 338 s of 1800 s and 0 of 5 consent lines; it grants nothing |
+| B8.5 lecture videos: data | **2** | Merged in #169: five lectures (2380 s), outlines, reference transcripts marked `checked`, four written consent lines; status COMPLETE under decision 0004 (the two temporary exceptions are not used). Not independently verified: the durations, hashes, file names, transcripts, official-set provenance (G-8) and speaker briefings are the owner's statements. It shows no word error rate. The earlier audit #104 (338 s, 0 of 5 consent lines) is superseded for the data |
 | B8.6 model comparison set | **4** | #33 (draft, "one transcript") |
 
 **2c. App-C.**
@@ -111,7 +111,7 @@ as a freeze, and draft PR #115 prepares the post-freeze CODEOWNERS rule.
 | 5 | H5P versions | First release that uses them | 6 | Decision 0008; needs lab |
 | 6 | LTI library and licence | **Release 0** | 5 | `docs/decisions/0001-lti-library.md` exists but is `Proposed`, pending the guide's review; a second file is also numbered `0001` |
 | 7 | Caption WER target | Release 3 (G-6) | 6 | Needs B8.5 complete and a speech provider; ADR 0002 (#98) is `PROPOSED`; evaluation tooling merged (#103) and refuses `official` mode |
-| 8 | Licence or consent for B8.5 | First release that relies on it | 6 | 0 consent lines (decision 0004). Evidence audit: #104 (merged) |
+| 8 | Licence or consent for B8.5 | First release that relies on it | 3 | Four written consent lines for four speakers in decision 0004 (#169). Not verified: each speaker's briefing and the official-set provenance (G-8) are the owner's statements. Evidence audit: #104 (merged; it describes the 2026-11-20 state, with 0 consent lines) |
 | 9 | Moodle 5.3 AI features | **Release 0** | 5 | **The decision record exists on `main`**: `docs/decisions/0012-app-c-9-moodle-ai-features.md` (PR #156, merged 2026-11-22). It is a **source-research record** (Moodle's 5.3 source), not an implementation, and **not lab-verified**: the lab Moodle 5.3 site was not looked at and Moodle 4.5 was not read. Class 5 (pending): the record is present, the lab verification is outstanding, and the guide's approval of its proposed outcome is a separate outstanding action. The guide's answer on #140 put the check in scope for Student 4 |
 | 10 | Backup and restore roles | First release that relies on it | 6 | Needs lab |
 
@@ -143,7 +143,7 @@ it (see `traceability-needs.md`).
 | Model interface (FR-M-01, FR-M-02) | Library, tests, B5 | B5 contract merged (#25); draft #35 | Library on `main`; speech interface (not Release 0) | Student 3 |
 | Moodle web services (B4, FR-M-01 area) | Library and lab verification | B4 contract merged (#27); #64, #72, #63, #76, #79, #80 open | `libs/moodle_ws` on `main`; App-C 1 lab results (not Release 0) | Student 3, lab |
 | LTI (B3, App-C 6) | Contract, library, licence record | B3 contract merged (#83); ADR 0001 `Proposed` | Guide review of the library choice | Student 2, guide |
-| B8.5 data (App-C 8, 7) | Recordings, consent, transcripts, approval of exception | Checker on `main`; exceptions in decision 0004; evidence audit in #104 (merged) | 0 of 5 consent lines; transcripts; 1800 s total; five-lecture rule | Speakers, Student 3, guide |
+| B8.5 data (App-C 8, 7) | Owner confirmations: the five recordings are the official set; each speaker was briefed. A word-error-rate run (App-C 7) | Checker and data on `main` (#169): COMPLETE under decision 0004; the temporary exceptions are not used; evidence audit #104 (merged, 2026-11-20 state) | Official-set provenance and speaker briefings are unverified owner statements; no word error rate | Student 4, guide |
 | BBB (App-C 4, FR-V-09) | Lab metadata and format output | Check script and NOT VERIFIED records on `main` (#96) | Any lab run | Student 4, lab |
 | WER (G-6, App-C 7) | Baseline run, target, method | Tooling merged (#103) | A complete B8.5; ADR 0002 approval; normalisation rule; provider permission | Guide, Student 3, Student 4 |
 | Moodle 4.5 and 5.3 (C-03, D2.3, E2) | Restore and role results on both | Guide's waiver comments for B8.1 and B8.2 (section 7); register in `docs/decisions/README.md` (#130, merged) | All results | Student 1, 2, guide |
@@ -174,7 +174,7 @@ not re-fetched: pre-commit, gitleaks over the whole history, mypy, contract exam
 | App-C 4: #96 and #97 open | #96 merged (NOT VERIFIED); #97 closed as superseded |
 | WER tooling "draft #103" | Merged |
 | Release 0 includes `lti`, `moodle_ws`, `model_interface` and App-C items 1 to 10 | PRD §D1 now limits Release 0 to `contracts`, `media_paths` and App-C 6 and 9 |
-| 1800 s exception: "PENDING, reported by the developer" | Decision 0004 cites the guide's confirmation on issue #121 (PR #125) and adds a four-lecture exception; the set is still not complete |
+| 1800 s exception: "PENDING, reported by the developer" | Decision 0004 cites the guide's confirmation on issue #121 (PR #125). Since #169 the set totals 2380 s with five lectures, so the exceptions are not used (refreshed 2026-11-23) |
 | "No lecture is recorded" | Corrected on `main` (#126): five local files are identified and hashed |
 
 ## 7. Decisions and dependencies (not resolved here)
@@ -182,7 +182,7 @@ not re-fetched: pre-commit, gitleaks over the whole history, mypy, contract exam
 | Decision or dependency | Authority | Impact if open |
 |---|---|---|
 | **Moodle versions.** PRD C-03, D2.3 and E2 still say 4.5 **and** 5.3. The guide decided on issue #55 that B8.1 builds and tests on **5.3 only**, with 4.5 waived for Release 0 (decision 0009; #95 merged); PR #130 (merged) added one register | Guide | Row D2.3 stays "not met" |
-| The date of the guide's earlier approval of the 1800 s exception | Guide | B8.5 cannot be called complete; the five-lecture rule still holds |
+| The date of the guide's earlier approval of the 1800 s exception | Guide | Historical: since #169 the set has five lectures and 2380 s, so the exception is not used and no longer blocks calling the dataset COMPLETE under decision 0004. The date is still unknown |
 | Retention, lab storage, names and transcripts, and processing services for B8.5 (data-map questions) | **Decided by the guide** (2026-11-19, confirmed in his own words 2026-11-20) and recorded in `docs/decisions/0011-b8-5-data-handling.md` (merged in PR #104); the data map follows it. What the lab endpoint keeps is not recorded yet (ADR 0002, PR #98) | Speakers are told about withdrawal and Git history before writing the consent line |
 | Which of the two `0001` decision records is renumbered | Guide | Decision records are ambiguous |
 | Approval of the three remaining design documents (`studio.md` is `Approved`, PR #147) | Guide only | Feature code cannot start for those modules; D1 not met |
@@ -206,7 +206,7 @@ not re-fetched: pre-commit, gitleaks over the whole history, mypy, contract exam
 
 ## 9. Not claimed
 
-No evidence exists for: BigBlueButton lab verification, a word-error-rate result, B8.5 acceptance,
+No evidence exists for: BigBlueButton lab verification, a word-error-rate result, independent verification of B8.5 (official-set provenance and speaker briefings; the dataset status itself is COMPLETE under decision 0004),
 Moodle restore or web-service results on either version, any LTI launch, or any AI or speech call.
 This chapter claims none of them.
 
