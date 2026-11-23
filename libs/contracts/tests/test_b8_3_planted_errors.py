@@ -71,7 +71,12 @@ def _variants() -> list[dict[str, Any]]:
 
 
 def _built() -> list[dict[str, Any]]:
-    return [v for v in _variants() if v["status"] == "built"]
+    """Built package variants (each has a folder of its own)."""
+    return [
+        v
+        for v in _variants()
+        if v["status"] == "built" and v["input_kind"] == "package"
+    ]
 
 
 def _files(root: Path) -> dict[str, bytes]:
@@ -120,7 +125,7 @@ def test_mapping_is_provisional_until_confirmation_is_recorded() -> None:
 
 
 def test_ck_12_is_not_asserted_until_body_media_extraction_is_decided() -> None:
-    (ck12,) = [v for v in _variants() if v["rule"] == "CK-12"]
+    (ck12,) = [v for v in _variants() if v["id"] == "ck-12-full-url-media"]
     assert ck12["assertable"] is False
     assert "item 19" in ck12["notes"]
 
