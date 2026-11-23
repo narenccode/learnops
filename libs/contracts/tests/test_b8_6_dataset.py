@@ -483,7 +483,7 @@ def test_the_grading_draft_item_is_pending_and_never_copies_b8_4(manifest: Doc) 
     source = next(i for i in manifest["inputs"] if i["id"] == "b8-4")
     assert item["task"] == "grade_draft"
     assert source["kind"] == "b8-4-set" and is_b8_4_path(source["path"])
-    # The B8.4 pilot has no reference grades, so the item is pending: no input, no expected.
+    # B8.4 has no mentor reference grades, so the item is pending: no input, no expected.
     assert item["status"] == "pending"
     assert "input" not in item and "expected" not in item
     assert any("reference grades exist" in d for d in item["depends_on"])
@@ -494,7 +494,7 @@ def test_the_grading_draft_item_is_pending_and_never_copies_b8_4(manifest: Doc) 
 def test_a_grading_draft_item_is_ready_only_when_the_reference_grades_exist(
     manifest: Doc,
 ) -> None:
-    """The check that #31 and #33 do not depend on files that one of them does not hold."""
+    """The check that B8.6 does not depend on reference grades that B8.4 does not hold."""
     for item in manifest["items"]:
         if item["task"] == "grade_draft":
             assert grade_draft_problems(item, B8_4_DIR) == [], item["id"]
@@ -512,7 +512,7 @@ def test_a_grading_draft_item_is_ready_only_when_the_reference_grades_exist(
 def test_the_b8_4_input_exists_when_the_set_is_present(manifest: Doc) -> None:
     if not B8_4_DIR.is_dir():
         pytest.skip(
-            "B8.4 (PR #31) is not in this tree yet; the path of the b8-4 input is checked once it is"
+            "B8.4 is not in this tree; the path of the b8-4 input is checked when it is"
         )
     for source in manifest["inputs"]:
         if is_b8_4_path(source["path"]):

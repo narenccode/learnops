@@ -170,7 +170,8 @@ for example `1834 s (30 min 34 s)`.
 - **Where:** `b8-6-model-comparison/` (format, rubric and open decisions in its README).
 - **Source:** written for this project by Student 3. One fictional lecture transcript; no
   recording, no real lecturer, no real course content, no learner data.
-- **Licence:** not yet decided (open decision O9; proposal: Apache-2.0, like the repository).
-- **Status:** one chapters item and one summary item with author-drafted expected outputs, NOT
-  REVIEWED. Grading-draft items wait for B8.4; practice is a placeholder until design Q12 is
-  agreed with Students 1 and 4. No comparison has been run.
+- **Licence:** Apache-2.0 (decided by the guide, issue #186; PRD C-11).
+- **Status:** one chapters item, one summary item and one practice item with author-drafted
+  expected outputs, NOT REVIEWED. The grading-draft item is pending: B8.4 is merged (33
+  submissions), but it has no mentor reference grades. Who supplies and reviews each input is
+  decided (issue #186). No comparison has been run.

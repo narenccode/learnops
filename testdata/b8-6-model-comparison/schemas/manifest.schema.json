@@ -26,7 +26,7 @@
   "$defs": {
     "b8_4_path": {
       "type": "string",
-      "description": "Path in the B8.4 set, relative to the repository root, with forward slashes and no '..' segment. B8.4 is a separate set (PR #31), so this set points at it and never copies it.",
+      "description": "Path in the B8.4 set, relative to the repository root, with forward slashes and no '..' segment. B8.4 is a separate set, so this set points at it and never copies it.",
       "pattern": "^testdata/b8-4-synthetic-submissions/(?!(.*/)?\\.\\.(/|$))[A-Za-z0-9._/-]+$"
     },
     "set_path": {
