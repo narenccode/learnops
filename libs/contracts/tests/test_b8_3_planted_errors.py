@@ -131,6 +131,26 @@ def test_ck_12_is_not_asserted_until_body_media_extraction_is_decided() -> None:
     assert "item 19" in ck12["notes"]
 
 
+EXPLAINED_BY = {"CK-04", "CK-05", "CK-13"}
+
+
+def test_ck_01_is_not_a_separate_finding_when_another_rule_explains_the_item() -> None:
+    # Guide, issue #112, item 13: the root cause is reported once. The item stays listed as
+    # unreachable, but is not counted as a CK-01 finding, so CK-01 is never an also_expected.
+    for v in _variants():
+        assert "CK-01" not in v["also_expected"], v["id"]
+    for v in _variants():
+        if v["rule"] in EXPLAINED_BY:
+            assert f"explained by {v['rule']}" in v["notes"], v["id"]
+
+
+def test_ck_01_fires_on_its_own_when_nothing_explains_the_item() -> None:
+    (ck01,) = [v for v in _variants() if v["rule"] == "CK-01"]
+    assert ck01["expected"]["rule"] == "CK-01"
+    assert ck01["also_expected"] == []
+    assert "No other rule explains" in ck01["notes"]
+
+
 def test_ids_are_unique() -> None:
     ids = [v["id"] for v in _variants()]
     assert len(ids) == len(set(ids))

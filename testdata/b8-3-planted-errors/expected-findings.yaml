@@ -14,7 +14,8 @@
 #   planted_change  the one change made to a B8.2 copy
 #   expected        the finding a checker must report: rule, element, severity
 #   reason          why it must be reported
-#   also_expected   other rules that may fire on the same variant (interactions), or []
+#   also_expected   other rules that fire as their own, separate finding on the same variant, or [].
+#                   CK-01 is never listed here for an item explained by CK-04, CK-05 or CK-13 (guide, item 13)
 #   notes           open points
 #   assertable      optional; false = the expected finding is provisional and must not be asserted by a checker test yet
 
@@ -26,12 +27,16 @@ version: 1
 # confirms it. Then set mapping_status to confirmed and fill in `confirmation`.
 #   Confirmed by Akshita for the proposal: the rule-to-variant pairing matches the design as merged
 #   in #148, and the package variants (CK-02, 03, 09, 12) can be built without the lab.
-#   Waiting on the guide (checker design section 12):
-#     item 12  severity: "every rule is error" is a Proposal (section 3.4)
-#     item 13  whether CK-01 is also reported with CK-04, CK-05 and CK-13
-#     item 17  the B1/CK boundary (the #118 variants and the CK-06 rows)
-#     item 22  whether the .mbz variants are built on Moodle 4.5 and 5.3
-#   Also: docs/design/checker.md is still Draft.
+#   Answered by the guide on 2026-11-23 (https://github.com/narenccode/learnops/issues/112#issuecomment-7095842207):
+#     item 12  severity: all thirteen rules are error
+#     item 13  report the root cause once: an item unreachable because of CK-04, CK-05 or CK-13 is still
+#              listed as unreachable with its cause, but is NOT a separate CK-01 finding; the report
+#              line says "explained by CK-0x". CK-01 still fires when no other rule explains the item
+#     item 17  confirmed: a package failing B1 stops with the B1 errors, every CK rule is not checked
+#     item 22  the .mbz variants are built on Moodle 5.3 only for Release 0 (a new narrow exception
+#              that Akshita records); on 4.5 they are a rebuild
+#   Still open: Shraddha, as design owner, confirms the mapping (it stays `proposed` until then);
+#   Akshita updates docs/design/checker.md (it is still Draft); the nine .mbz variants need the lab.
 mapping_status: proposed
 mapping_source: "docs/design/checker.md section 11.3 at commit 4111e0c"
 confirmation: null   # {by: [...], reference: <issue/PR/decision link>, date: <YYYY-MM-DD>}
@@ -48,7 +53,7 @@ variants:
     expected: {rule: CK-01, element: wk-03-guide, severity: error}
     reason: "The date condition is already in the past, so no learner can ever open the Page."
     also_expected: []
-    notes: "A package can only express unlock.start_date, which opens a section and never closes it, so this needs an .mbz."
+    notes: "No other rule explains this item, so CK-01 is reported as its own finding (guide, item 13). A package can only express unlock.start_date, which opens a section and never closes it, so this needs an .mbz."
 
   - id: ck-02-completion-never-met
     rule: CK-02
@@ -83,8 +88,8 @@ variants:
     planted_change: "Week 3 availability names an activity (cm) that was removed from the course"
     expected: {rule: CK-04, element: wk-03, severity: error}
     reason: "The unlock rule refers to an activity that does not exist."
-    also_expected: [CK-01]
-    notes: "Week 3 also becomes unreachable. Whether CK-01 is reported or suppressed is open (checker design section 12 item 13). In a package the B1 validator rejects an unknown unlock.after."
+    also_expected: []
+    notes: "Week 3 is still listed as unreachable, with its cause, but is not a separate CK-01 finding: the report line says explained by CK-04 (guide, item 13). In a package the B1 validator rejects an unknown unlock.after."
 
   - id: ck-05-circular-unlock
     rule: CK-05
@@ -95,8 +100,8 @@ variants:
     planted_change: "Week 2 section waits for wk-03-task and week 3 section waits for wk-02-task"
     expected: {rule: CK-05, element: "wk-02, wk-03", severity: error}
     reason: "Each section waits for the other, so neither can ever open."
-    also_expected: [CK-01]
-    notes: "CK-01 on both sections unless suppressed (section 12 item 13). A package rejects a later reference (decision 0003 #23)."
+    also_expected: []
+    notes: "Weeks 2 and 3 are still listed as unreachable, with their cause, but are not separate CK-01 findings: the report lines say explained by CK-05 (guide, item 13). A package rejects a later reference (decision 0003 #23)."
 
   - id: ck-06-duplicate-idnumber
     rule: CK-06
@@ -204,8 +209,8 @@ variants:
     planted_change: "Week 1 task, which unlocks week 2, has completion tracking off"
     expected: {rule: CK-13, element: wk-01-task, severity: error}
     reason: "An unlock rule depends on an activity that never records completion."
-    also_expected: [CK-01]
-    notes: "Week 2 becomes unreachable; CK-01 unless suppressed (section 12 item 13). A package cannot express it."
+    also_expected: []
+    notes: "Week 2 is still listed as unreachable, with its cause, but is not a separate CK-01 finding: the report line says explained by CK-13 (guide, item 13). A package cannot express it."
 
 # The four #118 variants (missing-body, duplicate-id, protected-id, invalid-mode) test the B1
 # validator, not CK rules, and are recorded in #118's answer.yaml. They are not repeated here.
