@@ -1,0 +1,13 @@
+# PROVISIONAL submission. Fictional; written for this project (Apache-2.0).
+schema: learnops.testdata.b8-4.submission/v1
+id: s023
+onlinetext: |-
+  Repository: https://git.lab.invalid/learner-23/skate-park.git
+  Demo: https://demo.lab.invalid/learner-23/
+  Report: This week I learned a new skateboard trick and filmed it. The link shows the video
+  page. I did not work on the assistant.
+onlinetext_format: plain
+repo_dir: repo
+hosting:
+  publish_repo: false
+  demo_stub: unrelated_page

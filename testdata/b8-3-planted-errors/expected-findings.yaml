@@ -55,7 +55,7 @@ variants:
   - id: ck-03-points-total-mismatch
     rule: CK-03
     input_kind: package
-    status: planned
+    status: built
     path: course.yaml
     element: course.total_points
     planted_change: "course.total_points changed from 100 to 120; the four tasks still add up to 100"
@@ -139,7 +139,7 @@ variants:
   - id: ck-09-marking-table-sum
     rule: CK-09
     input_kind: package
-    status: planned
+    status: built
     path: weeks/02-task.md
     element: wk-02-task
     planted_change: "Marking table row 'Document answers' changed from 10 to 5, so rows add up to 20; the task is worth 25"
@@ -175,7 +175,7 @@ variants:
   - id: ck-12-full-url-media
     rule: CK-12
     input_kind: package
-    status: planned
+    status: built
     path: weeks/01-guide.md
     element: wk-01-guide
     planted_change: "Guide body gets an image at https://example.invalid/diagram.png (example.invalid never resolves)"

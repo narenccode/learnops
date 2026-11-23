@@ -1,0 +1,26 @@
+# Author's expected outcome. NOT a reference grade: no scores.
+# Rubric: B8.2 b8-2-wk-03-task (PR #61).
+schema: learnops.testdata.b8-4.expected-outcome/v1
+submission_id: s024
+rubric: b8-2-wk-03-task
+provisional: true
+criteria:
+- criterion: Test list
+  checks:
+  - check: repo_file:TESTS.md
+    expected: pass
+    reason: repo/TESTS.md exists.
+  judgement: does_not_meet
+  rationale: TESTS.md exists, so the check passes, but it holds a shopping list, not questions with expected
+    answers.
+- criterion: Demo still works
+  checks:
+  - check: http_ok:demo_url
+    expected: pass
+    reason: hosting.demo_stub is answers.
+  judgement: meets
+  rationale: The demo opens and answers a question.
+- criterion: Fixes
+  checks: []
+  judgement: does_not_meet
+  rationale: No weak answer is fixed; the report describes colour and font changes.

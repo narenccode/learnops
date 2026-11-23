@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson Processor Demo</title>
+<style>
+  :root { --bg:#fff; --fg:#1d2433; --muted:#5b6475; --card:#f4f6fa; --accent:#2457d6; --err:#b3261e; --ok:#1b7f3b; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#12151c; --fg:#e8ebf2; --muted:#9aa3b5; --card:#1c212c; --accent:#7ea2ff; --err:#ff8a80; --ok:#6fd58c; } }
+  body { margin:0; padding:24px 16px; background:var(--bg); color:var(--fg); font:16px/1.5 system-ui,sans-serif; }
+  main { max-width:860px; margin:0 auto; }
+  h1 { font-size:1.5rem; margin:0 0 4px; } .muted { color:var(--muted); }
+  section { background:var(--card); border-radius:10px; padding:16px; margin:16px 0; }
+  button { background:var(--accent); color:#fff; border:0; border-radius:6px; padding:8px 16px; font-size:1rem; cursor:pointer; }
+  button:disabled { opacity:.5; cursor:default; } input[type=text] { width:100%; padding:8px; box-sizing:border-box; margin:8px 0; }
+  progress { width:100%; height:16px; } .err { color:var(--err); } .ok { color:var(--ok); }
+  video { width:100%; max-height:70vh; background:#000; border-radius:6px; } img { max-width:100%; border-radius:6px; }
+  pre { overflow:auto; background:var(--bg); padding:12px; border-radius:6px; font-size:.85rem; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Lesson Processor Demo</h1>
+  <p class="muted">Local demo: converts one lecture video to 720p H.264/AAC, extracts a poster and writes a lesson manifest. Nothing is uploaded to external services.</p>
+
+  <section>
+    <h2>1. Select a lecture video</h2>
+    <input id="file" type="file" accept=".mp4,.mov,.mkv,.webm,video/*">
+    <div id="info" class="muted"></div>
+    <label for="title">Lesson title</label>
+    <input id="title" type="text" maxlength="120" placeholder="Lesson title">
+    <button id="start" disabled>Process lesson</button>
+    <div id="status" aria-live="polite" style="margin-top:12px"></div>
+    <progress id="bar" value="0" max="1" hidden></progress>
+  </section>
+
+  <section id="result" hidden>
+    <h2>2. Completed lesson</h2>
+    <p id="lessonTitle"></p>
+    <video id="player" controls preload="metadata"></video>
+    <h3>Poster</h3><img id="poster" alt="Poster frame">
+    <h3>Manifest (<a id="manifestLink" target="_blank">lesson.json</a>)</h3>
+    <pre id="manifest"></pre>
+  </section>
+
+  <section>
+    <h2>Processed lessons</h2>
+    <ul id="list"></ul>
+  </section>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const fmtMB = (n) => (n / 1048576).toFixed(1) + " MB";
+let file = null;
+
+function setStatus(text, cls) { $("status").textContent = text; $("status").className = cls || ""; }
+
+$("file").addEventListener("change", () => {
+  file = $("file").files[0] || null;
+  $("start").disabled = !file;
+  if (!file) { $("info").textContent = ""; return; }
+  $("info").textContent = `${file.name} · ${fmtMB(file.size)} · ${file.type || "unknown type"}`;
+  $("title").value = file.name.replace(/\.[^.]+$/, "");
+  const probe = document.createElement("video");
+  probe.preload = "metadata";
+  probe.onloadedmetadata = () => {
+    $("info").textContent += ` · ${probe.videoWidth}×${probe.videoHeight} · ${probe.duration.toFixed(1)} s`;
+    URL.revokeObjectURL(probe.src);
+  };
+  probe.src = URL.createObjectURL(file);
+});
+
+$("start").addEventListener("click", async () => {
+  $("start").disabled = true; $("result").hidden = true;
+  setStatus("Uploading to the local server…"); $("bar").hidden = false; $("bar").removeAttribute("value");
+  const qs = new URLSearchParams({ filename: file.name, title: $("title").value });
+  let res;
+  try { res = await fetch("/api/jobs?" + qs, { method: "POST", body: file }); }
+  catch { setStatus("Could not reach the server. Is it still running?", "err"); $("start").disabled = false; return; }
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    setStatus(body.detail || "Upload failed. Try again.", "err"); $("bar").hidden = true; $("start").disabled = false; return;
+  }
+  poll((await res.json()).job);
+});
+
+async function poll(job) {
+  const s = await (await fetch("/api/jobs/" + job)).json();
+  $("bar").value = s.progress || 0;
+  if (s.status === "running") { setStatus(`${s.step} (${Math.round((s.progress || 0) * 100)}%)`); return setTimeout(() => poll(job), 700); }
+  $("start").disabled = !file; $("bar").hidden = true;
+  if (s.status === "failed") { setStatus("Failed: " + s.error, "err"); return; }
+  setStatus("Lesson ready.", "ok"); show(s.lesson); refresh();
+}
+
+function mediaUrl(lessonKey, name) { return `/media/${lessonKey}/${name}`; }
+
+async function show(key) {
+  $("result").hidden = false;
+  const manifest = await (await fetch(mediaUrl(key, "lesson.json"))).json();
+  $("lessonTitle").textContent = `${manifest.title} · ${manifest.duration_s}s · ${manifest.lesson_id}`;
+  $("player").src = mediaUrl(key, manifest.tracks[0].file);
+  $("poster").src = mediaUrl(key, "poster.jpg");
+  $("player").poster = mediaUrl(key, "poster.jpg");
+  $("manifestLink").href = mediaUrl(key, "lesson.json");
+  $("manifest").textContent = JSON.stringify(manifest, null, 2);
+  $("result").scrollIntoView();
+}
+
+async function refresh() {
+  const lessons = await (await fetch("/api/lessons")).json();
+  $("list").replaceChildren(...lessons.map((m) => {
+    const li = document.createElement("li"), a = document.createElement("a");
+    a.href = "#"; a.textContent = `${m.title} (${m.lesson_id})`;
+    a.onclick = (e) => { e.preventDefault(); show(m.lesson_id); };
+    li.append(a); return li;
+  }));
+  if (!lessons.length) $("list").textContent = "None yet.";
+}
+
+fetch("/api/health").then((r) => r.json()).then((h) => { if (!h.ffmpeg) setStatus("FFmpeg is not installed on the server. See the demo README.", "err"); });
+refresh();
+</script>
+</body>
+</html>

@@ -45,3 +45,6 @@ artifacts/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Lesson processor demo output (generated media)
+processed-lessons/

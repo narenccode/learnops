@@ -1,0 +1,25 @@
+# PROVISIONAL submission. Fictional; written for this project (Apache-2.0).
+schema: learnops.testdata.b8-4.submission/v1
+id: s007
+onlinetext: |-
+  Repository: https://git.lab.invalid/learner-07/pool-rules-helper.git
+  Demo: https://demo.lab.invalid/learner-07/
+  Report: I built a helper that answers questions about the rules of a community pool. The rules
+  fit on one page, so I could check every answer by hand, which mattered more to me than clever
+  matching.
+
+  The first version compared whole sentences and almost never found anything, because people ask
+  in their own words. I switched to counting shared words between the question and each paragraph.
+  That works for most questions, for example opening hours and lockers.
+
+  What went wrong: questions that use a different word than the rules, such as "kids" instead of
+  "children", get the wrong paragraph. I also published the demo with an old copy of the rules at
+  first, so it gave last year's closing time. I now load the rules file at start-up instead of
+  copying the text into the code.
+
+  Next week I want to read the rules from a document and list the questions it answers badly.
+onlinetext_format: plain
+repo_dir: repo
+hosting:
+  publish_repo: true
+  demo_stub: answers
