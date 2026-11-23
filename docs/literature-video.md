@@ -2,7 +2,7 @@
 
 **Module:** Video (M4, Student 4: Nagashree V, `vnaags`).
 **Requirement:** `docs/GETTING-STARTED.md` (Student 4, "Literature survey for **your** module": at least 6 sources, each opened and verified) and PRD C4.12 "Bloom mapping" (Survey, L2: Indian-English speech recognition, lecture segmentation, summarisation, resumable upload protocols).
-**Status:** Draft. **Owner-verified sources: 6 of the required 6 (S2, P1, P2, P5, P9, P10).** The count of six is met. The survey is still a Draft and is NOT complete in coverage: the gaps listed below (lecture segmentation, summarisation, BigBlueButton recordings, WER normalisation) are open. Seven entries (P3, P4, P6, P7, P8, P11, P12) stay **PENDING OWNER VERIFICATION** and do not count.
+**Status:** Draft. **Owner-verified sources: 13 (S2 and P1 to P12); the requirement of 6 is met.** The survey is still a Draft and is NOT complete in coverage: the gaps listed below (lecture-specific segmentation and summarisation, BigBlueButton `metadata.xml`, WER normalisation) are open. The owner states (2026-11-23) that all twelve entries P1 to P12 were opened and verified; the verification is the owner's statement and covers the facts each entry states.
 
 This file is the single consolidated Video-module survey. `docs/GETTING-STARTED.md` allows a survey in `docs/design/<module>.md` §12 or in `docs/literature-<module>.md`; this file uses the second option. Sources are added one at a time, each only after the owner has opened and verified it (`CLAUDE.md` §6a, rule 5: AI tools can invent citations). AI-researched candidates are kept in a separate "Pending entries" section, labelled PENDING OWNER VERIFICATION, and are not counted.
 
@@ -25,33 +25,30 @@ Published results are not LearnOps results. No LearnOps speech evaluation has be
 | P5 | tus resumable upload protocol 1.0.x | Resumable upload | Owner opened the source and confirmed the entry matched it (2026-11-23); the verification covers the facts the entry states, not parts it marks as unread |
 | P9 | W3C, *Web Content Accessibility Guidelines (WCAG) 2.1*, success criterion 1.2.2 *Captions (Prerecorded)* | Captioning accessibility | Owner opened the source and confirmed the entry matched it (2026-11-23); the verification covers the facts the entry states, not parts it marks as unread |
 | P10 | W3C, *WebVTT: The Web Video Text Tracks Format* (Candidate Recommendation Draft, 20 May 2026) | Caption file format (`captions.en.vtt`) | Owner opened the source and confirmed the entry matched it (2026-11-23); the verification covers the facts the entry states, not parts it marks as unread |
+| P3 | Hearst, *Text Tiling: Segmenting Text into Multi-paragraph Subtopic Passages* (Computational Linguistics 23(1), 1997) | Lecture segmentation | Owner opened the source and confirmed the entry matched it (2026-11-23); the verification covers the facts the entry states, not parts it marks as unread |
+| P4 | Atri et al., *See, Hear, Read: Leveraging Multimodality with Guided Attention for Abstractive Text Summarization* (arXiv 2105.09601) | Summarisation | Owner opened the source and confirmed the entry matched it (2026-11-23); the verification covers the facts the entry states, not parts it marks as unread |
+| P6 | IETF Internet-Draft *Resumable Uploads for HTTP* (draft-ietf-httpbis-resumable-upload) | Resumable upload | Owner opened the source and confirmed the entry matched it (2026-11-23); the verification covers the facts the entry states, not parts it marks as unread |
+| P7 | BigBlueButton documentation, recording development page | BigBlueButton recordings | Owner opened the source and confirmed the entry matched it (2026-11-23); the verification covers the facts the entry states, not parts it marks as unread |
+| P8 | BigBlueButton documentation, API page (getRecordings) | BigBlueButton recordings | Owner opened the source and confirmed the entry matched it (2026-11-23); the verification covers the facts the entry states, not parts it marks as unread |
+| P11 | nginx documentation, `client_max_body_size` in `ngx_http_core_module` | Reverse-proxy upload size limit | Owner opened the source and confirmed the entry matched it (2026-11-23); the verification covers the facts the entry states, not parts it marks as unread |
+| P12 | Jurafsky and Martin, *Speech and Language Processing* (3rd ed. draft), chapter 16 *Automatic Speech Recognition* | WER definition (textbook) | Owner opened the source and confirmed the entry matched it (2026-11-23); the verification covers the facts the entry states, not parts it marks as unread |
 
-### Pending entries (AI-researched; P3, P4, P6, P7, P8, P11 and P12 are still PENDING OWNER VERIFICATION)
+### Pending entries
 
-Every entry below was first read by an AI assistant (Claude Code, web fetch, 16 and 22 Nov 2026), **not by the owner**. P1, P2, P5, P9 and P10 have since been opened and compared by the owner, who confirmed that each entry matched (2026-11-23); they are in the verified table above and count. The seven still listed here carry no owner verification and **do not count** towards the six-source requirement. The owner must open each URL, compare it with the entry, and only then move it to the verified table. Metadata is limited to what the fetched page printed; "NOT PRINTED" means the page did not show it and nothing was filled in from memory.
-
-| ID | Source | Area | Status |
-|---|---|---|---|
-| P3 | Hearst, *Text Tiling: Segmenting Text into Multi-paragraph Subtopic Passages* (Computational Linguistics 23(1), 1997) | Lecture segmentation | PENDING OWNER VERIFICATION |
-| P4 | Atri et al., *See, Hear, Read: Leveraging Multimodality with Guided Attention for Abstractive Text Summarization* (arXiv 2105.09601) | Summarisation | PENDING OWNER VERIFICATION |
-| P6 | IETF Internet-Draft *Resumable Uploads for HTTP* (draft-ietf-httpbis-resumable-upload) | Resumable upload | PENDING OWNER VERIFICATION |
-| P7 | BigBlueButton documentation, recording development page | BigBlueButton recordings | PENDING OWNER VERIFICATION |
-| P8 | BigBlueButton documentation, API page (getRecordings) | BigBlueButton recordings | PENDING OWNER VERIFICATION; getRecordings details only partly read |
-| P11 | nginx documentation, `client_max_body_size` in `ngx_http_core_module` | Reverse-proxy upload size limit | PENDING OWNER VERIFICATION (added 2026-11-22) |
-| P12 | Jurafsky and Martin, *Speech and Language Processing* (3rd ed. draft), chapter 16 *Automatic Speech Recognition* | WER definition (textbook) | PENDING OWNER VERIFICATION; only the contents page was read (added 2026-11-22) |
+None. All twelve AI-researched entries (P1 to P12) were first read by an AI assistant (Claude Code, web fetch, 16 and 22 Nov 2026), not by the owner; the owner then opened each source and confirmed it (2026-11-23). Where an entry still says a part of a page was not read, or a fact is UNKNOWN, the owner has not reported otherwise, so that statement stands.
 
 ### Coverage against C4.12 survey topics
 
 | Topic | Verified (owner) | Pending | Gap |
 |---|---|---|---|
-| Indian-English speech recognition | S2, P1, P2 | P12 | No source on technical-lecture WER; P12 (WER definition) has not been opened beyond its contents page; no normalisation source |
-| Lecture segmentation | none | P3 | P3 is 1997 text segmentation, not lecture video or ASR transcripts; no modern lecture-specific source |
-| Summarisation | none | P4 | P4 is conference-talk video; no lecture-transcript summarisation paper read |
-| Resumable upload protocols | P5 | P6, P11 | P11 documents one proxy's limit and its 413 error; still no evidence on browser limits or on real-world robustness |
-| BigBlueButton recordings | none | P7, P8 | The owner confirmed on 2026-11-23 that the P7 page does not mention `metadata.xml`, so its format needs another source (P8 or a lab recording); P8 read only in part |
+| Indian-English speech recognition | S2, P1, P2, P12 | none | No source on technical-lecture WER; whether chapter 16 of P12 defines WER and normalisation was not reported, so it is not recorded; no normalisation source |
+| Lecture segmentation | P3 | none | P3 is 1997 text segmentation, not lecture video or ASR transcripts; no modern lecture-specific source |
+| Summarisation | P4 | none | P4 is conference-talk video; no lecture-transcript summarisation paper read |
+| Resumable upload protocols | P5, P6, P11 | none | P11 documents one proxy's limit and its 413 error; still no evidence on browser limits or on real-world robustness |
+| BigBlueButton recordings | P7, P8 | none | The owner confirmed on 2026-11-23 that the P7 page does not mention `metadata.xml`, so its format needs another source (P8 or a lab recording) |
 | Captioning accessibility and caption format | P9, P10 | none | The entries cover the page headers and the one criterion; the WebVTT cue syntax and the other WCAG criteria were not read |
 
-Summary: 6 of 6 required sources are owner-verified (S2, P1, P2, P5, P9, P10). The count is met; the gaps above are still to be addressed, and P3, P4, P6, P7, P8, P11 and P12 stay pending.
+Summary: 13 owner-verified sources (S2 and P1 to P12); the requirement of 6 is met. The coverage gaps above are still to be addressed.
 
 ---
 
@@ -324,7 +321,7 @@ These are references as listed in the paper. They have **not** been opened or ve
 
 ---
 
-# Entries P1 to P12 (P1, P2, P5, P9 and P10 owner-verified; the rest PENDING OWNER VERIFICATION)
+# Entries P1 to P12 (all owner-verified, 2026-11-23)
 
 Labels in these entries: **Source-stated** (printed on the page read), **Our interpretation** (AI-assistant reasoning about LearnOps; not published evidence), **NOT PRINTED** (not on the page; not filled in). Quotes are short. Abstracts are paraphrased, not verbatim. Only the entries marked OWNER-VERIFIED say the owner opened the source; the others were read by an AI assistant only.
 
@@ -356,7 +353,7 @@ Labels in these entries: **Source-stated** (printed on the page read), **Our int
 
 ## P3. Hearst: Text Tiling
 
-**Status: PENDING OWNER VERIFICATION.**
+**Status: OWNER-VERIFIED (2026-11-23): the owner opened the source and confirmed the entry matched it.**
 
 - **Title (as printed on the ACL Anthology page):** Text Tiling: Segmenting Text into Multi-paragraph Subtopic Passages
 - **Author:** Marti A. Hearst. **Journal:** Computational Linguistics, Volume 23, Number 1, pages 33-64, March 1997 (from the volume title; the Month field is blank). **Publisher:** MIT Press.
@@ -368,7 +365,7 @@ Labels in these entries: **Source-stated** (printed on the page read), **Our int
 
 ## P4. See, Hear, Read (AVIATE / FLORAL)
 
-**Status: PENDING OWNER VERIFICATION.**
+**Status: OWNER-VERIFIED (2026-11-23): the owner opened the source and confirmed the entry matched it.**
 
 - **Authors (printed order):** Yash Kumar Atri, Shraman Pramanick, Vikram Goyal, Tanmoy Chakraborty
 - **Identifier / URL:** arXiv 2105.09601; https://arxiv.org/abs/2105.09601. **Versions:** v1 20 May 2021; v2 15 Sep 2021. **Comment line:** "Journal paper accepted in Knowledge Based Systems" (volume, pages and DOI NOT PRINTED). **Licence:** CC BY 4.0 (arXiv page).
@@ -389,7 +386,7 @@ Labels in these entries: **Source-stated** (printed on the page read), **Our int
 
 ## P6. IETF Internet-Draft: Resumable Uploads for HTTP
 
-**Status: PENDING OWNER VERIFICATION.** **This is a draft, not a standard.**
+**Status: OWNER-VERIFIED (2026-11-23): the owner opened the source and confirmed the entry matched it.** **This is a draft, not a standard.**
 
 - **Title:** Resumable Uploads for HTTP. **Draft name:** draft-ietf-httpbis-resumable-upload.
 - **Editors (as printed):** M. Kleidl (Transloadit), G. Zhang (Apple Inc.), L. Pardue (Apple).
@@ -401,7 +398,7 @@ Labels in these entries: **Source-stated** (printed on the page read), **Our int
 
 ## P7. BigBlueButton documentation: recording (development)
 
-**Status: PENDING OWNER VERIFICATION.**
+**Status: OWNER-VERIFIED (2026-11-23): the owner opened the source and confirmed the entry matched it.**
 
 - **URL:** https://docs.bigbluebutton.org/development/recording (header "Version: 4.0"; the page does not say it applies to a single BBB version). Authorship and publication date: NOT PRINTED. Licence: NOT PRINTED in what was read.
 - **Source-stated:** lifecycle stages Capture, Archive, Sanity, Process, Publish, Playback. Directories: raw `/var/bigbluebutton/recording/raw/<internal-meeting-id>/`, process and publish under `/var/bigbluebutton/recording/{process,publish}/presentation/<internal-meeting-id>/`, playback under `/var/bigbluebutton/published/presentation/<internal-meeting-id>/`. `events.xml` sits in the raw directory (contains e.g. RecordStatusEvent and ParticipantJoinEvent entries). `processing_time` records processing duration. The "presentation" workflow is the default; a separate "video" workflow can produce a single video file (webm shown in a config example). Recordings are requested with `record=true` on the API `create` call.
@@ -412,7 +409,7 @@ Labels in these entries: **Source-stated** (printed on the page read), **Our int
 
 ## P8. BigBlueButton documentation: API (getRecordings)
 
-**Status: PENDING OWNER VERIFICATION. Only partly read.**
+**Status: OWNER-VERIFIED (2026-11-23): the owner opened the source and confirmed the entry matched it.**
 
 - **URL:** https://docs.bigbluebutton.org/development/api (header "Version: 4.0"; about 155k characters; the last ~15k were not read and the middle was only summarised).
 - **Verbatim-read (changelog):** getRecordings gained meta and state filters (1.0); thumbnails and a participants element (1.1); pagination with offset and limit (2.6); totalElements (2.7).
@@ -442,7 +439,7 @@ Labels in these entries: **Source-stated** (printed on the page read), **Our int
 
 ## P11. nginx: `client_max_body_size`
 
-**Status: PENDING OWNER VERIFICATION.** The directive's text was read by an AI assistant (fetched 2026-11-22), not by the owner.
+**Status: OWNER-VERIFIED (2026-11-23): the owner opened the source and confirmed the entry matched it.** The directive's text was read by an AI assistant (fetched 2026-11-22); the owner then opened the page.
 
 - **URL:** https://nginx.org/en/docs/http/ngx_http_core_module.html (directive `client_max_body_size`, contexts http, server, location).
 - **Read:** the default is `1m`; a request body above the configured size gets the **413 (Request Entity Too Large)** error; the page notes that browsers cannot display this error correctly; `0` disables the check.
@@ -452,7 +449,7 @@ Labels in these entries: **Source-stated** (printed on the page read), **Our int
 
 ## P12. Jurafsky and Martin, Speech and Language Processing, chapter 16
 
-**Status: PENDING OWNER VERIFICATION. Only the contents page was read.**
+**Status: OWNER-VERIFIED (2026-11-23): the owner opened the source and confirmed the entry matched it.**
 
 - **URL:** https://web.stanford.edu/~jurafsky/slp3/ (page header "Speech and Language Processing (3rd ed. draft)", release dated 19 August 2026; the contents list "16: Automatic Speech Recognition").
 - **Not read:** the chapter itself. **UNKNOWN:** whether and how it defines word error rate and its normalisation; this must be checked by opening the chapter.
@@ -464,7 +461,7 @@ Labels in these entries: **Source-stated** (printed on the page read), **Our int
 
 # Remaining gaps and risks
 
-1. **Verification:** 6 of 6 required sources are owner-verified (S2, P1, P2, P5, P9, P10). P3, P4, P6, P7, P8, P11 and P12 still need the owner to open each URL; P8 and P3 especially need a full read.
+1. **Verification:** all twelve entries P1 to P12 are owner-verified (owner's statement, 2026-11-23), on top of S2. Anything an entry still says was not read stays unread unless the owner reports otherwise.
 2. **Indian-English lecture ASR:** no source covers technical-lecture WER; P2 covers Indian languages, not English. A WER definition and normalisation source is missing.
 3. **Lecture segmentation and summarisation:** only an old text-segmentation paper (P3) and a conference-talk summarisation paper (P4). The unread Springer article is a lead only.
 4. **Resumable upload:** specifications and one proxy's documented limit (P11); no evidence on browser limits or robustness (the PRD's "upload robustness" evaluation is LearnOps's own to measure).
