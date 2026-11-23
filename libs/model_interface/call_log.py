@@ -29,6 +29,8 @@ from .config import ENV_VARIABLE, TEST_ENVIRONMENT, ConfigError
 from .errors import CallLoggerMissing
 
 Outcome = Literal["ok", "invalid_output", "provider_error", "invalid_meta"]
+# "model" for run(), "speech" for transcribe() (guide, issue #186): both go to shared.model_calls.
+Kind = Literal["model", "speech"]
 
 
 @dataclass(frozen=True)
@@ -36,8 +38,12 @@ class CallRecord:
     task: str
     attempt: int
     outcome: Outcome
-    # B5 model_result_meta fields. For provider_error and invalid_meta the usage fields are null.
+    # A model record holds the B5 model_result_meta fields; a speech record holds the B5
+    # transcript_meta fields (no token counts, no prompt_version). For provider_error and
+    # invalid_meta the usage fields are null.
     meta: Mapping[str, Any]
+    # Last and defaulted, so every existing CallRecord(task, attempt, outcome, meta) is unchanged.
+    kind: Kind = "model"
 
 
 class CallLogger(Protocol):
@@ -57,6 +63,7 @@ class InMemoryCallLogger:
                 record.attempt,
                 record.outcome,
                 copy.deepcopy(dict(record.meta)),
+                record.kind,
             )
         )
 

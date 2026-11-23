@@ -25,7 +25,7 @@ Files: `libs/contracts/validate_examples.py` (run by CI's "Validate contract exa
 in `libs/contracts/tests/test_validate_examples.py`. Shared validator reference EXT-09 (the
 `contracts` library); this is the E1 "Contract" test level ("every example ... validates against
 its schema, CI, every PR"). It does not cover "generated files" from E1, because no module
-generates contract files yet. What is not checked yet is listed in `libs/contracts/README.md`. Each schema and its examples are checked by the engine
+generates contract files yet. What is still not checked is listed in `libs/contracts/README.md`. Each schema and its examples are checked by the engine
 (previous section).
 
 | Rule | PRD | Test(s) |
@@ -39,6 +39,9 @@ generates contract files yet. What is not checked yet is listed in `libs/contrac
 | One extension rule in both layouts (any case; the stem and the suffix word stay lower case), and a missing-example message that names `.json`, `.yaml` and `.yml` | B.0 rule 1, UI-05 | `test_both_example_layouts_work_alone_and_together` (case `any-case-extension`), `test_schema_without_an_example_in_either_layout_is_an_error` |
 | A link to a file outside `contracts/` is followed and reported under the link's own path (documented, not refused) | EXT-09 | `test_a_link_to_a_file_outside_contracts_is_followed_and_reported_under_the_link` |
 | A schema file not named `<name>.v<N>.schema.json` is reported, never skipped, so a repository with only misnamed schemas cannot pass | B.0 rule 1 | `test_misnamed_schema_is_reported_with_its_path`, `test_misnamed_schema_is_not_treated_as_valid_because_a_folder_matches`, `test_only_misnamed_schemas_never_succeed` |
+| An example no schema takes (a flat file or a folder) and a file that is not `.json`, `.yaml` or `.yml` are reported, never skipped; supporting files in a subfolder and hidden files are not | B.0 rule 1, E1 | `test_a_flat_file_that_no_schema_takes_is_an_orphan`, `test_an_example_folder_with_no_schema_is_an_orphan`, `test_a_file_that_is_not_json_or_yaml_is_reported`, `test_supporting_files_in_a_subfolder_and_hidden_files_are_not_reported` |
+| A key repeated in one JSON or YAML object is an error (with line and column in YAML); the same key in different objects and a YAML merge key are fine | B.0 rule 1, E1 | `test_a_key_repeated_in_one_object_is_reported`, `test_the_same_key_in_different_objects_is_fine` |
+| `NaN`, `Infinity` and `-Infinity` in JSON are errors; ordinary numbers still pass | B.0 rule 1, E1 | `test_json_that_python_accepts_but_json_does_not_is_reported`, `test_ordinary_json_numbers_still_pass` |
 
 ## B1 course package contract (v1), Release 0 foundation
 
@@ -1042,3 +1045,27 @@ reported by `pytest -rs`, when ffmpeg or ffprobe is not installed.
 | FR-V-01 (R3) | **In part** | Accepts only `.mp4`, `.mov`, `.mkv`, `.webm`; refuses an empty file, a file over the limit (default 4 GB, `LESSON_MAX_UPLOAD_BYTES`) and a file that is not really a video. **Not implemented:** resumable chunked upload (tus), the 90 MB chunk size and resuming after interruption. The upload is one request that sends the whole file. | `test_unsupported_extension_rejected`, `test_empty_file_rejected`, `test_oversize_rejected`, `test_fake_video_content_rejected`, `test_supported_input_accepted`, `test_rejects_bad_extension`, `test_fake_upload_fails_cleanly` |
 | FR-V-03 (R3) | **In part** | Always converts the upload to `720p.mp4` (H.264/AAC, 720 lines high; it does not check whether the source already qualifies) and extracts `poster.jpg` from 10 % into the video. It checks the result is H.264, 720 lines, AAC when the source has audio, and within 2 s of the source length. **Not implemented:** the optional `360p.mp4` copy and its feature flag, and "when needed" (no skip when the source is already 720p H.264/AAC). | `test_end_to_end_conversion_poster_manifest`, `test_truncated_video_leaves_no_lesson`, `test_real_ffmpeg_failure_cleans_up`, `test_ffmpeg_failure_is_reported_and_cleaned` |
 | FR-V-08 (R3) | **In part** | Writes `lesson.json` last, in a temporary folder, only when `720p.mp4`, `poster.jpg`, `captions.en.vtt`, `transcript.en.json` and `chapters.json` exist and the manifest validates against the B6.3 schema; then moves the folder into place with one rename. A failed run leaves no lesson folder. **Not met in full:** three of the required files are empty placeholders, `slides`, `cues` and `summary` are not produced, and the step is not a retryable job. | `test_end_to_end_conversion_poster_manifest`, `test_truncated_video_leaves_no_lesson`, `test_real_ffmpeg_failure_cleans_up`, `test_ffmpeg_failure_is_reported_and_cleaned`, `test_manifest_without_required_field_is_rejected`, `test_list_lessons_ignores_unfinished_folder`, `test_second_lesson_does_not_overwrite_first` |
+
+## FR-M-02 speech interface library (skeleton, partial), Release 0 foundation
+
+FR-M-02 ("Speech interface library (B5.4)", R0) is partial: the call, the provider rules and the
+checks exist and are mock-tested; no real speech service is called. It is not in the top table
+until it is complete.
+
+| Rule | PRD | Code | Test(s) |
+|---|---|---|---|
+| `transcribe(audio_path, language="en")` returns a B5 transcript (segments and meta) | B5.4 | `libs/model_interface/speech.py` | `test_speech.py`: `test_the_fake_returns_a_valid_b5_transcript`, `test_language_defaults_to_english`, `test_the_package_exports_transcribe` |
+| The provider is chosen by `SPEECH_PROVIDER` with the fake-provider rule; `local` and `hosted` refuse until integrated; a passed provider is for test runs only | B5.2, B5.4, decision 0001 (3) | `speech_providers.py`, `speech.py` | `test_fake_is_refused_outside_a_test_run`, `test_local_and_hosted_refuse_until_a_transport_exists`, `test_an_unset_speech_provider_is_a_clear_error`, `test_passing_a_provider_is_for_test_runs_only` |
+| A bad language or an unreadable audio file is refused before any provider call; the path is never echoed | B5.4, OPS-04 | `speech.py` | `test_a_missing_file_is_refused_before_the_provider_is_called`, `test_a_folder_is_not_an_audio_file`, `test_language_must_be_a_non_empty_string` |
+| The answer is checked against the B5 schema and the time rule; one retry, then `InvalidOutput` with no transcript text; provider failures are not retried | B5.2, B5.4, decision 0001 (5, 9) | `speech.py`, `transcript.py` | `test_one_invalid_answer_is_retried_once`, `test_two_invalid_answers_raise_and_return_nothing`, `test_a_provider_failure_is_not_retried` |
+| Every speech attempt is logged through the same call logger as `run()`: `kind="speech"`, transcript meta only, no audio path or text; failed attempts too, with unknown values null; a logger that fails stops the call; no logger outside a test run refuses before the provider is called; a record is a model record unless it says otherwise | B5.3 "every call", guide (issue #186, 23 Nov 2026) | `call_log.py`, `speech.py` | `test_speech_logging.py`: `test_one_successful_call_logs_one_speech_record`, `test_an_invalid_answer_then_a_good_one_logs_both_attempts`, `test_two_invalid_answers_log_two_failed_attempts_and_raise`, `test_a_provider_failure_is_logged_with_unknown_values`, `test_a_reply_with_a_broken_meta_is_logged_with_unknown_values`, `test_a_record_holds_no_audio_path_and_no_transcript_text`, `test_a_logger_that_fails_stops_the_call`, `test_no_call_logger_outside_a_test_run_refuses_before_the_provider_is_called`, `test_a_call_record_is_a_model_record_unless_it_says_otherwise`, `test_the_in_memory_logger_keeps_the_kind` |
+| `latency_ms` is measured by LearnOps, as a whole number | B5.4, decision 0001 (2) | `speech.py`, `validation.py` | `test_latency_ms_is_measured_here_as_a_whole_number` |
+| Not a rule: time order, and times past `duration_s`; silent audio gives `segments: []` | B5.4, decision 0001 (4, 10, 11) | `speech.py` | `test_segments_out_of_time_order_are_accepted`, `test_times_past_duration_are_accepted`, `test_silent_audio_gives_an_empty_transcript` |
+
+### Not implemented, and therefore not claimed
+
+| What | PRD | Waits for |
+|---|---|---|
+| A real local (lab Whisper-family) or hosted speech service | B5.4 | ADR 0002 (PR #98) and the lab (design Q19 is the model provider, not this) |
+| The PostgreSQL logger for `shared.model_calls` that writes the speech records (and the `kind` column) | B5.3 | Q36 (migration tool, shared schema) |
+| `SPEECH_TIMEOUT_S`, the budget, and splitting long audio (90-minute dry run) | — | Design proposals (grading.md §4.2); lab check |

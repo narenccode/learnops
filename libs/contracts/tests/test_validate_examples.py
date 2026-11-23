@@ -144,9 +144,6 @@ def test_several_schemas_are_each_paired_with_their_own_examples(
             {
                 "thing.v1.meta-local.json": GOOD,
                 "thing.v1.more.yaml": "name: b\n",
-                "thing.v1.json": "{}",  # no word between the stem and the extension
-                "thing.v1.a.b.json": "{}",  # two words
-                "thing.v10.x.json": "{}",  # the stem of another version
             },
             ["thing.v1.meta-local.json", "thing.v1.more.yaml"],
         ),
@@ -323,9 +320,16 @@ def test_schema_without_an_example_in_either_layout_is_an_error(
     contracts = make_tree(tmp_path, examples, raw=flat)
     if empty_folder:
         (contracts / "examples" / "thing.v1").mkdir()
-    problem = only(validate_all(contracts))
+    report = validate_all(contracts)
+    problem = report.problems[0]
     assert problem.code == "missing_example"
     assert problem.schema == THING
+    # Whatever else sits there is reported as well (see the orphan tests); it is never skipped.
+    assert {p.code for p in report.problems[1:]} <= {
+        "orphan_example",
+        "orphan_example_folder",
+        "unsupported_file",
+    }
     assert listed_examples(contracts) == {THING: []}
     for text in (problem.message, problem.hint):  # every accepted extension is named
         assert all(extension in text for extension in (".json", ".yaml", ".yml"))
@@ -466,8 +470,9 @@ def test_misnamed_schema_is_not_treated_as_valid_because_a_folder_matches(
     (contracts / "examples" / folder).mkdir()
     (contracts / "examples" / folder / "bad.json").write_text("{}", encoding="utf-8")
     report = validate_all(contracts)
-    assert codes(report) == ["misnamed_schema"]
+    assert codes(report) == ["misnamed_schema", "orphan_example_folder"]
     assert report.problems[0].schema == f"contracts/{name}"
+    assert report.problems[1].example == f"{PREFIX}{folder}"
     assert report.schema_count == 1  # only thing.v1
     assert report.example_count == 1
     assert report.passed == ((f"{PREFIX}thing.v1/a.json", THING),)
@@ -484,6 +489,156 @@ def test_only_misnamed_schemas_never_succeed(
     assert report.schema_count == 0
     assert main(["--contracts-dir", str(contracts)]) == 1
     assert "0 examples found, 0 schemas" in capsys.readouterr().out
+
+
+# --- examples that no schema takes, and files that are not examples ---------------------------
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "thing.v1.json",  # no word between the stem and the extension
+        "thing.v1.a.b.json",  # two words
+        "thing.v10.x.json",  # the stem of a version that has no schema
+        "other.v1.x.json",  # a schema that does not exist
+        "thing.v1.X.json",  # only the extension is case-insensitive
+        "notes.yaml",
+    ],
+)
+def test_a_flat_file_that_no_schema_takes_is_an_orphan(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], name: str
+) -> None:
+    contracts = make_tree(tmp_path, {"a.json": GOOD}, raw={name: GOOD})
+    problem = only(validate_all(contracts))
+    assert problem.code == "orphan_example"
+    assert problem.example == f"{PREFIX}{name}"
+    assert problem.schema is None
+    assert "No schema matches" in problem.message
+    assert "contract-change" in problem.hint
+    assert main(["--contracts-dir", str(contracts)]) == 1
+    err = capsys.readouterr().err
+    assert f"FAIL {PREFIX}{name}:" in err
+    assert "next: " in err
+
+
+def test_an_example_folder_with_no_schema_is_an_orphan(tmp_path: Path) -> None:
+    contracts = make_tree(tmp_path, {"a.json": GOOD}, raw={"other.v1/a.json": GOOD})
+    report = validate_all(contracts)
+    problem = only(report)
+    assert problem.code == "orphan_example_folder"
+    assert problem.example == f"{PREFIX}other.v1"
+    assert "contracts/other.v1.schema.json does not exist" in problem.message
+    assert report.example_count == 1  # its examples are not counted as checked
+    assert main(["--contracts-dir", str(contracts)]) == 1
+
+
+@pytest.mark.parametrize(
+    ("where", "name", "schema"),
+    [
+        ("folder", "readme.txt", THING),
+        ("folder", "A.JSOM", THING),
+        ("examples", "README.md", None),
+        ("examples", "thing.v1.x.txt", None),
+    ],
+)
+def test_a_file_that_is_not_json_or_yaml_is_reported(
+    tmp_path: Path, where: str, name: str, schema: str | None
+) -> None:
+    raw: Files = {name: "x"} if where == "examples" else {f"thing.v1/{name}": "x"}
+    contracts = make_tree(tmp_path, {"a.json": GOOD}, raw=raw)
+    problem = only(validate_all(contracts))
+    assert problem.code == "unsupported_file"
+    assert problem.schema == schema
+    assert problem.example == (
+        f"{PREFIX}{name}" if where == "examples" else f"{PREFIX}thing.v1/{name}"
+    )
+    assert all(word in problem.hint for word in (".json", ".yaml", ".yml", "subfolder"))
+    assert main(["--contracts-dir", str(contracts)]) == 1
+
+
+def test_supporting_files_in_a_subfolder_and_hidden_files_are_not_reported(
+    tmp_path: Path,
+) -> None:
+    contracts = make_tree(
+        tmp_path,
+        {"a.json": GOOD, "weeks/01.md": "# hi\n", ".gitkeep": ""},
+        raw={".gitkeep": ""},
+    )
+    report = validate_all(contracts)
+    assert report.problems == ()
+    assert report.example_count == 1
+
+
+# --- strict parsing: a repeated key, NaN and Infinity ---------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("name", "content", "key"),
+    [
+        ("a.json", '{"name": "a", "name": "b"}', "name"),
+        ("a.json", '{"name": "a", "items": [{"x": 1, "x": 2}]}', "x"),
+        ("a.json", '{"name": "a", "meta": {"k": 1, "k": 1}}', "k"),
+        ("a.yaml", "name: a\nname: b\n", "name"),
+        ("a.yml", "name: a\nitems:\n  - {x: 1, x: 2}\n", "x"),
+    ],
+    ids=["json", "json-in-array", "json-same-value", "yaml", "yaml-in-array"],
+)
+def test_a_key_repeated_in_one_object_is_reported(
+    tmp_path: Path, name: str, content: str, key: str
+) -> None:
+    contracts = make_tree(tmp_path, {name: content})
+    problem = only(validate_all(contracts))
+    assert problem.code == "unreadable_example"
+    assert problem.example == f"{PREFIX}thing.v1/{name}"
+    assert problem.schema == THING
+    assert (
+        f"the key '{key}' appears more than once in the same object" in problem.message
+    )
+    if name.endswith((".yaml", ".yml")):
+        assert "line " in problem.message and "<unicode string>" not in problem.message
+    assert main(["--contracts-dir", str(contracts)]) == 1
+
+
+@pytest.mark.parametrize(
+    ("name", "content"),
+    [
+        ("a.json", '{"name": "a", "meta": [{"x": 1}, {"x": 2}]}'),  # other objects
+        ("a.json", '{"name": "a", "p": {"x": 1}, "q": {"x": 2}}'),
+        ("a.yaml", "name: a\np: {x: 1}\nq: {x: 2}\n"),
+        # A merge key is not a repeated key: the explicit value wins.
+        ("a.yaml", "base: &b {y: 1}\nname: a\nitem:\n  <<: *b\n  y: 2\n"),
+    ],
+    ids=["json-in-array", "json-siblings", "yaml-siblings", "yaml-merge-override"],
+)
+def test_the_same_key_in_different_objects_is_fine(
+    tmp_path: Path, name: str, content: str
+) -> None:
+    assert validate_all(make_tree(tmp_path, {name: content})).problems == ()
+
+
+@pytest.mark.parametrize("value", ["NaN", "Infinity", "-Infinity"])
+def test_json_that_python_accepts_but_json_does_not_is_reported(
+    tmp_path: Path, value: str
+) -> None:
+    contracts = make_tree(tmp_path, {"a.json": f'{{"name": "a", "count": {value}}}'})
+    problem = only(validate_all(contracts))
+    assert problem.code == "unreadable_example"
+    assert f"{value} is not valid JSON" in problem.message
+    assert main(["--contracts-dir", str(contracts)]) == 1
+
+
+@pytest.mark.parametrize(
+    "number", ["0", "-1", "1e5", "2.5E-3", "123456789012345678901"]
+)
+def test_ordinary_json_numbers_still_pass(tmp_path: Path, number: str) -> None:
+    schema = {
+        **SCHEMA,
+        "properties": {**SCHEMA["properties"], "count": {"type": "number"}},
+    }
+    contracts = make_tree(
+        tmp_path, {"a.json": f'{{"name": "a", "count": {number}}}'}, schema=schema
+    )
+    assert validate_all(contracts).problems == ()
 
 
 # --- CLI ------------------------------------------------------------------------------------
