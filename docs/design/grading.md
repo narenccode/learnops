@@ -955,6 +955,12 @@ Every measurement records the data set, method, date and who measured. Numbers c
 
 (PRD §B8) Fixed inputs and expected outputs for practice drafts, grading drafts, chapters and summaries. Grading inputs come from B8.4. Practice, chapter and summary inputs must be agreed with Students 1 and 4 (Q12). The set and its rubric are fixed before any comparison run.
 
+**Proposal for the guide (Q44, Q45, Q48).** The guide said on issue #186 (23 Nov 2026) that I propose the set size, the agreement rule and the rubric here, and that he settles them when he approves this design. Nothing below is decided.
+- **Set size (proposed).** One chapters item and one summary item for each of the five B8.5 lectures (five each), five practice items, and the grading items from the B8.4 test split. For the grading items the size follows Q45: at least 60 if the authoring effort allows, with the interval always printed next to the rate. The set is fixed before any comparison run. Chapter and summary inputs come from Student 4, practice inputs from Student 1, grading inputs from Student 3, and Student 2 coordinates (Q12); the module owner who supplied an input reviews its expected output, and the guide decides any disagreement.
+- **Rubric (proposed).** A blinded mentor, who does not know the provider, rates each chapters, summary or practice output at one of three levels: acceptable (usable as it is), acceptable with edits (usable after the mentor edits it), or unusable or wrong. Grading drafts use the wrong-answer rule of §11.2 (Q48).
+- **Agreement (proposed).** For grading drafts it stays "within one band" (§11.2, Q44). For chapters, summaries and practice drafts, two rates are reported: the usable share (rated acceptable or acceptable with edits) and the strict share (rated acceptable with no edits). The wrong-answer rate stays the share rated unusable or wrong, so the usable share is one minus the wrong-answer rate for these tasks, and the strict share is the extra information. Transport failures count as reliability, not as wrong answers (§11.2).
+- **Review time (proposed).** The grading protocol of §11.2 (Q46) is reused for every task: gaps over three minutes between interface events are excluded and the number excluded is reported, and the order of manual and assisted work is counterbalanced, so that times are comparable across tasks.
+
 ### 11.5 Proposed test inventory
 
 Planned tests, not yet written. Groups name the test ids; each id maps to one test.
