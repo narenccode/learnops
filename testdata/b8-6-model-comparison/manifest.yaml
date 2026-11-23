@@ -1,0 +1,79 @@
+# B8.6 model comparison set (PRD B8, used by FR-M-03): PROVISIONAL.
+#
+# One fictional transcript as the input for one chapters item and one summary item. Their
+# expected outputs are AUTHOR-DRAFTED and NOT REVIEWED by a mentor. Grading-draft items wait for
+# B8.4 (merged: #31, #189, #190) and its mentor reference grades (Q13). Practice has an author-drafted
+# item; who supplies each input is decided (issue #186, Q12). No comparison has been run; there are
+# no results.
+schema: learnops.testdata.b8-6/v1
+status: provisional
+rubric: rubric.yaml
+
+inputs:
+  - id: t001
+    kind: transcript
+    path: inputs/t001/transcript.en.json
+    source_note: inputs/t001/source.md
+    provisional: true
+
+  - id: b8-4
+    kind: b8-4-set
+    path: testdata/b8-4-synthetic-submissions/manifest.yaml
+    source_note: inputs/b8-4/source.md
+    provisional: true
+
+items:
+  - id: ch-001
+    task: chapters
+    status: ready
+    provisional: true
+    input: t001
+    expected: expected/ch-001/chapters.json
+    expected_review:
+      status: not_reviewed
+    authored_by: Student 3
+    note: Author-drafted expected chapters; NOT REVIEWED. Input t001 stays for now (Student 4 on PR #33); a checked B8.5 transcript is added later as a second input, by its lecture id.
+
+  - id: su-001
+    task: summary
+    status: ready
+    provisional: true
+    input: t001
+    expected: expected/su-001/summary.en.md
+    expected_review:
+      status: not_reviewed
+    authored_by: Student 3
+    note: Author-drafted expected summary; NOT REVIEWED. Input t001 stays for now (Student 4 on PR #33); a checked B8.5 transcript is added later as a second input, by its lecture id.
+
+  - id: gd-001
+    task: grade_draft
+    status: pending
+    provisional: true
+    depends_on:
+      - >-
+        B8.4 reference grades exist: one mentor file per submission in
+        testdata/b8-4-synthetic-submissions/reference-grades/mentor-01/. None exists: B8.4 (33
+        submissions, merged in #31, #189 and #190) has only the author's own grades, labelled as
+        not reference grades.
+      - The guide confirms who the B8.4 mentor is (design Q13, B8.4 O3), and a second mentor on at least 10 submissions (Q47)
+      - GradeDraftInputV1 / GradeDraftV1 agreed (design §4.3d, Q41), before a model is run on this item
+    note: >-
+      Planned: the input is the B8.4 submissions (inputs entry b8-4) and the expected output the
+      mentor reference grades, one file per submission, as `input` and `expected` once they exist.
+      Until then the item is pending and has neither. The mentor review form is in templates/
+      (PROPOSED).
+
+  - id: pr-001
+    task: practice
+    status: ready
+    provisional: true
+    input: t001
+    expected: expected/pr-001/practice.yaml
+    expected_review:
+      status: not_reviewed
+    authored_by: Student 3
+    depends_on:
+      - The practice draft format (FR-S-12 review card, proposed by Student 1 on PR #33) is confirmed by the guide (reported by Harshitha on 18 Nov; the link to his answer is still to be added); design Q12 stays open for the lecture input
+      - Student 4 answered on PR #33: t001 stays the provisional input; a B8.5 transcript becomes a second input only after it is marked checked in the B8.5 inventory (testdata/README.md), referenced by its lecture id (lecture-NN)
+      - The B7 contract (PR #54) defines no draft format, so the format is B8.6's own test-data shape
+    note: Four multiple-choice checkpoint questions (H5P question set) drawn from the fictional transcript t001; author-drafted, NOT REVIEWED. Ordering and the branching scenario are left out of the first version, short answer is not used, and interactive video is for lab demonstrations only.

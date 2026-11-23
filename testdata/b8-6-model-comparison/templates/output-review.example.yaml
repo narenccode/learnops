@@ -1,0 +1,18 @@
+# INVENTED EXAMPLE of a mentor's review of one AI output (chapters, summary or practice). Not a
+# real review. Copy it, replace every value, and keep the keys. The reviewing mentor does not know
+# which provider wrote the draft (draft_id is opaque).
+schema: learnops.testdata.b8-6.output-review/v1
+item: su-001
+draft_id: draft-002
+mentor_ref: mentor-01
+reviewed_at: "2026-11-21"
+blind_to_provider: true
+time_spent_seconds: 180
+level: acceptable_with_edits
+checks:
+  matches_the_input: "yes"
+  answers_or_facts_are_correct: "yes"
+  says_something_the_input_does_not: "yes"
+  usable_without_help: "no"
+edits_needed: Remove the sentence about the second lecture, which the transcript does not mention.
+note: Otherwise the summary states the main points.

@@ -1,0 +1,50 @@
+# B8.6 expected practice draft pr-001: PROVISIONAL, NOT REVIEWED.
+# Author-drafted by Student 3 from the fictional transcript t001 ("Why caches work"). It is one
+# author's reading, not a model output, and no mentor has reviewed it (open decision O2).
+# Format proposed by Student 1 on PR #33 (FR-S-12 review card) and confirmed by the guide (reported by Harshitha on 18 Nov; the link to his answer is still to be added)
+# (design Q12). Multiple-choice checkpoint questions only; no short answer.
+schema: learnops.testdata.b8-6.practice/v1
+item: pr-001
+input: t001
+content_type: question_set
+questions:
+  - id: q1
+    question: Why does a cache work at all?
+    correct_answer: Programs tend to reuse the same data, or the data next to it (locality).
+    distractors:
+      - A disk is always faster than a small memory.
+      - Programs ask for random data every time.
+      - A cache stores a full copy of the disk.
+    explanation: The lecture says caches work because programs tend to use the same data again soon (temporal locality) and data next to what they just used (spatial locality).
+    source: t001
+    source_seconds: [52, 88]
+  - id: q2
+    question: When the cache is full, which item does least recently used (LRU) remove?
+    correct_answer: The item that has not been used for the longest time.
+    distractors:
+      - The item that was added first.
+      - The item that was used most often.
+      - A random item.
+    explanation: LRU removes the item that has not been touched for the longest time. Removing the item added first is first in, first out (FIFO), a different policy.
+    source: t001
+    source_seconds: [122, 140]
+  - id: q3
+    question: Which eviction policy is even simpler than LRU but can remove an item that is still being used?
+    correct_answer: First in, first out (FIFO).
+    distractors:
+      - Least recently used (LRU).
+      - Time to live.
+      - Invalidation.
+    explanation: The lecture says first in, first out is simpler, but it can throw out an item that is still being used every second.
+    source: t001
+    source_seconds: [140, 156]
+  - id: q4
+    question: What problem does giving a cached item a time to live help with?
+    correct_answer: The cached copy becoming stale after the original data changes.
+    distractors:
+      - The cache becoming full.
+      - Data that is far away on a disk or a network.
+      - A program that has no locality.
+    explanation: If the original data changes, the cached copy is stale. A time to live makes the copy expire so that the next request fetches fresh data.
+    source: t001
+    source_seconds: [156, 192]

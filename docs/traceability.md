@@ -1069,3 +1069,31 @@ until it is complete.
 | A real local (lab Whisper-family) or hosted speech service | B5.4 | ADR 0002 (PR #98) and the lab (design Q19 is the model provider, not this) |
 | The PostgreSQL logger for `shared.model_calls` that writes the speech records (and the `kind` column) | B5.3 | Q36 (migration tool, shared schema) |
 | `SPEECH_TIMEOUT_S`, the budget, and splitting long audio (90-minute dry run) | — | Design proposals (grading.md §4.2); lab check |
+
+## B8.6 model comparison set (PROVISIONAL), Release 0 foundation
+
+Files: `testdata/b8-6-model-comparison/` (manifest, rubric, six schemas, one transcript input,
+three expected outputs, two PROPOSED mentor review forms), `libs/contracts/tests/test_b8_6_dataset.py`. B8.6 is a test-data set
+(PRD B8) with no requirement ID of its own. It is the input of FR-M-03 (Release 4), which is not
+implemented, so no row in the table above maps to it.
+
+### Covered by automated tests
+
+| Rule | Source | Test(s) |
+|---|---|---|
+| Manifest and rubric validate against their schemas; expected chapters pass the merged B6.2 validator | Proposed format (set README, O10); PRD B6.2 | `test_schema_is_a_valid_draft_2020_12_schema`, `test_manifest_and_rubric_are_valid`, `test_expected_chapters_are_valid_and_fit_the_transcript` |
+| Fixed inputs linked to expected outputs; pending and placeholder items hold no content | PRD B8 | `test_ids_are_unique_and_references_resolve`, `test_pending_and_placeholder_items_have_no_content` |
+| The grading-draft item gd-001 is pending (B8.4 has no reference grades yet), never copies B8.4, cannot point outside it, and can be `ready` only when the reference grades exist, one per submission; the b8-4 input path is checked when B8.4 is in the tree (skipped, with the reason, when B8.4 is not in the tree) | PRD B8; B8.4 | `test_the_grading_draft_item_is_pending_and_never_copies_b8_4`, `test_a_grading_draft_item_is_ready_only_when_the_reference_grades_exist`, `test_the_b8_4_input_exists_when_the_set_is_present`, `test_a_b8_4_path_cannot_leave_the_b8_4_set` |
+| The practice item pr-001 is a valid review-card draft (question, correct answer, at least two distractors, explanation, source), uses one H5P content type, never interactive video, short answer or the branching scenario, and every source range sits on transcript segment boundaries | PRD FR-S-12, B7 (PR #54 defines no draft format); proposed by Student 1 on PR #33, confirmed by the guide (reported by Harshitha on 18 Nov; the link to his answer is still to be added); design Q12 | `test_expected_practice_is_valid_and_fits_the_input`, `test_practice_rules_catch_a_bad_draft` |
+| Two PROPOSED mentor review forms (grade-draft review and output review): valid schemas, invented examples validate, output-review levels equal the rubric's, a draft id never names a provider, the grade-draft example is consistent (differences, totals, band), no real review is claimed | Proposed format (set README, O2 to O5); design 11.2, Q48 | `test_review_schema_is_a_valid_draft_2020_12_schema`, `test_the_invented_review_examples_validate`, `test_output_review_levels_equal_the_rubric_levels`, `test_a_draft_id_never_names_a_provider`, `test_the_grade_draft_example_is_consistent`, `test_review_forms_reject_missing_blind_and_extra_fields`, `test_no_real_reviews_are_claimed` |
+| Transcript input has the B5.4 shape and consistent times | PRD B5.4 | `test_transcript_has_the_prd_b5_4_shape_and_consistent_times`, `test_time_checks_catch_bad_transcripts`, `test_transcript_validates_against_the_b5_contract` (skipped until B5 is on `main`) |
+| Expected chapters use the B6.2 shape and fit the transcript | PRD B6.2 | `test_expected_chapters_are_valid_and_fit_the_transcript`, `test_chapter_checks_catch_overlap_through_the_b62_validator`, `test_chapter_checks_catch_what_only_the_transcript_knows` |
+| The four FR-M-03 measures are in the rubric | PRD FR-M-03 | `test_rubric_covers_the_measures_and_tasks` |
+| Provisional and not-reviewed labelling; no results claimed | Set README | `test_status_rules`, `test_reviewed_needs_a_reviewer`, `test_expected_summary_is_labelled_until_reviewed`, `test_no_results_are_claimed` |
+| No real data (fictional hosts only, no email addresses, small text files) | PRD B8, C-07 | `test_files_are_small_text_with_no_real_hosts_or_email_addresses` |
+
+### Not met yet, and not tested
+
+- Grading-draft items (wait for B8.4 and its reference grades, Q13) and practice items (Q12).
+- Reviewed expected outputs, a fixed rubric (Q48), measure definitions marked `open`, set size.
+- Any comparison run or result (FR-M-03, Release 4).
