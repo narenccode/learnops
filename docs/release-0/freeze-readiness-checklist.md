@@ -35,7 +35,7 @@ to classify the row was not found. A merged PR is not treated as proof of its ac
 | Item | Status | Note |
 |---|---|---|
 | Video design document | **Draft** on `main` | `git log origin/main -- docs/design/video.md` shows #17, #24, #34, #47 and #93; none sets `Approved`. PR #140 (merged 2026-11-22) completed the draft and recorded the guide's answers; the document is still `Draft`, and the design approval is separate and the guide's alone |
-| PR #100 (S2 Svarah literature audit) | Merged | T13 as a whole is not complete (PR #106: 1 of 6 sources verified) |
+| PR #100 (S2 Svarah literature audit) | Merged | T13: 13 owner-verified sources (S2, P1 to P12), requirement of 6 met; coverage gaps remain |
 | PR #103 (G-6 evaluation preparation) | Merged | Preparation only: no official evaluation has run |
 | PR #96 (App-C 4 record) | Merged | Records NOT VERIFIED; no lab observation |
 | PR #97 | Closed 2026-11-18 | Superseded by #96 |
@@ -98,7 +98,7 @@ items 1 to 5, 7, 8, 10. The Release 0 notes must list where each one goes (not w
 |---|---|---|---|
 | #98 T8 STT ADR 0002 | Draft | Review required | PROPOSED, pending the guide's approval of its six points |
 | #105 T19 report and demo | **Merged** 2026-11-22 | Approved (Harshitha) | Documentation against the provisional criteria P1 to P6; not a completion claim |
-| #106 T13 literature (P1 to P12) | Merged 2026-11-22 | Approved (Harshitha, Akshita21-09) | 1 of 6 sources verified; entries P1 to P12 pending owner verification |
+| #106 T13 literature (P1 to P12) | Merged 2026-11-22 | Approved (Harshitha, Akshita21-09) | Merged with 1 of 6 verified; since then all of P1 to P12 are owner-verified (owner's statement, 2026-11-23) |
 | #129 Lesson Processor demo | Merged 2026-11-23 | Approved (Harshitha, Akshita21-09, guide) | One-PR exception and the `libx264` exception (decision 0013) from the guide |
 | #115 CODEOWNERS after the freeze | Draft | Review required | |
 | #31, #33 B8.4, B8.6 datasets | Open / Draft | Review required | Provisional |
