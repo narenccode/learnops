@@ -110,9 +110,10 @@ def test_entry_is_complete_and_valid(v: dict[str, Any]) -> None:
     assert v["id"].startswith(v["rule"].lower())
 
 
-def test_mapping_is_provisional_until_confirmation_is_recorded() -> None:
+def test_mapping_stays_proposed_until_confirmation_is_recorded() -> None:
     data = yaml.safe_load(EXPECTED.read_text(encoding="utf-8"))
-    assert data["mapping_status"] in {"provisional", "confirmed"}
+    assert data["mapping_status"] in {"proposed", "confirmed"}
+    assert "4111e0c" in data["mapping_source"]
     if data["mapping_status"] == "confirmed":
         confirmation = data["confirmation"] or {}
         assert (

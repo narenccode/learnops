@@ -1,0 +1,32 @@
+# PROVISIONAL submission. Fictional; written for this project (Apache-2.0).
+schema: learnops.testdata.b8-4.submission/v1
+id: s026
+onlinetext: |-
+  Repository: https://git.lab.invalid/learner-26/boat-safety-helper.git
+  Demo: https://demo.lab.invalid/learner-26/
+  Report: Looking back, the most difficult part of this course was not the programming itself but
+  deciding what makes an answer good. My rowing club helper now answers from the club's safety
+  rules, and I test it against a question list each time I change something.
+
+  What went well: putting the rules in a separate document in week 2 made all later changes
+  simpler. The question list from week 3 found two mistakes I would otherwise have published,
+  including one where the helper told beginners they could go out alone.
+
+  The demo was what I worried about most. It still answers in under a second, because the
+  document is short and I read it once when the program starts.
+
+  What I would do differently: matching shared words is fragile. Questions that use different
+  words from the rules still fail, and I fixed them one by one with lists of alternative words.
+  With more time I would try a method that understands meaning, and measure it against the same
+  question list so I know whether it really improves things.
+
+  What I learned: write the test first, keep the document apart from the code, and state plainly
+  in the README what the helper cannot do. I also had two club members try it, and their
+  questions became the final entries on my question list. My Limits section now says it only knows the safety
+  rules and cannot answer questions about membership fees. That came straight from a question a
+  member asked me last month.
+onlinetext_format: plain
+repo_dir: repo
+hosting:
+  publish_repo: true
+  demo_stub: answers

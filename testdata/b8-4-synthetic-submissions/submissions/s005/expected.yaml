@@ -1,0 +1,31 @@
+# Author's expected outcome. NOT a reference grade: no scores.
+# Rubric: B8.2 b8-2-wk-01-task (PR #61).
+schema: learnops.testdata.b8-4.expected-outcome/v1
+submission_id: s005
+rubric: b8-2-wk-01-task
+provisional: true
+criteria:
+- criterion: Working demo
+  checks:
+  - check: http_ok:demo_url
+    expected: fail
+    reason: 'hosting.demo_stub is none: nothing is served.'
+  judgement: does_not_meet
+  rationale: Nothing is served at the demo link.
+- criterion: Repository and README
+  checks:
+  - check: repo_clone
+    expected: pass
+    reason: hosting.publish_repo is true.
+  - check: readme_sections:Setup
+    expected: fail
+    reason: The repository has no README.md.
+  judgement: partly_meets
+  rationale: The repository clones, but there is no README at all.
+- criterion: Reflection
+  checks:
+  - check: word_count:150
+    expected: fail
+    reason: The report has 59 words; the minimum is 150 (PROVISIONAL counting rule).
+  judgement: does_not_meet
+  rationale: Far under 150 words.

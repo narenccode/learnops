@@ -1,0 +1,26 @@
+# Author's expected outcome. NOT a reference grade: no scores.
+# Rubric: B8.2 b8-2-wk-03-task (PR #61).
+schema: learnops.testdata.b8-4.expected-outcome/v1
+submission_id: s020
+rubric: b8-2-wk-03-task
+provisional: true
+criteria:
+- criterion: Test list
+  checks:
+  - check: repo_file:TESTS.md
+    expected: fail
+    reason: repo/TESTS.md does not exist (exact path).
+  judgement: partly_meets
+  rationale: Five questions with expected answers exist, but in test-questions.txt, not TESTS.md, so the
+    file check fails.
+- criterion: Demo still works
+  checks:
+  - check: http_ok:demo_url
+    expected: pass
+    reason: hosting.demo_stub is answers.
+  judgement: meets
+  rationale: The demo opens and answers one of the listed questions.
+- criterion: Fixes
+  checks: []
+  judgement: meets
+  rationale: Two fixes, each explained.

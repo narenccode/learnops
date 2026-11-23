@@ -1,0 +1,5 @@
+When is club night? -> Monday from 7.
+How long is a tournament game clock? -> 30 minutes.
+When do juniors play? -> Saturday mornings.
+Is there a club night on Monday? -> Yes, from 7.
+What clock do tournaments use? -> 30 minutes per player.

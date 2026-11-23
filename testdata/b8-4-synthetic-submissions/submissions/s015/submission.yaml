@@ -1,0 +1,13 @@
+# PROVISIONAL submission. Fictional; written for this project (Apache-2.0).
+schema: learnops.testdata.b8-4.submission/v1
+id: s015
+onlinetext: |-
+  Repository: https://git.lab.invalid/learner-15/joke-bot.git
+  Demo: https://demo.lab.invalid/learner-15/
+  Report: I changed my project to a joke bot because answering from a document was boring. It
+  picks a random joke from a list. Everyone who tried it laughed at least once.
+onlinetext_format: plain
+repo_dir: repo
+hosting:
+  publish_repo: true
+  demo_stub: unrelated_page

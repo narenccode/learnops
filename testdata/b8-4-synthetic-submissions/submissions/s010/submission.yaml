@@ -1,0 +1,14 @@
+# PROVISIONAL submission. Fictional; written for this project (Apache-2.0).
+schema: learnops.testdata.b8-4.submission/v1
+id: s010
+onlinetext: |-
+  Repository: https://git.lab.invalid/learner-10/foodbank-faq.git
+  Demo: https://demo.lab.invalid/learner-10/
+  Report: I made a FAQ bot for food bank volunteers. It works on my computer. The demo page is
+  slow and I am not sure why, maybe the server is far away. I did not have time to look into it
+  before the deadline. Next week I will try to make it faster.
+onlinetext_format: plain
+repo_dir: repo
+hosting:
+  publish_repo: true
+  demo_stub: timeout

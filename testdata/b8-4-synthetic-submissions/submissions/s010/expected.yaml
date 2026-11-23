@@ -1,0 +1,31 @@
+# Author's expected outcome. NOT a reference grade: no scores.
+# Rubric: B8.2 b8-2-wk-01-task (PR #61).
+schema: learnops.testdata.b8-4.expected-outcome/v1
+submission_id: s010
+rubric: b8-2-wk-01-task
+provisional: true
+criteria:
+- criterion: Working demo
+  checks:
+  - check: http_ok:demo_url
+    expected: fail
+    reason: 'hosting.demo_stub is timeout: no HTTP 2xx within 10 s (PRD C3.5).'
+  judgement: does_not_meet
+  rationale: The demo link does not answer within 10 seconds, so a test question cannot be answered.
+- criterion: Repository and README
+  checks:
+  - check: repo_clone
+    expected: pass
+    reason: hosting.publish_repo is true.
+  - check: readme_sections:Setup
+    expected: pass
+    reason: repo/README.md has the headings Setup.
+  judgement: meets
+  rationale: The repository clones and the README has a Setup section, though a very short one.
+- criterion: Reflection
+  checks:
+  - check: word_count:150
+    expected: fail
+    reason: The report has 52 words; the minimum is 150 (PROVISIONAL counting rule).
+  judgement: does_not_meet
+  rationale: Well under 150 words, and it names a problem without saying what went wrong or what was tried.

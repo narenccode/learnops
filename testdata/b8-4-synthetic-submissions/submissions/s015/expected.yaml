@@ -1,0 +1,33 @@
+# Author's expected outcome. NOT a reference grade: no scores.
+# Rubric: B8.2 b8-2-wk-02-task (PR #61).
+schema: learnops.testdata.b8-4.expected-outcome/v1
+submission_id: s015
+rubric: b8-2-wk-02-task
+provisional: true
+criteria:
+- criterion: Repository
+  checks:
+  - check: repo_clone
+    expected: pass
+    reason: hosting.publish_repo is true.
+  judgement: meets
+  rationale: The repository link clones.
+- criterion: Document answers
+  checks:
+  - check: http_ok:demo_url
+    expected: pass
+    reason: hosting.demo_stub is unrelated_page, which returns HTTP 200.
+  judgement: does_not_meet
+  rationale: The page opens, but it shows a joke; nothing answers from a document. The passing check does
+    not meet the criterion.
+- criterion: README
+  checks:
+  - check: readme_sections:Setup,Usage
+    expected: pass
+    reason: repo/README.md has the headings Setup, Usage.
+  judgement: meets
+  rationale: Setup and Usage sections are present, for a different project.
+- criterion: Weak answers
+  checks: []
+  judgement: does_not_meet
+  rationale: No weak answers; the report is about the joke bot.
