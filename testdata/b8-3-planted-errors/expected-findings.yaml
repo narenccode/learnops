@@ -19,11 +19,21 @@
 #   assertable      optional; false = the expected finding is provisional and must not be asserted by a checker test yet
 
 version: 1
-# PROVISIONAL. This mapping comes from docs/design/checker.md section 11.3, which is itself a
-# Proposal. It is NOT an approved expected-results baseline and must not be used as the oracle
-# for the 100 % target (PRD C2.7) until `confirmation` below is filled in by Akshita and the guide.
-# When confirmed, set mapping_status to confirmed and record who confirmed it, where and when.
-mapping_status: provisional
+# PROPOSED, not confirmed. This mapping is the proposal in docs/design/checker.md section 11.3, as
+# merged in commit 4111e0c (#148). It is NOT an approved expected-results baseline and must not be
+# used as the oracle for the 100 % target (PRD C2.7). Per the checker design's author (Akshita), it
+# stays `proposed` until the guide has answered the items below and the design owner (Shraddha)
+# confirms it. Then set mapping_status to confirmed and fill in `confirmation`.
+#   Confirmed by Akshita for the proposal: the rule-to-variant pairing matches the design as merged
+#   in #148, and the package variants (CK-02, 03, 09, 12) can be built without the lab.
+#   Waiting on the guide (checker design section 12):
+#     item 12  severity: "every rule is error" is a Proposal (section 3.4)
+#     item 13  whether CK-01 is also reported with CK-04, CK-05 and CK-13
+#     item 17  the B1/CK boundary (the #118 variants and the CK-06 rows)
+#     item 22  whether the .mbz variants are built on Moodle 4.5 and 5.3
+#   Also: docs/design/checker.md is still Draft.
+mapping_status: proposed
+mapping_source: "docs/design/checker.md section 11.3 at commit 4111e0c"
 confirmation: null   # {by: [...], reference: <issue/PR/decision link>, date: <YYYY-MM-DD>}
 baseline: testdata/b8-2-sample-course   # must report zero findings
 variants:
@@ -55,7 +65,7 @@ variants:
   - id: ck-03-points-total-mismatch
     rule: CK-03
     input_kind: package
-    status: planned
+    status: built
     path: course.yaml
     element: course.total_points
     planted_change: "course.total_points changed from 100 to 120; the four tasks still add up to 100"
@@ -139,7 +149,7 @@ variants:
   - id: ck-09-marking-table-sum
     rule: CK-09
     input_kind: package
-    status: planned
+    status: built
     path: weeks/02-task.md
     element: wk-02-task
     planted_change: "Marking table row 'Document answers' changed from 10 to 5, so rows add up to 20; the task is worth 25"
@@ -175,7 +185,7 @@ variants:
   - id: ck-12-full-url-media
     rule: CK-12
     input_kind: package
-    status: planned
+    status: built
     path: weeks/01-guide.md
     element: wk-01-guide
     planted_change: "Guide body gets an image at https://example.invalid/diagram.png (example.invalid never resolves)"

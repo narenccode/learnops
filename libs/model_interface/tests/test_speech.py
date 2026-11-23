@@ -1,7 +1,7 @@
 """speech.transcribe(audio_path, language) (PRD B5.4, FR-M-02 skeleton).
 
 Mock-tested only: the fake provider is built from the B5 contract example, and local and hosted
-refuse until a real transport exists (design Q19). No audio is decoded and no server is called.
+refuse until a real transport exists (ADR 0002, PR #98). No audio is decoded and no server is called.
 The audio files here are a few synthetic bytes, never a real recording (CLAUDE.md rule 4).
 """
 

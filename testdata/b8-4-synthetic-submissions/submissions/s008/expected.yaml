@@ -1,0 +1,32 @@
+# Author's expected outcome. NOT a reference grade: no scores.
+# Rubric: B8.2 b8-2-wk-01-task (PR #61).
+schema: learnops.testdata.b8-4.expected-outcome/v1
+submission_id: s008
+rubric: b8-2-wk-01-task
+provisional: true
+criteria:
+- criterion: Working demo
+  checks:
+  - check: http_ok:demo_url
+    expected: pass
+    reason: hosting.demo_stub is answers.
+  judgement: meets
+  rationale: The demo link opens and the bot answers a test question about the laser cutter.
+- criterion: Repository and README
+  checks:
+  - check: repo_clone
+    expected: pass
+    reason: hosting.publish_repo is true.
+  - check: readme_sections:Setup
+    expected: fail
+    reason: repo/README.md has no heading Setup.
+  judgement: partly_meets
+  rationale: The repository clones and the README explains setup, but under the heading Install, not Setup;
+    the check fails on the exact name.
+- criterion: Reflection
+  checks:
+  - check: word_count:150
+    expected: pass
+    reason: The report has 151 words; the minimum is 150 (PROVISIONAL counting rule).
+  judgement: meets
+  rationale: Just over 150 words, covering what was built and what went wrong.

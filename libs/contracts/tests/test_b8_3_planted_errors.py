@@ -71,7 +71,12 @@ def _variants() -> list[dict[str, Any]]:
 
 
 def _built() -> list[dict[str, Any]]:
-    return [v for v in _variants() if v["status"] == "built"]
+    """Built package variants (each has a folder of its own)."""
+    return [
+        v
+        for v in _variants()
+        if v["status"] == "built" and v["input_kind"] == "package"
+    ]
 
 
 def _files(root: Path) -> dict[str, bytes]:
@@ -105,9 +110,10 @@ def test_entry_is_complete_and_valid(v: dict[str, Any]) -> None:
     assert v["id"].startswith(v["rule"].lower())
 
 
-def test_mapping_is_provisional_until_confirmation_is_recorded() -> None:
+def test_mapping_stays_proposed_until_confirmation_is_recorded() -> None:
     data = yaml.safe_load(EXPECTED.read_text(encoding="utf-8"))
-    assert data["mapping_status"] in {"provisional", "confirmed"}
+    assert data["mapping_status"] in {"proposed", "confirmed"}
+    assert "4111e0c" in data["mapping_source"]
     if data["mapping_status"] == "confirmed":
         confirmation = data["confirmation"] or {}
         assert (
@@ -120,7 +126,7 @@ def test_mapping_is_provisional_until_confirmation_is_recorded() -> None:
 
 
 def test_ck_12_is_not_asserted_until_body_media_extraction_is_decided() -> None:
-    (ck12,) = [v for v in _variants() if v["rule"] == "CK-12"]
+    (ck12,) = [v for v in _variants() if v["id"] == "ck-12-full-url-media"]
     assert ck12["assertable"] is False
     assert "item 19" in ck12["notes"]
 
@@ -182,6 +188,24 @@ def test_ck_02_change_is_the_one_declared() -> None:
     assert page["type"] == "page"
     assert page["idnumber"] == "wk-01-guide"
     assert page["completion"] == "submit"
+
+
+def test_ck_03_change_is_the_one_declared() -> None:
+    assert "total_points: 120" in _text("ck-03-points-total-mismatch", "course.yaml")
+
+
+def test_ck_09_change_is_the_one_declared() -> None:
+    table = _text("ck-09-marking-table-sum", "weeks/02-task.md")
+    points = [int(m) for m in re.findall(r"^\| [^|]+ \| (\d+) \|", table, re.MULTILINE)]
+    assert sum(points) == 20  # the task stays worth 25 in course.yaml
+
+
+def test_ck_12_url_is_in_the_source_file_only() -> None:
+    # Source-level check only. It does NOT show that the URL reaches media_refs of the B2 model or
+    # that a checker reports CK-12: that depends on checker design section 12 item 19 (open), so
+    # the CK-12 expected finding is marked assertable: false.
+    body = _text("ck-12-full-url-media", "weeks/01-guide.md")
+    assert "https://example.invalid/diagram.png" in body
 
 
 def test_b82_is_unchanged() -> None:

@@ -33,7 +33,7 @@ Course Checker in Release 1.
 |---|---|
 | Folder | `testdata/b8-3-planted-errors/`; the answer file is `expected-findings.yaml` |
 | Source and licence | Fictional, derived from B8.2 (Apache-2.0, the same as the repository). No real learner data |
-| Status | **PARTIAL.** 1 of 13 rules has a built package variant so far (CK-02). 3 more package variants (CK-03, CK-09, CK-12) are `planned` and arrive in the next PRs of this series. 9 need a Moodle `.mbz` made in a lab and are `pending-lab`: no file exists for them |
+| Status | **PARTIAL.** 4 of 13 rules have a built package variant (CK-02, CK-03, CK-09, CK-12). 9 need a Moodle `.mbz` made in a lab and are `pending-lab`: no file exists for them |
 | What the tests prove | The dataset is well formed and every entry maps to a valid CK rule. **They do not show that the checker detects anything.** No checker exists yet; the 100 % target (PRD C2.7) is measured in Release 1 |
 
 **Layout.** `<variant-id>/package/` is a full copy of the B8.2 package with exactly one file changed.
@@ -44,20 +44,20 @@ B8.2 is never changed. The folders `missing-body`, `duplicate-id`, `protected-id
 |---|---|---|---|---|
 | `ck-01-unreachable-by-past-date` | CK-01 | mbz | pending-lab | week 3 guide opens only before 1 Jan 2020 |
 | `ck-02-completion-never-met` | CK-02 | package | built | Page `wk-01-guide` given `completion: submit` |
-| `ck-03-points-total-mismatch` | CK-03 | package | planned | `total_points` 120, tasks add to 100 |
+| `ck-03-points-total-mismatch` | CK-03 | package | built | `total_points` 120, tasks add to 100 |
 | `ck-04-unlock-missing-activity` | CK-04 | mbz | pending-lab | week 3 waits for a removed activity |
 | `ck-05-circular-unlock` | CK-05 | mbz | pending-lab | weeks 2 and 3 wait for each other |
 | `ck-06-duplicate-idnumber` | CK-06 | mbz | pending-lab | two activities share `wk-01-task` |
 | `ck-06-invalid-idnumber` | CK-06 | mbz | pending-lab | idnumber `Week 1 Task` |
 | `ck-07-protected-item-changed` | CK-07 | mbz | pending-lab | Final project max grade 100 to 80 |
 | `ck-08-completion-criteria-missing-item` | CK-08 | mbz | pending-lab | completion criteria name a deleted activity |
-| `ck-09-marking-table-sum` | CK-09 | package | planned | table adds to 20, task worth 25 |
+| `ck-09-marking-table-sum` | CK-09 | package | built | table adds to 20, task worth 25 |
 | `ck-10-no-marking-workflow` | CK-10 | mbz | pending-lab | marking workflow off |
 | `ck-11-graded-practice-h5p` | CK-11 | mbz | pending-lab | practice H5P with grade 10 |
-| `ck-12-full-url-media` | CK-12 | package | planned | image at `https://example.invalid/diagram.png` |
+| `ck-12-full-url-media` | CK-12 | package | built (finding not asserted) | image at `https://example.invalid/diagram.png`; provisional until body-media extraction is decided |
 | `ck-13-unlock-without-completion` | CK-13 | mbz | pending-lab | unlocking task has completion tracking off |
 
-**The mapping is PROVISIONAL.** `expected-findings.yaml` says `mapping_status: provisional` and `confirmation: null`. It is not an approved baseline and not the oracle for the 100 % target until Akshita and the guide confirm it and the confirmation is recorded in the file. CK-12 is also marked `assertable: false`: whether the model builder extracts body media into `media_refs` is open (checker design §12 item 19).
+**The mapping is PROPOSED, not confirmed.** `expected-findings.yaml` says `mapping_status: proposed` (source: `docs/design/checker.md` §11.3 at commit `4111e0c`) and `confirmation: null`. Akshita has confirmed only that the rule-to-variant pairing matches the merged design and that the package variants need no lab; the severities (§12 item 12), the CK-01 overlap (item 13), the B1/CK boundary (item 17) and the Moodle versions (item 22) wait for the guide, and Shraddha as design owner confirms it after that. It is not an approved baseline and not the oracle for the 100 % target until the guide has answered those items and Shraddha, as design owner, confirms it and the confirmation is recorded in the file. CK-12 is also marked `assertable: false`: whether the model builder extracts body media into `media_refs` is open (checker design §12 item 19).
 
 **Reading `expected-findings.yaml`.** Each entry gives the variant `id`, the `rule`, the `element`
 (by idnumber), the `expected` finding (rule, element, severity), the `reason`, and `also_expected`:
@@ -66,6 +66,18 @@ finding and tolerate nothing outside `expected` and `also_expected`. `also_expec
 the open question of whether CK-01 is reported or suppressed when another rule already explains an
 unreachable item (checker design §12 item 13). The mapping comes from `docs/design/checker.md` §11.3
 and is not yet confirmed by the guide.
+
+## B8.4 Synthetic submissions (owner: Student 3), PROVISIONAL
+
+- **Where:** `b8-4-synthetic-submissions/` (details, format and open decisions in its README).
+- **Source:** written for this project by Student 3. Entirely fictional: placeholder learners,
+  invented organisations, reserved `.invalid` URLs. No real learner data, no real course content.
+- **Licence:** Apache-2.0 (decided by the guide, issue #186; PRD C-11).
+- **Status:** 33 submissions against the marking tables of all four B8.2 tasks, in the submission
+  form of PRD B1.5, all in the development split. The count meets the PRD minimum of 30, but there
+  are no mentor reference grades, so the set is not complete (the guide names the mentor, O3). The
+  format still needs an owner's approval (O7). The author's own grades for 25 of them are in
+  `author-grades/`, labelled "author-graded, not reference grades" (guide, issue #186).
 
 ## B8.5 Lecture videos (owner: Student 4), COMPLETE
 

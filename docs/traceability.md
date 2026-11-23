@@ -25,7 +25,7 @@ Files: `libs/contracts/validate_examples.py` (run by CI's "Validate contract exa
 in `libs/contracts/tests/test_validate_examples.py`. Shared validator reference EXT-09 (the
 `contracts` library); this is the E1 "Contract" test level ("every example ... validates against
 its schema, CI, every PR"). It does not cover "generated files" from E1, because no module
-generates contract files yet. What is not checked yet is listed in `libs/contracts/README.md`. Each schema and its examples are checked by the engine
+generates contract files yet. What is still not checked is listed in `libs/contracts/README.md`. Each schema and its examples are checked by the engine
 (previous section).
 
 | Rule | PRD | Test(s) |
@@ -39,6 +39,9 @@ generates contract files yet. What is not checked yet is listed in `libs/contrac
 | One extension rule in both layouts (any case; the stem and the suffix word stay lower case), and a missing-example message that names `.json`, `.yaml` and `.yml` | B.0 rule 1, UI-05 | `test_both_example_layouts_work_alone_and_together` (case `any-case-extension`), `test_schema_without_an_example_in_either_layout_is_an_error` |
 | A link to a file outside `contracts/` is followed and reported under the link's own path (documented, not refused) | EXT-09 | `test_a_link_to_a_file_outside_contracts_is_followed_and_reported_under_the_link` |
 | A schema file not named `<name>.v<N>.schema.json` is reported, never skipped, so a repository with only misnamed schemas cannot pass | B.0 rule 1 | `test_misnamed_schema_is_reported_with_its_path`, `test_misnamed_schema_is_not_treated_as_valid_because_a_folder_matches`, `test_only_misnamed_schemas_never_succeed` |
+| An example no schema takes (a flat file or a folder) and a file that is not `.json`, `.yaml` or `.yml` are reported, never skipped; supporting files in a subfolder and hidden files are not | B.0 rule 1, E1 | `test_a_flat_file_that_no_schema_takes_is_an_orphan`, `test_an_example_folder_with_no_schema_is_an_orphan`, `test_a_file_that_is_not_json_or_yaml_is_reported`, `test_supporting_files_in_a_subfolder_and_hidden_files_are_not_reported` |
+| A key repeated in one JSON or YAML object is an error (with line and column in YAML); the same key in different objects and a YAML merge key are fine | B.0 rule 1, E1 | `test_a_key_repeated_in_one_object_is_reported`, `test_the_same_key_in_different_objects_is_fine` |
+| `NaN`, `Infinity` and `-Infinity` in JSON are errors; ordinary numbers still pass | B.0 rule 1, E1 | `test_json_that_python_accepts_but_json_does_not_is_reported`, `test_ordinary_json_numbers_still_pass` |
 
 ## B1 course package contract (v1), Release 0 foundation
 
@@ -590,11 +593,42 @@ PRD G-2 and C2.7 (FR-C-03, rules CK-01 to CK-13), which is made in Release 1.
 
 | Item | PRD | Test |
 |---|---|---|
-| Package variants, each a B8.2 copy with exactly one changed file, valid under B1. Built so far: CK-02; CK-03, CK-09 and CK-12 are `planned` (next PRs of the series) | B8.3, FR-C-03 | `test_built_variant_changes_exactly_the_declared_file`, `test_built_variant_is_a_valid_b1_package`, `test_ck_02_change_is_the_one_declared` (in `libs/contracts/tests/test_b8_3_planted_errors.py`) |
-| `expected-findings.yaml` (**provisional**: `mapping_status: provisional`, confirmation by Akshita and the guide not yet recorded; CK-12 `assertable: false`): one entry per planted error with a valid CK rule, element, severity and reason; every CK-01 to CK-13 has a variant | B8.3, C2.3 | `test_entry_is_complete_and_valid`, `test_every_ck_rule_has_at_least_one_variant`, `test_ids_are_unique`, `test_every_variant_folder_has_an_entry_and_back`, `test_mapping_is_provisional_until_confirmation_is_recorded`, `test_ck_12_is_not_asserted_until_body_media_extraction_is_decided` |
+| Package variants, each a B8.2 copy with exactly one changed file, valid under B1. Built: CK-02, CK-03, CK-09, CK-12 | B8.3, FR-C-03 | `test_built_variant_changes_exactly_the_declared_file`, `test_built_variant_is_a_valid_b1_package`, `test_ck_02_change_is_the_one_declared`, `test_ck_03_change_is_the_one_declared`, `test_ck_09_change_is_the_one_declared`, `test_ck_12_url_is_in_the_source_file_only` (source text only; the media_refs path is not tested, see §12 item 19) (in `libs/contracts/tests/test_b8_3_planted_errors.py`) |
+| `expected-findings.yaml` (**proposed**: `mapping_status: proposed` from checker design §11.3 at commit `4111e0c`; confirmation waits for the guide's answers on §12 items 12, 13, 17 and 22, then Shraddha; CK-12 `assertable: false`): one entry per planted error with a valid CK rule, element, severity and reason; every CK-01 to CK-13 has a variant | B8.3, C2.3 | `test_entry_is_complete_and_valid`, `test_every_ck_rule_has_at_least_one_variant`, `test_ids_are_unique`, `test_every_variant_folder_has_an_entry_and_back`, `test_mapping_stays_proposed_until_confirmation_is_recorded`, `test_ck_12_is_not_asserted_until_body_media_extraction_is_decided` |
 | B8.2 is unchanged (SHA-256 of every file) and B8.3 holds no secrets or email addresses | B8.2, C-07 | `test_b82_is_unchanged`, `test_no_secrets_or_learner_data` |
-| Nine `.mbz` variants (CK-01, 04, 05, 06 twice, 07, 08, 10, 11, 13) | C-03 | None yet: PENDING MOODLE LAB; the 4.5 and 5.3 question is checker design §12 item 22 |
+| Nine `.mbz` variants (CK-01, 04, 05, 06 twice, 07, 08, 10, 11, 13) from a real lab backup | C-03 | None yet: PENDING MOODLE LAB; the 4.5 and 5.3 question is checker design §12 item 22 |
 | The checker finds 100 % of the planted errors and nothing on B8.2 | C2.7, G-2 | **Not tested**: the checker does not exist (Release 1). The tests above check the dataset only |
+
+## B8.4 synthetic submissions (PROVISIONAL), Release 0 foundation
+
+Files: `testdata/b8-4-synthetic-submissions/` (manifest, four schemas, 33 submissions),
+`libs/contracts/tests/test_b8_4_dataset.py`. B8.4 is a test-data set (PRD B8) with no requirement
+ID of its own, so no row in the table above maps to it. It is the dataset for the PRD C3.7
+agreement criterion (G-5), which belongs to Release 4 work that does not exist yet.
+
+### Covered by automated tests
+
+| Rule | Source | Test(s) |
+|---|---|---|
+| Manifest, submission, expected-outcome and reference-grade documents validate against their schemas | Proposed format (set README, O7) | `test_schema_is_a_valid_draft_2020_12_schema`, `test_manifest_is_valid`, `test_submission_and_expected_outcome_are_valid`, `test_reference_grade_files_are_valid` |
+| Each submission has a repository, a demo link and a short report, in the online-text form of PRD B1.5 (a report file only when there is no `Report:` section) | PRD B8, B1.5 | `test_submission_and_expected_outcome_are_valid`, `test_the_set_exercises_the_b15_forms_and_failures` |
+| The stand-in reader of the online text (B1.5 rules 1 to 7, plain text) and the B1.3 README heading rule give the expected result of every plain submission vector (12) and every README vector (12) in `contracts/test-vectors/submission.v1.json` | PRD B1.3, B1.5 | `test_the_stand_in_reader_gives_the_expected_parts_of_every_plain_vector`, `test_the_stand_in_heading_rule_gives_the_expected_result_of_every_readme_vector` |
+| The expected-outcome schema rejects `score`, `points`, `total` and `grade` at the document, every criterion and every check, whatever the value | PRD B8 (reference grades only from a mentor) | `test_a_score_field_is_rejected_at_every_level`, `test_a_score_field_is_rejected_whatever_its_value`, `test_a_valid_expected_outcome_is_still_accepted` |
+| Every edge-case tag the files can decide agrees with them (README, demo, report length, clone, and the three label tags) | Set README | `test_every_edge_case_tag_agrees_with_the_files` |
+| Submission, rubric, course package and marking table link up; points sum; only the six check names | PRD B1.3, C3.5 | `test_ids_are_unique_and_match_folders`, `test_references_resolve`, `test_rubric_sources_exist_and_match_the_course_package` |
+| Expected outcomes follow the marking table, carry no scores and agree with the files | Proposed (set README) | `test_expected_outcome_follows_the_marking_table`, `test_expected_check_results_agree_with_the_files` |
+| The author's own grades are labelled `author` with `reference_grade: false`, cannot carry a `mentor_ref` or validate as a reference grade, follow the marking table (criteria, score range, total = sum), never give full marks where the expected outcome says a check fails or the criterion is not met, and the eight ungraded submissions are exactly the listed ones | Guide, issue #186; PRD B8.4 (reference grades only from a mentor) | `test_author_grade_files_are_valid_and_labelled`, `test_an_author_grade_cannot_pass_as_a_mentor_grade`, `test_the_ungraded_submissions_are_exactly_the_listed_ones`, `test_a_full_mark_never_contradicts_the_expected_outcome`, `test_the_drift_rule_catches_a_false_full_mark` |
+| Reference-grade cross-field rules (criteria match, score range, total = sum) | PRD B8, C3.3 FR-G-03 (sum) | `test_reference_grade_rules_catch_bad_grades` |
+| At least 30 submissions, every intended level on each of the four B8.2 tasks, all in the development split (the author wrote them all), no editor-HTML submission | PRD B8.4, B1.5 rule 5, design Q47 | `test_the_set_covers_every_intended_level`, `test_the_set_has_at_least_30_submissions_on_all_four_tasks`, `test_every_submission_is_development_and_none_is_editor_html` |
+| No real learner data (fictional hosts only, no email addresses, small text files) | PRD B8, C-07 | `test_no_real_hosts_or_email_addresses`, `test_files_are_small_text` |
+| Provisional labelling | Set README | `test_provisional_set_marks_everything_provisional`, `test_tags_agree_with_expected_outcomes` |
+
+### Not met yet, and not tested
+
+- Reference grades from at least one mentor (none; the guide names the mentor, Q13). The set has 33 submissions, so the size is met, but it is not complete without the grades. The sealed test split (Q47) is not written: every submission is by the same author.
+- Editor HTML as online text (B1.5 rule 5 is unverified until the lab check on Moodle 4.5 and 5.3), and a reader that is not the stand-in: Module 3's extractor does not exist yet.
+- Word-count and heading-matching rules are provisional (Q39). See the open decisions in
+  `testdata/b8-4-synthetic-submissions/README.md`.
 
 ## B8.5 lecture video test data set, Release 0 foundation
 
@@ -995,6 +1029,22 @@ the normalisation rules and the WER target are not decided, and ADR 0002 (T8) is
 - Any speech model's accuracy; the synthetic tests use made-up text only.
 - That an approval cited in an official run exists (a reviewer checks it).
 - Text normalisation, confidence intervals, timing accuracy and speed: not decided, not built.
+
+## Video lesson processor demo (`modules/video/demo/lesson_processor`), partial and local only
+
+A limited local **demonstration; not Release 3 work**, and no design approval is implied (the guide allowed it as a one-PR exception on PR #129; `docs/design/video.md` stays Draft). It implements **only the parts listed below**.
+It has no resumable or chunked (tus) upload, no job queue or worker, no LTI or authentication, no
+Moodle integration, no transcription, chapters, summary or slide index, and no storage adapter.
+`captions.en.vtt`, `transcript.en.json` and `chapters.json` are empty placeholders so the B6.3
+manifest is valid. It uses `libs/media_paths` and `contracts/lesson-manifest.v1.schema.json`
+unchanged. Tests are in `modules/video/demo/tests/`. Tests that need ffmpeg are skipped, and
+reported by `pytest -rs`, when ffmpeg or ffprobe is not installed.
+
+| Requirement | Status | What the demo does | Test(s) |
+|---|---|---|---|
+| FR-V-01 (R3) | **In part** | Accepts only `.mp4`, `.mov`, `.mkv`, `.webm`; refuses an empty file, a file over the limit (default 4 GB, `LESSON_MAX_UPLOAD_BYTES`) and a file that is not really a video. **Not implemented:** resumable chunked upload (tus), the 90 MB chunk size and resuming after interruption. The upload is one request that sends the whole file. | `test_unsupported_extension_rejected`, `test_empty_file_rejected`, `test_oversize_rejected`, `test_fake_video_content_rejected`, `test_supported_input_accepted`, `test_rejects_bad_extension`, `test_fake_upload_fails_cleanly` |
+| FR-V-03 (R3) | **In part** | Always converts the upload to `720p.mp4` (H.264/AAC, 720 lines high; it does not check whether the source already qualifies) and extracts `poster.jpg` from 10 % into the video. It checks the result is H.264, 720 lines, AAC when the source has audio, and within 2 s of the source length. **Not implemented:** the optional `360p.mp4` copy and its feature flag, and "when needed" (no skip when the source is already 720p H.264/AAC). | `test_end_to_end_conversion_poster_manifest`, `test_truncated_video_leaves_no_lesson`, `test_real_ffmpeg_failure_cleans_up`, `test_ffmpeg_failure_is_reported_and_cleaned` |
+| FR-V-08 (R3) | **In part** | Writes `lesson.json` last, in a temporary folder, only when `720p.mp4`, `poster.jpg`, `captions.en.vtt`, `transcript.en.json` and `chapters.json` exist and the manifest validates against the B6.3 schema; then moves the folder into place with one rename. A failed run leaves no lesson folder. **Not met in full:** three of the required files are empty placeholders, `slides`, `cues` and `summary` are not produced, and the step is not a retryable job. | `test_end_to_end_conversion_poster_manifest`, `test_truncated_video_leaves_no_lesson`, `test_real_ffmpeg_failure_cleans_up`, `test_ffmpeg_failure_is_reported_and_cleaned`, `test_manifest_without_required_field_is_rejected`, `test_list_lessons_ignores_unfinished_folder`, `test_second_lesson_does_not_overwrite_first` |
 
 ## FR-M-02 speech interface library (skeleton, partial), Release 0 foundation
 
