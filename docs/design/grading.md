@@ -264,7 +264,7 @@ transcript = speech.transcribe(audio_path, language="en")
 - **`meta`** (guide's decisions in `docs/decisions/0001-b5-model-interface-v1.md`, PR #25): `input_hash`, `temperature`, `seed` and `cost_known` are **not part of v1** (#8); they could be added later as optional fields (PRD §B.0 rule 2). Unknown token counts and cost are `null`, never 0 (#1). A local model with no billed cost reports `0.0` (#2).
 - **Speech.** Callers always receive one transcript with absolute timestamps. Whether the library uploads the whole file or splits it internally is hidden behind the interface and checked in the lab with a 90-minute file (PRD G-7) (lab). `audio_path` must be readable by the calling process; workers on other hosts need the file locally (to be stated in Module 4's design).
 - **Prompts.** Versioned files in `libs/model_interface/prompts/`, each with a `prompt_version` (PRD §B5.3). Layout (proposed): `prompts/<task>/v<N>.md` with `prompt_version` in a front-matter header; a published version is never edited; a change is a new file; a check confirms the file name and header agree.
-- **Logging.** Every call writes `meta` to `shared.model_calls` through an injectable `CallLogger` (a Postgres implementation for services, an in-memory one for tests), so consumers need no database to run unit tests. No raw learner content, prompt text or model output is logged (PRD §B5.3, OPS-04, module rule 6).
+- **Logging.** Every call, model and speech, writes `meta` to `shared.model_calls` through an injectable `CallLogger` (a Postgres implementation for services, an in-memory one for tests), so consumers need no database to run unit tests. No raw learner content, prompt text, model output, audio path or transcript text is logged (PRD §B5.3, OPS-04, module rule 6). **Confirmed by the guide (issue #186, 23 Nov 2026):** speech calls go in the same table as model calls with a `kind` column; the token and prompt-version fields may be empty for a speech row; failed calls are logged too; metadata only; nothing in `contracts/` changes (§5.2 lists the columns).
 
 ### 4.3 Proposed contract text (for the contract owners, via `/contract-change` or before the freeze)
 
@@ -330,7 +330,18 @@ job(id pk, type, site_id, moodle_course_id, version_id null, payload jsonb,
   lease_owner, lease_expires_at, idempotency_key unique, error_code, requested_by,
   created_at, started_at, finished_at)
 worker_heartbeat(worker, host, last_seen; pk (worker, host))
-shared.model_calls    -- defined with B5, owned by Module 3 (PRD §B5.3)
+shared.model_calls    -- defined with B5, owned by Module 3 (PRD §B5.3); one row per model or speech attempt
+  model_calls(id pk, kind in (model, speech), task, attempt,
+    outcome in (ok, invalid_output, provider_error, invalid_meta),
+    provider, model null, latency_ms, cost_estimate null,
+    input_tokens null, output_tokens null, prompt_version null,  -- model rows; empty for speech rows
+    duration_s null,                                             -- speech rows (audio length); empty for model rows
+    created_at)
+  -- Metadata only: there is no column for a prompt, a model output, an audio path or transcript text.
+  -- Decided by the guide (issue #186): the kind column, empty token and prompt-version fields for
+  -- speech, failed calls logged. (proposed) The other names and types: they follow the library's
+  -- CallRecord and the B5 model_result_meta and transcript_meta, and are settled when Module 3's
+  -- migration is written and Student 2 has reviewed it (§5.3, Migrations).
 shared.audit_log, shared.course_link    -- owned by Module 2, used not changed (PRD OPS-06, §B3)
 ```
 
@@ -353,7 +364,7 @@ shared.audit_log, shared.course_link    -- owned by Module 2, used not changed (
 - **Run identity** (proposed for the guide; Q70 stays open). Each grading execution gets a unique run id, linked to its jobs and audit entries, so `--run` has a defined meaning and the same run cannot be started twice by accident. How the id is stored is not decided, and no change to `job` or `shared.audit_log` is proposed here (§12.4).
 
 - **What is stored.** Check evidence (size-capped, marked `learner_originated`), capped excerpts (§9.5), fingerprints and references. No submission files and no cloned repositories are stored. Cloned repositories exist only inside the sandbox and are destroyed with it. A retention job removes expired excerpts, fingerprints and check evidence after `GRADING_RETENTION_DAYS` (the guide sets the value, Q34).
-- **Migrations.** Versioned, each with an up and a down step (PRD OPS-07), each run in one transaction. The down step drops only what its up step created. A migration touches only objects in the grading schema; the shared schema is owned by Module 2 (`course_link`, `audit_log`) and Module 3 (`model_calls`). One migration tool for the whole repository, chosen by Module 2 (Q36). Shared migrations run before module migrations.
+- **Migrations.** Versioned, each with an up and a down step (PRD OPS-07), each run in one transaction. The down step drops only what its up step created. A migration touches only objects in the grading schema; the shared schema is owned by Module 2 (`course_link`, `audit_log`) and Module 3 (`model_calls`). One migration tool for the whole repository, chosen by Module 2 (Q36). Shared migrations run before module migrations. **Confirmed by the guide (issue #186, 23 Nov 2026):** migrations are plain SQL `up` and `down` scripts with a small runner (video design Q7, confirmed 19 Nov); Student 2 settles the shared runner under Q36, so the `model_calls` migration is written in that form and Student 2 reviews it.
 - **Roles.** Application role: read and write on its own schema, read-only on `shared.course_link`, insert-only on `shared.audit_log` and `shared.model_calls`. Sandbox-host role (§9.2.6, revised, Q62): no table grants at all; `EXECUTE` only on a small set of `SECURITY DEFINER` functions that claim a `check` job, extend its lease, and submit its results (`submission_check`, `similarity_fingerprint` and README rows of `submission_excerpt`) under the job's lease token; nothing else.
 - **Media paths.** Not used by this module. Any stored file path is relative (PRD C-08).
 
@@ -423,8 +434,8 @@ Variables are listed here; adding them to `.env.example` is a separate step by t
 | `MODEL_PROVIDER`, `MODEL_NAME`, `MODEL_LOCAL_URL`, `MODEL_HOSTED_API_KEY` | local in the lab | yes |
 | `SPEECH_PROVIDER`, `SPEECH_LOCAL_URL`, `SPEECH_HOSTED_API_KEY` | local in the lab | yes |
 | `MODEL_TIMEOUT_S`, `MODEL_TRANSPORT_RETRIES`, `MODEL_MAX_INPUT_TOKENS`, `MODEL_BUDGET_USD`, `SPEECH_TIMEOUT_S` | 120, 2, from the endpoint, from the guide, scaled | to add (proposed) |
-| `LEARNOPS_ENV` | `test`, `lab` or `production`; `lab` in `.env.example`; unset counts as "not test" | added by the FR-M-01 skeleton (PR #35); not on `main` |
-| `MODEL_ALLOW_FAKE` | `false` in `.env.example`; `true` only with `LEARNOPS_ENV=test`, and any other environment refuses to start | added by the FR-M-01 skeleton (PR #35); not on `main` |
+| `LEARNOPS_ENV` | `test`, `lab` or `production`; `lab` in `.env.example`; unset counts as "not test" | added by the FR-M-01 library (#170 to #176, on `main`) |
+| `MODEL_ALLOW_FAKE` | `false` in `.env.example`; `true` only with `LEARNOPS_ENV=test`, and any other environment refuses to start | added by the FR-M-01 library (#170 to #176, on `main`) |
 | `MODEL_PRICE_FILE` | none: proposed for working out `cost_estimate`; path and format not defined | no; not in `.env.example` or code on any branch (proposed) |
 | `GRADING_JOB_LEASE_S`, `GRADING_JOB_MAX_ATTEMPTS`, `GRADING_WORKER_CONCURRENCY` | 120, 5, 2 | to add (proposed) |
 | `GRADING_CHECKS_DIR`, `GRADING_CLONE_ALLOWED_HOSTS` | placeholder | to add (proposed) |
@@ -805,7 +816,7 @@ With the hosted provider, these items leave the lab. They are listed in the data
 | Similarity fingerprints and flags | `grading.similarity_*` | not sent | `GRADING_RETENTION_DAYS` | Similarity flags |
 | Cloned learner repository | Per-job sandbox work volume on the sandbox host only (§9.2.2) | not sent | Deleted at the end of the run | Machine checks and fingerprints |
 | Drafts, approvals, write attempts | `grading.draft`, `grading.approval`, `write_attempt` | Moodle (approved grade and feedback only) | per project retention | Review, audit, revert |
-| Model call metadata | `shared.model_calls` | not sent | per project retention | Cost and audit; no content |
+| Model and speech call metadata | `shared.model_calls` | not sent | per project retention | Cost and audit; no content, no audio path |
 
 ### 9.5 Learner-controlled content, injection, reproducibility
 
@@ -878,7 +889,7 @@ Marking table missing or invalid: the assignment is skipped; CK-09 in the checke
 
 ## 11. Test plan
 
-The T-numbered tests below are planned: none exists on `main` and none has been run. Other tests do exist: B1 contract tests are on `main`, and B4, B5 and FR-M-01 tests are on unmerged pull requests (#27, #25, #35). "Fake Moodle" is a test double that replays responses recorded in the lab, with fault injection; it is built only after the recordings exist, so it never encodes guesses (Q53).
+The T-numbered tests below are planned and none has been run against a Moodle site; some tests now exist on `main` under other names, such as the `libs/moodle_ws` tests. Other tests do exist: B1 contract tests are on `main`, and B4, B5 and FR-M-01 tests are on `main` (#27, #25, and #170 to #176, which replace #35). The `libs/moodle_ws` tests are on `main` too. "Fake Moodle" is a test double that replays responses recorded in the lab, with fault injection; it is built only after the recordings exist, so it never encodes guesses (Q53).
 
 | Level | What is tested | Test data | Requirement IDs |
 |---|---|---|---|
@@ -1169,28 +1180,28 @@ PRD, the release table or §13 until the guide decides.
 
 One requirement (or one tightly related group) per pull request. "Gate" is something that must be true before the pull request is merged or before its artifact is run. Every pull request updates `docs/traceability.md` and the README where relevant. The order below changes the earlier order so that lab verification comes before any fixture recorded from Moodle.
 
-**Release 0** (foundation; allowed before this document is approved, except where noted):
+**Release 0** (foundation; allowed before this document is approved, except where noted). **Status on 23 Nov 2026:** PRD D1, which changed after this plan was written, moves `libs/lti`, `libs/moodle_ws` and `libs/model_interface` (FR-M-01, FR-M-02) out of Release 0 into the first release that uses them, which for this module is Release 4. Rows 5a to 5g, 7 and 8 are therefore Release 4 work that was done early; the other rows stay Release 0.
 
 | Order | Pull request | Requirements | Depends on | Notes |
 |---|---|---|---|---|
-| 1 | B1 submission rule, check-config schema, examples (Student 1) | B1 | Q32, Q33 | Release 0; examples validate (T35) |
+| 1 | B1 submission rule, check-config schema, examples (Student 1) | B1 | Q33 (Q32 is decided: PRD B1.5, #87) | Release 0; the submission rule is merged (#87); examples validate (T35) |
 | 2 | Marking-table parser in `libs/contracts` (Student 2) | B1.3, CK-09 | 1 | Release 0; T01 |
-| 3 | Lab verification records for the ten B4 §5 checks and §4.1 item 11, and recorded fixtures (with Student 2) | App-C 1 | lab ready | Release 0; results in `docs/decisions/` |
-| 4 | B4 rules, schema and allow-list example (`contracts/moodle-ws.v1.*`; not frozen) | B4 | — | Release 0; T35; the guide allows a draft merge before the lab, but B4 cannot be frozen until row 3's checks pass; all four students approve before the freeze |
-| 5a | `libs/moodle_ws`: errors and messages | B4 (interim FR-G-01, FR-G-06; Q43) | 4 | Release 0; proposed, see the note below |
-| 5b | `libs/moodle_ws`: token wrapper and redaction | B4 (interim FR-G-01, FR-G-06; Q43) | 5a | Release 0; proposed; T05 |
-| 5c | `libs/moodle_ws`: site settings, one token per site | B4 (interim FR-G-01, FR-G-06; Q43) | 5b | Release 0; proposed |
-| 5d | `libs/moodle_ws`: allow-list | B4 (interim FR-G-01, FR-G-06; Q43) | 5c | Release 0; proposed; T04 |
-| 5e | `libs/moodle_ws`: client, transport protocol and draft rule | B4 (interim FR-G-01, FR-G-06; Q43) | 5d | Release 0; proposed; fake transport only |
-| 5f | `libs/moodle_ws`: client adversarial tests and final documentation | B4 (interim FR-G-01, FR-G-06; Q43) | 5e | Release 0; proposed |
-| 5g | `libs/moodle_ws`: real transport, error mapping, normalized models, file download, tests against recorded fixtures | B4 (interim FR-G-01, FR-G-06; Q43) | 3, 5f | Release 0; needs the lab |
-| 6 | B5 contract, PRD text and examples (`contracts/model-interface.v1.schema.json`, decision 0001; not frozen) | FR-M-01, FR-M-02 | Q38 | Release 0; reviewed by Students 1 and 4; T35 |
-| 7, 8 | `libs/model_interface` (registry, errors, retries, budget, `CallLogger`, fake and local providers) and the speech interface (90-minute dry run) | FR-M-01, FR-M-02 | 6 | Release 0; no keys anywhere; T06 to T09; the FR-M-01 skeleton is in PR #35 (see GitHub for its state), which exceeds the 800-line limit; a split into seven stacked pull requests is proposed, not agreed; speech is not started |
-| 9 | Shared schema, migration tool, `shared.course_link` columns documented (Student 2) | OPS-06, OPS-07 | Q36 | Release 0; T11 |
-| 10, 11 | B8.4 generator, development and test splits, reference grades; B8.6 set and rubric (with Students 1 and 4) | B8.4, B8.6 | 1, 2, Q12, Q13 | Release 0; splits sealed |
+| 3 | Lab verification records for the 18 B4 §5 checks (the contract's list), and recorded fixtures (with Student 2) | App-C 1 | lab ready | Release 0; results in `docs/decisions/` |
+| 4 | B4 rules, schema and allow-list example (`contracts/moodle-ws.v1.*`; merged as #27, #64, #150 and #167; the contract still says Draft and is not frozen) | B4 | — | Release 0; T35; the guide allows a draft merge before the lab, but B4 cannot be frozen until row 3's checks pass; all four students approve before the freeze |
+| 5a | `libs/moodle_ws`: errors and messages | B4 (interim FR-G-01, FR-G-06; Q43) | 4 | Release 4 (PRD D1); merged (#151) |
+| 5b | `libs/moodle_ws`: token wrapper and redaction | B4 (interim FR-G-01, FR-G-06; Q43) | 5a | Release 4 (PRD D1); merged (#151 token, #152 redaction); T05 |
+| 5c | `libs/moodle_ws`: site settings, one token per site | B4 (interim FR-G-01, FR-G-06; Q43) | 5b | Release 4 (PRD D1); merged (#151; https only and a refusal of the same token on both sites in #168) |
+| 5d | `libs/moodle_ws`: allow-list | B4 (interim FR-G-01, FR-G-06; Q43) | 5c | Release 4 (PRD D1); merged (#153); T04 |
+| 5e | `libs/moodle_ws`: client, transport protocol and draft rule | B4 (interim FR-G-01, FR-G-06; Q43) | 5d | Release 4 (PRD D1); merged (#153 transport interface, #161 and #162 client guards, #164 outcomes, #165 and #166 the guarded write); fake transport only |
+| 5f | `libs/moodle_ws`: client adversarial tests and final documentation | B4 (interim FR-G-01, FR-G-06; Q43) | 5e | Release 4 (PRD D1); merged with the pieces above (#161 to #168) |
+| 5g | `libs/moodle_ws`: real transport, error mapping, normalized models, file download, tests against recorded fixtures | B4 (interim FR-G-01, FR-G-06; Q43) | 3, 5f | Release 4 (PRD D1); not built; needs the lab |
+| 6 | B5 contract, PRD text and examples (`contracts/model-interface.v1.schema.json`, decision 0001; not frozen) | FR-M-01, FR-M-02 | Q38 | Release 0; merged (#25; not frozen); reviewed by Students 1 and 4; T35 |
+| 7, 8 | `libs/model_interface` (registry, errors, retries, budget, `CallLogger`, fake and local providers) and the speech interface (90-minute dry run) | FR-M-01, FR-M-02 | 6 | Release 4 (PRD D1); no keys anywhere; T06 to T09; FR-M-01 is merged as seven pull requests, #170 to #176 (they replace #35, which is closed); the FR-M-02 speech skeleton is merged (#182); speech logging is in review (#187); a real speech service waits for ADR 0002 (#98) and the lab |
+| 9 | Shared schema, migration tool, `shared.course_link` columns documented (Student 2) | OPS-06, OPS-07 | Q36 | Release 0; T11; not done. Who owns the `shared.course_link` columns is not agreed: the B3 contract says B4, this document says Module 2, and the guide has not decided |
+| 10, 11 | B8.4 generator, development and test splits, reference grades; B8.6 set and rubric (with Students 1 and 4) | B8.4, B8.6 | 1, 2, Q12, Q13 | Release 0; splits sealed. B8.4 is merged (33 submissions in the B1.5 form, #31, #189 and #190, with 25 author grades that are labelled as not reference grades); it is not complete without mentor reference grades (Q13). B8.6 is in #33 (draft) |
 | 12 | Contract freeze gate (Student 2) | PRD §B.0 | 1 to 11 | Release 0; examples, fixtures, round trip, consumer tests pass; lab list recorded; guide approves the PRD amendments |
 
-**Rows 5a to 5f are a proposed sequence, not an approved one.** They divide the library into stacked pull requests, each under the 800-line limit. Row 5a is stacked on PR #27, and none can merge before it. Rows 5a to 5g each name `B4` in the title or description, because the library has no requirement ID of its own (Q43). FR-G-01 and FR-G-06 are interim traces only, and no row here implements them. Nothing in them has been checked against Moodle.
+**Rows 5a to 5g were proposed as a sequence of stacked pull requests.** CLAUDE.md §7 item 9 now says a pull request is built on `main`, never on another unmerged one, so the library merged as separate pull requests built on `main` (#151 to #153 and #161 to #168), each under the 800-line limit. Rows 5a to 5g each name `B4` in the title or description, because the library has no requirement ID of its own (Q43). FR-G-01 and FR-G-06 are interim traces only, and no row here implements them. Nothing in them has been checked against a Moodle site: the B4 lab checks are open.
 
 **Release 4** (starts only when this document is approved):
 
@@ -1218,6 +1229,6 @@ Release 4 work also depends on Release 1 (CK-09) (PRD §D1).
 
 ## 14. Review and approval
 
-- [ ] Owner: I understand and can explain every section.
+- [x] Owner: I understand and can explain every section.
 - [ ] Peer reviewer: checked against the PRD chapter and the contracts; comments resolved.
 - [ ] Guide: approved (sets `Status: Approved`).
