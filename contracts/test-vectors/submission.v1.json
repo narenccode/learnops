@@ -379,6 +379,98 @@
           "words": 5
         }
       }
+    },
+    {
+      "id": "word-count-punctuation-and-url",
+      "title": "Every piece between whitespace is a word: a lone dash counts and a URL is one word",
+      "status": "derived",
+      "covers": [
+        "B1.5-1",
+        "B1.5-2",
+        "B1.5-3",
+        "B1.3-word_count"
+      ],
+      "input": {
+        "onlinetext": "Repository: https://example.org/dana/demo-assistant\nDemo: https://example.org/dana/demo\nReport: Step 1 - see https://example.org/dana/notes for the log.",
+        "onlinetext_format": "plain",
+        "files": []
+      },
+      "expected": {
+        "repository": {
+          "value": "https://example.org/dana/demo-assistant"
+        },
+        "demo": {
+          "value": "https://example.org/dana/demo"
+        },
+        "report": {
+          "value": "Step 1 - see https://example.org/dana/notes for the log.",
+          "source": "onlinetext",
+          "words": 8
+        }
+      }
+    },
+    {
+      "id": "word-count-plain-markdown-kept",
+      "title": "Plain online text has no markup to remove: Markdown symbols are counted as they are",
+      "status": "derived",
+      "covers": [
+        "B1.5-1",
+        "B1.5-2",
+        "B1.5-3",
+        "B1.3-word_count"
+      ],
+      "input": {
+        "onlinetext": "Repository: https://example.org/dana/demo-assistant\nDemo: https://example.org/dana/demo\nReport: **Bold** _claim_ # not a heading",
+        "onlinetext_format": "plain",
+        "files": []
+      },
+      "expected": {
+        "repository": {
+          "value": "https://example.org/dana/demo-assistant"
+        },
+        "demo": {
+          "value": "https://example.org/dana/demo"
+        },
+        "report": {
+          "value": "**Bold** _claim_ # not a heading",
+          "source": "onlinetext",
+          "words": 6
+        }
+      }
+    },
+    {
+      "id": "report-md-with-byte-order-mark",
+      "title": "A report file is read as UTF-8 and a leading byte-order mark is removed: it is not part of the report",
+      "status": "derived",
+      "covers": [
+        "B1.5-1",
+        "B1.5-2",
+        "B1.5-4",
+        "B1.3-word_count"
+      ],
+      "input": {
+        "onlinetext": "Repository: https://example.org/dana/demo-assistant\nDemo: https://example.org/dana/demo",
+        "onlinetext_format": "plain",
+        "files": [
+          {
+            "name": "report.md",
+            "text": "\ufeff# Notes\n\nIt works."
+          }
+        ]
+      },
+      "expected": {
+        "repository": {
+          "value": "https://example.org/dana/demo-assistant"
+        },
+        "demo": {
+          "value": "https://example.org/dana/demo"
+        },
+        "report": {
+          "value": "# Notes\n\nIt works.",
+          "source": "report.md",
+          "words": 4
+        }
+      }
     }
   ],
   "readme_cases": [
@@ -653,6 +745,103 @@
       ],
       "expected": {
         "result": "pass"
+      }
+    },
+    {
+      "id": "readme-case-folding-and-nfc",
+      "title": "Names and headings are compared after NFC and case folding: STRASSE matches Straße, and a decomposed é matches é",
+      "status": "derived",
+      "covers": [
+        "B1.3-readme-headings"
+      ],
+      "check": "readme_sections:Straße,Café",
+      "files": [
+        {
+          "name": "README.md",
+          "text": "# STRASSE\n\n## Cafe\u0301"
+        }
+      ],
+      "expected": {
+        "result": "pass"
+      }
+    },
+    {
+      "id": "readme-runs-of-spaces-are-one",
+      "title": "A run of spaces or tabs inside a heading compares as one space",
+      "status": "derived",
+      "covers": [
+        "B1.3-readme-headings"
+      ],
+      "check": "readme_sections:Getting started",
+      "files": [
+        {
+          "name": "README.md",
+          "text": "## Getting  started\n\n## Next\tsteps"
+        }
+      ],
+      "expected": {
+        "result": "pass"
+      }
+    },
+    {
+      "id": "readme-inline-markup-is-kept",
+      "title": "Inline markup is not removed: the heading text of ## **Setup** is **Setup**, which does not match Setup",
+      "status": "derived",
+      "covers": [
+        "B1.3-readme-headings"
+      ],
+      "check": "readme_sections:Setup",
+      "files": [
+        {
+          "name": "README.md",
+          "text": "## **Setup**"
+        }
+      ],
+      "expected": {
+        "result": "fail",
+        "missing": [
+          "Setup"
+        ]
+      }
+    },
+    {
+      "id": "readme-byte-order-mark-and-crlf",
+      "title": "README.md is read as UTF-8 with a leading byte-order mark removed, and CRLF ends a line like LF",
+      "status": "derived",
+      "covers": [
+        "B1.3-readme-file",
+        "B1.3-readme-headings"
+      ],
+      "check": "readme_sections:Setup,Usage",
+      "files": [
+        {
+          "name": "README.md",
+          "text": "\ufeff# Setup\r\n\r\n## Usage\r\n"
+        }
+      ],
+      "expected": {
+        "result": "pass"
+      }
+    },
+    {
+      "id": "readme-repeated-name-reported-once",
+      "title": "A name listed twice must exist once, and a missing name is reported once",
+      "status": "derived",
+      "covers": [
+        "B1.3-readme-headings"
+      ],
+      "check": "readme_sections:Usage,Usage,Setup",
+      "files": [
+        {
+          "name": "README.md",
+          "text": "# Setup"
+        }
+      ],
+      "expected": {
+        "result": "fail",
+        "missing": [
+          "Usage"
+        ]
       }
     }
   ]

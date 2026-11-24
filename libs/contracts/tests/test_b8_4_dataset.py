@@ -39,6 +39,7 @@ from __future__ import annotations
 
 import json
 import re
+import unicodedata
 from pathlib import Path
 from typing import Any
 
@@ -158,7 +159,8 @@ def read_submission(onlinetext: str, files: dict[str, str]) -> dict[str, Doc]:
         return parts
     for name in ("report.md", "report.txt"):
         if name in files:
-            text = files[name]
+            # Read as UTF-8 with a leading byte-order mark removed (PRD B1.3, word_count).
+            text = files[name].removeprefix("﻿")
             parts["report"] = {
                 "value": text,
                 "source": name,
@@ -174,10 +176,11 @@ def readme_headings(text: str) -> set[str]:
     of 1 to 6 # with at most three leading spaces, a closing # sequence after a space or tab removed,
     surrounding spaces and tabs removed; headings inside a fenced block (``` or ~~~, at most three
     leading spaces, closed by the same character at least as long, or running to the end) and Setext
-    headings do not count. Compared case-insensitively."""
+    headings do not count. A leading byte-order mark is removed and LF, CRLF and CR each end a line;
+    texts are compared by `section_key` (B1.3 "Matching")."""
     headings: set[str] = set()
     fence: str | None = None
-    for line in text.split("\n"):
+    for line in re.split(r"\r\n|\r|\n", text.removeprefix("﻿")):
         opening = FENCE_LINE.match(line)
         if fence is not None:
             if (
@@ -195,14 +198,21 @@ def readme_headings(text: str) -> set[str]:
         if atx:
             body = (atx.group(2) or "").strip(" \t")
             body = re.sub(r"(?:^|[ \t]+)#+$", "", body).strip(" \t")
-            headings.add(body.lower())
+            headings.add(section_key(body))
     return headings
+
+
+def section_key(text: str) -> str:
+    """PRD B1.3 matching: NFC, case folding, and each run of spaces or tabs as one space."""
+    folded = unicodedata.normalize("NFC", unicodedata.normalize("NFC", text).casefold())
+    return re.sub(r"[ \t]+", " ", folded)
 
 
 def readme_sections_result(argument: str, readme: str) -> Doc:
     wanted = [name.strip() for name in argument.split(",")]
     have = readme_headings(readme)
-    missing = [name for name in wanted if name.lower() not in have]
+    # A name listed twice must exist once, and a missing name is reported once (B1.3).
+    missing = list(dict.fromkeys(n for n in wanted if section_key(n) not in have))
     return {"result": "fail", "missing": missing} if missing else {"result": "pass"}
 
 

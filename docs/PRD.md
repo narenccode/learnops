@@ -446,10 +446,24 @@ HTML table in the Moodle assignment description; the grading assistant parses it
       character as the opening fence and is at least as long. A fence that is not closed runs to
       the end of the file.
     - A Setext heading (a line of text underlined with `=` or `-`) is not a heading.
+    - **Matching.** A name and a heading text are compared after Unicode normalisation NFC and
+      case folding, and with each run of spaces or tabs inside them treated as one space, so
+      `Straße` matches the heading `STRASSE` and `Getting started` matches `Getting  started`.
+      Inline markup is not removed: the heading `## **Setup**` has the text `**Setup**`. A name
+      listed twice must exist once, and a missing name is reported once.
+    - The README is read as UTF-8; a leading byte-order mark is removed, and LF, CRLF and CR each
+      end a line. A README that is missing or not valid UTF-8 fails the check, with every listed
+      section missing.
   - `word_count:<n>`: `n` is one or more ASCII digits (`0` to `9`) with no sign, space or
     underscore, and a value of at least 1. It is the minimum number of words in the report. A
     word is a piece of the report text between whitespace. Markup is removed before counting only
     when the report comes from online text (§B1.5); a report file is counted as it is.
+    - Every piece counts, including one that is only punctuation such as `#` or `-`, and a URL is
+      one word. Online text in plain format has no markup to remove, so Markdown symbols in it
+      are counted as they are, as in a report file.
+    - A report file is read as UTF-8, and a leading byte-order mark is removed; it is not part of
+      the report. A report file that is not valid UTF-8 is not defined in v1. Whitespace and
+      character references in editor HTML stay with the HTML details of §B1.5.
   - `http_ok:<field>`: `demo_url` is the only field in v1.
   - An unknown check name fails validation (§C3.5). So does a known check whose argument breaks
     a format defined here, for example `word_count:0` or `word_count:+5` (CK-09). An empty
