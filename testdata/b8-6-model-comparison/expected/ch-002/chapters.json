@@ -1,4 +1,5 @@
 [
+  {"start": 0.0, "end": 22.0, "title": "Consent statement"},
   {"start": 22.0, "end": 40.0, "title": "Introduction"},
   {"start": 40.0, "end": 180.0, "title": "Normalization"},
   {"start": 180.0, "end": 230.0, "title": "Database transactions"},

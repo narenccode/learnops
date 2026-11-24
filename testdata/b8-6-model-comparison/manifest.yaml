@@ -61,7 +61,7 @@ items:
     expected_review:
       status: not_reviewed
     authored_by: Student 4
-    note: Author-drafted expected chapters for B8.5 lecture-05 (chapter and summary inputs come from Student 4, issue #186); NOT REVIEWED. The eight chapter start times are measured by the owner on the recording; the segment times inside a chapter are synthetic (see inputs/t002/source.md).
+    note: Author-drafted expected chapters for B8.5 lecture-05 (chapter and summary inputs come from Student 4, issue #186); NOT REVIEWED. The chapter start times (nine chapters, the first being the spoken consent statement at 0 s) are measured by the owner on the recording; the segment times inside a chapter are synthetic (see inputs/t002/source.md).
 
   - id: su-002
     task: summary
