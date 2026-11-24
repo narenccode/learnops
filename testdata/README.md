@@ -57,15 +57,17 @@ B8.2 is never changed. The folders `missing-body`, `duplicate-id`, `protected-id
 | `ck-12-full-url-media` | CK-12 | package | built (finding not asserted) | image at `https://example.invalid/diagram.png`; provisional until body-media extraction is decided |
 | `ck-13-unlock-without-completion` | CK-13 | mbz | pending-lab | unlocking task has completion tracking off |
 
-**The mapping is PROPOSED, not confirmed.** `expected-findings.yaml` says `mapping_status: proposed` (source: `docs/design/checker.md` §11.3 at commit `4111e0c`) and `confirmation: null`. Akshita has confirmed only that the rule-to-variant pairing matches the merged design and that the package variants need no lab; the severities (§12 item 12), the CK-01 overlap (item 13), the B1/CK boundary (item 17) and the Moodle versions (item 22) wait for the guide, and Shraddha as design owner confirms it after that. It is not an approved baseline and not the oracle for the 100 % target until the guide has answered those items and Shraddha, as design owner, confirms it and the confirmation is recorded in the file. CK-12 is also marked `assertable: false`: whether the model builder extracts body media into `media_refs` is open (checker design §12 item 19).
+**The mapping is PROPOSED, not confirmed.** `expected-findings.yaml` says `mapping_status: proposed` (source: `docs/design/checker.md` §11.3 at commit `4111e0c`) and `confirmation: null`. Akshita has confirmed only that the rule-to-variant pairing matches the merged design and that the package variants need no lab; the guide has since answered the four items it was waiting on ([the guide's answers on issue #112](https://github.com/narenccode/learnops/issues/112#issuecomment-7095842207) (2026-11-23)): all rules are `error` (item 12), CK-01 is not a separate finding for an item explained by CK-04, CK-05 or CK-13 (item 13), a package failing B1 is `not checked` for every CK rule (item 17), and the `.mbz` variants are built on Moodle 5.3 only for Release 0 (item 22). Shraddha, as design owner, still has to confirm the mapping, and the checker design is still `Draft`, so the file stays `proposed`. It is not the oracle for the 100 % target until the confirmation is recorded in the file. CK-12 is also marked `assertable: false`: whether the model builder extracts body media into `media_refs` is open (checker design §12 item 19).
 
 **Reading `expected-findings.yaml`.** Each entry gives the variant `id`, the `rule`, the `element`
 (by idnumber), the `expected` finding (rule, element, severity), the `reason`, and `also_expected`:
-other rules that may fire on the same variant. A future checker test should require the `expected`
-finding and tolerate nothing outside `expected` and `also_expected`. `also_expected: [CK-01]` marks
-the open question of whether CK-01 is reported or suppressed when another rule already explains an
-unreachable item (checker design §12 item 13). The mapping comes from `docs/design/checker.md` §11.3
-and is not yet confirmed by the guide.
+other rules that fire as their own, separate finding on the same variant. A future checker test should
+require the `expected` finding and tolerate nothing outside `expected` and `also_expected`. The guide
+decided that the root cause is reported once (§12 item 13): an item that is unreachable because of CK-04,
+CK-05 or CK-13 is still listed as unreachable with its cause, but it is not a separate CK-01 finding, so
+those entries have `also_expected: []` and say "explained by CK-0x" in `notes`. CK-01 still fires on its
+own variant, where no other rule explains the item. The mapping comes from `docs/design/checker.md` §11.3
+and is not yet confirmed (see above).
 
 ## B8.4 Synthetic submissions (owner: Student 3), PROVISIONAL
 
