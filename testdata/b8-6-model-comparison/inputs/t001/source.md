@@ -7,4 +7,4 @@
 - **Edge cases on purpose:** segment 3 (47–52 s) is a pause with `text: ""` and `words: []`. Segment 9 (140–156 s) has text but `words: []`, as when a provider returns no word timings. Both are valid under B5.4 (decision record 0001 in PR #25).
 - **`meta`:** `provider: fake`, `model: hand-written-fixture`, `latency_ms: 0`, `cost_estimate: 0.0`. No model produced this. `fake` is the B5 test-only provider value. The values are placeholders, not measurements.
 - **Status:** PROVISIONAL. The chapter and summary inputs are still to be agreed with Student 4 (design Q12). This file is not part of B8.5 (Student 4's real lectures).
-- **Licence:** open decision (see the set README).
+- **Licence:** Apache-2.0, decided by the guide for the set (issue #186; see the set README).

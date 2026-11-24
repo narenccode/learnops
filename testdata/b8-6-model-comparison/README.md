@@ -1,7 +1,7 @@
 # B8.6 model comparison set (PROVISIONAL)
 
-**Status: PROVISIONAL.** A proposed format, a proposed rubric, and one fictional transcript with
-author-drafted expected chapters and summary that are **NOT REVIEWED**. No comparison has been
+**Status: PROVISIONAL.** A proposed format, a proposed rubric, and two transcript inputs (the fictional `t001`, and `t002`, derived
+from the checked B8.5 lecture-05 transcript) with author-drafted expected chapters and summaries that are **NOT REVIEWED**. No comparison has been
 run, and nothing here says how well any model performs.
 
 | | |
@@ -11,7 +11,7 @@ run, and nothing here says how well any model performs.
 | Design | `docs/design/grading.md` §11.2 (measures, Q48), §11.4 (B8.6), Q12 (Draft) |
 | Module rule | `modules/grading/CLAUDE.md` rule 7: the fixed set B8.6 and the same prompts for every provider |
 | Tests | `libs/contracts/tests/test_b8_6_dataset.py` |
-| Source | Written for this project by Student 3. Entirely fictional: no recording, no real lecturer, no real course content, no learner data. |
+| Source | `t001` was written for this project by Student 3 and is entirely fictional: no recording, no real lecturer, no real course content, no learner data. `t002` is the reference transcript of B8.5 lecture-05, typed by its speaker and checked, used with her written consent line (decision 0004): it names a real speaker and comes from a real recording, which stays in lab storage and is not in Git. No learner data. |
 | Licence | Apache-2.0 (decided by the guide, issue #186; PRD C-11) |
 
 ## What PRD §B8 requires, and what this set has

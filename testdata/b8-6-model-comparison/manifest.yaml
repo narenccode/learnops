@@ -39,7 +39,7 @@ items:
     expected_review:
       status: not_reviewed
     authored_by: Student 3
-    note: Author-drafted expected chapters; NOT REVIEWED. Input t001 stays for now (Student 4 on PR #33); a checked B8.5 transcript is added later as a second input, by its lecture id.
+    note: Author-drafted expected chapters; NOT REVIEWED. Input t001 is the fictional transcript; the checked B8.5 lecture-05 transcript is the second input t002, with its own item ch-002.
 
   - id: su-001
     task: summary
@@ -50,7 +50,7 @@ items:
     expected_review:
       status: not_reviewed
     authored_by: Student 3
-    note: Author-drafted expected summary; NOT REVIEWED. Input t001 stays for now (Student 4 on PR #33); a checked B8.5 transcript is added later as a second input, by its lecture id.
+    note: Author-drafted expected summary; NOT REVIEWED. Input t001 is the fictional transcript; the checked B8.5 lecture-05 transcript is the second input t002, with its own item su-002.
 
   - id: ch-002
     task: chapters
