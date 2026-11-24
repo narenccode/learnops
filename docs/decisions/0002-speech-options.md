@@ -298,8 +298,8 @@ does not prove it: G-7 covers the whole pipeline.
 
 - **Scoring tool:** `libs/speech_eval` (name), repository commit `e1edd11` (version, PR #103),
   Apache-2.0 (licence), as in section 7.3.
-- **Accuracy-comparison scope (planned for the first baseline run; G-6 and App-C 7 are Release 3, not a Release 0 deliverable):** B8.5 team recordings only, once the set is complete
-  and consented; Whisper-family engines (distilled and quantised Whisper builds are inside the
+- **Accuracy-comparison scope (planned for the first baseline run; G-6 and App-C 7 are Release 3, not a Release 0 deliverable):** B8.5 team recordings only (the set is COMPLETE under decision 0004, PR #169, and
+  consented); Whisper-family engines (distilled and quantised Whisper builds are inside the
   family) run **on the lab VM only**, plus the lab endpoint; metrics are pooled and per-lecture WER
   and the timing checks of section 7.4; no 90-minute test; no hosted provider; no B8.5 audio leaves
   the lab.
