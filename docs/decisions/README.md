@@ -17,6 +17,7 @@ reviewed at each release gate.
 |---|---|---|---|---|
 | B8.1 template course | Built and tested on 5.3 only; 4.5 not tested | [0009](0009-b8-1-template-course.md) | B8.1 only | Before the harness in Release 1, if C-03 stays: rebuild once on 4.5 |
 | B8.2 sample course: restore and merge tests | 5.3 only; 4.5 not tested | [0010](0010-b8-2-sample-course.md) (A5 on PR #61) | B8.2 restore and merge tests only | Release 1, when the template is rebuilt on 4.5 |
+| B8.3 planted-error `.mbz` variants | Built on 5.3 only; 4.5 not tested | [0014](0014-b8-3-mbz-variants-moodle-5-3.md) (guide, issue #112, item 22) | B8.3 `.mbz` variants only; the package variants need no Moodle | Release 1 restore and role-test matrix (PRD D2 item 3): rebuilt on 4.5 |
 | B4 rule R3, lock race on 4.5 | Accepted, documented limitation | B4 contract and grading design | B4 R3 | Not a version exception; it ends when Moodle's behaviour changes |
 | Everything else, including B3/LTI and the checker harness (FR-C-08) | Both 4.5 and 5.3 | PRD C-03 | No exception | — |
 
