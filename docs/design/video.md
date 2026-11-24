@@ -266,8 +266,8 @@ The PRD fixes the stack but not library versions or licences. Versions below wer
 
 | Library | Pinned version | Licence | Why needed | Alternative |
 |---|---|---|---|---|
-| FastAPI | 0.121.0 (verified; the version used by the Video demo, PR #129) | MIT (verified) | Web framework [§A10] | none (stack fixed) |
-| Starlette (installed by FastAPI) | 0.49.3 (verified; fixes CVE-2025-62727, so FastAPI must allow ≥ 0.49.1) | BSD-3-Clause (verified) | Used by FastAPI, including `FileResponse` | none |
+| FastAPI | 0.163.2 (verified; the version used by the Video demo, PR #129; it replaced 0.121.0 so that Starlette could be patched) | MIT (verified) | Web framework [§A10] | none (stack fixed) |
+| Starlette (installed by FastAPI) | 1.3.1 (verified; fixes the five open Dependabot alerts and CVE-2025-62727, so FastAPI must allow ≥ 1.3.1) | BSD-3-Clause (verified) | Used by FastAPI, including `FileResponse` | none |
 | React | 19.3.1 (verified) | MIT (verified) | Front end, static build [§A10] | none (stack fixed) |
 | TypeScript | 7.0.2 (verified) | Apache-2.0 (verified) | Front end [§A10] | none (stack fixed) |
 | Playwright (Python) | 1.65.2 (verified) | Apache-2.0 (verified) | Browser tests [§A10] | none (stack fixed) |

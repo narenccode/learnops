@@ -8,14 +8,14 @@
 # libs/contracts test expects to be unchecked. Keeping these here leaves the shared environment
 # (the `checks` job) without idna. Revisit when the Video module gets its real web service.
 # One pinned version per package, licence in a comment (CLAUDE.md §2.10).
-fastapi==0.121.0   # MIT. Replaces 0.115.6, which allowed Starlette below 0.42 (CVE-2025-62727, fixed in Starlette 0.49.1)
-starlette==0.49.3  # BSD-3-Clause. Pinned on purpose: >= 0.49.1 fixes CVE-2025-62727 (Range header DoS in FileResponse, used by /media); fastapi 0.121.0 allows < 0.50
+fastapi==0.163.2   # MIT. Replaces 0.121.0, which allowed only Starlette below 0.50 and so blocked the Starlette security fixes; 0.163.2 is the newest release that accepts Starlette 1.3.1 (0.164 needs >= 1.6.0)
+starlette==1.3.1   # BSD-3-Clause. Pinned on purpose: 1.3.1 is the first release that fixes all five open Dependabot alerts (GHSA-82w8-qh3p-5jfq, -jp82-jpqv-5vv3, -wqp7-x3pw-xc5r, -x746-7m8f-x49c, -86qp-5c8j-p5mr) and still includes the 0.49.1 fix for CVE-2025-62727 (Range header DoS in FileResponse, used by /media)
 uvicorn==0.34.0    # BSD-3-Clause
 httpx==0.28.1      # BSD-3-Clause. FastAPI's TestClient needs it (modules/video/demo/tests)
 #
-# Installed by these packages, not pinned here. Versions checked on 18 Nov 2026; every licence is
+# Installed by these packages, not pinned here. Versions checked on 24 Nov 2026; every licence is
 # permissive (CLAUDE.md section 2.10), and certifi (MPL-2.0) is used unmodified:
-#   pydantic 2.14.3 (MIT), pydantic-core 2.50.4 (MIT), annotated-types 0.8.0 (MIT),
+#   pydantic 2.14.4 (MIT), pydantic-core 2.50.5 (MIT), annotated-types 0.8.0 (MIT),
 #   annotated-doc 0.0.7 (MIT), typing-inspection 0.4.5 (MIT), typing-extensions 4.16.0 (PSF-2.0),
 #   anyio 4.16.0 (MIT), idna 3.20 (BSD-3-Clause), httpcore 1.0.9 (BSD-3-Clause), h11 0.16.0 (MIT),
-#   click 8.5.1 (BSD-3-Clause), certifi 2026.10.23 (MPL-2.0, unmodified)
+#   click 8.5.1 (BSD-3-Clause), certifi 2026.11.20 (MPL-2.0, unmodified)
