@@ -45,7 +45,7 @@ could be read two ways and nothing in the repository settles it.
 | Source | Requirement |
 |---|---|
 | PRD App-C 8 | "Licence or consent for every B8.5 video." |
-| PRD §B8 (B8.5) | "≥ 5 Indian-English technical lectures (≥ 30 min total, enough for the Release 0 baseline) with reference transcripts; recorded with written consent or openly licensed (licence verified and recorded)" (owner: Student 4) |
+| PRD §B8 (B8.5) | "≥ 5 Indian-English technical lectures (≥ 30 min total, enough for the first word-error-rate baseline run, App-C 7) with reference transcripts; recorded with written consent or openly licensed (licence verified and recorded)" (owner: Student 4) |
 | PRD §A6 | "Lecture videos with reference transcripts can be obtained with permission (§B8.5)." |
 | Decision 0004 | Each speaker writes **one consent line** with their name, the date and the exact sentence `used to test speech recognition; video stays in the lab; transcript published under Apache-2.0`. Recordings stay private and outside Git. Approved transcripts are published under Apache-2.0. Harshitha reviews the reference transcripts. |
 | Decision 0004, completion criteria | At least five recordings; total at least 1800 s; reference transcripts prepared and reviewed; speaker consent lines documented. |

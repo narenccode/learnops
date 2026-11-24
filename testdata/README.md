@@ -109,8 +109,8 @@ and is not yet confirmed (see above).
 - **Stays out of Git:** the video recordings, any audio extracted from them, and any unreviewed
   or model-made transcript draft. They are kept as described in "Original recording storage"
   below. Only outlines and reviewed reference transcripts are committed.
-- **PRD note:** PRD §B8 says "≥ 30 min total, enough for the Release 0 baseline" (updated in
-  #47), which matches the guide's decision above.
+- **PRD note:** PRD §B8 says "≥ 30 min total, enough for the first word-error-rate baseline run, App-C 7" (this text follows
+  the guide's answer on issue #186; an earlier version said "Release 0 baseline"), which matches the guide's decision above.
 
 ### Original recording storage
 
