@@ -31,8 +31,9 @@ from pathlib import Path
 REPOSITORY = "narenccode/learnops"
 TAG = "testdata-b8-1-v1"  # a rebuild gets testdata-b8-1-v2; v1 is kept (guide, P24)
 ASSET = "b8-1-template-course.v1.mbz"
-# PENDING MOODLE LAB: set when the .mbz is uploaded, here and in the README §1 and testdata/README.md.
-SHA256: str | None = None
+# Recorded on 2026-11-23 from the finished backup (12,591 bytes, built on Moodle 5.3+ Build 20261030); also in
+# the README §1 and testdata/README.md. A rebuild is a new asset and a new tag, never an overwrite.
+SHA256: str | None = "b319839079b1b53827d52dc343f93fc9942a9a04c924ddeb030fc6193392963d"
 
 HERE = Path(__file__).resolve().parent
 TARGET = HERE / ASSET
