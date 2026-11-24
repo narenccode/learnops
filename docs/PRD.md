@@ -449,6 +449,8 @@ HTML table in the Moodle assignment description; the grading assistant parses it
     - **Matching.** A name and a heading text are compared after Unicode normalisation NFC and
       case folding, and with each run of spaces or tabs inside them treated as one space, so
       `Straße` matches the heading `STRASSE` and `Getting started` matches `Getting  started`.
+      Other characters are compared as they are: a non-breaking space is not a space, so
+      `Getting started` does not match a heading with a non-breaking space between the words.
       Inline markup is not removed: the heading `## **Setup**` has the text `**Setup**`. A name
       listed twice must exist once, and a missing name is reported once.
     - The README is read as UTF-8; a leading byte-order mark is removed, and LF, CRLF and CR each
@@ -458,6 +460,8 @@ HTML table in the Moodle assignment description; the grading assistant parses it
     underscore, and a value of at least 1. It is the minimum number of words in the report. A
     word is a piece of the report text between whitespace. Markup is removed before counting only
     when the report comes from online text (§B1.5); a report file is counted as it is.
+    - Space, tab and the line ends separate words. Whether other Unicode white space, such as the
+      non-breaking space, separates words is not defined in v1.
     - Every piece counts, including one that is only punctuation such as `#` or `-`, and a URL is
       one word. Online text in plain format has no markup to remove, so Markdown symbols in it
       are counted as they are, as in a report file.

@@ -843,6 +843,27 @@
           "Usage"
         ]
       }
+    },
+    {
+      "id": "readme-non-breaking-space-is-not-a-space",
+      "title": "Only spaces and tabs compare as one space: a heading with a non-breaking space between the words does not match a name with a space",
+      "status": "derived",
+      "covers": [
+        "B1.3-readme-headings"
+      ],
+      "check": "readme_sections:Getting started",
+      "files": [
+        {
+          "name": "README.md",
+          "text": "## Getting\u00a0started"
+        }
+      ],
+      "expected": {
+        "result": "fail",
+        "missing": [
+          "Getting started"
+        ]
+      }
     }
   ]
 }

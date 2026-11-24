@@ -93,6 +93,7 @@ README_CASE_IDS = [
     "readme-inline-markup-is-kept",
     "readme-byte-order-mark-and-crlf",
     "readme-repeated-name-reported-once",
+    "readme-non-breaking-space-is-not-a-space",
 ]
 # The machine checks of PRD C3.5. A check that is named in a vector as the unknown one must not be
 # one of these: a known name is not unknown. A test keeps this set equal to the PRD list.
@@ -642,6 +643,9 @@ def test_prd_b13_has_the_check_formats_and_names_what_it_does_not_define() -> No
         "Online text in plain format has no markup to remove",
         "A report file is read as UTF-8, and a leading byte-order mark is removed",
         "A report file that is not valid UTF-8 is not defined in v1",
+        "Space, tab and the line ends separate words",
+        "such as the non-breaking space, separates words is not defined in v1",
+        "a non-breaking space is not a space",
     ):
         assert phrase in text, phrase
     # The finer Markdown details are decided (the guide, 2026-11-16), so they are no longer listed
