@@ -7,6 +7,7 @@ performs the adoption test and the tag (PRD §D2 items 7 and 8; `docs/RELEASING.
 four more commits, #130, #142, #145 and #147, merged). The first audit was at `3abbc02` on
 2026-11-16; 41 commits have merged since, and the PRD changed what Release 0 contains (see below). GitHub state was queried with `gh` on the audit date and changes quickly; re-check before
 relying on it.
+**Refresh 2026-11-23** (`origin/main` `dedf578`, after #169 and #129 merged): only the B8.5 rows, the #129 row and the owner list were updated; no other row was re-read, and the verdict is unchanged.
 
 **What changed in the PRD since the first audit (PRs #113 and #116).** Release 0 (PRD §D1) now
 contains: lab VMs ready (A11); repository, CI, coding standards; contracts B1 to B8 v1 **frozen**;
@@ -16,7 +17,7 @@ a design document per module approved. The libraries `lti`, `moodle_ws` and `mod
 uses them**, and "the Release 0 notes list where each one goes". Earlier versions of this checklist
 (and of the report in PR #105) counted those items against Release 0; they no longer are.
 
-**Sibling documents (other sessions, not duplicated):** PR #105 adds the Release 0 report, demo
+**Sibling documents (other sessions, not duplicated):** PR #105 (merged 2026-11-22) added the Release 0 report, demo
 script and traceability needs under the same folder; PR #106 the literature entries (T13); PR #98
 the speech options record (T8). PR #103 (G-6 evaluation preparation, T9) **merged** after review.
 
@@ -33,8 +34,8 @@ to classify the row was not found. A merged PR is not treated as proof of its ac
 
 | Item | Status | Note |
 |---|---|---|
-| Video design document | **Draft** on `main` | `git log origin/main -- docs/design/video.md` shows #17, #24, #34, #47 and #93; none sets `Approved`. Draft PR #140 completes it and records the guide's answers; the design approval is separate and the guide's alone |
-| PR #100 (S2 Svarah literature audit) | Merged | T13 as a whole is not complete (PR #106: 1 of 6 sources verified) |
+| Video design document | **Draft** on `main` | `git log origin/main -- docs/design/video.md` shows #17, #24, #34, #47 and #93; none sets `Approved`. PR #140 (merged 2026-11-22) completed the draft and recorded the guide's answers; the document is still `Draft`, and the design approval is separate and the guide's alone |
+| PR #100 (S2 Svarah literature audit) | Merged | T13: 13 owner-verified sources (S2, P1 to P12), requirement of 6 met; coverage gaps remain |
 | PR #103 (G-6 evaluation preparation) | Merged | Preparation only: no official evaluation has run |
 | PR #96 (App-C 4 record) | Merged | Records NOT VERIFIED; no lab observation |
 | PR #97 | Closed 2026-11-18 | Superseded by #96 |
@@ -64,10 +65,10 @@ to classify the row was not found. A merged PR is not treated as proof of its ac
 | Test data B8.2 sample course | **Implemented, not verified** | Package and dataset test merged (#61, decision 0010) |
 | Test data B8.3 planted-error courses | **Not started** | No PR or file found |
 | Test data B8.4 synthetic submissions | **Not ready** | PR #31 (open): provisional pilot of 6; the PRD asks for at least 30 |
-| Test data B8.5 lecture videos | **Blocked** | Checker and tests merged (#82, #89); inventory hashes (#99). 0 of 5 consent lines, no transcripts, 338 s of 1800 s measured; see the B8.5 evidence document |
+| Test data B8.5 lecture videos | **Implemented, not verified** | On `main` since #169: five lectures (2380 s), outlines, transcripts marked `checked`, four consent lines; COMPLETE under decision 0004. Not verified: durations, hashes, file names, official-set provenance (G-8) and speaker briefings are the owner's statements; no word error rate. See the B8.5 evidence document (2026-11-20 audit, history) |
 | Test data B8.6 model comparison set | **Not ready** | PR #33 (open, draft): "one transcript" |
 | App-C item 6 (LTI library and licence) | **Awaiting guide** | `docs/decisions/0001-lti-library.md` is `Proposed`, pending the guide's review. Two files are numbered `0001` (`0001-lti-library.md` and `0001-b5-model-interface-v1.md`); the guide decides which to renumber |
-| App-C item 9 (Moodle 5.3 AI features) | **Not started** | No decision record found. The guide's answer on draft PR #140 puts it in scope for Student 4 |
+| App-C item 9 (Moodle 5.3 AI features) | **Source-checked; lab verification pending** | The decision record **exists on `main`**: `docs/decisions/0012-app-c-9-moodle-ai-features.md` (PR #156, merged 2026-11-22). It is a source-research record, not an implementation: it does not show that anything is implemented or verified in LearnOps. It is source-checked, **not lab-verified**: the lab Moodle 5.3 site and Moodle 4.5 were not looked at. **Guide approval of its proposed outcome is a separate outstanding action.** The guide's answer on PR #140 put it in scope for Student 4 |
 | Lab VMs ready (A11) | **Unknown / Blocked** | The guide said on issue #55 that the lab Moodle 4.5 and 5.3 sites exist (2026-11-11) and gave an owner an account on 5.3 (2026-11-14); no A11 readiness record exists |
 | Design document per module approved | **Partly done: 1 of 4** | `studio.md` is `Approved` (PR #147, 2026-11-20); `grading.md` is `In review`; `checker.md` and `video.md` are `Draft`. The guide approves the other three |
 | CI and repository standards | **Completed** | `ci` succeeded on `main` `5f3a794` (and the two commits before it); review bot and CODEOWNERS exist |
@@ -86,21 +87,19 @@ items 1 to 5, 7, 8, 10. The Release 0 notes must list where each one goes (not w
 | 4 | BBB recording metadata | Release 3 (FR-V-09) | **Blocked** | Records `0005` and `0006` merged (PR #96), both NOT VERIFIED; self-test passes on synthetic data only; see the App-C 4 map |
 | 5 | H5P content-type versions | First release that uses them | **Blocked** | Decision 0008 records the lab check design; needs lab |
 | 6 | LTI 1.3 library and licence | **Release 0** | **Awaiting guide** | ADR 0001 is Proposed |
-| 7 | Caption WER target from baseline run | Release 3 (G-6) | **Blocked** | Needs B8.5 complete and a speech provider; evaluation preparation merged (#103); ADR 0002 is draft PR #98, with the guide's one record fix applied |
-| 8 | Licence or consent for every B8.5 video | First release that relies on it | **Blocked** | 0 of 5; see the B8.5 evidence document |
-| 9 | Moodle 5.3 AI features | **Release 0** | **Not started** | No decision record found |
+| 7 | Caption WER target from baseline run | Release 3 (G-6) | **Blocked** | B8.5 data is complete (#169); still needs a speech provider, an approved normaliser and ADR 0002 (draft PR #98, lab facts pending); evaluation preparation merged (#103) |
+| 8 | Licence or consent for every B8.5 video | First release that relies on it | **Implemented, not verified** | Four written consent lines for four speakers in decision 0004 (#169); each speaker's briefing and the official-set provenance are the owner's statements |
+| 9 | Moodle 5.3 AI features | **Release 0** | **Source-checked; lab verification pending** | Record `0012` is on `main` (PR #156, merged 2026-11-22), a source-research record only; the lab 5.3 check is outstanding, and the guide's approval of its proposed outcome is a separate outstanding action |
 | 10 | Backup/restore roles | First release that relies on it | **Blocked** | Needs lab |
 
-## 5. Pull requests (queried 2026-11-20; 19 open, listed by relevance)
+## 5. Pull requests (queried 2026-11-20; 19 open, listed by relevance; the #105 and #106 rows were refreshed on 2026-11-22)
 
 | PR | State | Review | Note |
 |---|---|---|---|
 | #98 T8 STT ADR 0002 | Draft | Review required | PROPOSED, pending the guide's approval of its six points |
-| #105 T19 report and demo | Open, ready for review | Changes requested (status wording) | Revised against `main`; the review points are being fixed |
-| #106 T13 literature (P1 to P8) | Draft | Review required | 1 of 6 sources verified; entries pending owner verification |
-| #104 this audit | Open, ready for review | Changes requested (status wording) | The audit's own verdict (not ready to freeze) is unchanged |
-| #129 Lesson Processor demo | Open | Changes requested (Akshita21-09) | One-PR exception from the guide; awaiting peer review |
-| #140 Video design document | Draft | Review required | Guide's answers applied; stays `Draft` |
+| #105 T19 report and demo | **Merged** 2026-11-22 | Approved (Harshitha) | Documentation against the provisional criteria P1 to P6; not a completion claim |
+| #106 T13 literature (P1 to P12) | Merged 2026-11-22 | Approved (Harshitha, Akshita21-09) | Merged with 1 of 6 verified; since then all of P1 to P12 are owner-verified (owner's statement, 2026-11-23) |
+| #129 Lesson Processor demo | Merged 2026-11-23 | Approved (Harshitha, Akshita21-09, guide) | One-PR exception and the `libx264` exception (decision 0013) from the guide |
 | #115 CODEOWNERS after the freeze | Draft | Review required | |
 | #31, #33 B8.4, B8.6 datasets | Open / Draft | Review required | Provisional |
 | #35, #63 model-interface and moodle_ws skeletons | Draft | Review required / changes requested | Not Release 0 after the PRD change |
@@ -121,8 +120,7 @@ Merged and relevant since the first audit: #25, #27, #46, #54, #61, #83, #85, #8
 - The "Release 0 notes" that list where each moved item goes.
 
 **Awaiting the owner / team:**
-- Speaker consent lines, speaker names, file names, transcripts and Harshitha's review for B8.5; written confirmation that the five local files are the official set.
-- A pull request for the five measured durations (`video/b8-5-dataset-evidence`, commit `9c6d703`, not on `main`).
+- Written confirmation that the five recordings are the official B8.5 set and that each speaker was briefed: **accepted for Release 0 by the guide as the owner's statements, with the caveat recorded** ([issue #186](https://github.com/narenccode/learnops/issues/186#issuecomment-7101984198), 23 November 2026). Not independently verified.
 - Creating `CHANGELOG.md` and `docs/releases/r0.md` (PRD §D2 item 5, `docs/RELEASING.md`).
 
 **Blocked by unavailable external services:** the lab Moodle 4.5 and 5.3 sites, a BigBlueButton server, and a speech provider.

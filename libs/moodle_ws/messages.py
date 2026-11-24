@@ -22,11 +22,76 @@ RELEASE_REFUSED: Final = (
     "{function} tried to send the state '{state}', so nothing was sent to Moodle. LearnOps never "
     "releases grades; a mentor releases them in Moodle."
 )
+WRITE_NEEDS_HELPER: Final = (
+    "A grade write is sent only through write_draft_grade(), which checks the maximum grade, the "
+    "learner's state and marking workflow and reads the result back, so nothing was sent to "
+    "Moodle. Call write_draft_grade() instead."
+)
+ATTEMPT_REQUIRED: Final = (
+    "mod_assign_save_grade needs the explicit attempt being graded (a whole number from 0, never "
+    "-1), so nothing was sent to Moodle. Pass the attempt number you graded."
+)
+PINNED_ZERO_REQUIRED: Final = (
+    "mod_assign_save_grade must send applytoall=0 and addattempt=0 (B4 R15), so nothing was sent "
+    "to Moodle. Set both to 0."
+)
+GRADE_NOT_A_NUMBER: Final = (
+    "The grade is not a plain number of 0 or more, so nothing was sent to Moodle. Pass the "
+    "approved grade as a number, for example 84.5."
+)
+OUTCOME_VERIFIED: Final = (
+    "The draft grade was written and read back, and it matches what was sent. A mentor releases it "
+    "in Moodle."
+)
+OUTCOME_NOT_VERIFIED: Final = (
+    "The draft grade could not be confirmed by reading it back, so it is not counted as written. "
+    "It was not sent again. Check it in Moodle and decide what to do next."
+)
+OUTCOME_UNCERTAIN: Final = (
+    "Moodle did not confirm the write, and the read-back did not show it either. It was not sent "
+    "again. Check the grade in Moodle and decide what to do next."
+)
+OUTCOME_REFUSED_LOCKED: Final = (
+    "The learner's grade is already ready for release or released, so nothing was sent. Change it "
+    "in Moodle if it must change."
+)
+OUTCOME_REFUSED_OUT_OF_RANGE: Final = (
+    "The grade is below 0 or above the assignment's maximum, so nothing was sent. Correct the "
+    "grade and approve it again."
+)
+OUTCOME_REFUSED_STATE_UNKNOWN: Final = (
+    "The learner's current grading state could not be read, so nothing was sent: LearnOps cannot "
+    "show the grade is not locked. Check the learner in Moodle."
+)
+OUTCOME_REFUSED_WORKFLOW_OFF: Final = (
+    "Marking workflow is off for this assignment, so nothing was sent: the grade could be shown "
+    "to the learner at once. Turn marking workflow on in Moodle first."
+)
+OUTCOME_NEEDS_MENTOR_CONFIRMATION: Final = (
+    "Moodle did not confirm the write, but reading it back shows the grade that was sent. It was "
+    "not sent again. Check it in Moodle and confirm it before it counts as written."
+)
+OUTCOME_ACCESS_DENIED: Final = (
+    "The service account cannot see or grade this learner's submission, so nothing was written. "
+    "Ask your administrator."
+)
+OUTCOME_NO_SUBMISSION: Final = "The learner has no submission, so nothing was written. Grade them in Moodle if needed."
+OUTCOME_NO_GRADE: Final = "The submission has no approved grade, so nothing was written. Approve a grade first."
+OUTCOME_SKIPPED_SUSPENDED: Final = "The learner is suspended in this course, so they were skipped. Grade them in Moodle if needed."
 MISSING_SETTING: Final = (
     "{variable} is not set. Set it in the environment before contacting Moodle."
 )
 PLACEHOLDER_SETTING: Final = "{variable} still has the placeholder from .env.example. Set the real value in the environment."
 UNKNOWN_SITE: Final = "That is not a Moodle site. Use one of: {allowed}."
+PLAIN_HTTP_REFUSED: Final = (
+    "The address of Moodle site '{site}' uses plain http, so the token would travel unencrypted. "
+    "Use an https address. A lab site that has only http can set {variable}=true; "
+    "that setting is for the lab only, never for a real site."
+)
+SAME_TOKEN_ON_BOTH_SITES: Final = (
+    "{variable} hold the same token. Each Moodle site has its own service account "
+    "and token (PRD B4); set a different token for each site."
+)
 ALLOW_LIST_UNREADABLE: Final = (
     "The B4 allow-list file {file} could not be read. Restore it from the repository."
 )

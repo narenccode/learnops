@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:learnops:testdata:b8-6:grade-draft-review:v1",
+  "title": "B8.6 mentor review of one AI grade draft (PROPOSED TEMPLATE)",
+  "description": "A blinded mentor's review of one AI grading draft against the mentor's own reference grade (B8.4). PROPOSED: the fields follow the wrong-answer rule in rubric.yaml (design section 11.2, Q48), which the guide has not decided. No real review exists; templates/ holds an invented example.",
+  "type": "object",
+  "required": [
+    "schema",
+    "item",
+    "submission_id",
+    "draft_id",
+    "mentor_ref",
+    "reviewed_at",
+    "blind_to_provider",
+    "time_spent_seconds",
+    "criteria",
+    "total"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": { "const": "learnops.testdata.b8-6.grade-draft-review/v1" },
+    "item": { "type": "string", "pattern": "^gd-[0-9]{3}$" },
+    "submission_id": { "type": "string", "pattern": "^s[0-9]{3}$" },
+    "draft_id": {
+      "type": "string",
+      "pattern": "^draft-[0-9]{3}$",
+      "description": "An opaque id. It never names the provider, so the mentor stays blind to it."
+    },
+    "mentor_ref": { "type": "string", "pattern": "^mentor-[0-9]{2}$" },
+    "reviewed_at": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+    "blind_to_provider": { "type": "boolean" },
+    "time_spent_seconds": { "type": "integer", "minimum": 0 },
+    "criteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "criterion",
+          "reference_score",
+          "draft_score",
+          "score_difference",
+          "evidence_supported",
+          "feedback_acceptable",
+          "wrong"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "criterion": { "type": "string", "minLength": 1 },
+          "reference_score": { "type": "number", "minimum": 0 },
+          "draft_score": { "type": "number", "minimum": 0 },
+          "score_difference": { "type": "number" },
+          "evidence_supported": { "enum": ["yes", "no"] },
+          "feedback_acceptable": { "enum": ["yes", "no"] },
+          "wrong": { "enum": ["yes", "no"] },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "total": {
+      "type": "object",
+      "required": ["reference_total", "draft_total", "within_one_band"],
+      "additionalProperties": false,
+      "properties": {
+        "reference_total": { "type": "number", "minimum": 0 },
+        "draft_total": { "type": "number", "minimum": 0 },
+        "within_one_band": { "enum": ["yes", "no"] }
+      }
+    }
+  }
+}

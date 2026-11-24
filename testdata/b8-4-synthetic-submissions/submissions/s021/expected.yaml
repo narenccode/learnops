@@ -1,0 +1,26 @@
+# Author's expected outcome. NOT a reference grade: no scores.
+# Rubric: B8.2 b8-2-wk-03-task (PR #61).
+schema: learnops.testdata.b8-4.expected-outcome/v1
+submission_id: s021
+rubric: b8-2-wk-03-task
+provisional: true
+criteria:
+- criterion: Test list
+  checks:
+  - check: repo_file:TESTS.md
+    expected: pass
+    reason: repo/TESTS.md exists.
+  judgement: meets
+  rationale: TESTS.md lists five questions with expected answers.
+- criterion: Demo still works
+  checks:
+  - check: http_ok:demo_url
+    expected: error
+    reason: 'The online text has no Demo: line, so the demo link cannot be read (PRD B1.5 rule 7:
+      field_missing).'
+  judgement: does_not_meet
+  rationale: The submission gives no demo link, so no listed question can be asked.
+- criterion: Fixes
+  checks: []
+  judgement: does_not_meet
+  rationale: One fix, not explained; the task asks for at least two with explanations.

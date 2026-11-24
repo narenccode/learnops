@@ -25,7 +25,7 @@ Files: `libs/contracts/validate_examples.py` (run by CI's "Validate contract exa
 in `libs/contracts/tests/test_validate_examples.py`. Shared validator reference EXT-09 (the
 `contracts` library); this is the E1 "Contract" test level ("every example ... validates against
 its schema, CI, every PR"). It does not cover "generated files" from E1, because no module
-generates contract files yet. What is not checked yet is listed in `libs/contracts/README.md`. Each schema and its examples are checked by the engine
+generates contract files yet. What is still not checked is listed in `libs/contracts/README.md`. Each schema and its examples are checked by the engine
 (previous section).
 
 | Rule | PRD | Test(s) |
@@ -39,6 +39,9 @@ generates contract files yet. What is not checked yet is listed in `libs/contrac
 | One extension rule in both layouts (any case; the stem and the suffix word stay lower case), and a missing-example message that names `.json`, `.yaml` and `.yml` | B.0 rule 1, UI-05 | `test_both_example_layouts_work_alone_and_together` (case `any-case-extension`), `test_schema_without_an_example_in_either_layout_is_an_error` |
 | A link to a file outside `contracts/` is followed and reported under the link's own path (documented, not refused) | EXT-09 | `test_a_link_to_a_file_outside_contracts_is_followed_and_reported_under_the_link` |
 | A schema file not named `<name>.v<N>.schema.json` is reported, never skipped, so a repository with only misnamed schemas cannot pass | B.0 rule 1 | `test_misnamed_schema_is_reported_with_its_path`, `test_misnamed_schema_is_not_treated_as_valid_because_a_folder_matches`, `test_only_misnamed_schemas_never_succeed` |
+| An example no schema takes (a flat file or a folder) and a file that is not `.json`, `.yaml` or `.yml` are reported, never skipped; supporting files in a subfolder and hidden files are not | B.0 rule 1, E1 | `test_a_flat_file_that_no_schema_takes_is_an_orphan`, `test_an_example_folder_with_no_schema_is_an_orphan`, `test_a_file_that_is_not_json_or_yaml_is_reported`, `test_supporting_files_in_a_subfolder_and_hidden_files_are_not_reported` |
+| A key repeated in one JSON or YAML object is an error (with line and column in YAML); the same key in different objects and a YAML merge key are fine | B.0 rule 1, E1 | `test_a_key_repeated_in_one_object_is_reported`, `test_the_same_key_in_different_objects_is_fine` |
+| `NaN`, `Infinity` and `-Infinity` in JSON are errors; ordinary numbers still pass | B.0 rule 1, E1 | `test_json_that_python_accepts_but_json_does_not_is_reported`, `test_ordinary_json_numbers_still_pass` |
 
 ## B1 course package contract (v1), Release 0 foundation
 
@@ -352,7 +355,7 @@ Test names are in `test_moodle_ws_v1.py`.
 | The write rules are exactly R1 to R15 (guide's decisions on PR #64 and, for R12 to R14, PR #72; rules §3a) | B4 draft rule | `test_the_write_rules_are_exactly_r1_to_r15` |
 | R1: `mod_assign_get_grades` is the stored-grade read-back, in the allow-list, rules §2 and the PRD tables (always sent: `assignmentids`), with the §3b matching rule | B4 draft rule | `test_r1_get_grades_is_the_stored_grade_read_back` |
 | R2: `attemptnumber` is the explicit attempt, never `-1`; the read-back matches it | B4 draft rule | `test_r2_attempt_number_is_explicit_never_minus_one` |
-| R3: a write is refused before sending when the state is already `readyforrelease` or `released`, and is still read back; the 4.5 / 5.3 difference is recorded for the lab; R3 holds on 5.3 and is best effort on 4.5, named in the release notes (guide, 15 Nov) | B4 draft rule | `test_r3_locked_states_are_refused_before_sending_and_still_verified` |
+| R3: a write is refused before sending when the state is already `readyforrelease` or `released`, and is still read back; the 4.5 / 5.3 difference is recorded for the lab; R3 holds on 5.3 and is best effort on 4.5, named in the release notes (guide, 15 Nov); a state that ends `released` after the write is `NOT_VERIFIED` and a normal `readyforrelease` write stays verified (guide, 22 Nov) | B4 draft rule | `test_r3_locked_states_are_refused_before_sending_and_still_verified` |
 | R4: `viewhiddencourses`, `viewhiddendetails` and `useremail` are not granted | B4, SEC-03 | `test_r4_declared_capabilities_are_not_granted` |
 | R5: suspended learners are skipped and reported as skipped; `viewsuspendedusers` is not granted | B4 | `test_r5_suspended_learners_are_skipped_and_reported` |
 | R6: `viewownsubmissionsummary` stays lab check 12 | B4, App-C 1 | `test_r6_view_own_submission_summary_stays_a_lab_check` |
@@ -379,10 +382,10 @@ Test names are in `test_moodle_ws_v1.py`.
 
 | Rule | PRD |
 |---|---|
-| Only the functions listed in the contract are called (`libs/moodle_ws` will build its allow-list from the example; the library does not exist yet) | B4 |
+| Only the functions listed in the contract are called. `libs/moodle_ws` builds its allow-list from the example and refuses any other function before the transport (`test_allowlist.py`: `test_the_list_equals_the_contract_example`, `test_anything_else_is_refused_before_the_transport`). Not enforced against a real Moodle: there is no real transport yet | B4 |
 | One service account per site, with a token restricted to those functions and the capabilities in rules §4 (the lists are tested; that they are enough is lab check 9) | B4, SEC-03 |
 | The token is stored only in the environment | SEC-03, C-06 |
-| A grade write uses workflow state `readyforrelease`, never `released`, and counts as done only when both the state and the grade value are confirmed; the grade value is read with `mod_assign_get_grades` (R1); the write rules R1 to R15 are contract text here, and their enforcement in `libs/moodle_ws` is a separate follow-up; only approved drafts are written | B4, C-09 |
+| A grade write uses workflow state `readyforrelease`, never `released`, and counts as done only when both the state and the grade value are confirmed; the grade value is read with `mod_assign_get_grades` (R1); `libs/moodle_ws` enforces the write rules in `write_draft_grade`, the only grade-write path (see the `libs/moodle_ws` section below); only approved drafts are written | B4, C-09 |
 | Each function exists and behaves as expected with the parameters used on Moodle 4.5 and 5.3 (all lab checks in rules §5 are still open) | B4, App-C 1 |
 
 Open: when the lab Moodle sites are available (all checks in `moodle-ws.v1.md` §5 wait for
@@ -390,6 +393,51 @@ them; B4 cannot be frozen until they pass), and the field for feedback comments 
 `mod_assign_save_grade` (lab check 6). Q1, Q24 and Q37 are decided (PR #27); the eleven B4
 questions are decided (PR #64), and so are the three that followed: the state that cannot be read before
 a write, marking workflow off, and a lost answer with a matching read-back (R12 to R14, PR #72).
+
+## `libs/moodle_ws` skeleton, Release 0 foundation
+
+Files: `libs/moodle_ws/`. The library has no requirement ID of its own (design Q7, Q43, open), so no
+row in the table above maps to it. Interim, per design §2: read side under FR-G-01, write side under
+FR-G-06. Neither requirement is implemented by this skeleton.
+
+| Rule | Source | Test |
+|---|---|---|
+| Only allow-listed functions are sent; the list comes from the contract example | B4 §2a, guide on Q1 | `test_allowlist.py` |
+| A grade write sends `readyforrelease`, never `released` | B4 §3, C-09 | `test_client.py` |
+| One token per site, from the environment only | B4 §1, Q24, SEC-03, C-06 | `test_config.py` |
+| Site addresses must be https, so a token never travels unencrypted; plain http only through the lab-only setting `MOODLE_WS_UNSAFE_ALLOW_PLAIN_HTTP_LAB_ONLY=true` (exact value), on `load_site` and on settings built by hand; the setting never makes a bad address valid | B4 §1, SEC-03 (guide, #150, 22 Nov) | `test_config.py`: `test_a_plain_http_address_is_refused_and_not_repeated`, `test_the_lab_only_setting_must_be_exactly_true`, `test_settings_built_by_hand_refuse_plain_http_too`, `test_the_lab_setting_never_makes_a_bad_address_valid` |
+| The same token for both sites is refused from either side, trimmed, naming the two variables and never the value; an unset or placeholder other token is no clash | B4 §1, design 4.1 (guide, #150, 22 Nov) | `test_config.py`: `test_the_same_token_for_both_sites_is_refused_from_either_side`, `test_the_same_token_after_trimming_is_still_the_same`, `test_an_unset_other_token_is_not_a_clash` |
+| Tokens and full URLs stay out of logs and errors | SEC-03, OPS-04, design §4.1 | `test_redaction.py` |
+| One error family with stable codes | Design §4.1, §10.2 (library documentation, Q37) | `test_errors.py` |
+| A function that is not in the allow-list is refused with a fixed message that does not repeat it; matching is exact; every listed function resolves on both versions; a replacement name applies only to its own version | B4 §2a, guide on Q1 | `test_an_unlisted_function_is_refused_and_the_message_repeats_nothing`, `test_every_listed_function_resolves_to_itself_on_both_versions`, `test_matching_is_exact`, `test_a_replacement_name_is_returned_only_for_its_own_version` |
+| `mod_assign_set_user_flags` is refused: by the contract allow-list, and by name even if an allow-list lists it | Guide's B4 findings, PR #64 | `test_client.py`: `test_set_user_flags_is_refused_by_the_contract_allow_list`, `test_set_user_flags_is_refused_even_if_an_allow_list_lists_it` |
+| No direct grade write: `call()` refuses `mod_assign_save_grade` after its guards, and so does the client's internal send; the receipt path is removed (guide on PR #76: close the bypass in code); the transport is called in two places only: that internal send and `write_draft_grade`, whose single-use sender is created inside the call; the internal send cannot stand in for it; the sender works once, also when the send fails, and runs the draft rule again; no module outside the library uses the client's internals | B4 §3, §3a | `test_grade_guards.py` |
+| R2: `attemptnumber` is explicit (a whole number from 0, never `-1`) on every grade-write path | B4 §3a | `test_grade_guards.py`: `test_r2_*` |
+| R15: `applytoall` and `addattempt` are always `0`; any other value, a bool or a missing value is refused before anything is sent, on every grade-write path | B4 §3a (guide, PR #64, 2026-11-16) | `test_grade_guards.py`: `test_r15_applytoall_other_than_zero_is_refused_before_sending`, `test_r15_addattempt_other_than_zero_is_refused_before_sending` |
+| R9: a grade is a plain non-negative number, parsed exactly (no exponent, `NaN`, whitespace or bool); the range check accepts 0 to the maximum | B4 §3a | `test_grade_guards.py`: `test_r9_*` |
+| §3b and R2: the stored grade counts only for exactly one entry and one row, the same explicit attempt and an exact numeric match, with no warning | B4 §3a, §3b | `test_outcomes.py`: `test_r2_*`, `test_3b_*` |
+| Only an unlocked marking-workflow state may be written over; locked, marking workflow off and unknown states are refused | B4 §3a R3, R12, R13; PRD B4 draft rule | `test_outcomes.py`: `test_only_an_unlocked_marking_workflow_state_may_be_written_over`, `test_the_state_sets_do_not_overlap` |
+| R6: a missing or malformed `lastattempt` gives no state | B4 §3a | `test_outcomes.py`: `test_r6_*` |
+| R5, R10, R11: separate outcomes, only `VERIFIED` is success; a lost answer tells the mentor to decide or confirm | B4 §3a | `test_outcomes.py`: `test_r5_*`, `test_r10_*`, `test_r11_*` |
+| Every grade write goes through `write_draft_grade`: a direct call never writes over a locked learner or with marking workflow off | B4 §3, §3a | `test_grade_write.py`: `test_a_direct_call_*` |
+| R1: the merged contract lists `mod_assign_get_grades`; the read-back asks for the one assignment written; the state alone is never enough | B4 §3a, §3b | `test_grade_write.py`: `test_r1_*` |
+| R2: `write_draft_grade` refuses `-1` before reading anything | B4 §3a | `test_grade_write.py`: `test_r2_*` |
+| R3: `readyforrelease` / `released` refused before sending; a lock after the check is caught on 5.3; a state that ends `released` after the write is `NOT_VERIFIED` on both; on 4.5 a normal write is verified and the race to `readyforrelease` is not detected (accepted limitation, guide on PR #80) (source fake) | B4 §3a | `test_grade_write.py`: `test_r3_*` |
+| The final read-back is `NOT_VERIFIED` when the `mod_assign_get_grades` answer has a warning, no `warnings` field, or `warnings: null` (source fake, both versions) | B4 §3b | `test_grade_write.py`: `test_a_final_read_back_with_a_warning_or_no_warnings_list_is_not_verified` |
+| Marking workflow off and unknown states send nothing; each unlocked state is written (proposed, fail closed, B4 §6) | PRD B4 draft rule; B4 §6 | `test_grade_write.py`: `test_marking_workflow_off_*`, `test_an_unknown_state_*`, `test_each_unlocked_*` |
+| R6: no readable state before the write sends nothing; a state hidden after it is not verified | B4 §3a | `test_grade_write.py`: `test_r6_*` |
+| R8: a failed read-back is `NOT_VERIFIED` and the write is sent once | B4 §3a | `test_grade_write.py`: `test_r8_*` |
+| R9: out-of-range refused before sending; a silently ignored grade is caught by the read-back | B4 §3a | `test_grade_write.py`: `test_r9_*` |
+| R10: an access failure is its own outcome; one learner failing does not stop the next | B4 §3a | `test_grade_write.py`: `test_r10_*` |
+| R11: a lost or garbled answer is read back once, never rewritten; a match needs the mentor's confirmation (proposed, fail closed) | B4 §3a | `test_grade_write.py`: `test_r11_*` |
+| The parameters are read once, so the checks and the write see the same values | B4 §3a | `test_grade_write.py`: `test_write_draft_grade_reads_the_parameters_once` |
+
+R4 and R7 (capabilities kept out, `reviewgrades` on both versions) have no library code; they are
+tested in the contract. The 4.5 / 5.3 behaviour in `tests/source_fake.py` is read from the Moodle source,
+not recorded: lab checks 4 and 12 to 16 are open.
+
+Not covered: all of this runs against a scripted fake transport. No real transport exists, and nothing
+has been checked against Moodle (every check in `contracts/moodle-ws.v1.md` §5 is open).
 
 ## B7 H5P practice output contract (v1), Release 0 foundation, DRAFT
 
@@ -538,19 +586,64 @@ These need Studio, the checker or a Moodle site and are not claimed by this chan
 - The section idnumbers `wk-01` … `wk-04` are kept for now. They need updating when the B1
   section-idnumber contract change (Issue #65) is implemented.
 
+## B8.3 planted-error courses (test data), Release 0 foundation, PARTIAL
+
+B8.3 is a test data set (PRD §B8) with no requirement ID of its own. It prepares the measurement for
+PRD G-2 and C2.7 (FR-C-03, rules CK-01 to CK-13), which is made in Release 1.
+
+| Item | PRD | Test |
+|---|---|---|
+| Package variants, each a B8.2 copy with exactly one changed file, valid under B1. Built: CK-02, CK-03, CK-09, CK-12 | B8.3, FR-C-03 | `test_built_variant_changes_exactly_the_declared_file`, `test_built_variant_is_a_valid_b1_package`, `test_ck_02_change_is_the_one_declared`, `test_ck_03_change_is_the_one_declared`, `test_ck_09_change_is_the_one_declared`, `test_ck_12_url_is_in_the_source_file_only` (source text only; the media_refs path is not tested, see §12 item 19) (in `libs/contracts/tests/test_b8_3_planted_errors.py`) |
+| `expected-findings.yaml` (**proposed**: `mapping_status: proposed` from checker design §11.3 at commit `4111e0c`; the guide answered §12 items 12, 13, 17 and 22 on issue #112 (2026-11-23), CK-01 is not a separate finding for CK-04, 05 and 13, and Shraddha's confirmation is still pending; CK-12 `assertable: false`): one entry per planted error with a valid CK rule, element, severity and reason; every CK-01 to CK-13 has a variant | B8.3, C2.3 | `test_entry_is_complete_and_valid`, `test_every_ck_rule_has_at_least_one_variant`, `test_ids_are_unique`, `test_every_variant_folder_has_an_entry_and_back`, `test_mapping_stays_proposed_until_confirmation_is_recorded`, `test_ck_01_is_not_a_separate_finding_when_another_rule_explains_the_item`, `test_ck_01_fires_on_its_own_when_nothing_explains_the_item`, `test_ck_12_is_not_asserted_until_body_media_extraction_is_decided` |
+| B8.2 is unchanged (SHA-256 of every file) and B8.3 holds no secrets or email addresses | B8.2, C-07 | `test_b82_is_unchanged`, `test_no_secrets_or_learner_data` |
+| Nine `.mbz` variants (CK-01, 04, 05, 06 twice, 07, 08, 10, 11, 13) from a real lab backup | C-03 | None yet: PENDING MOODLE LAB; built on Moodle 5.3 only for Release 0 (the guide, issue #112, item 22; Akshita records the exception) |
+| The checker finds 100 % of the planted errors and nothing on B8.2 | C2.7, G-2 | **Not tested**: the checker does not exist (Release 1). The tests above check the dataset only |
+
+## B8.4 synthetic submissions (PROVISIONAL), Release 0 foundation
+
+Files: `testdata/b8-4-synthetic-submissions/` (manifest, four schemas, 33 submissions),
+`libs/contracts/tests/test_b8_4_dataset.py`. B8.4 is a test-data set (PRD B8) with no requirement
+ID of its own, so no row in the table above maps to it. It is the dataset for the PRD C3.7
+agreement criterion (G-5), which belongs to Release 4 work that does not exist yet.
+
+### Covered by automated tests
+
+| Rule | Source | Test(s) |
+|---|---|---|
+| Manifest, submission, expected-outcome and reference-grade documents validate against their schemas | Proposed format (set README, O7) | `test_schema_is_a_valid_draft_2020_12_schema`, `test_manifest_is_valid`, `test_submission_and_expected_outcome_are_valid`, `test_reference_grade_files_are_valid` |
+| Each submission has a repository, a demo link and a short report, in the online-text form of PRD B1.5 (a report file only when there is no `Report:` section) | PRD B8, B1.5 | `test_submission_and_expected_outcome_are_valid`, `test_the_set_exercises_the_b15_forms_and_failures` |
+| The stand-in reader of the online text (B1.5 rules 1 to 7, plain text) and the B1.3 README heading rule give the expected result of every plain submission vector (12) and every README vector (12) in `contracts/test-vectors/submission.v1.json` | PRD B1.3, B1.5 | `test_the_stand_in_reader_gives_the_expected_parts_of_every_plain_vector`, `test_the_stand_in_heading_rule_gives_the_expected_result_of_every_readme_vector` |
+| The expected-outcome schema rejects `score`, `points`, `total` and `grade` at the document, every criterion and every check, whatever the value | PRD B8 (reference grades only from a mentor) | `test_a_score_field_is_rejected_at_every_level`, `test_a_score_field_is_rejected_whatever_its_value`, `test_a_valid_expected_outcome_is_still_accepted` |
+| Every edge-case tag the files can decide agrees with them (README, demo, report length, clone, and the three label tags) | Set README | `test_every_edge_case_tag_agrees_with_the_files` |
+| Submission, rubric, course package and marking table link up; points sum; only the six check names | PRD B1.3, C3.5 | `test_ids_are_unique_and_match_folders`, `test_references_resolve`, `test_rubric_sources_exist_and_match_the_course_package` |
+| Expected outcomes follow the marking table, carry no scores and agree with the files | Proposed (set README) | `test_expected_outcome_follows_the_marking_table`, `test_expected_check_results_agree_with_the_files` |
+| The author's own grades are labelled `author` with `reference_grade: false`, cannot carry a `mentor_ref` or validate as a reference grade, follow the marking table (criteria, score range, total = sum), never give full marks where the expected outcome says a check fails or the criterion is not met, and the eight ungraded submissions are exactly the listed ones | Guide, issue #186; PRD B8.4 (reference grades only from a mentor) | `test_author_grade_files_are_valid_and_labelled`, `test_an_author_grade_cannot_pass_as_a_mentor_grade`, `test_the_ungraded_submissions_are_exactly_the_listed_ones`, `test_a_full_mark_never_contradicts_the_expected_outcome`, `test_the_drift_rule_catches_a_false_full_mark` |
+| Reference-grade cross-field rules (criteria match, score range, total = sum) | PRD B8, C3.3 FR-G-03 (sum) | `test_reference_grade_rules_catch_bad_grades` |
+| At least 30 submissions, every intended level on each of the four B8.2 tasks, all in the development split (the author wrote them all), no editor-HTML submission | PRD B8.4, B1.5 rule 5, design Q47 | `test_the_set_covers_every_intended_level`, `test_the_set_has_at_least_30_submissions_on_all_four_tasks`, `test_every_submission_is_development_and_none_is_editor_html` |
+| No real learner data (fictional hosts only, no email addresses, small text files) | PRD B8, C-07 | `test_no_real_hosts_or_email_addresses`, `test_files_are_small_text` |
+| Provisional labelling | Set README | `test_provisional_set_marks_everything_provisional`, `test_tags_agree_with_expected_outcomes` |
+
+### Not met yet, and not tested
+
+- Reference grades from at least one mentor (none; the guide names the mentor, Q13). The set has 33 submissions, so the size is met, but it is not complete without the grades. The sealed test split (Q47) is not written: every submission is by the same author.
+- Editor HTML as online text (B1.5 rule 5 is unverified until the lab check on Moodle 4.5 and 5.3), and a reader that is not the stand-in: Module 3's extractor does not exist yet.
+- Word-count and heading-matching rules are provisional (Q39). See the open decisions in
+  `testdata/b8-4-synthetic-submissions/README.md`.
+
 ## B8.5 lecture video test data set, Release 0 foundation
 
-Files: `testdata/b8-5-lecture-videos/` (README, folder `.gitignore`, placeholder outlines and
-transcripts), the B8.5 inventory in `testdata/README.md`, the guide's decision
+Files: `testdata/b8-5-lecture-videos/` (README, folder `.gitignore`, the five lectures' outlines and
+reference transcripts), the B8.5 inventory in `testdata/README.md`, the guide's decision
 `docs/decisions/0004-b8-5-lecture-videos.md`, and the validation test
 `libs/contracts/tests/test_b8_5_dataset.py`. B8.5 is a test data set (PRD B8), not a functional
 requirement, so it has no FR ID and no row in the table at the top. It is the data for PRD G-6
 (caption word error rate, Release 3), App-C 7 (the error-rate target from a first baseline run)
 and App-C 8 (licence or consent for every B8.5 video).
 
-**Status: PENDING.** Five local recording files were identified in earlier work (their SHA-256
-values are in the inventory), but no consent line is written, no transcript is typed or reviewed, and none is accepted as B8.5 evidence. The tests show that the committed placeholders are well formed and that the PENDING status
-is true. They do **not** show that B8.5 or App-C 8 is met.
+**Status: COMPLETE.** Five recordings from four speakers are listed in the inventory (2380 s in total; the owner's
+`ffprobe` durations, hashes and file names, not re-verified by the reviewers), each with an outline and a reference
+transcript marked `checked`, and each speaker has written a consent line in decision 0004. The tests show that the
+committed data is well formed and that the COMPLETE status is true under the written criteria. They do **not** show a word error rate, that the speakers understood the briefing, or that the recordings are the official set: those are the owner's confirmations in the pull request.
 
 ### Enforced by the test and covered by automated tests
 
@@ -762,6 +855,95 @@ Chosen in the schema rather than stated in the PRD: token counts and `latency_ms
 integers; seconds and `cost_estimate` are non-negative numbers; `model`, `prompt_version` and `word`
 are non-empty strings; `prompt_version` has no set format.
 
+### Enforced by library code and covered by automated tests
+
+JSON Schema cannot express these; `test_segment_ending_before_it_starts_passes_the_schema` shows
+the schema alone does not catch the first one.
+
+| Rule | PRD | Code | Test(s) |
+|---|---|---|---|
+| Every segment's `end` is at least its `start` | B5.4 | `libs/model_interface/transcript.py` | `test_transcript.py`: `test_segment_ending_before_it_starts_is_rejected`, `test_every_bad_segment_is_reported`, `test_end_left_relative_to_its_chunk_is_rejected`, `test_zero_length_segment_is_valid`, `test_every_transcript_example_has_valid_segment_times` |
+| Every word's `end` is at least its `start`, the same rule as a segment (guide's decision 9, 15 Nov); `time_errors` returns the segment errors, then the word errors | B5.4, decision 0001 (9) | `libs/model_interface/transcript.py` | `test_transcript.py`: `test_word_ending_before_it_starts_is_rejected`, `test_every_bad_word_is_reported`, `test_zero_length_word_is_valid`, `test_a_segment_without_words_has_no_word_errors`, `test_every_transcript_example_has_valid_word_times`, `test_time_errors_reports_segments_then_words` |
+| No rule on time order or on times past `duration_s` (guide's decisions 10 and 11): the check accepts both | B5.4, decision 0001 (10, 11) | `libs/model_interface/transcript.py` | `test_transcript.py`: `test_time_order_and_times_past_duration_have_no_rule` |
+| `fake` is refused unless `LEARNOPS_ENV=test` and `MODEL_ALLOW_FAKE=true`; the flag is refused in the lab, in production and with `LEARNOPS_ENV` unset; applies to `MODEL_PROVIDER` and `SPEECH_PROVIDER` | B5.2, B5.4 | `libs/model_interface/config.py` | `test_config.py`: `test_fake_is_accepted_in_a_test_run_with_the_flag_on`, `test_fake_is_refused_without_the_test_setting`, `test_the_fake_flag_is_refused_outside_tests`, `test_the_fake_flag_is_refused_when_the_environment_is_unset`, `test_real_providers_are_accepted_everywhere`, `test_unknown_provider_is_refused`, `test_unknown_environment_is_refused`, `test_unclear_flag_value_is_refused` |
+
+### Documented but not automatically enforced
+
+No code checks these yet. The schema's `$comment` lists them too.
+
+| Rule | PRD |
+|---|---|
+| `result.data` matches the task's `output_schema` | B5.1 |
+| Invalid structured output: one retry, then a clear error, never a partial result | B5.2 |
+| Model chosen by `MODEL_NAME`; keys from environment variables only | B5.2 |
+| Prompts are versioned files in `libs/model_interface/prompts/` | B5.3 |
+| Every call logs `meta` to `shared.model_calls`, with no raw learner content | B5.3 |
+| Unknown usage and cost are written as `null`, never 0 (the schema accepts both; only the provider code knows which is true) | B5.1 |
+| Times count from the start of the original audio after chunking (the schema sees only numbers) | B5.4 |
+| A word ends at or after its start; segments are in time order | Not in the PRD; not decided |
+
+## FR-M-01 shared model interface library (skeleton, partial), Release 0 foundation
+
+Files: `libs/model_interface/` (`runner.py`, `registry.py`, `prompts.py`, `prompts/example_echo/v1.md`
+(test-only), `providers/`, `call_log.py`, `errors.py`, `messages.py`), tests in
+`libs/model_interface/tests/` (`test_run.py`, `test_call_logging.py`, `test_multi_provider.py`,
+`test_provider_compatibility.py`, `test_service_boundaries.py`, `test_registry_and_prompts.py`, `test_providers.py`, `test_public_api.py`), and usage notes in
+`libs/model_interface/README.md`.
+Builds on the B5 contract section above (PR #25). It does not change `config.py`; it adds the word-time check to `transcript.py`.
+
+FR-M-01 ("Shared model interface library (B5.1–B5.3)", R0) is still deliberately not in the table
+at the top: this skeleton does not complete it. Missing: the real local transport (the lab
+endpoint's protocol, design Q19), the real hosted transport (Q19), and logging `meta` to
+`shared.model_calls` (migration tool and shared schema, Q36). FR-M-01 gets its row in the pull
+request that completes it.
+
+Of the B5 section's "Documented but not automatically enforced" rows, these are now enforced by
+code and tested here: `result.data` matches `output_schema`; one retry then a clear error;
+versioned prompt files; unknown usage written as `null` by the local provider. Logging to
+`shared.model_calls` is only partly covered: every attempt is recorded (meta only) and `run()`
+refuses without a logger outside a test run, but the only logger that exists is in memory.
+
+### Enforced by library code and covered by automated tests
+
+| Rule | PRD | Code | Test(s) |
+|---|---|---|---|
+| One call `run(task, inputs, output_schema)` returns validated `data` and `meta`, with no provider or logger passed, through one shared provider | B5.1 | `runner.py`, `providers/__init__.py` | `test_run.py`: `test_valid_output_returns_data_and_b5_meta`, `test_the_prd_call_shape_works_with_the_shared_fake_provider`; `test_call_logging.py`: `test_the_shared_provider_is_kept_between_calls`, `test_a_configured_provider_is_used_by_the_prd_call_shape` |
+| Public call shape `import model_interface as model; model.run(task, inputs, output_schema)`; the module is `model_interface.runner` and there is no `model_interface.run` module to import by mistake | B5.1 | `__init__.py`, `runner.py` | `test_public_api.py`: `test_model_run_is_the_runner_function`, `test_model_run_takes_task_inputs_output_schema_first`, `test_from_import_gives_the_function`, `test_runner_module_imports_as_a_module`, `test_there_is_no_model_interface_run_module`, `test_every_exported_name_exists` |
+| `task` is a registered task name; names are unique and well formed | B5.1 | `registry.py` | `test_registry_and_prompts.py`: `test_registered_task_can_be_looked_up`, `test_duplicate_task_name_is_refused`, `test_unregistered_task_is_refused`, `test_bad_task_name_is_refused`; `test_run.py`: `test_unregistered_task_is_refused_before_any_call` |
+| `output_schema` must be the registered one; task schemas must be valid JSON Schemas and are kept as private copies | B5.1 | `registry.py`, `runner.py` | `test_output_schema_must_be_the_registered_one`, `test_invalid_schema_is_refused`, `test_registered_schema_is_a_private_copy` |
+| Inputs are checked against the task's input schema before any provider call | B5.1 | `runner.py` | `test_invalid_inputs_are_refused_before_any_call` |
+| Output is validated; on invalid output one retry, then `InvalidOutput`, never a partial result | B5.2 | `runner.py` | `test_invalid_output_is_retried_once`, `test_invalid_output_twice_raises_and_returns_nothing` |
+| `meta` is checked against the B5 schema; unknown usage is `null`, local cost is `0.0` | B5.1 | `runner.py`, `providers/local.py` | `test_meta_that_breaks_the_b5_contract_is_refused`, `test_local_meta_reports_unknown_usage_as_null`, `test_local_keeps_unreported_usage_as_none` |
+| One provider interface: local, hosted and fake give the same validated `Result`, with valid B5 `meta`, logged through the shared logger; `runner.py` has no provider-specific code | B5.1, B5.2 | `providers/base.py`, `providers/transport.py`, `runner.py` | `test_multi_provider.py`: `test_every_provider_gives_the_same_validated_result_and_logs_it`, `test_a_hosted_failure_is_logged_through_the_shared_logger` |
+| Hosted provider behind an injectable transport: no URL assumed; reported cost kept; unreported cost is `None`, never 0; `MODEL_NAME` required and shown in `meta`; transport failures carry no content | B5.1, B5.2 | `providers/hosted.py`, `providers/transport.py` | `test_multi_provider.py`: `test_hosted_passes_the_request_to_its_transport_without_a_url`, `test_hosted_keeps_a_reported_cost`, `test_hosted_cost_not_reported_is_none_never_zero`, `test_local_cost_stays_zero_whatever_the_transport_reports`, `test_hosted_transport_failure_shows_no_content`, `test_hosted_needs_model_name`, `test_model_name_reaches_hosted_meta` |
+| No fallback between providers: if the selected provider can't be built or reached, the call fails and no other provider is tried | B5.2 | `providers/__init__.py` | `test_multi_provider.py`: `test_a_failing_local_provider_never_tries_hosted_or_fake`, `test_a_transport_for_the_other_provider_is_never_used`, `test_the_resolver_never_catches_a_selected_provider_failure` |
+| A provider never holds a credential, so a key appears in no `repr()`, error or log record; mock transports need none. Real credential handling is pending Q19 | B5.2, C-06 | `providers/__init__.py`, `providers/hosted.py` | `test_multi_provider.py`: `test_the_key_appears_in_no_repr_error_or_log_record`, `test_the_key_is_not_passed_to_the_transport`; `test_provider_compatibility.py`: `test_a_mock_hosted_provider_needs_no_credential`, `test_no_hosted_provider_exists_without_a_transport` |
+| Mock compatibility: local and hosted are selected by `MODEL_PROVIDER`, work through one `run()`, validate output the same way, fail the same way, give the same B5 `meta`, log every outcome, and switch by configuration alone. **Mock transports only: this is not real server integration** | B5.1, B5.2, B5.3 | `providers/`, `runner.py` | `test_provider_compatibility.py`: `test_model_provider_selects_the_provider`, `test_fake_is_selected_in_a_test_run`, `test_output_that_breaks_the_schema_is_rejected`, `test_invalid_output_gets_one_retry_then_a_clear_error`, `test_bytes_are_refused_even_when_they_hold_valid_json`, `test_nan_and_infinity_are_not_json`, `test_provider_failure_is_one_clear_error_logged_and_not_retried`, `test_a_malformed_transport_reply_is_a_clear_logged_error`, `test_a_provider_that_returns_the_wrong_type_is_logged`, `test_meta_has_exactly_the_b5_fields_for_every_provider`, `test_failed_attempts_have_the_same_b5_fields`, `test_every_outcome_reaches_the_shared_logger`, `test_no_attempt_logs_inputs_prompt_or_output`, `test_switching_local_to_hosted_needs_no_application_change` |
+| Invalid providers are refused: a callable `complete()`, a supported name and a model are all checked; a look-alike calling itself `fake` is refused outside a test run | B5.2 | `providers/__init__.py`, `runner.py` | `test_provider_compatibility.py`: `test_invalid_providers_are_refused`, `test_a_valid_provider_passes`, `test_a_look_alike_calling_itself_fake_is_refused_outside_a_test_run` |
+| Service boundaries: outside a test run, `run()` executes only on the configured provider and logs only to the configured logger; anything else is refused before any model call. A service set up for local can't run on hosted, or the reverse. Injection stays open in test runs. `InMemoryCallLogger` can't be configured outside a test run | B5.2, B5.3, SEC-07 | `providers/__init__.py`, `call_log.py`, `runner.py` | `test_service_boundaries.py`: `test_a_service_cannot_silently_run_on_the_other_provider`, `test_a_service_cannot_swap_in_another_provider_of_the_same_kind`, `test_a_service_with_no_configured_provider_cannot_pass_one`, `test_passing_the_configured_provider_is_harmless`, `test_a_service_runs_on_its_configured_provider`, `test_the_fake_stays_refused_for_a_service`, `test_a_test_run_can_still_inject_any_provider_and_logger`, `test_a_test_run_can_still_inject_the_fake`, `test_every_service_call_reaches_the_configured_logger`, `test_a_failed_service_call_reaches_the_configured_logger`, `test_invalid_output_in_a_service_reaches_the_configured_logger`, `test_a_service_cannot_bypass_the_shared_logger`, `test_a_service_can_pass_the_configured_logger`, `test_a_service_with_no_logger_cannot_pass_one`, `test_the_in_memory_logger_cannot_be_configured_outside_a_test_run`, `test_the_in_memory_logger_can_be_configured_in_a_test_run`, `test_a_service_can_configure_its_own_logger` |
+| No silent switch or replacement: a provider that disagrees with `MODEL_PROVIDER`, or a second provider, is refused; test state resets safely | B5.2 | `providers/__init__.py` | `test_call_logging.py`: `test_a_changed_setting_never_switches_the_shared_provider`; `test_provider_compatibility.py`: `test_a_configured_provider_never_becomes_the_fake`, `test_a_failing_hosted_provider_never_tries_local_or_fake`, `test_a_provider_that_disagrees_with_the_setting_is_refused`, `test_a_second_provider_is_refused_and_the_first_stays`, `test_setting_the_same_provider_again_is_harmless`, `test_a_shared_fake_cannot_be_replaced_either`, `test_reset_clears_state_so_tests_stay_independent`, `test_state_from_another_test_does_not_leak`, `test_reset_is_not_part_of_the_public_api` |
+| Provider chosen by `MODEL_PROVIDER`; `fake` only through the `config.py` guard, against the real process environment; `hosted` refused with a clear error until a transport exists (Q19) | B5.2 | `providers/__init__.py`, `providers/fake.py` | `test_multi_provider.py`: `test_the_resolver_refuses_the_fake_outside_a_test_run_even_with_the_flag`; `test_providers.py`: `test_hosted_is_not_implemented_yet`, `test_fake_is_built_only_in_a_test_run`, `test_fake_cannot_be_built_outside_a_test_run`, `test_fake_needs_model_provider_fake_even_in_a_test_run`, `test_fake_takes_no_environment_argument`; `test_run.py`: `test_default_provider_comes_from_the_guarded_configuration`; `test_call_logging.py`: `test_the_guard_runs_again_on_every_get_provider` |
+| Fake provider is deterministic by task and inputs, with failure injection | B5.2 (test use) | `providers/fake.py` | `test_fake_answers_by_task_and_inputs_whatever_the_key_order`, `test_fake_without_a_fixture_says_so`, `test_fake_plays_queued_outputs_in_order_then_repeats_the_last`, `test_fake_failure_injection_raises_once` |
+| Local provider: settings from `MODEL_LOCAL_URL` and `MODEL_NAME`; request goes to an injected transport; transport failures become `ProviderUnavailable` without request content | B5.2 | `providers/local.py` | `test_local_needs_its_settings`, `test_local_passes_the_request_to_its_transport`, `test_transport_failure_becomes_provider_unavailable_without_content`, `test_local_without_a_transport_is_not_integrated_yet` |
+| Provider failures are raised, not retried and not turned into output | B5.2 | `runner.py` | `test_provider_failure_is_raised_not_retried` |
+| Prompts are versioned files `prompts/<task>/v<N>.md` whose `prompt_version` header names their own task and version; the highest version is used unless one is named | B5.3 | `prompts.py` | `test_example_prompt_loads_with_its_version`, `test_highest_version_is_used_unless_one_is_named`, `test_prompt_version_must_agree_with_the_file`, `test_prompt_without_header_or_text_is_refused`, `test_task_without_a_prompt_cannot_be_registered` |
+| The test-only example prompt registers nothing in the shared registry | — (repository rule) | `registry.py` | `test_no_task_is_registered_in_the_shared_registry_by_the_library` |
+| Call records hold `meta` only, never inputs or output | B5.3 | `call_log.py`, `runner.py` | `test_logger_records_meta_only`, `test_invalid_output_is_retried_once`, `test_failed_attempts_log_no_content` |
+| Every attempt is logged, also failed ones; a provider failure and invalid `meta` are recorded with `null` usage and then raised; invalid output keeps the usage the provider reported | B5.1, B5.3 | `runner.py`, `call_log.py` | `test_call_logging.py`: `test_success_is_logged_with_b5_meta`, `test_provider_failure_is_logged_with_null_usage_and_raised`, `test_an_unexpected_provider_exception_is_logged_and_raised`, `test_failure_records_are_valid_b5_meta`, `test_invalid_meta_is_logged_with_null_usage_and_raised`, `test_a_provider_failure_on_the_retry_is_logged_as_attempt_two`, `test_invalid_output_keeps_the_usage_the_provider_reported` |
+| Required logging is never skipped: outside `LEARNOPS_ENV=test`, also with it unset, `run()` refuses before any model call when no logger is configured; a test run falls back to an in-memory logger; a logger that fails stops the call from returning | B5.3 | `call_log.py`, `runner.py` | `test_call_logging.py`: `test_run_refuses_without_a_logger_outside_a_test_run`, `test_a_configured_logger_is_used_outside_a_test_run`, `test_a_logger_passed_to_the_call_is_refused_outside_a_test_run`, `test_a_test_run_falls_back_to_the_in_memory_logger`, `test_the_in_memory_fallback_does_not_survive_leaving_the_test_run`, `test_a_logger_that_fails_stops_the_call_from_returning` |
+| `repr()` never shows inputs, prompt text, model text or result data | B5.3, OPS-04 | `providers/base.py`, `providers/local.py`, `prompts.py`, `runner.py` | `test_call_logging.py`: `test_repr_of_a_request_shows_no_prompt_or_inputs`, `test_repr_of_a_response_shows_no_text`, `test_repr_of_a_transport_reply_shows_no_text`, `test_repr_of_a_result_shows_no_data`, `test_repr_of_a_prompt_shows_no_text` |
+| Error messages never carry learner input, model output or transport detail: problems are named by their place in the schema only, and transport failures keep only the exception's class name with the original chain cut | B5.3, OPS-04 | `runner.py`, `providers/local.py`, `messages.py` | `test_run.py`: `test_invalid_output_error_shows_no_model_output`, `test_invalid_output_error_shows_no_raw_text`, `test_invalid_input_error_shows_no_learner_input`, `test_invalid_meta_error_shows_no_output`, `test_invalid_output_twice_raises_and_returns_nothing`; `test_providers.py`: `test_transport_failure_becomes_provider_unavailable_without_content` |
+
+### Not implemented, and therefore not claimed
+
+| Rule | PRD | Waiting for |
+|---|---|---|
+| Real local endpoint request | B5.2 | Q19 (lab endpoint protocol) |
+| Real hosted API call through the provider's official SDK (`HostedProvider` exists; no real `HostedTransport`) | B5.2 | Q19 (provider, SDK, licence), spending-cap key (A15.5) |
+| Every call logs `meta` to `shared.model_calls` (PostgreSQL logger). Until it exists, `run()` refuses outside a test run unless a logger is configured | B5.3 | Q36 (migration tool, shared schema) |
+| Timeouts, transport retries and the budget guard | — | Design proposals only (grading.md §4.2) |
+| Task schemas as Pydantic models | Root `CLAUDE.md` §6 ("Pydantic models for every contract and API payload"); PRD B5.1 allows "JSON Schema / Pydantic model" | OPEN DECISION for the guide: JSON Schema is used meanwhile. Adding Pydantic (planned 2.14.1, grading.md §8) changes `requirements-dev.txt`, owned by Students 1 and 2 and the guide |
+
 ## App-C item 4: BigBlueButton recording metadata (Release 0 verification record)
 
 `docs/decisions/0006-app-c-4-bbb-recording-metadata.md`. Documentation only: no code, contract or
@@ -829,7 +1011,7 @@ Files: `libs/speech_eval/` (WER arithmetic, input validation, report, CLI),
 `libs/speech_eval/tests/test_speech_eval.py`, `docs/evaluation/g6-wer-procedure.md`,
 `docs/evaluation/g6-wer-report-template.md`. Requirements: PRD G-6, §C4.7 (third box), App-C 7.
 
-**Status: PENDING.** The official G-6 evaluation has **not** been run. The B8.5 set is PENDING,
+**Status: PENDING.** The official G-6 evaluation has **not** been run. The B8.5 set is COMPLETE (#169), but
 the normalisation rules and the WER target are not decided, and ADR 0002 (T8) is not approved.
 
 | Rule | Source | Test(s) |
@@ -847,3 +1029,71 @@ the normalisation rules and the WER target are not decided, and ADR 0002 (T8) is
 - Any speech model's accuracy; the synthetic tests use made-up text only.
 - That an approval cited in an official run exists (a reviewer checks it).
 - Text normalisation, confidence intervals, timing accuracy and speed: not decided, not built.
+
+## Video lesson processor demo (`modules/video/demo/lesson_processor`), partial and local only
+
+A limited local **demonstration; not Release 3 work**, and no design approval is implied (the guide allowed it as a one-PR exception on PR #129; `docs/design/video.md` stays Draft). It implements **only the parts listed below**.
+It has no resumable or chunked (tus) upload, no job queue or worker, no LTI or authentication, no
+Moodle integration, no transcription, chapters, summary or slide index, and no storage adapter.
+`captions.en.vtt`, `transcript.en.json` and `chapters.json` are empty placeholders so the B6.3
+manifest is valid. It uses `libs/media_paths` and `contracts/lesson-manifest.v1.schema.json`
+unchanged. Tests are in `modules/video/demo/tests/`. Tests that need ffmpeg are skipped, and
+reported by `pytest -rs`, when ffmpeg or ffprobe is not installed.
+
+| Requirement | Status | What the demo does | Test(s) |
+|---|---|---|---|
+| FR-V-01 (R3) | **In part** | Accepts only `.mp4`, `.mov`, `.mkv`, `.webm`; refuses an empty file, a file over the limit (default 4 GB, `LESSON_MAX_UPLOAD_BYTES`) and a file that is not really a video. **Not implemented:** resumable chunked upload (tus), the 90 MB chunk size and resuming after interruption. The upload is one request that sends the whole file. | `test_unsupported_extension_rejected`, `test_empty_file_rejected`, `test_oversize_rejected`, `test_fake_video_content_rejected`, `test_supported_input_accepted`, `test_rejects_bad_extension`, `test_fake_upload_fails_cleanly` |
+| FR-V-03 (R3) | **In part** | Always converts the upload to `720p.mp4` (H.264/AAC, 720 lines high; it does not check whether the source already qualifies) and extracts `poster.jpg` from 10 % into the video. It checks the result is H.264, 720 lines, AAC when the source has audio, and within 2 s of the source length. **Not implemented:** the optional `360p.mp4` copy and its feature flag, and "when needed" (no skip when the source is already 720p H.264/AAC). | `test_end_to_end_conversion_poster_manifest`, `test_truncated_video_leaves_no_lesson`, `test_real_ffmpeg_failure_cleans_up`, `test_ffmpeg_failure_is_reported_and_cleaned` |
+| FR-V-08 (R3) | **In part** | Writes `lesson.json` last, in a temporary folder, only when `720p.mp4`, `poster.jpg`, `captions.en.vtt`, `transcript.en.json` and `chapters.json` exist and the manifest validates against the B6.3 schema; then moves the folder into place with one rename. A failed run leaves no lesson folder. **Not met in full:** three of the required files are empty placeholders, `slides`, `cues` and `summary` are not produced, and the step is not a retryable job. | `test_end_to_end_conversion_poster_manifest`, `test_truncated_video_leaves_no_lesson`, `test_real_ffmpeg_failure_cleans_up`, `test_ffmpeg_failure_is_reported_and_cleaned`, `test_manifest_without_required_field_is_rejected`, `test_list_lessons_ignores_unfinished_folder`, `test_second_lesson_does_not_overwrite_first` |
+
+## FR-M-02 speech interface library (skeleton, partial), Release 0 foundation
+
+FR-M-02 ("Speech interface library (B5.4)", R0) is partial: the call, the provider rules and the
+checks exist and are mock-tested; no real speech service is called. It is not in the top table
+until it is complete.
+
+| Rule | PRD | Code | Test(s) |
+|---|---|---|---|
+| `transcribe(audio_path, language="en")` returns a B5 transcript (segments and meta) | B5.4 | `libs/model_interface/speech.py` | `test_speech.py`: `test_the_fake_returns_a_valid_b5_transcript`, `test_language_defaults_to_english`, `test_the_package_exports_transcribe` |
+| The provider is chosen by `SPEECH_PROVIDER` with the fake-provider rule; `local` and `hosted` refuse until integrated; a passed provider is for test runs only | B5.2, B5.4, decision 0001 (3) | `speech_providers.py`, `speech.py` | `test_fake_is_refused_outside_a_test_run`, `test_local_and_hosted_refuse_until_a_transport_exists`, `test_an_unset_speech_provider_is_a_clear_error`, `test_passing_a_provider_is_for_test_runs_only` |
+| A bad language or an unreadable audio file is refused before any provider call; the path is never echoed | B5.4, OPS-04 | `speech.py` | `test_a_missing_file_is_refused_before_the_provider_is_called`, `test_a_folder_is_not_an_audio_file`, `test_language_must_be_a_non_empty_string` |
+| The answer is checked against the B5 schema and the time rule; one retry, then `InvalidOutput` with no transcript text; provider failures are not retried | B5.2, B5.4, decision 0001 (5, 9) | `speech.py`, `transcript.py` | `test_one_invalid_answer_is_retried_once`, `test_two_invalid_answers_raise_and_return_nothing`, `test_a_provider_failure_is_not_retried` |
+| Every speech attempt is logged through the same call logger as `run()`: `kind="speech"`, transcript meta only, no audio path or text; failed attempts too, with unknown values null; a logger that fails stops the call; no logger outside a test run refuses before the provider is called; a record is a model record unless it says otherwise | B5.3 "every call", guide (issue #186, 23 Nov 2026) | `call_log.py`, `speech.py` | `test_speech_logging.py`: `test_one_successful_call_logs_one_speech_record`, `test_an_invalid_answer_then_a_good_one_logs_both_attempts`, `test_two_invalid_answers_log_two_failed_attempts_and_raise`, `test_a_provider_failure_is_logged_with_unknown_values`, `test_a_reply_with_a_broken_meta_is_logged_with_unknown_values`, `test_a_record_holds_no_audio_path_and_no_transcript_text`, `test_a_logger_that_fails_stops_the_call`, `test_no_call_logger_outside_a_test_run_refuses_before_the_provider_is_called`, `test_a_call_record_is_a_model_record_unless_it_says_otherwise`, `test_the_in_memory_logger_keeps_the_kind` |
+| `latency_ms` is measured by LearnOps, as a whole number | B5.4, decision 0001 (2) | `speech.py`, `validation.py` | `test_latency_ms_is_measured_here_as_a_whole_number` |
+| Not a rule: time order, and times past `duration_s`; silent audio gives `segments: []` | B5.4, decision 0001 (4, 10, 11) | `speech.py` | `test_segments_out_of_time_order_are_accepted`, `test_times_past_duration_are_accepted`, `test_silent_audio_gives_an_empty_transcript` |
+
+### Not implemented, and therefore not claimed
+
+| What | PRD | Waits for |
+|---|---|---|
+| A real local (lab Whisper-family) or hosted speech service | B5.4 | ADR 0002 (PR #98) and the lab (design Q19 is the model provider, not this) |
+| The PostgreSQL logger for `shared.model_calls` that writes the speech records (and the `kind` column) | B5.3 | Q36 (migration tool, shared schema) |
+| `SPEECH_TIMEOUT_S`, the budget, and splitting long audio (90-minute dry run) | — | Design proposals (grading.md §4.2); lab check |
+
+## B8.6 model comparison set (PROVISIONAL), Release 0 foundation
+
+Files: `testdata/b8-6-model-comparison/` (manifest, rubric, six schemas, one transcript input,
+three expected outputs, two PROPOSED mentor review forms), `libs/contracts/tests/test_b8_6_dataset.py`. B8.6 is a test-data set
+(PRD B8) with no requirement ID of its own. It is the input of FR-M-03 (Release 4), which is not
+implemented, so no row in the table above maps to it.
+
+### Covered by automated tests
+
+| Rule | Source | Test(s) |
+|---|---|---|
+| Manifest and rubric validate against their schemas; expected chapters pass the merged B6.2 validator | Proposed format (set README, O10); PRD B6.2 | `test_schema_is_a_valid_draft_2020_12_schema`, `test_manifest_and_rubric_are_valid`, `test_expected_chapters_are_valid_and_fit_the_transcript` |
+| Fixed inputs linked to expected outputs; pending and placeholder items hold no content | PRD B8 | `test_ids_are_unique_and_references_resolve`, `test_pending_and_placeholder_items_have_no_content` |
+| The grading-draft item gd-001 is pending (B8.4 has no reference grades yet), never copies B8.4, cannot point outside it, and can be `ready` only when the reference grades exist, one per submission; the b8-4 input path is checked when B8.4 is in the tree (skipped, with the reason, when B8.4 is not in the tree) | PRD B8; B8.4 | `test_the_grading_draft_item_is_pending_and_never_copies_b8_4`, `test_a_grading_draft_item_is_ready_only_when_the_reference_grades_exist`, `test_the_b8_4_input_exists_when_the_set_is_present`, `test_a_b8_4_path_cannot_leave_the_b8_4_set` |
+| The practice item pr-001 is a valid review-card draft (question, correct answer, at least two distractors, explanation, source), uses one H5P content type, never interactive video, short answer or the branching scenario, and every source range sits on transcript segment boundaries | PRD FR-S-12, B7 (PR #54 defines no draft format); proposed by Student 1 on PR #33, confirmed by the guide (reported by Harshitha on 18 Nov; the link to his answer is still to be added); design Q12 | `test_expected_practice_is_valid_and_fits_the_input`, `test_practice_rules_catch_a_bad_draft` |
+| Two PROPOSED mentor review forms (grade-draft review and output review): valid schemas, invented examples validate, output-review levels equal the rubric's, a draft id never names a provider, the grade-draft example is consistent (differences, totals, band), no real review is claimed | Proposed format (set README, O2 to O5); design 11.2, Q48 | `test_review_schema_is_a_valid_draft_2020_12_schema`, `test_the_invented_review_examples_validate`, `test_output_review_levels_equal_the_rubric_levels`, `test_a_draft_id_never_names_a_provider`, `test_the_grade_draft_example_is_consistent`, `test_review_forms_reject_missing_blind_and_extra_fields`, `test_no_real_reviews_are_claimed` |
+| Transcript input has the B5.4 shape and consistent times | PRD B5.4 | `test_transcript_has_the_prd_b5_4_shape_and_consistent_times`, `test_time_checks_catch_bad_transcripts`, `test_transcript_validates_against_the_b5_contract` (skipped until B5 is on `main`) |
+| Expected chapters use the B6.2 shape and fit the transcript | PRD B6.2 | `test_expected_chapters_are_valid_and_fit_the_transcript`, `test_chapter_checks_catch_overlap_through_the_b62_validator`, `test_chapter_checks_catch_what_only_the_transcript_knows` |
+| The four FR-M-03 measures are in the rubric | PRD FR-M-03 | `test_rubric_covers_the_measures_and_tasks` |
+| Provisional and not-reviewed labelling; no results claimed | Set README | `test_status_rules`, `test_reviewed_needs_a_reviewer`, `test_expected_summary_is_labelled_until_reviewed`, `test_no_results_are_claimed` |
+| No real data (fictional hosts only, no email addresses, small text files) | PRD B8, C-07 | `test_files_are_small_text_with_no_real_hosts_or_email_addresses` |
+
+### Not met yet, and not tested
+
+- Grading-draft items (wait for B8.4 and its reference grades, Q13) and practice items (Q12).
+- Reviewed expected outputs, a fixed rubric (Q48), measure definitions marked `open`, set size.
+- Any comparison run or result (FR-M-03, Release 4).

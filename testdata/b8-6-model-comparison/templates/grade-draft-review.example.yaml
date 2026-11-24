@@ -1,0 +1,38 @@
+# INVENTED EXAMPLE of a mentor's review of one AI grade draft. Not a real review: the numbers and
+# the draft are made up to show the format. Copy it, replace every value, and keep the keys.
+# The reviewing mentor does not know which provider wrote the draft (draft_id is opaque).
+schema: learnops.testdata.b8-6.grade-draft-review/v1
+item: gd-001
+submission_id: s005
+draft_id: draft-001
+mentor_ref: mentor-01
+reviewed_at: "2026-11-21"
+blind_to_provider: true
+time_spent_seconds: 240
+criteria:
+  - criterion: Working demo
+    reference_score: 0
+    draft_score: 0
+    score_difference: 0
+    evidence_supported: "yes"
+    feedback_acceptable: "yes"
+    wrong: "no"
+  - criterion: Repository and README
+    reference_score: 2
+    draft_score: 8
+    score_difference: 6
+    evidence_supported: "no"
+    feedback_acceptable: "no"
+    wrong: "yes"
+    note: The draft says the README has a Setup section; the repository has no README.
+  - criterion: Reflection
+    reference_score: 1
+    draft_score: 1
+    score_difference: 0
+    evidence_supported: "yes"
+    feedback_acceptable: "yes"
+    wrong: "no"
+total:
+  reference_total: 3
+  draft_total: 9
+  within_one_band: "no"

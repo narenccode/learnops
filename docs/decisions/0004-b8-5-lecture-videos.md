@@ -9,7 +9,7 @@ The team will create its own lecture test dataset for Release 0.
 - Speakers will speak naturally from an outline rather than read a script.
 - Each speaker must provide their own written consent line.
 - Transcripts will be typed manually or corrected from a model outside the speech-recognition comparison.
-- Harshitha will review the reference transcripts.
+- Harshitha reviews lectures 01, 03, 04 and 05; Nagashree reviews lecture 02 (its speaker is Harshitha); acknowledged by the guide ([issue #186](https://github.com/narenccode/learnops/issues/186#issuecomment-7101984198)).
 - Original recordings will remain private and outside Git.
 - Approved transcripts will be published under Apache-2.0.
 
@@ -40,11 +40,13 @@ The dataset is considered complete when:
 
 The guide has approved, for now, that the current B8.5 dataset work does not need to reach the 1800 second total. This is a temporary exception, not a permanent removal of the requirement, and no other minimum is set in its place. The exception covers only the minimum total duration. Every recording's duration is still measured with `ffprobe` and recorded correctly, the other completion criteria still apply, and the dataset is not complete until they are met.
 
-Approval reference: confirmed by the guide on issue #121, recorded there by the guide's assistant. The date of the earlier approval is not recorded.
+Approval reference: the guide confirmed it in his own words on issue #121 on 2026-11-20 ([comment](https://github.com/narenccode/learnops/issues/121#issuecomment-7053492287)). The date of the earlier approval is not recorded.
 
 ## Temporary exception: minimum number of lectures
 
 The guide has approved, for now, that the interim demonstration and testing work may proceed with four lecture recordings instead of five, ideally from four different speakers. This is a temporary exception, not a permanent removal of the requirement: the dataset is not complete until five recordings exist, every other completion criterion still applies, and no other minimum is set in its place. The five-lecture minimum in PRD B8.5 and in the completion criteria above is unchanged.
+
+Approval reference: the guide's own-words confirmation on issue #121 of 2026-11-20 ([comment](https://github.com/narenccode/learnops/issues/121#issuecomment-7053492287)), which covers both exceptions.
 
 ## Consent lines
 
@@ -54,4 +56,14 @@ One line per speaker, written by that speaker. A speaker who gives more than one
 
 Each lecture's row in the B8.5 inventory (`testdata/README.md`) points to its speaker's line as `0004` speaker-NN. Nobody writes a consent line for another person.
 
-No consent lines yet.
+- speaker-01: Akshita, 2026-11-23: "used to test speech recognition; video stays in the lab; transcript published under Apache-2.0"
+- speaker-02: Harshitha, 2026-11-23: "used to test speech recognition; video stays in the lab; transcript published under Apache-2.0"
+- speaker-03: Nagashree V, 2026-11-23: "used to test speech recognition; video stays in the lab; transcript published under Apache-2.0"
+- speaker-04: Shraddha, 2026-11-23: "used to test speech recognition; video stays in the lab; transcript published under Apache-2.0"
+
+## How the transcripts were made
+
+All five reference transcripts were typed by hand by the speaker of that lecture (statement of the owner, Student 4). No
+model draft was used, so no model is recorded. Lecture 02 (speaker Harshitha) was checked by Nagashree V; the other four
+were checked by Harshitha. The guide acknowledged this on 23 November 2026 (see the line above and the link there): nobody checks their own
+transcript.

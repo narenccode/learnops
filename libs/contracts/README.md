@@ -183,10 +183,21 @@ python libs/contracts/validate_examples.py [--check | --dry-run] [--contracts-di
   refuses links that leave its package folder; this tool does not.
 - The summary counts every example found, so passed, failed and not validated (the examples of an
   unusable schema) always add up to it.
-- Not checked yet: examples that no schema matches (orphans such as `moodle-ws.v1.json` are skipped
-  and the run can still exit 0), other file types next to the examples, duplicate keys, and `NaN`,
-  `Infinity` and `-Infinity`. On #68 the guide set orphans, unsupported files, duplicate keys and
-  strict JSON as a later pull request: they are not in this stack.
+- **Examples no schema takes, and files that are not examples** are reported, so nothing is
+  skipped without a word. `orphan_example`: a `.json`, `.yaml` or `.yml` file directly in
+  `contracts/examples/` that is not `<name>.v<N>.<suffix>.<ext>` of an existing schema (for example
+  `moodle-ws.v1.json`, or a file of a version that has no schema). `orphan_example_folder`: a folder
+  in `contracts/examples/` named after no schema, such as the folder of a misnamed schema.
+  `unsupported_file`: any other file directly in `contracts/examples/`, or at the top of a
+  schema's example folder (`readme.txt`, `README.md`). Subfolders of an example folder (B1's
+  `weeks/`) and hidden files (`.gitkeep`) are not examples and are not reported. Each problem
+  has a `next:` hint. The run exits 1.
+- **Strict parsing.** A key repeated in one object is an error in JSON and in YAML (Python and
+  PyYAML would silently keep the last value). In YAML the report gives the line and column.
+  A YAML merge key (`<<: *anchor`) is not a repeated key, and the same key in different objects is
+  fine. `NaN`, `Infinity` and `-Infinity` are errors in JSON, because they are not JSON. The error
+  is `unreadable_example`, like any other file that cannot be read. YAML's own `.nan` and `.inf`
+  are not checked.
 - Exit codes: `0` when every example passes, `1` when any problem is found, `2` for a usage error
   or a missing contracts folder. The tool only reads files: `--check` (the default) and
   `--dry-run` do the same, and there is nothing to undo.

@@ -41,7 +41,7 @@ evaluation**. Use one section only and delete the other.
 
 | # | Item | Owner | State |
 |---|---|---|---|
-| 1 | B8.5 set COMPLETE: recordings, consent lines, reference transcripts checked by Harshitha | Student 4, Harshitha | PENDING |
+| 1 | B8.5 set COMPLETE: recordings, consent lines, reference transcripts checked by Harshitha | Student 4, Harshitha | **Done in the B8.5 data PR** (#169): five lectures, four consent lines; the transcript of lecture 02 was checked by Nagashree V because its speaker is Harshitha. The owner's confirmations (official recordings, briefing) are in that PR |
 | 2 | Approval reference for the temporary exceptions in decision 0004 (no 1800 s total; four lectures for interim work) | Guide | **Recorded**: decision 0004 cites the guide's answer on issue #121 (PR #125). The exceptions are for interim demonstration and testing only. **They do not change the five-lecture rule**: an official run still needs five checked lectures |
 | 3 | Transcript typing and WER normalisation rules | Guide | Not decided |
 | 4 | ADR 0002 (T8 speech options) approved; lab endpoint model, engine, version, word timestamps | Guide (T8 session) | PROPOSED, not approved |

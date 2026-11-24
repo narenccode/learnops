@@ -1,4 +1,4 @@
-# B8.5 Lecture videos (owner: Student 4), PENDING
+# B8.5 Lecture videos (owner: Student 4), COMPLETE
 
 At least five short technical lectures in Indian English, approximately 30 minutes in total
 (acceptance threshold: at least 1800 s), recorded by the project team for this project (no
@@ -7,14 +7,13 @@ pipeline (PRD G-6, App-C 7). The method is the guide's
 decision in `docs/decisions/0004-b8-5-lecture-videos.md`. The inventory, one row per lecture, is
 the B8.5 table in `testdata/README.md`.
 
-**Status: PENDING.** Five local recording files were identified in earlier work (PR #99
-recorded their SHA-256 values in the inventory). The files are not in Git and are not
-re-verified here. None is accepted as B8.5 evidence yet: whether they are official B8.5
-lectures is not confirmed, no speaker consent line is written in decision 0004, and no reference
-transcript has been typed or reviewed. The five durations (338 s in total, measured with `ffprobe`)
-are recorded in the inventory. Every file
-under `lectures/` is a placeholder. Do not use this set for any measurement. The temporary
-exceptions in decision 0004 (four lectures, no 1800 s total) do not make it complete.
+**Status: COMPLETE.** Five recordings are listed in the inventory (`testdata/README.md`): 451, 441, 462, 538 and
+488 s, 2380 s in total, from four speakers. Each has an outline and a reference transcript, the transcripts are
+marked `checked` (lecture 02, whose speaker is Harshitha, was checked by Nagashree V; the other four by
+Harshitha), and each speaker has written a consent line in decision 0004. The durations, hashes and file
+names were supplied by the owner and not re-verified by the reviewers. The files are not in Git. This record does
+not show a word error rate: no measurement has been run, and the method and normalisation are still to be
+approved (App-C 7).
 
 ## Folder layout
 
@@ -48,7 +47,7 @@ record are per speaker (`speaker-NN`), not per lecture. An ID (`lecture-NN`) sta
 | Item | In Git? | Where |
 |---|---|---|
 | Outline the speaker talks from | Yes, Apache-2.0 | `lectures/<lecture-id>/outline.md` |
-| Reference transcript, typed or corrected by hand and checked by Harshitha | Yes, Apache-2.0 | `lectures/<lecture-id>/transcript.en.txt` |
+| Reference transcript, typed or corrected by hand and checked by Harshitha (lecture 02 by Nagashree) | Yes, Apache-2.0 | `lectures/<lecture-id>/transcript.en.txt` |
 | Inventory: title, speaker, duration, recording file name, SHA-256, review status | Yes | `testdata/README.md`, B8.5 table |
 | Speaker consent lines | Yes | `docs/decisions/0004-b8-5-lecture-videos.md`, `## Consent lines` |
 | Video recordings | **No, never** | See "Where recordings are kept" |
@@ -138,7 +137,7 @@ Before a speaker writes their line, tell them:
   error rate measurement (case, punctuation, fillers, numbers) are not fixed yet; they are
   decided with the first baseline run (App-C 7). Until then, type what is said, in the order it
   is said.
-- **Check:** Harshitha (`Harshithamanjunatha`) checks each transcript against its recording. Only
+- **Check:** Harshitha (`Harshithamanjunatha`) checks the transcripts of lectures 01, 03, 04 and 05, and Nagashree checks lecture 02, whose speaker is Harshitha (acknowledged by the guide, decision 0004). Each checks against the recording. Only
   then does the inventory's Transcript review column change from `pending` to `checked`.
 
 ## Pending placeholders and completed entries
@@ -155,28 +154,32 @@ be used for any measurement.
 
 ## Completion checklist
 
+Ticked items are confirmed by the committed files and the validation test. Unticked items rest on the owner's
+statement in the pull request and are not verified by the repository: the speaker briefing, where the recordings are stored, and
+who checked lecture 02.
+
 For each lecture (`lecture-01` … `lecture-05`):
 
-- [ ] `lectures/<lecture-id>/outline.md` holds the speaker's outline (placeholder removed)
+- [x] `lectures/<lecture-id>/outline.md` holds the speaker's outline (placeholder removed)
 - [ ] The lecture is recorded and stored as described in "Where recordings are kept" (folder
       not synced or backed up to a cloud service; not shared)
-- [ ] Inventory: title, speaker, Duration (s) and Recording file filled in
-- [ ] Inventory: SHA-256 filled in
+- [x] Inventory: title, speaker, Duration (s) and Recording file filled in
+- [x] Inventory: SHA-256 filled in
 - [ ] The speaker was told about the interim storage, then wrote their own consent line (once per
       speaker); the inventory's Consent cell points to it as `` `0004` speaker-NN ``
-- [ ] `lectures/<lecture-id>/transcript.en.txt` typed or corrected by hand (placeholder removed)
-- [ ] Transcript checked by Harshitha; inventory says `checked`
+- [x] `lectures/<lecture-id>/transcript.en.txt` typed or corrected by hand (placeholder removed)
+- [x] Transcript checked (lectures 01, 03, 04 and 05 by Harshitha, lecture 02 by Nagashree, acknowledged by the guide); inventory says `checked`
 
 For the set:
 
-- [ ] At least five lectures complete
-- [ ] Total recorded duration at least 1800 s (the acceptance threshold for "approximately
+- [x] At least five lectures complete
+- [x] Total recorded duration at least 1800 s (the acceptance threshold for "approximately
       30 minutes"), written on the inventory's total line
-- [ ] Only then: the Status lines in `testdata/README.md` and in this README change from `PENDING`
+- [x] Only then: the Status lines in `testdata/README.md` and in this README change from `PENDING`
       to `COMPLETE`
-- [ ] The B8.5 validation test passes: `python -m pytest -q libs/contracts/tests/test_b8_5_dataset.py`
+- [x] The B8.5 validation test passes: `python -m pytest -q libs/contracts/tests/test_b8_5_dataset.py`
       (added in the same PR as this README)
-- [ ] `git ls-files testdata/b8-5-lecture-videos` lists only `README.md`, `.gitignore`,
+- [x] `git ls-files testdata/b8-5-lecture-videos` lists only `README.md`, `.gitignore`,
       `outline.md` and `transcript.en.txt` files
 
 ## Licence

@@ -78,3 +78,46 @@ jobs:
       - name: Tests for the CI scripts
         run: |
           if [ -d .github/scripts/tests ]; then pip install pytest && pytest -q .github/scripts/tests; fi
+
+  video-demo:
+    # Dedicated job for modules/video/demo (limited local demo). The tests there need ffmpeg and
+    # ffprobe, so this job installs them and fails when any test is skipped: a missing ffmpeg must
+    # never look like a pass. The "checks" job above is unchanged.
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install ffmpeg and ffprobe
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg
+
+      - name: Verify ffmpeg and ffprobe
+        run: |
+          # Explicit checks: `ffmpeg -version | head` would exit 0 even if ffmpeg were missing.
+          for tool in ffmpeg ffprobe; do
+            if ! command -v "$tool" >/dev/null 2>&1; then
+              echo "::error::$tool is not installed. The Video demo tests need ffmpeg and ffprobe."
+              exit 1
+            fi
+            "$tool" -version | head -n 1
+          done
+
+      - name: Install Python dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+          pip install -r requirements-video-demo.txt
+
+      - name: Video demo tests (no skips allowed)
+        run: |
+          set -o pipefail  # without it a failing pytest would be hidden by tee
+          pytest -v -rs modules/video/demo/tests | tee "$RUNNER_TEMP/video-demo.log"
+          if grep -q " SKIPPED" "$RUNNER_TEMP/video-demo.log"; then
+            echo "::error::A Video demo test was skipped. ffmpeg, fastapi and httpx (requirements-video-demo.txt) must all be present."
+            exit 1
+          fi

@@ -3,3 +3,5 @@
 # requirements-dev.txt.
 
 tzdata==2026.6                     # Apache-2.0. Time-zone database for zoneinfo on systems that have none (Windows); not used where the system has one
+jsonschema==4.26.0                 # MIT. libs/moodle_ws/allowlist.py validates the allow-list example against its schema at run time; modules/video/demo/lesson_processor/processor.py validates lesson.json against contracts/lesson-manifest.v1.schema.json (same pin as requirements-dev.txt, which needs it for the libs/contracts tests; kept in both so each file installs on its own, and the two must change together)
+referencing==0.37.0                # MIT. Needed by jsonschema

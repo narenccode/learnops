@@ -1,0 +1,22 @@
+# PROVISIONAL submission. Fictional; written for this project (Apache-2.0).
+schema: learnops.testdata.b8-4.submission/v1
+id: s008
+onlinetext: |-
+  Repository: https://git.lab.invalid/learner-08/makerspace-bot.git
+  Demo: https://demo.lab.invalid/learner-08/
+  Report: My assistant answers questions about a makerspace: opening times, the laser cutter
+  and the 3D printers. I wrote the text it reads myself, based on how such spaces usually work.
+
+  What worked: the word overlap idea is simple and it was very quick to publish the demo. Asking about
+  the laser cutter returns the paragraph about the safety induction, which is what I wanted.
+
+  What went wrong: a question with no shared words returns a random paragraph instead of saying it
+  does not know. I only noticed when a friend asked "is there parking" and got the printer prices.
+  I added a check that returns "I do not know" when nothing matches. My README explains how to
+  install and run it, but I called the sections Install and Run because that is how I think about
+  it. Next week I want to try longer documents and see where it breaks first.
+onlinetext_format: plain
+repo_dir: repo
+hosting:
+  publish_repo: true
+  demo_stub: answers

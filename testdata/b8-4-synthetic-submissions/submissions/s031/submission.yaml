@@ -1,0 +1,30 @@
+# PROVISIONAL submission. Fictional; written for this project (Apache-2.0).
+schema: learnops.testdata.b8-4.submission/v1
+id: s031
+onlinetext: |-
+  Repository: https://git.lab.invalid/learner-31/weather-widget.git
+  Demo: https://demo.lab.invalid/learner-31/
+  Report: This course gave me time to finish a project I had wanted to build for a long time:
+  a weather widget for my desktop. It shows the temperature, the wind and a small picture of the
+  sky, and it updates every ten minutes.
+
+  What I would change: the widget uses a lot of memory for something so small. I would rewrite the
+  drawing code so it only redraws the parts that change. I would also add a setting for the units,
+  because my friends abroad want Fahrenheit instead of Celsius.
+
+  What went well: the layout looks clean and the colours change with the time of day, which
+  everyone likes. I spent a whole weekend choosing the icons and I am happy with them.
+
+  What I learned: working on one project for four weeks taught me to plan in small steps. I wrote
+  a list of features at the start and ticked them off one by one. I also tried three different weather services before choosing
+  one, because the first two changed their data format without warning and broke the widget twice.
+  In total the project took about forty hours. I also learned to read error
+  messages properly instead of guessing, and to keep notes about what I tried, because the same
+  problem came back twice. The README now has Setup, Usage and Limits sections, and the Limits
+  section says the widget needs an internet connection to update. Next I want to share it with my
+  classmates and collect their ideas for new features.
+onlinetext_format: plain
+repo_dir: repo
+hosting:
+  publish_repo: true
+  demo_stub: unrelated_page

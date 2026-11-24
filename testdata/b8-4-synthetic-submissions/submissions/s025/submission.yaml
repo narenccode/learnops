@@ -1,0 +1,32 @@
+# PROVISIONAL submission. Fictional; written for this project (Apache-2.0).
+schema: learnops.testdata.b8-4.submission/v1
+id: s025
+onlinetext: |-
+  Repository: https://git.lab.invalid/learner-25/rowing-club-assistant.git
+  Demo: https://demo.lab.invalid/learner-25/
+  Report: Looking back, the hardest part of this course was not the code but deciding what a
+  good answer is. My rowing club assistant now answers from the club's safety rules, and I check
+  it against a test list every time I change something.
+
+  What went well: moving the rules into a document in week 2 made every later change easier. The
+  test list from week 3 caught two mistakes I would otherwise have published, including one where
+  the assistant told beginners they could row alone.
+
+  Demo: the demo was the part I worried about most. It still answers within a second, because the
+  document is small and I load it once at start-up.
+
+  What I would change: word overlap is fragile. Questions that use other words than the rules
+  still fail, and I fixed them one at a time with lists of other words. With more time I would
+  try a method that understands meaning, and I would measure it against the same test list so I
+  can tell whether it is really better.
+
+  What I learned: write the tests before the fix, keep the document separate from the code, and
+  say clearly in the README what the assistant cannot do. I also asked two club members to try
+  it, and their questions became the last entries in my test list. My Limits section now says it only
+  knows the safety rules and that it cannot answer questions about membership fees. That
+  sentence came directly from a question a club member asked me.
+onlinetext_format: plain
+repo_dir: repo
+hosting:
+  publish_repo: true
+  demo_stub: answers

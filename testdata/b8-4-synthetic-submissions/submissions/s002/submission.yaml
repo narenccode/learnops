@@ -1,0 +1,25 @@
+# PROVISIONAL submission. Fictional; written for this project (Apache-2.0).
+# PROVISIONAL submission. Fictional; written for this project (Apache-2.0).
+schema: learnops.testdata.b8-4.submission/v1
+id: s002
+onlinetext: |-
+  Repository: https://git.lab.invalid/learner-02/garden-rules-bot.git
+  Demo: https://demo.lab.invalid/learner-02/
+  Report: My bot now reads the allotment garden rules and answers questions about them. It looks at each
+  word of the question that is longer than three letters and returns the first rule line that
+  contains it.
+
+  Questions it gets wrong:
+
+  The question "Where do plot clippings go?" gets the rule about keeping paths clear, because
+  "plot" is the first long word that matches and that rule comes first. The real answer is the green
+  bins rule. The bot stops at the first word that matches instead of finding the best line.
+
+  Also some other questions about bins did not work that well sometimes.
+
+  I would like to improve the matching next week.
+onlinetext_format: plain
+repo_dir: repo
+hosting:
+  publish_repo: true
+  demo_stub: answers

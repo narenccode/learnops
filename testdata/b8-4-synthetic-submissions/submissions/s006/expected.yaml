@@ -1,0 +1,35 @@
+# Author's expected outcome. NOT a reference grade: no scores.
+# Rubric: B8.2 b8-2-wk-01-task (PR #61).
+schema: learnops.testdata.b8-4.expected-outcome/v1
+submission_id: s006
+rubric: b8-2-wk-01-task
+provisional: true
+criteria:
+- criterion: Working demo
+  checks:
+  - check: http_ok:demo_url
+    expected: pass
+    reason: hosting.demo_stub is unrelated_page, which returns HTTP 200.
+  judgement: does_not_meet
+  rationale: The link opens, but the page is about running, not an assistant answering a test question.
+    A passing check alone must not earn the marks.
+- criterion: Repository and README
+  checks:
+  - check: repo_clone
+    expected: fail
+    reason: 'hosting.publish_repo is false: the repository does not clone.'
+  - check: readme_sections:Setup
+    expected: error
+    reason: 'hosting.publish_repo is false: nothing to clone, so this check cannot run (error, not fail;
+      design §4.3d).'
+  judgement: does_not_meet
+  rationale: The repository is not reachable. The local copy is a unit converter, not the assistant the
+    task asks for.
+- criterion: Reflection
+  checks:
+  - check: word_count:150
+    expected: pass
+    reason: The report has 240 words; the minimum is 150 (PROVISIONAL counting rule).
+  judgement: ambiguous
+  rationale: Read literally, 150+ words on what was built and what went wrong is met. But the report is
+    about a different project; whether that counts is for the mentor's reference grade.
