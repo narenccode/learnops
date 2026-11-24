@@ -1,5 +1,5 @@
 [
-  {"start": 0.0, "end": 40.0, "title": "Introduction"},
+  {"start": 22.0, "end": 40.0, "title": "Introduction"},
   {"start": 40.0, "end": 180.0, "title": "Normalization"},
   {"start": 180.0, "end": 230.0, "title": "Database transactions"},
   {"start": 230.0, "end": 316.0, "title": "ACID properties"},
