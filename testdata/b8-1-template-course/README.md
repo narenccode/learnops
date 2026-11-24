@@ -71,7 +71,7 @@ non-protected content to leave alone. The `tpl-` prefix keeps these `idnumber`s 
 `Sample task` is **ungraded**. Proposal (Owner, 2026-11-12, Points): the Final project Assignment gets
 the 100 points and is the only graded item (§4). Owner (the 11-18 reply, P27): `Sample task` is an
 Assignment left ungraded. On 5.3, find and record the name of the setting that leaves no grade item (or 0
-points), and the completion setting (submit): recorded on 2026-11-23, as the operator read them from the 5.3 screens (the labels were not copied letter by letter): `Grade > Type` = `None`; completion = `Add requirements`, then `Make a submission`.
+points), and the completion setting (submit): recorded on 2026-11-23, read from the 5.3 screens: `Grade > Type` = `None`; `Use marking workflow` = `No`; completion = `Add requirements`, then `Make a submission` (`View the activity` unticked).
 
 **Text of the three activities** (Owner, the 11-18 reply, P27; fictional):
 
@@ -108,7 +108,7 @@ that holds the two activities; it is not one of the four items.
 | Course feedback: anonymous | **Owner-confirmed** (the 11-18 reply, P28): anonymous. The 2026-11-07 reply intended it; listing it among the proposals was the mistake |
 | Points | Proposal (Owner, 2026-11-12): the Final project Assignment gets the 100 points and is the only graded item, so `Sample task` (§3) is ungraded. The Moodle default is left, so the points count in the course total. The owner said not to design around it |
 | Final project Assignment name | Owner (the 14:43 reply): `Final project`, idnumber `final-project` |
-| Exact Moodle setting names and values on 5.3 (4.5: not tested; waived for Release 0 (B8.1 only; see [0009](../../docs/decisions/0009-b8-1-template-course.md) and the [register](../../docs/decisions/README.md))) | Recorded in §8: the 5.3 completion dropdown offers three choices (the activity is marked done manually, no tracking, or `Add requirements` with the requirements under it). **Final project has both `Receive a grade` and `Make a submission` ticked**, where the guide asked for `receive a grade` only (§8, finding 2). The labels of the other settings were not copied letter by letter |
+| Exact Moodle setting names and values on 5.3 (4.5: not tested; waived for Release 0 (B8.1 only; see [0009](../../docs/decisions/0009-b8-1-template-course.md) and the [register](../../docs/decisions/README.md))) | Recorded in §8, read from the 5.3 screens: the 5.3 completion choices are `None`, `Students must manually mark the activity as done` and `Add requirements`; under `Add requirements` the boxes are `View the activity`, `Make a submission` and `Receive a grade` (`Any grade` or `Passing grade`) for an assignment, and `View the activity` and `Submit feedback` for the feedback activity; the other fields read: `Grade > Type` = `None`, `Use marking workflow`, `Record user names` = `Anonymous`. **Final project has both `Receive a grade` and `Make a submission` ticked**, where the guide asked for `receive a grade` only (§8, finding 2) |
 
 **Baseline for the merge test.** PRD §C1.7 expects the protected items "unchanged (same idnumbers,
 same count, badge and completion criteria intact)"; the list above is the baseline. Totals for the
@@ -183,7 +183,7 @@ a course made from the template (PRD §B1.4).
 | Item (Owner decision, or pending lab detail) | Status |
 |---|---|
 | Restore route for the harness (App-C item 3: admin CLI or browser automation) | The harness's own question, separate from B8.1 (Owner, the 14:43 reply). Not decided here |
-| Exact steps and options to create a course and to merge | Run on 2026-11-23: Restore with `Restore as a new course`; merge with `Restore into this course`, then `Merge the backup course into this course`, defaults kept (§8). The menu and option labels were reported by the operator and not all were copied letter by letter |
+| Exact steps and options to create a course and to merge | Run on 2026-11-23: Restore with `Restore as a new course`; merge with `Restore into this course`, then `Merge the backup course into this course`, defaults kept (§8). The completion, feedback and course-completion labels are from the screenshots (§8); the menu labels of the Restore and Backup pages were reported by the operator |
 | Clean-up after a test restore | Owner (the 09:36 reply): every course created for a test is deleted after its result is recorded and checked. Owner (the 11-18 reply, P25, P26, P33): that includes restored copies and the merge target; **the template course stays**. Local copies, screenshots, logs and the downloaded `.mbz` stay local, out of Git, and are deleted once the evidence is in the record. Any deletion beyond a test course needs the guide's approval. Do not change site settings or the recycle bin. How to delete a course on 5.3: PENDING MOODLE LAB |
 | Cross-version restore | Owner (the 11-14 reply, which replaces the 14:43 reply on this point): build the template on 5.3 and run every restore and the sections-only merge on 5.3 only. Moodle 4.5 is not tested; waived for Release 0 (B8.1 only; see [0009](../../docs/decisions/0009-b8-1-template-course.md) and the [register](../../docs/decisions/README.md)). There is no 4.5 restore test and no 5.3-to-4.5 test in Release 0; the owner expects a 5.3 template not to restore on 4.5 (owner's report, §3; not verified). For each restore, record the Moodle version, the date and the outcome |
 
@@ -197,7 +197,7 @@ that already exists at that number. Studio replaces this later. PRD §B1.4: sect
 the protected items and their section.
 
 **Steps (Owner, the 11-18 reply, P15c, P30, P31).** Run on 2026-11-23 on Moodle 5.3+ (Build: 20261030); the
-results are in §8. Moodle menu and option labels are as reported by the operator.
+results are in §8. Moodle menu and option labels are as reported by the operator; the completion and feedback labels are from screenshots (§8).
 
 1. Restore the template (§1) into a new course on Moodle 5.3. This copy keeps sections 1 to 3; **do not
    renumber it**.
@@ -264,7 +264,7 @@ the clean-up rule in §7 (Owner, the 14:43, 09:36 and 11-14 replies).
 | Protected items, completion criteria and badge match §4 to §6 | Not tested; waived for Release 0 (B8.1 only; see [0009](../../docs/decisions/0009-b8-1-template-course.md) and the [register](../../docs/decisions/README.md)) | Match (course 8): sections 1 `Orientation`, 2 `Sample week`, 3 `Final project`; the five idnumbers; only Final project graded (100 points); completion = Final project AND Course feedback; badge present, not available, issuer `LearnOps lab (placeholder)`; no users enrolled. Finding 2 applies |
 | Sections-only merge leaves protected items unchanged (PRD §C1.7) | Not tested; waived for Release 0 (B8.1 only; see [0009](../../docs/decisions/0009-b8-1-template-course.md) and the [register](../../docs/decisions/README.md)) | **PASS** (course 10): BEFORE and AFTER equal in every cell, 2026-11-23. Findings 1 and 3 apply |
 
-**Run record (PRD §E3).** Data set: B8.1 template course, built on 2026-11-23. Method: Moodle's own Backup and Restore in the browser on the 5.3 lab site, the backup archive opened and read, and the §4 comparison tables written from Moodle's own screens. Measured by Harshitha, who ran the session with the guide's OK ([issue #112, 2026-11-23](https://github.com/narenccode/learnops/issues/112#issuecomment-7101983721)). Evidence: the screenshots, logs and tables stay local and are not committed; the text results are in `docs/decisions/0009-b8-1-template-course.md`.
+**Run record (PRD §E3).** Data set: B8.1 template course, built on 2026-11-23. Method: Moodle's own Backup and Restore in the browser on the 5.3 lab site, the backup archive opened and read, and the §4 comparison tables written from Moodle's own screens. Measured by Harshitha, who ran the session with the guide's OK ([issue #112, 2026-11-23](https://github.com/narenccode/learnops/issues/112#issuecomment-7101983721)). Evidence: the screenshots, logs and tables stay local and are not committed; the text results are in `docs/decisions/0009-b8-1-template-course.md`, which names the local screenshots: `Screenshot 2026-11-23 144812.png` and `144830.png` (course page with the extra empty section, A3); `151120.png` (Final project completion: `Make a submission` and `Receive a grade` both ticked, finding 2); `153245.png` (Course feedback `Record user names` = `Anonymous`); `153318.png` (Course feedback completion `Submit feedback`); `153719.png` (Grader report: Final project and Course total only); `154020.png`, `154100.png`, `154118.png`, `154131.png` (course completion settings: Final project and Course feedback, ALL; no other condition enabled); `154512.png` (badge not available, criterion course completion); `154928.png` and `155001.png` (Sample task: `Type` = `None`, `Make a submission`); `155906.png` (first backup's schema page, with the lowercase `sample task` and the extra section); `162507.png` (Final project section); `165352.png` (schema page of the sections-only backup, sections 1 to 3 not selected); `171138.png` (course 10 after the merge: two `Announcements` forums and sections 1 to 5). All are dated 2026-11-23 and kept local in `Pictures\Screenshots`; none is committed.
 
 | Course | Id | What it is |
 |---|---|---|
@@ -299,7 +299,7 @@ the clean-up rule in §7 (Owner, the 14:43, 09:36 and 11-14 replies).
 3. **Private lab address in the file.** See §1: the file carries a private lab address and nothing else about the lab (guide, [issue #112](https://github.com/narenccode/learnops/issues/112#issuecomment-7101983721), item 4).
 4. **Renamed copy.** The release file is a copy of Moodle's own backup file, renamed; the bytes and the SHA-256 are the same.
 
-**Not recorded.** The exact Moodle labels of several settings were reported by the operator, not copied letter by letter (§3, §4). The message Moodle printed after the merge and the names of the local screenshots were not recorded. The administrator-screen checks (completion tracking, badges and course badges on) are not recorded yet: they need the administrator account the guide is setting up.
+**Not recorded.** The message Moodle printed after the merge, the restore result page of course 8, the backup initial-settings pages and the badge issuer fields have no screenshot (the archive contents cover the backup options and the issuer, §8). The administrator-screen checks (completion tracking, badges and course badges on) are not recorded yet: they need the administrator account the guide is setting up.
 
 | Question | Status |
 |---|---|
