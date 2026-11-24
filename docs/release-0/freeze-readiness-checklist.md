@@ -120,7 +120,7 @@ Merged and relevant since the first audit: #25, #27, #46, #54, #61, #83, #85, #8
 - The "Release 0 notes" that list where each moved item goes.
 
 **Awaiting the owner / team:**
-- Written confirmation that the five recordings are the official B8.5 set and that each speaker was briefed (PR #169 lists these as owner confirmations).
+- Written confirmation that the five recordings are the official B8.5 set and that each speaker was briefed: **accepted for Release 0 by the guide as the owner's statements, with the caveat recorded** ([issue #186](https://github.com/narenccode/learnops/issues/186#issuecomment-7101984198), 23 November 2026). Not independently verified.
 - Creating `CHANGELOG.md` and `docs/releases/r0.md` (PRD §D2 item 5, `docs/RELEASING.md`).
 
 **Blocked by unavailable external services:** the lab Moodle 4.5 and 5.3 sites, a BigBlueButton server, and a speech provider.
