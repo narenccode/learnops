@@ -203,7 +203,7 @@ The rule: **future features must be new consumers of data that already exists, n
 | Web framework | FastAPI |
 | Front end (where a UI is needed) | React + TypeScript, built to static files served by the tool |
 | Database | PostgreSQL 16 (one database, one schema per module: `studio`, `checker`, `grading`, `video`, plus `shared`) |
-| LTI 1.3 | A maintained open-source Python LTI 1.3 library with a compatible licence (chosen and recorded in Release 0) |
+| LTI 1.3 | LTI 1.3 launch validation with PyJWT in `libs/lti`, and no LTI-specific library (PyLTI1p3Next is the recorded fallback). Every dependency has a compatible licence, recorded in the ADR (`docs/decisions/0001-lti-library.md`; chosen by the guide on issue #146, 20 November 2026) |
 | Browser tests | Playwright (Python) |
 | Media processing | ffmpeg |
 | Speech-to-text (lab) | Whisper-family model through the speech interface (§B5.4) |
