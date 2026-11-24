@@ -26,3 +26,7 @@ reviewed at each release gate.
 2. A decision record holds the scope, the reason, the cost and the date.
 3. One row is added above.
 4. No other document repeats it; they point here.
+
+## Numbering: two records share 0001
+
+Two records share the number 0001: `0001-lti-library.md` (the LTI library record) and `0001-b5-model-interface-v1.md` (the B5 record). Both stay as they are, because each is cited by file name in about ten places (contract text, schema comments and tests). "ADR 0001" means the LTI record and "decision 0001" means the B5 record, and each is cited by its full file name. New records take the next free number. (Guide, [issue #186](https://github.com/narenccode/learnops/issues/186#issuecomment-7101984198), 23 November 2026.)
