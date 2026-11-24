@@ -55,7 +55,7 @@ other work. Five tasks consume most of their time:
 | G-3 Every role works on every screen | Role tests passing: 5 roles × 3 screen profiles × Moodle 4.5 and 5.3 | 100 % | Release 1 |
 | G-4 Less grading time | Minutes per submission, assisted vs manual | ≥ 50 % reduction | Release 4 |
 | G-5 Trustworthy grading drafts | Draft grade within one band of the mentor's grade (B8.4) | ≥ 80 % | Release 4 |
-| G-6 Every video usable | Caption word error rate on Indian-English lectures (B8.5) | Measured and reported; target fixed in Release 0 | Release 3 |
+| G-6 Every video usable | Caption word error rate on Indian-English lectures (B8.5) | Measured and reported; target fixed from the first baseline run (App-C 7) | Release 3 |
 | G-7 Recordings processed quickly | Time from a 90-min recording becoming available to captions, chapters and index ready | ≤ 30 min | Release 3 |
 | G-8 Large uploads work | 700 MB file through a proxy that limits requests to 100 MB, with one interruption | Succeeds and resumes | Release 3 |
 | G-9 Practice with little effort (stretch) | Mentor review time for one week's practice | ≤ 5 min | Release 5 |
@@ -824,7 +824,7 @@ url = media_signing.sign(relative_path, ttl_seconds=3600)
 | B8.2 Sample course | A fictional 4-week project-based course package following B1 | Student 1 |
 | B8.3 Planted-error courses | Variants of B8.2, each with known errors from the checker catalogue (§C2.3), with an answer file | Student 2 |
 | B8.4 Synthetic submissions | ≥ 30 submissions (repo + demo link + short report) across quality levels, with reference grades from at least one mentor | Student 3 |
-| B8.5 Lecture videos | ≥ 5 Indian-English technical lectures (≥ 30 min total, enough for the Release 0 baseline) with reference transcripts; recorded with written consent or openly licensed (licence verified and recorded) | Student 4 |
+| B8.5 Lecture videos | ≥ 5 Indian-English technical lectures (≥ 30 min total, enough for the first word-error-rate baseline run, App-C 7) with reference transcripts; recorded with written consent or openly licensed (licence verified and recorded) | Student 4 |
 | B8.6 Model comparison set | Fixed inputs and expected outputs for practice drafts, grading drafts, chapters and summaries | Student 3 |
 
 No real learner data in any set.
@@ -1100,7 +1100,7 @@ Provides: B6. Uses: B3, B5 (model and speech), B7 (stretch), B8.5.
 ### C4.7 Acceptance criteria
 - [ ] 700 MB file uploaded through a 100 MB-limited proxy with one forced interruption: completes and plays.
 - [ ] For a 90-minute recording: lesson ready (captions, transcript, chapters, slide index, manifest) ≤ 30 min after it becomes available.
-- [ ] Caption word error rate measured on B8.5 and reported against the Release 0 target.
+- [ ] Caption word error rate measured on B8.5 and reported against the target set from the first baseline run (App-C 7).
 - [ ] `lesson.json` validates against B6.3; all paths relative; existing single-track lessons remain valid when `camera`/`screen` tracks are added later.
 - [ ] A BigBlueButton recording from a lab course appears in the correct live-class folder without manual steps.
 - [ ] Pasted snippet plays the video with captions in a Moodle Page on 4.5 and 5.3.
