@@ -3,7 +3,9 @@
 **Date checked:** 2026-11-24, on the lab Moodle 5.3 site, by Akshita (Student 1), with an administrator
 account the guide gave her (issue #112, 2026-11-24).
 **Requirement:** PRD §A11 (lab environment); §D1 lists "Lab VMs ready (A11)" for Release 0.
-**Method:** Moodle's own admin screens, read only. No setting was changed for this record. Nothing here
+**Method:** Moodle's own admin screens, read only, and, for the Moodle version only, the version fields
+(`moodle_version`, `moodle_release`) of `moodle_backup.xml` in the B8.1 backup taken on the site the same
+day, read from a local copy of the file. No setting was changed for this record. Nothing here
 names an address, host name, IP, password, token or key (PRD C-06, A7). What could not be seen is written
 **unknown**, never guessed.
 **Status:** partial. It records what the 5.3 site shows; every other A11 machine is unknown or not tested.
