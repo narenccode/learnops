@@ -511,16 +511,17 @@ count towards them. This pull request adds M2 to the B7 "Used by" row in PRD B.0
 Files: `testdata/b8-1-template-course/README.md` (the requirements, the proposals and the open
 decisions, and a plain list of the expected protected items for the checker); the B8.1 entry in
 `testdata/README.md`. B8.1 is a test data set (PRD §B8, B1.4) and has no requirement ID of its own,
-so no row in the table at the top maps to it. No `.mbz` exists yet. The badge image and the download
+so no row in the table at the top maps to it. The `.mbz` was built on 2026-11-23 and rebuilt and tested on 2026-11-24 (results in
+the B8.1 README §8 and in decision 0009; no automated test reads the `.mbz`, since it is not committed). The badge image and the download
 script exist and are tested (the two rows below that name tests).
 
 | What is documented | PRD | Test(s) |
 |---|---|---|
-| The template course backup holds the four protected items: the final project assignment (`final-project`), the course feedback activity (`course-feedback`), the course completion criteria and the course badge. The idnumbers are the PRD defaults and are configurable. The protected section number (3) is owner-confirmed (#61 A2, 2026-11-16) and stays configurable | B8.1, B1.4 | None yet: the `.mbz` does not exist |
+| The template course backup holds the four protected items: the final project assignment (`final-project`), the course feedback activity (`course-feedback`), the course completion criteria and the course badge. The idnumbers are the PRD defaults and are configurable. The protected section number (3) is owner-confirmed (#61 A2, 2026-11-16) and stays configurable | B8.1, B1.4 | None (the `.mbz` is not committed); checked by hand on 2026-11-23, results in decision 0009 |
 | A plain list of the expected protected items (idnumber, type, section, count) for the checker, which builds its model from the `.mbz` | B8.1, B1.4 | None yet |
 | The course badge image is a plain square PNG made by the project (`make_badge.py`, standard library only, Apache-2.0), kept with its source in the B8.1 folder; `--check` confirms the committed `badge.png` matches the script (Owner, Issue #55, 2026-11-18, P9b) | B8.1, C-11 | `test_committed_badge_matches_its_generator`, `test_badge_is_a_square_rgb_png`, `test_badge_check_catches_another_image` (negative control), `test_badge_dry_run_writes_nothing`, `test_badge_writes_a_file_that_passes_check` |
-| The download script `download.py` verifies the SHA-256; `--check` (read-only) and `--dry-run` write nothing; during a download, a failed SHA-256 verification, a failed download or Ctrl+C removes the `.part` file; it refuses to run until a SHA-256 is recorded; tag `testdata-b8-1-v1`, a rebuild gets a new tag (Owner, Issue #55, 2026-11-18, P24, P33) | B8.1, root `CLAUDE.md` rule 9 | `test_no_recorded_sha_refuses_and_writes_nothing`, `test_download_verifies_and_keeps_no_partial_file`, `test_wrong_sha_removes_the_partial_file`, `test_failed_download_removes_the_partial_file`, `test_ctrl_c_removes_the_partial_file`, `test_partial_downloads_are_gitignored`, `test_check_reports_a_changed_or_missing_file`, `test_dry_run_writes_nothing`, `test_release_names_follow_the_guides_rule` (all in `libs/contracts/tests/test_b8_1_files.py`) |
-| A sections-only backup is merged into the template and the protected items stay unchanged. The intended comparison writes down the same table for each protected item before and after the merge, with the fields type, name, idnumber, section number, points, completion setting and visibility, and the two tables must be equal (Owner, Issue #55, 2026-11-12); no check or test implements this yet. The Release 0 backup procedure is written as an untested draft | B1.4, C1.7, App-C item 2 | None yet: needs a Moodle site |
+| The download script `download.py` verifies the SHA-256; `--check` (read-only) and `--dry-run` write nothing; during a download, a failed SHA-256 verification, a failed download or Ctrl+C removes the `.part` file; it refuses to run until a SHA-256 is recorded; tag `testdata-b8-1-v1`, a rebuild gets a new tag (Owner, Issue #55, 2026-11-18, P24, P33) | B8.1, root `CLAUDE.md` rule 9 | `test_no_recorded_sha_refuses_and_writes_nothing`, `test_recorded_sha_is_a_sha256_hex_string`, `test_download_verifies_and_keeps_no_partial_file`, `test_wrong_sha_removes_the_partial_file`, `test_failed_download_removes_the_partial_file`, `test_ctrl_c_removes_the_partial_file`, `test_partial_downloads_are_gitignored`, `test_check_reports_a_changed_or_missing_file`, `test_dry_run_writes_nothing`, `test_release_names_follow_the_guides_rule` (all in `libs/contracts/tests/test_b8_1_files.py`) |
+| A sections-only backup is merged into the template and the protected items stay unchanged. The intended comparison writes down the same table for each protected item before and after the merge, with the fields type, name, idnumber, section number, points, completion setting and visibility, and the two tables must be equal (Owner, Issue #55, 2026-11-12); no automated check implements this; it was done by hand on 2026-11-23 (the Release 0 backup procedure is in the B8.1 README §7) | B1.4, C1.7, App-C item 2 | None (done by hand and recorded): run on 2026-11-23, BEFORE and AFTER equal in every cell, PASS; results in decision 0009 and the B8.1 README §8 |
 | Moodle 5.3 is the owner-confirmed build and test version for Release 0 (Issue #55, 2026-11-14 reply, which replaces the 2026-11-12 decision to build on 4.5). Every restore and the sections-only merge are tested on 5.3 only, recording the Moodle version, the date and the outcome of each restore; the `.mbz` is labelled "built on Moodle 5.3". The owner reports that Moodle documents that a backup restores into the same or a newer version only, so the 5.3 template is expected not to restore on 4.5 (the owner's report: not verified here, and the PRD does not state it). Moodle 4.5 is **not tested; waived for Release 0 (B8.1 only; see [0009](decisions/0009-b8-1-template-course.md) and the [register](decisions/README.md))**, not recorded as passed; if PRD C-03 later needs the template on 4.5, it is rebuilt once on 4.5 | C-03 | None yet: not verified; needs Moodle lab testing on 5.3. Moodle 4.5: not tested; waived for Release 0 (B8.1 only; see [0009](decisions/0009-b8-1-template-course.md) and the [register](decisions/README.md)) |
 | Deviation - C-03: the B8.1 template is built and tested on Moodle 5.3 only; 4.5 not tested, waived for Release 0 (B8.1 only; see [0009](decisions/0009-b8-1-template-course.md) and the [register](decisions/README.md)). The B8.2 restore and merge tests have their own decision, made by the guide on 2026-11-16 (A5 on PR #61, recorded there with B8.2, not here); C-03 still applies to the harness (FR-C-08) | C-03 | None (a recorded deviation, not a test) |
 
@@ -528,20 +529,18 @@ script exist and are tested (the two rows below that name tests).
 
 These are pending and are not claimed by this change:
 
-- **The `.mbz` backup, its SHA-256 and the release asset (tag `testdata-b8-1-v1`).** None of them
-  exists yet. The download script exists but refuses to run until the SHA-256 is recorded in it.
-- **Moodle 5.3 verification:** the restore, the protected items, the completion criteria, the badge
-  and the sections-only merge (PRD C1.7, App-C item 2). The B8.1 owner's lab access is ready (in person, the
-  owner's 2026-11-14 reply), but access is not a result and no lab verification result is recorded. **Moodle 4.5 is not tested; waived for Release 0 (B8.1 only; see [0009](decisions/0009-b8-1-template-course.md) and the [register](decisions/README.md))**
+- **The release asset (tag `testdata-b8-1-v1`).** The `.mbz` is built (SHA-256 in the B8.1 README §1), but it is
+  not uploaded. It waits for the guide's answer on the Final project completion finding (B8.1 README §8,
+  finding 2): a rebuild would give a new SHA-256. `download.py` and `download.py --check` against the release are
+  run after the upload.
+- **The results are recorded, but only partly checked by a machine.** Nothing reads the `.mbz` in an automated
+  test (it is not committed). The checks of 2026-11-23 and 2026-11-24 were done by hand: the archive was opened and read, and
+  the BEFORE and AFTER tables were written from Moodle's own screens by the operator. The administrator-screen
+  checks (completion tracking, badges and course badges on) are not recorded yet.
+- **Moodle 4.5 is not tested; waived for Release 0 (B8.1 only; see [0009](decisions/0009-b8-1-template-course.md) and the [register](decisions/README.md))**
   and is not claimed as passed.
-- **The App-C item 2 results.** The decision record `docs/decisions/0009-b8-1-template-course.md`
-  exists and holds the Moodle 4.5 waiver (PR #95); its number is taken again at merge, after
-  rebasing (Owner, Issue #55). The results are not written. The owner asks for a short, text-only
-  results table in the same file that names the local evidence files; screenshots and logs stay
-  local and are not committed.
-- **The open decisions** in the B8.1 README (§9) were answered by the guide on Issue #55
-  (2026-11-18) and are recorded there. What is left is lab work (PENDING MOODLE LAB), including
-  whether 5.3 keeps an unawarded badge in a users-off backup (P35).
+- **Clean-up.** The test courses (8, 9 and 10) are deleted after this change merges (the template, course 7,
+  stays); each deletion and the recycle-bin behaviour are recorded then.
 
 ## B8.2 sample course (test data), Release 0 foundation
 
