@@ -8,6 +8,7 @@ four more commits, #130, #142, #145 and #147, merged). The first audit was at `3
 2026-11-16; 41 commits have merged since, and the PRD changed what Release 0 contains (see below). GitHub state was queried with `gh` on the audit date and changes quickly; re-check before
 relying on it.
 **Refresh 2026-11-23** (`origin/main` `dedf578`, after #169 and #129 merged): only the B8.5 rows, the #129 row and the owner list were updated; no other row was re-read, and the verdict is unchanged.
+**Refresh 2026-11-24** (PR #213, from the lab 5.3 check of 2026-11-24): only the "Lab VMs ready (A11)" row was updated, to point to the new A11 readiness record (the App-C item 9 rows were updated by #212 the same day). No other row was re-read; this is not a re-audit of the checklist, and the verdict (NOT READY) is unchanged.
 
 **What changed in the PRD since the first audit (PRs #113 and #116).** Release 0 (PRD §D1) now
 contains: lab VMs ready (A11); repository, CI, coding standards; contracts B1 to B8 v1 **frozen**;
@@ -69,7 +70,7 @@ to classify the row was not found. A merged PR is not treated as proof of its ac
 | Test data B8.6 model comparison set | **Not ready** | PR #33 (open, draft): "one transcript" |
 | App-C item 6 (LTI library and licence) | **Awaiting guide** | `docs/decisions/0001-lti-library.md` is `Proposed`, pending the guide's review. Two files are numbered `0001` (`0001-lti-library.md` and `0001-b5-model-interface-v1.md`); the guide decides which to renumber |
 | App-C item 9 (Moodle 5.3 AI features) | **Source-checked and lab-checked on 5.3; guide's approval pending** | The decision record **exists on `main`**: `docs/decisions/0012-app-c-9-moodle-ai-features.md` (PR #156, merged 2026-11-22). It is a research record, not an implementation: it does not show that anything is implemented or verified in LearnOps. Its "Lab result" section (2026-11-24) records the lab 5.3 admin screens: seven provider plugins, no provider instance, both placements disabled, no speech or video action. Moodle 4.5 was not looked at. **Guide approval of its proposed outcome is a separate outstanding action.** The guide's answer on PR #140 put it in scope for Student 4 |
-| Lab VMs ready (A11) | **Unknown / Blocked** | The guide said on issue #55 that the lab Moodle 4.5 and 5.3 sites exist (2026-11-11) and gave an owner an account on 5.3 (2026-11-14); no A11 readiness record exists |
+| Lab VMs ready (A11) | **Partly recorded; the guide decides** | `docs/release-0/a11-lab-readiness.md` (2026-11-24) records the 5.3 site: 5.3+ (Build: 20261030), completion tracking, web services, REST, that a dedicated service account with a token exists and which functions its service has, H5P types and badges. Unknown: `moodle45` (not tested), `bbb`, `tools`, the lab AI services, the HTTPS certificate and the LTI registrations. The guide decides whether this is enough for Release 0 |
 | Design document per module approved | **Partly done: 1 of 4** | `studio.md` is `Approved` (PR #147, 2026-11-20); `grading.md` is `In review`; `checker.md` and `video.md` are `Draft`. The guide approves the other three |
 | CI and repository standards | **Completed** | `ci` succeeded on `main` `5f3a794` (and the two commits before it); review bot and CODEOWNERS exist |
 
