@@ -95,7 +95,7 @@ def release(tmp_path: Path) -> tuple[str, str]:
 def test_no_recorded_sha_refuses_and_writes_nothing(
     tmp_path: Path, release: tuple[str, str], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    # The real SHA-256 is recorded now (2026-11-23); this test sets it to None to keep checking
+    # The real SHA-256 is recorded now (2026-11-24); this test sets it to None to keep checking
     # the guard that a download without a recorded SHA-256 is refused (exit 2, nothing written).
     monkeypatch.setattr(download, "SHA256", None)
     target = tmp_path / "b.mbz"

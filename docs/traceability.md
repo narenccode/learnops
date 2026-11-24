@@ -511,7 +511,7 @@ count towards them. This pull request adds M2 to the B7 "Used by" row in PRD B.0
 Files: `testdata/b8-1-template-course/README.md` (the requirements, the proposals and the open
 decisions, and a plain list of the expected protected items for the checker); the B8.1 entry in
 `testdata/README.md`. B8.1 is a test data set (PRD §B8, B1.4) and has no requirement ID of its own,
-so no row in the table at the top maps to it. The `.mbz` was built and tested on 2026-11-23 (results in
+so no row in the table at the top maps to it. The `.mbz` was built on 2026-11-23 and rebuilt and tested on 2026-11-24 (results in
 the B8.1 README §8 and in decision 0009; no automated test reads the `.mbz`, since it is not committed). The badge image and the download
 script exist and are tested (the two rows below that name tests).
 
@@ -534,7 +534,7 @@ These are pending and are not claimed by this change:
   finding 2): a rebuild would give a new SHA-256. `download.py` and `download.py --check` against the release are
   run after the upload.
 - **The results are recorded, but only partly checked by a machine.** Nothing reads the `.mbz` in an automated
-  test (it is not committed). The checks of 2026-11-23 were done by hand: the archive was opened and read, and
+  test (it is not committed). The checks of 2026-11-23 and 2026-11-24 were done by hand: the archive was opened and read, and
   the BEFORE and AFTER tables were written from Moodle's own screens by the operator. The administrator-screen
   checks (completion tracking, badges and course badges on) are not recorded yet.
 - **Moodle 4.5 is not tested; waived for Release 0 (B8.1 only; see [0009](decisions/0009-b8-1-template-course.md) and the [register](decisions/README.md))**
