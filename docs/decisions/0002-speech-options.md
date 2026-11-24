@@ -29,7 +29,7 @@ The Video pipeline (PRD §C4) transcribes every lesson through the speech interf
 `speech.transcribe(audio_path, language="en")` returns segments with word timings and a `meta`
 block (provider, model, duration_s, latency_ms, cost_estimate) (PRD §B5.4). FR-V-04 turns that
 into `transcript.en.json` and `captions.en.vtt`. Goals G-6 (caption word error rate on
-Indian-English lectures, target fixed in Release 0 from a first baseline run, App-C 7) and G-7 (a
+Indian-English lectures, Release 3; the target is fixed from the first baseline run, App-C 7, PRD A3) and G-7 (a
 90-minute recording ready within 30 minutes of becoming available) depend on this choice.
 
 `docs/GETTING-STARTED.md` (Student 4, item 3) asks for a comparison of speech-to-text options for
@@ -54,7 +54,7 @@ does not: it is not on `origin/main`, on any remote branch, or in any local work
 | R9 | Test data only. B8.5 speakers consented to "video stays in the lab" | PRD C-07; decision 0004 consent statement |
 | R10 | Data sent to a hosted AI API is limited to what the task needs and documented in the data map | PRD SEC-07 |
 | R11 | Students work only inside the lab VMs and the lab AI services provided by the guide | PRD C-12 |
-| R12 | Caption WER measured on B8.5 and reported against the Release 0 target | PRD §C4.7, App-C 7 |
+| R12 | Caption WER measured on B8.5 and reported against the target set from the first baseline run (G-6 is Release 3; PRD C4.7, App-C 7) | PRD §C4.7, App-C 7 |
 
 ## 3. What the lab provides: verified vs unknown
 
@@ -298,7 +298,7 @@ does not prove it: G-7 covers the whole pipeline.
 
 - **Scoring tool:** `libs/speech_eval` (name), repository commit `e1edd11` (version, PR #103),
   Apache-2.0 (licence), as in section 7.3.
-- **Accuracy-comparison scope (Release 0):** B8.5 team recordings only, once the set is complete
+- **Accuracy-comparison scope (planned for the first baseline run; G-6 and App-C 7 are Release 3, not a Release 0 deliverable):** B8.5 team recordings only, once the set is complete
   and consented; Whisper-family engines (distilled and quantised Whisper builds are inside the
   family) run **on the lab VM only**, plus the lab endpoint; metrics are pooled and per-lecture WER
   and the timing checks of section 7.4; no 90-minute test; no hosted provider; no B8.5 audio leaves
