@@ -7,6 +7,7 @@ consent lines on `main`, and the B8.5 Status in `testdata/README.md` is now COMP
 below are the 2026-11-20 audit, kept as history, and are **not** updated. This document does not decide App-C 8:
 the written consent lines exist, but each speaker's briefing and the official-set provenance (audit gap G-8) are
 the owner's confirmations in PR #169, not evidence checked here.
+**Accepted for Release 0 with this caveat (guide, [issue #186](https://github.com/narenccode/learnops/issues/186#issuecomment-7101984198), 23 November 2026):** the durations, hashes, file names, official-set provenance and speaker briefings are the owner's statements and are **not independently verified**. At the Release 0 gate the guide reads the consent lines in decision 0004; the recordings stay in lab storage.
 **Audit date:** 2026-11-20, re-audited at `origin/main` `5f3a794`. The local file check in section 2
 was made on 2026-11-16 and was not repeated; everything about the repository was re-read on the
 audit date. **Scope note (PRD §D1, PRs #113 and #116):** App-C 8 is no longer a Release 0 item; it
@@ -45,9 +46,9 @@ could be read two ways and nothing in the repository settles it.
 | Source | Requirement |
 |---|---|
 | PRD App-C 8 | "Licence or consent for every B8.5 video." |
-| PRD §B8 (B8.5) | "≥ 5 Indian-English technical lectures (≥ 30 min total, enough for the Release 0 baseline) with reference transcripts; recorded with written consent or openly licensed (licence verified and recorded)" (owner: Student 4) |
+| PRD §B8 (B8.5) | "≥ 5 Indian-English technical lectures (≥ 30 min total, enough for the first word-error-rate baseline run, App-C 7) with reference transcripts; recorded with written consent or openly licensed (licence verified and recorded)" (owner: Student 4) |
 | PRD §A6 | "Lecture videos with reference transcripts can be obtained with permission (§B8.5)." |
-| Decision 0004 | Each speaker writes **one consent line** with their name, the date and the exact sentence `used to test speech recognition; video stays in the lab; transcript published under Apache-2.0`. Recordings stay private and outside Git. Approved transcripts are published under Apache-2.0. Harshitha reviews the reference transcripts. |
+| Decision 0004 | Each speaker writes **one consent line** with their name, the date and the exact sentence `used to test speech recognition; video stays in the lab; transcript published under Apache-2.0`. Recordings stay private and outside Git. Approved transcripts are published under Apache-2.0. Harshitha reviews lectures 01, 03, 04 and 05 and Nagashree reviews lecture 02 (its speaker is Harshitha), acknowledged by the guide. |
 | Decision 0004, completion criteria | At least five recordings; total at least 1800 s; reference transcripts prepared and reviewed; speaker consent lines documented. |
 | Decision 0004, temporary exception | Guide approved that the 1800 s minimum need not be reached "for now"; the exception covers only that minimum. Approval reference: the guide's confirmation on issue #121, recorded in decision 0004 by PR #125. A second temporary exception allows four lectures for interim work (same record). |
 | `docs/data-map.md`; decision 0011 | Retention/deletion of recordings, lab-storage access, names and transcripts, and processing services were decided by the guide on 2026-11-19 and are recorded in `docs/decisions/0011-b8-5-data-handling.md`; the data-map rows follow it. What the lab endpoint keeps is not recorded yet (decision 0002, PR #98). |
