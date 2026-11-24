@@ -1139,8 +1139,10 @@ judgement is awaited.
 - §13 of this document, work breakdown: PR 26 (`model-bench` and report) depends on PR 7
   (`model_interface`), PR 11 (the B8.6 set) and PR 20 (the draft worker with the `grade_draft` prompt
   v1). No chapter, summary or practice prompt appears in the list.
-- B8.6 README (PR #33), open decisions: O1 (who supplies chapter, summary and practice inputs) and
-  O7 (practice task shape and output format).
+- B8.6 README (merged in #33): O1 (who supplies chapter, summary and practice inputs) is decided by
+  the guide on issue #186 (grading inputs Student 3, practice inputs Student 1, chapter and summary
+  inputs Student 4, coordination Student 2). O7 (practice task shape and output format) is proposed
+  by Student 1 and still waits for the link to the guide's confirmation.
 
 **Author's interpretation** (not a documented fact):
 
