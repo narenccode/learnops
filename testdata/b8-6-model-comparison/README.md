@@ -22,7 +22,7 @@ run, and nothing here says how well any model performs.
 |---|---|---|---|---|
 | Chapters | ch-001 | ready, PROVISIONAL | `inputs/t001/transcript.en.json` | `expected/ch-001/chapters.json`, NOT REVIEWED |
 | Summaries | su-001 | ready, PROVISIONAL | `inputs/t001/transcript.en.json` | `expected/su-001/summary.en.md`, NOT REVIEWED |
-| Chapters | ch-002 | ready, PROVISIONAL, **times estimated** | `inputs/t002/transcript.en.json` (B8.5 lecture-05) | `expected/ch-002/chapters.json`, NOT REVIEWED; chapter starts to be measured on the recording |
+| Chapters | ch-002 | ready, PROVISIONAL, chapter starts measured | `inputs/t002/transcript.en.json` (B8.5 lecture-05) | `expected/ch-002/chapters.json`, NOT REVIEWED; chapter starts measured on the recording by the owner, segment times between them synthetic |
 | Summaries | su-002 | ready, PROVISIONAL | `inputs/t002/transcript.en.json` (B8.5 lecture-05) | `expected/su-002/summary.en.md`, NOT REVIEWED |
 | Grading drafts | gd-001 | **pending** | B8.4 submissions (`inputs/b8-4/source.md`; B8.4 is merged: 33 submissions, #31, #189 and #190) | B8.4 mentor reference grades: **none exist yet** (B8.4 has only the author's own grades, labelled as not reference grades), and the guide names the mentor (Q13). Review form: `templates/` (PROPOSED) |
 | Practice drafts | pr-001 | ready, PROVISIONAL | `inputs/t001/transcript.en.json` | `expected/pr-001/practice.yaml`, NOT REVIEWED. Four multiple-choice checkpoint questions in the review-card shape proposed by Student 1 (FR-S-12); the format is confirmed by the guide (reported by Harshitha on 18 Nov; the link to his answer is still to be added) |
@@ -37,7 +37,7 @@ rubric.yaml                    review levels and the four FR-M-03 measures (PROV
 schemas/                       manifest, rubric, expected-practice and two review-form schemas (Draft 2020-12)
 templates/                     PROPOSED mentor review forms with invented examples (see templates/README.md)
 inputs/t001/                   transcript.en.json (B5.4 shape) + source.md (provenance)
-inputs/t002/                   B8.5 lecture-05 transcript in the B5.4 shape (times ESTIMATED) + source.md
+inputs/t002/                   B8.5 lecture-05 transcript in the B5.4 shape (chapter starts measured, segment times synthetic) + source.md
 expected/<item id>/            author-drafted expected outputs (see expected/README.md)
 results/                       empty: no comparison has been run
 reviews/                       not created yet: real mentor reviews go here
@@ -81,7 +81,7 @@ The guide answered some of these on issue #186 (23 Nov 2026), and the grading de
 
 | # | Decision | Ref | Who |
 |---|---|---|---|
-| O1 | **Decided (guide, issue #186):** grading inputs come from B8.4 (Student 3), practice inputs from Student 1, chapter and summary inputs from Student 4, and Student 2 coordinates. The input t001 stays; **t002 (B8.5 lecture-05, a checked transcript) is added** as a second input with its chapters and summary items, authored for Student 4 to review. Its chapter start times are estimated until Student 4 measures them on the recording. | design Q12 | Students 1 and 4, integration lead, guide |
+| O1 | **Decided (guide, issue #186):** grading inputs come from B8.4 (Student 3), practice inputs from Student 1, chapter and summary inputs from Student 4, and Student 2 coordinates. The input t001 stays; **t002 (B8.5 lecture-05, a checked transcript) is added** as a second input with its chapters and summary items, authored for Student 4 to review. Its eight chapter start times were measured by Student 4 on the recording; the segment times between them are synthetic. | design Q12 | Students 1 and 4, integration lead, guide |
 | O2 | **Decided (guide, issue #186):** the module owner who supplied an input reviews its expected output, and the guide decides any disagreement. How "reviewed" is recorded stays in the manifest (`expected_review`). | — | Guide |
 | O3 | Review rubric: the three output levels and the grading-draft wrong rule | design §11.2, Q48 | Guide |
 | O4 | Agreement for grading drafts: within one band (Q44). For chapters, summaries and practice: **proposed in design §11.4** (#197): a usable share and a strict share, with the wrong-answer rate separate. The guide settles it when he approves the design | Q44, Q48 | Guide |

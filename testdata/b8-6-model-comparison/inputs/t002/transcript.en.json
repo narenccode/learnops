@@ -2,444 +2,444 @@
   "segments": [
     {
       "start": 0.0,
-      "end": 2.4,
+      "end": 2.5,
       "text": "Hello, my name is Shraddha.",
       "words": []
     },
     {
-      "start": 2.4,
-      "end": 13.6,
+      "start": 2.5,
+      "end": 13.8,
       "text": "I voluntarily consent to having my voice and lecture recording included in the LearnOps B8.5 test dataset for project evaluation and testing purposes.",
       "words": []
     },
     {
-      "start": 13.6,
-      "end": 20.4,
+      "start": 13.8,
+      "end": 20.7,
       "text": "I understand that this recording will be used as test evidence for the project.",
       "words": []
     },
     {
-      "start": 20.4,
-      "end": 21.4,
+      "start": 20.7,
+      "end": 21.7,
       "text": "Thank you.",
       "words": []
     },
     {
-      "start": 21.4,
-      "end": 22.9,
+      "start": 21.7,
+      "end": 23.2,
       "text": "Good morning everyone.",
       "words": []
     },
     {
-      "start": 22.9,
-      "end": 30.6,
+      "start": 23.2,
+      "end": 31.1,
       "text": "In the previous sections, we learned about database fundamentals, database design, relational tables, and SQL operations.",
       "words": []
     },
     {
-      "start": 30.6,
-      "end": 39.4,
+      "start": 31.1,
+      "end": 40.0,
       "text": "In this final section, I will explain some important concepts that help make databases reliable, efficient, and secure.",
       "words": []
     },
     {
-      "start": 39.4,
-      "end": 41.3,
+      "start": 40.0,
+      "end": 42.0,
       "text": "Let's begin with normalization.",
       "words": []
     },
     {
-      "start": 41.3,
-      "end": 50.6,
+      "start": 42.0,
+      "end": 51.2,
       "text": "Normalization is the process of organizing data in a database to reduce unnecessary duplication and avoid certain data-related problems.",
       "words": []
     },
     {
-      "start": 50.6,
-      "end": 63.3,
+      "start": 51.2,
+      "end": 63.9,
       "text": "To understand why normalization is needed, imagine a college database where student information, department information, and course information are all stored in a single large table.",
       "words": []
     },
     {
-      "start": 63.3,
-      "end": 71.1,
+      "start": 63.9,
+      "end": 71.7,
       "text": "If a department name is repeated in hundreds of rows, updating that department name becomes difficult.",
       "words": []
     },
     {
-      "start": 71.1,
-      "end": 76.9,
+      "start": 71.7,
+      "end": 77.6,
       "text": "If we update only some rows, the database may contain inconsistent information.",
       "words": []
     },
     {
-      "start": 76.9,
-      "end": 83.2,
+      "start": 77.6,
+      "end": 83.9,
       "text": "Normalization helps solve these problems by dividing large tables into smaller, related tables.",
       "words": []
     },
     {
-      "start": 83.2,
-      "end": 85.7,
+      "start": 83.9,
+      "end": 86.3,
       "text": "There are different normal forms.",
       "words": []
     },
     {
-      "start": 85.7,
-      "end": 99.8,
+      "start": 86.3,
+      "end": 100.5,
       "text": "The first normal form, or 1NF, requires that each column contain atomic values. This means each cell should contain a single value rather than a list of multiple values.",
       "words": []
     },
     {
-      "start": 99.8,
-      "end": 113.0,
+      "start": 100.5,
+      "end": 113.7,
       "text": "For example, storing three phone numbers in one cell does not follow the usual 1NF requirement. We should represent those values separately in an appropriate table structure.",
       "words": []
     },
     {
-      "start": 113.0,
-      "end": 129.0,
+      "start": 113.7,
+      "end": 129.8,
       "text": "The second normal form, or 2NF, requires that the table is already in 1NF and that every non-key attribute depends on the whole candidate key, not just part of a composite candidate key.",
       "words": []
     },
     {
-      "start": 129.0,
-      "end": 136.3,
+      "start": 129.8,
+      "end": 137.1,
       "text": "This is especially important when a table has a primary key consisting of multiple columns.",
       "words": []
     },
     {
-      "start": 136.3,
-      "end": 149.5,
+      "start": 137.1,
+      "end": 150.2,
       "text": "The third normal form, or 3NF, requires that the table is already in 2NF and that non-key attributes do not have inappropriate transitive dependencies on candidate keys.",
       "words": []
     },
     {
-      "start": 149.5,
-      "end": 158.3,
+      "start": 150.2,
+      "end": 159.0,
       "text": "In simple words, non-key information should depend on the key, the whole key, and nothing but the key.",
       "words": []
     },
     {
-      "start": 158.3,
-      "end": 163.6,
+      "start": 159.0,
+      "end": 164.4,
       "text": "Another normal form is BCNF, which stands for Boyce-Codd Normal Form.",
       "words": []
     },
     {
-      "start": 163.6,
-      "end": 173.8,
+      "start": 164.4,
+      "end": 174.6,
       "text": "BCNF is a stronger version of 3NF. It requires every determinant of a non-trivial functional dependency to be a super key.",
       "words": []
     },
     {
-      "start": 173.8,
-      "end": 179.2,
+      "start": 174.6,
+      "end": 180.0,
       "text": "Normalization helps reduce redundancy and prevent insertion, update, and deletion anomalies.",
       "words": []
     },
     {
-      "start": 179.2,
-      "end": 183.6,
+      "start": 180.0,
+      "end": 184.2,
       "text": "Now let's move to another important topic: database transactions.",
       "words": []
     },
     {
-      "start": 183.6,
-      "end": 190.9,
+      "start": 184.2,
+      "end": 191.3,
       "text": "A transaction is a sequence of database operations treated as one logical unit of work.",
       "words": []
     },
     {
-      "start": 190.9,
-      "end": 196.8,
+      "start": 191.3,
+      "end": 197.0,
       "text": "A simple example is transferring money from one bank account to another.",
       "words": []
     },
     {
-      "start": 196.8,
-      "end": 200.2,
+      "start": 197.0,
+      "end": 200.3,
       "text": "Suppose Rahul transfers 1,000 rupees to Priya.",
       "words": []
     },
     {
-      "start": 200.2,
+      "start": 200.3,
       "end": 203.1,
       "text": "The database must perform two operations.",
       "words": []
     },
     {
       "start": 203.1,
-      "end": 207.5,
+      "end": 207.4,
       "text": "First, it should subtract 1,000 rupees from Rahul's account.",
       "words": []
     },
     {
-      "start": 207.5,
-      "end": 211.9,
+      "start": 207.4,
+      "end": 211.6,
       "text": "Second, it should add 1,000 rupees to Priya's account.",
       "words": []
     },
     {
-      "start": 211.9,
-      "end": 214.3,
+      "start": 211.6,
+      "end": 214.0,
       "text": "Both operations must happen correctly.",
       "words": []
     },
     {
-      "start": 214.3,
-      "end": 223.6,
+      "start": 214.0,
+      "end": 222.9,
       "text": "Imagine that the money is deducted from Rahul's account, but the system crashes before adding it to Priya's account.",
       "words": []
     },
     {
-      "start": 223.6,
-      "end": 226.5,
+      "start": 222.9,
+      "end": 225.8,
       "text": "This would create an incorrect result.",
       "words": []
     },
     {
-      "start": 226.5,
-      "end": 230.9,
+      "start": 225.8,
+      "end": 230.0,
       "text": "Transactions help ensure that database operations are handled reliably.",
       "words": []
     },
     {
-      "start": 230.9,
-      "end": 236.3,
+      "start": 230.0,
+      "end": 235.0,
       "text": "The most important properties of transactions are known as ACID properties.",
       "words": []
     },
     {
-      "start": 236.3,
-      "end": 240.1,
+      "start": 235.0,
+      "end": 238.7,
       "text": "ACID stands for Atomicity, Consistency, Isolation, and Durability.",
       "words": []
     },
     {
-      "start": 240.1,
-      "end": 241.6,
+      "start": 238.7,
+      "end": 240.1,
       "text": "First is Atomicity.",
       "words": []
     },
     {
-      "start": 241.6,
-      "end": 252.8,
+      "start": 240.1,
+      "end": 250.6,
       "text": "Atomicity means that a transaction is treated as a single unit. Either all its operations are completed, or none of them are applied.",
       "words": []
     },
     {
-      "start": 252.8,
-      "end": 263.5,
+      "start": 250.6,
+      "end": 260.6,
       "text": "In the bank transfer example, both the deduction and addition should succeed. If one operation fails, the transaction should be rolled back.",
       "words": []
     },
     {
-      "start": 263.5,
-      "end": 265.0,
+      "start": 260.6,
+      "end": 262.0,
       "text": "Second is Consistency.",
       "words": []
     },
     {
-      "start": 265.0,
-      "end": 275.7,
+      "start": 262.0,
+      "end": 272.1,
       "text": "Consistency means that a transaction should move the database from one valid state to another valid state while maintaining all defined constraints.",
       "words": []
     },
     {
-      "start": 275.7,
-      "end": 284.0,
+      "start": 272.1,
+      "end": 279.9,
       "text": "For example, a bank transfer should not violate the rules that maintain account balances and transaction records.",
       "words": []
     },
     {
-      "start": 284.0,
-      "end": 285.4,
+      "start": 279.9,
+      "end": 281.2,
       "text": "Third is Isolation.",
       "words": []
     },
     {
-      "start": 285.4,
-      "end": 294.2,
+      "start": 281.2,
+      "end": 289.5,
       "text": "Isolation means that concurrent transactions should not interfere with each other in a way that produces incorrect results.",
       "words": []
     },
     {
-      "start": 294.2,
-      "end": 306.3,
+      "start": 289.5,
+      "end": 300.9,
       "text": "For example, two people may try to update the same bank account at nearly the same time. The database system must coordinate these operations properly.",
       "words": []
     },
     {
-      "start": 306.3,
-      "end": 307.8,
+      "start": 300.9,
+      "end": 302.3,
       "text": "Fourth is Durability.",
       "words": []
     },
     {
-      "start": 307.8,
-      "end": 318.0,
+      "start": 302.3,
+      "end": 311.9,
       "text": "Durability means that once a transaction is successfully committed, its changes should remain saved even if a system failure occurs afterward.",
       "words": []
     },
     {
-      "start": 318.0,
-      "end": 322.4,
+      "start": 311.9,
+      "end": 316.0,
       "text": "These four properties are essential for reliable transaction processing.",
       "words": []
     },
     {
-      "start": 322.4,
-      "end": 324.8,
+      "start": 316.0,
+      "end": 318.3,
       "text": "Next, let's understand concurrency control.",
       "words": []
     },
     {
-      "start": 324.8,
-      "end": 331.7,
+      "start": 318.3,
+      "end": 324.6,
       "text": "In a database, multiple users may access and modify data at the same time.",
       "words": []
     },
     {
-      "start": 331.7,
-      "end": 336.5,
+      "start": 324.6,
+      "end": 329.1,
       "text": "For example, many customers may use a banking application simultaneously.",
       "words": []
     },
     {
-      "start": 336.5,
-      "end": 344.3,
+      "start": 329.1,
+      "end": 336.4,
       "text": "If two transactions update the same record without proper coordination, the final result may be incorrect.",
       "words": []
     },
     {
-      "start": 344.3,
-      "end": 349.7,
+      "start": 336.4,
+      "end": 341.3,
       "text": "Concurrency control is used to manage simultaneous transactions and maintain consistency.",
       "words": []
     },
     {
-      "start": 349.7,
-      "end": 352.1,
+      "start": 341.3,
+      "end": 343.6,
       "text": "One common technique is locking.",
       "words": []
     },
     {
-      "start": 352.1,
-      "end": 363.3,
+      "start": 343.6,
+      "end": 354.0,
       "text": "A shared lock allows multiple transactions to read data, while an exclusive lock is generally used when a transaction needs to modify data.",
       "words": []
     },
     {
-      "start": 363.3,
-      "end": 368.7,
+      "start": 354.0,
+      "end": 359.0,
       "text": "Another technique is timestamp ordering, where transactions are coordinated using timestamps.",
       "words": []
     },
     {
-      "start": 368.7,
-      "end": 371.6,
+      "start": 359.0,
+      "end": 361.6,
       "text": "Database systems also use recovery mechanisms.",
       "words": []
     },
     {
-      "start": 371.6,
-      "end": 378.9,
+      "start": 361.6,
+      "end": 368.2,
       "text": "Recovery is the process of restoring a database to a correct state after a failure.",
       "words": []
     },
     {
-      "start": 378.9,
-      "end": 386.2,
+      "start": 368.2,
+      "end": 374.8,
       "text": "Failures may happen because of power loss, hardware problems, software errors, or unexpected system crashes.",
       "words": []
     },
     {
-      "start": 386.2,
-      "end": 390.1,
+      "start": 374.8,
+      "end": 378.4,
       "text": "Logs help record database changes and support recovery.",
       "words": []
     },
     {
-      "start": 390.1,
-      "end": 405.2,
+      "start": 378.4,
+      "end": 392.0,
       "text": "A checkpoint is another recovery technique. It allows the database system to record a known recovery position so that it does not always need to process the entire history of operations.",
       "words": []
     },
     {
-      "start": 405.2,
-      "end": 407.6,
+      "start": 392.0,
+      "end": 395.0,
       "text": "Finally, let's discuss database security.",
       "words": []
     },
     {
-      "start": 407.6,
-      "end": 412.5,
+      "start": 395.0,
+      "end": 400.9,
       "text": "Database security protects information from unauthorized access, modification, or destruction.",
       "words": []
     },
     {
-      "start": 412.5,
-      "end": 415.9,
+      "start": 400.9,
+      "end": 405.0,
       "text": "Authentication verifies the identity of a user.",
       "words": []
     },
     {
-      "start": 415.9,
-      "end": 421.3,
+      "start": 405.0,
+      "end": 411.5,
       "text": "Authorization determines what actions an authenticated user is allowed to perform.",
       "words": []
     },
     {
-      "start": 421.3,
-      "end": 432.0,
+      "start": 411.5,
+      "end": 424.6,
       "text": "For example, a student may have permission to view their academic information, while an administrator may have permission to update student records.",
       "words": []
     },
     {
-      "start": 432.0,
-      "end": 442.2,
+      "start": 424.6,
+      "end": 437.0,
       "text": "Other important security practices include using strong passwords, assigning appropriate permissions, encrypting sensitive information, maintaining backups, and regularly monitoring database activity.",
       "words": []
     },
     {
-      "start": 442.2,
-      "end": 449.0,
+      "start": 437.0,
+      "end": 444.6,
       "text": "To conclude our presentation, we have covered four major areas of Database Management Systems.",
       "words": []
     },
     {
-      "start": 449.0,
-      "end": 453.4,
+      "start": 444.6,
+      "end": 449.5,
       "text": "First, we learned the fundamentals and importance of DBMS.",
       "words": []
     },
     {
-      "start": 453.4,
-      "end": 460.2,
+      "start": 449.5,
+      "end": 457.1,
       "text": "Second, we understood how databases are designed using the ER model and relational model.",
       "words": []
     },
     {
-      "start": 460.2,
-      "end": 466.6,
+      "start": 457.1,
+      "end": 464.1,
       "text": "Third, we learned how SQL is used to create, modify, and retrieve information.",
       "words": []
     },
     {
-      "start": 466.6,
-      "end": 472.4,
+      "start": 464.1,
+      "end": 470.6,
       "text": "Finally, we discussed normalization, transactions, ACID properties, concurrency control, recovery, and security.",
       "words": []
     },
     {
-      "start": 472.4,
-      "end": 484.1,
+      "start": 470.6,
+      "end": 483.7,
       "text": "These concepts form the foundation of database management and are used in real-world applications such as banking, healthcare, education, e-commerce, and many other industries.",
       "words": []
     },
     {
-      "start": 484.1,
+      "start": 483.7,
       "end": 488.0,
       "text": "Thank you everyone for listening to our presentation.",
       "words": []

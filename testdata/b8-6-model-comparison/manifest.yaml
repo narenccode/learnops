@@ -2,7 +2,7 @@
 #
 # One fictional transcript (t001) and one real checked B8.5 transcript (t002, lecture-05) are the inputs for
 # the chapters and summary items. Their expected outputs are AUTHOR-DRAFTED and NOT REVIEWED by a mentor.
-# t002 times are ESTIMATED until the owner measures the chapter starts. Grading-draft items wait for
+# t002: the chapter starts are measured by the owner; the segment times between them are synthetic. Grading-draft items wait for
 # B8.4 (merged: #31, #189, #190) and its mentor reference grades (Q13). Practice has an author-drafted
 # item; who supplies each input is decided (issue #186, Q12). No comparison has been run; there are
 # no results.
@@ -61,7 +61,7 @@ items:
     expected_review:
       status: not_reviewed
     authored_by: Student 4
-    note: Author-drafted expected chapters for B8.5 lecture-05 (chapter and summary inputs come from Student 4, issue #186); NOT REVIEWED. The chapter start times are ESTIMATED from the word count, not measured on the recording; the owner replaces them (see inputs/t002/source.md).
+    note: Author-drafted expected chapters for B8.5 lecture-05 (chapter and summary inputs come from Student 4, issue #186); NOT REVIEWED. The eight chapter start times are measured by the owner on the recording; the segment times inside a chapter are synthetic (see inputs/t002/source.md).
 
   - id: su-002
     task: summary
