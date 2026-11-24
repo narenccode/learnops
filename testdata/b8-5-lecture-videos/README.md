@@ -47,7 +47,7 @@ record are per speaker (`speaker-NN`), not per lecture. An ID (`lecture-NN`) sta
 | Item | In Git? | Where |
 |---|---|---|
 | Outline the speaker talks from | Yes, Apache-2.0 | `lectures/<lecture-id>/outline.md` |
-| Reference transcript, typed or corrected by hand and checked by Harshitha | Yes, Apache-2.0 | `lectures/<lecture-id>/transcript.en.txt` |
+| Reference transcript, typed or corrected by hand and checked by Harshitha (lecture 02 by Nagashree) | Yes, Apache-2.0 | `lectures/<lecture-id>/transcript.en.txt` |
 | Inventory: title, speaker, duration, recording file name, SHA-256, review status | Yes | `testdata/README.md`, B8.5 table |
 | Speaker consent lines | Yes | `docs/decisions/0004-b8-5-lecture-videos.md`, `## Consent lines` |
 | Video recordings | **No, never** | See "Where recordings are kept" |
@@ -137,7 +137,7 @@ Before a speaker writes their line, tell them:
   error rate measurement (case, punctuation, fillers, numbers) are not fixed yet; they are
   decided with the first baseline run (App-C 7). Until then, type what is said, in the order it
   is said.
-- **Check:** Harshitha (`Harshithamanjunatha`) checks each transcript against its recording. Only
+- **Check:** Harshitha (`Harshithamanjunatha`) checks the transcripts of lectures 01, 03, 04 and 05, and Nagashree checks lecture 02, whose speaker is Harshitha (acknowledged by the guide, decision 0004). Each checks against the recording. Only
   then does the inventory's Transcript review column change from `pending` to `checked`.
 
 ## Pending placeholders and completed entries
@@ -168,7 +168,7 @@ For each lecture (`lecture-01` … `lecture-05`):
 - [ ] The speaker was told about the interim storage, then wrote their own consent line (once per
       speaker); the inventory's Consent cell points to it as `` `0004` speaker-NN ``
 - [x] `lectures/<lecture-id>/transcript.en.txt` typed or corrected by hand (placeholder removed)
-- [ ] Transcript checked by Harshitha; inventory says `checked`
+- [x] Transcript checked (lectures 01, 03, 04 and 05 by Harshitha, lecture 02 by Nagashree, acknowledged by the guide); inventory says `checked`
 
 For the set:
 
