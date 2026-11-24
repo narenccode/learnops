@@ -2,9 +2,11 @@
 
 **Date:** 2026-11-16
 **Status:** PROPOSED. **Section 8 was approved by the guide with two amendments**; the guide confirmed it in his own words on 2026-11-20
-([comment on PR #98](https://github.com/narenccode/learnops/pull/98#issuecomment-7053405605)); the record is **not complete**: the non-secret lab facts and the
-FFmpeg build are not recorded yet (section 3 and section 9), so no engine is chosen here. The open
-questions that remain are listed in section 9.
+([comment on PR #98](https://github.com/narenccode/learnops/pull/98#issuecomment-7053405605)); the record is **not complete and is parked on the guide's decision of 2026-11-23**
+([comment on PR #98](https://github.com/narenccode/learnops/pull/98#issuecomment-7102253491)): the lab speech endpoint does not exist yet, so there are no lab facts to record and nothing in Release 0
+depends on them (the caption word error rate, G-6 and App-C 7, is Release 3). The non-secret lab facts and the
+FFmpeg build are therefore `PENDING` (section 3 and section 9), and **no engine is chosen here**. The guide posts the
+non-secret facts on PR #98 when the endpoint is built. The open questions that remain are listed in section 9.
 **Owner:** Student 4 (Video) · **Requirements:** FR-V-04, FR-M-02, G-6, G-7, App-C 7, C-10, EXT-04, OPS-10, OPS-11
 **Contracts touched:** none. This record changes no contract (PRD §B.0).
 
@@ -62,17 +64,18 @@ reserved invalid host). No lab endpoint was contacted for this record: none is c
 session, and the repository holds no endpoint address, credential or lab output. The guide said on
 2026-11-19 that the lab facts were already shared with the team and asked that the **non-secret** ones
 be recorded here (model and size, engine and version, hardware, request format and limits,
-authentication method, whether word timestamps are returned). **They are not recorded yet** because
-the shared material is not in the repository. Never record IP addresses, VM addresses or credentials.
+authentication method, whether word timestamps are returned). **They are not recorded** because the lab speech endpoint does not exist yet (guide, 2026-11-23,
+[PR #98](https://github.com/narenccode/learnops/pull/98#issuecomment-7102253491)); the guide will post the non-secret facts when it is built. Never record IP addresses, VM
+addresses or credentials.
 
 | Question | Answer | Status |
 |---|---|---|
-| Which speech model does the lab provide? | "Whisper-family" only (PRD §A10, §B5.4). The model name and size (tiny … large, turbo, distilled, English-only or multilingual) are not recorded anywhere | **OPEN: not recorded yet (the guide shared the facts with the team and asked for the non-secret ones to be recorded)** |
-| Which engine serves it (openai/whisper, faster-whisper, whisper.cpp, another)? | Not recorded | **OPEN: not recorded yet (the guide shared the facts with the team and asked for the non-secret ones to be recorded)** |
-| Model and engine version | Not recorded | **OPEN: not recorded yet (the guide shared the facts with the team and asked for the non-secret ones to be recorded)** |
-| Does the endpoint return word-level timestamps? | Not recorded. B5.4 requires `words`; the proposed contract allows `words: []` | **PENDING** (needs one request to the endpoint; see section 9) |
-| Request format, size limit, timeout, audio format accepted, authentication | Not recorded | **OPEN: not recorded yet (the guide shared the facts with the team and asked for the non-secret ones to be recorded)** |
-| Hardware behind the endpoint (GPU or CPU, memory), concurrency | Not recorded. PRD §A11 says nothing about a GPU | **OPEN: not recorded yet (the guide shared the facts with the team and asked for the non-secret ones to be recorded)** |
+| Which speech model does the lab provide? | "Whisper-family" only (PRD §A10, §B5.4). The model name and size (tiny … large, turbo, distilled, English-only or multilingual) are not recorded anywhere | **PENDING: the lab speech endpoint does not exist yet (guide, 2026-11-23)** |
+| Which engine serves it (openai/whisper, faster-whisper, whisper.cpp, another)? | Not recorded | **PENDING: the lab speech endpoint does not exist yet (guide, 2026-11-23)** |
+| Model and engine version | Not recorded | **PENDING: the lab speech endpoint does not exist yet (guide, 2026-11-23)** |
+| Does the endpoint return word-level timestamps? | Not recorded. B5.4 requires `words`; the proposed contract allows `words: []` | **PENDING**: the lab speech endpoint does not exist yet (guide, 2026-11-23) |
+| Request format, size limit, timeout, audio format accepted, authentication | Not recorded | **PENDING: the lab speech endpoint does not exist yet (guide, 2026-11-23)** |
+| Hardware behind the endpoint (GPU or CPU, memory), concurrency | Not recorded. PRD §A11 says nothing about a GPU | **PENDING: the lab speech endpoint does not exist yet (guide, 2026-11-23)** |
 | Behaviour on a 90-minute recording | Not measured | **PENDING** (LearnOps result) |
 | Is the endpoint allowed to receive B8.5 audio, and does it keep it? | **Allowed** (guide, 2026-11-19): the endpoint is inside the lab and may receive the B8.5 **team** recordings for this evaluation only; no learner or faculty audio; the audio stays out of Git; the team deletes its local copies and records what the service keeps. What the service keeps is **not recorded yet** | Allowed; retention **PENDING** (lab facts) |
 
@@ -221,8 +224,8 @@ already limits.
 
 ## 7. Evaluation methodology (proposed; nothing run yet)
 
-This is the plan for LearnOps results. It has not been executed: B8.5 is itself PENDING (no
-lecture recorded, no consent given, no reference transcript typed;
+This is the plan for LearnOps results. It has not been executed: the lab speech endpoint does not exist yet, and no measurement has been run. The B8.5 data set is COMPLETE under decision 0004 (five
+lectures, 2380 s, `checked` transcripts, four written consent lines, PR #169; the owner's statements on provenance and briefings are accepted for Release 0 with a caveat, guide, issue #186;
 `testdata/b8-5-lecture-videos/README.md`). **Do not use any number from section 5 as a LearnOps
 result.**
 
@@ -233,9 +236,8 @@ reference transcripts typed by hand or corrected from a model **outside** the co
 reviewed by Harshitha (decision 0004). Audio stays on the permitted machines or lab storage; it is
 never committed. **Decided (guide, 2026-11-19):** a 90-minute test is deferred; there is none in
 Release 0. When it is needed, use a team recording with a consent line, or concatenated B8.5 audio;
-Student 4 owns the source; no downloaded material. B8.5 is not yet complete: decision 0004 records
-two temporary exceptions (no 1800 s total; four lectures for interim work, PR #125), which do not
-change the five-lecture rule for an official run.
+Student 4 owns the source; no downloaded material. B8.5 is COMPLETE under decision 0004 since PR #169 (five lectures, 2380 s); the two temporary exceptions recorded
+there (PR #125) are not used by this set.
 
 ### 7.2 Systems compared
 
@@ -301,10 +303,9 @@ does not prove it: G-7 covers the whole pipeline.
   family) run **on the lab VM only**, plus the lab endpoint; metrics are pooled and per-lecture WER
   and the timing checks of section 7.4; no 90-minute test; no hosted provider; no B8.5 audio leaves
   the lab.
-- **FFmpeg build and configuration:** **not recorded yet.** The guide asks for the lab image's
-  `ffmpeg -version` output (version and configuration line) before an LGPL build is relied on
-  (see `docs/design/video.md`, Q10). Record the version and configuration here and in the release
-  notes once sent.
+- **FFmpeg build and configuration:** **not recorded; not needed yet.** The guide's decision of 2026-11-23 says the lab image's
+  `ffmpeg -version` lines are needed when the Release 3 pipeline relies on an LGPL build (see `docs/design/video.md`, Q10). Until then
+  decision 0013 stands for the demo. Record the version and configuration here and in the release notes when they are sent.
 
 ## 8. Decision (approved by the guide with two amendments, 2026-11-19)
 
@@ -342,9 +343,9 @@ principle: the facts must still be recorded here.
 
 | # | Question | Guide's answer (2026-11-19) | State |
 |---|---|---|---|
-| 1 | Which Whisper-family model (name, size, English-only or multilingual, distilled or not) does the lab endpoint serve? | Already shared with the team. Record the non-secret facts here | **Open: not recorded yet** |
-| 2 | Which engine and version serves it, and on what hardware (GPU or CPU, memory, concurrency)? | Same | **Open: not recorded yet** |
-| 3 | Does the endpoint return word-level timestamps, with what request format, limits and authentication method? | Same; never the VM addresses, IPs or credentials | **Open: not recorded yet** |
+| 1 | Which Whisper-family model (name, size, English-only or multilingual, distilled or not) does the lab endpoint serve? | Already shared with the team. Record the non-secret facts here | **Open: parked until the endpoint exists (guide, 2026-11-23)** |
+| 2 | Which engine and version serves it, and on what hardware (GPU or CPU, memory, concurrency)? | Same | **Open: parked until the endpoint exists (guide, 2026-11-23)** |
+| 3 | Does the endpoint return word-level timestamps, with what request format, limits and authentication method? | Same; never the VM addresses, IPs or credentials | **Open: parked until the endpoint exists (guide, 2026-11-23)** |
 | 4 | May the lab endpoint receive B8.5 audio, and does it keep it? | Yes, for this evaluation only: team recordings only, no learner or faculty audio; the consent lines in decision 0004 cover the speakers; the audio stays out of Git; the team deletes its local copies and records what the service keeps; do not promise deletion on the guide's service | **Answered**; what the service keeps is not recorded |
 | 5 | Are non-Whisper local models and distilled Whisper variants permitted? | PRD A10 fixes the lab speech service as Whisper-family; not a product-wide ban; v1 lab comparison is Whisper-family; distilled and quantised Whisper builds are inside the family; no "Whisper-only" rule | **Answered** |
 | 6 | Is a hosted provider permitted in production? | Stays open, a separate decision; no OpenAI `whisper-1` default; no B8.5 audio to a hosted provider | **Answered; hosted provider open** |
@@ -353,10 +354,10 @@ principle: the facts must still be recorded here.
 | 9 | Which `distil` or quantised variants may be evaluated? | Inside the Whisper family | **Answered** |
 | 10 | Is the B5 contract (merged in PR #25) the final shape for `words`? | Keep B5.4 as written: `words: []` is valid, including when timing is absent; the transcript text remains and G-6 uses that text; the lab endpoint should return words if it can; the contract merged in #25 is final for v1 | **Answered** |
 
-**Still to record before this record is complete (guide, 2026-11-19):** the non-secret lab facts
-(Q1 to Q3: model and size, engine and version, hardware, request format and limits, authentication
-method, word timestamps); the endpoint's retention entry for the data map (what it keeps, deleted
-after the run); and the FFmpeg build and configuration (section 7.6). The scoring tool, version and
+**Still to record before this record is complete (guide, 2026-11-19; parked 2026-11-23 because the lab speech endpoint does not exist yet):** the non-secret lab facts
+(Q1 to Q3: model and size, engine and version, hardware, request format and limits, kind of authentication, word timestamps, what it keeps),
+which the guide posts on PR #98 when the endpoint is built; the endpoint's retention entry for the data map; and the FFmpeg build and
+configuration (section 7.6), needed when the Release 3 pipeline relies on an LGPL build. The scoring tool, version and
 licence and the accuracy-comparison scope are in section 7.6.
 
 ## 10. Trade-offs
@@ -411,7 +412,7 @@ community thread (a user report, not a source of fact) was not re-read.
 
 | Item | Value |
 |---|---|
-| Guide decision | **Section 8 approved with two amendments** (8(1) as written, plus the PRD A10 clarification; 8(4) self-hosted evaluation on the lab VM only, with the guide's approval for the engine). The open questions of section 9 are answered where the table says so; the lab facts are still to be recorded |
+| Guide decision | **Section 8 approved with two amendments** (8(1) as written, plus the PRD A10 clarification; 8(4) self-hosted evaluation on the lab VM only, with the guide's approval for the engine). The open questions of section 9 are answered where the table says so; the lab facts are parked: the guide decided on 2026-11-23 that the record stays `PROPOSED` with them `PENDING` (the lab speech endpoint does not exist yet), and no engine is chosen in it ([comment](https://github.com/narenccode/learnops/pull/98#issuecomment-7102253491)) |
 | Decided by / date | The guide, 2026-11-20 (first given by the guide's assistant on 2026-11-19, then confirmed by the guide in his own words) |
 | Link to approval | [https://github.com/narenccode/learnops/pull/98#issuecomment-7053405605](https://github.com/narenccode/learnops/pull/98#issuecomment-7053405605) |
-| Record complete? | **No.** Open: the non-secret lab facts (Q1 to Q3), the endpoint's retention entry, the FFmpeg build and configuration. The status of this record changes once those are recorded |
+| Record complete? | **No, parked by the guide (2026-11-23).** Open: the non-secret lab facts (Q1 to Q3), the endpoint's retention entry, the FFmpeg build and configuration. They are recorded when the lab speech endpoint exists and the guide posts them; the status of this record changes then |
