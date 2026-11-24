@@ -2,7 +2,7 @@
 
 **Module:** grading
 **Owner:** @Harshithamanjunatha · **Peer reviewer:** @vnaags
-**Release(s):** Release 0 (FR-M-01, FR-M-02; contracts B4 and B5; test sets B8.4 and B8.6 v1), Release 4 (FR-G-01…08, FR-M-03)
+**Release(s):** Release 0 (contracts B4 and B5; test sets B8.4 and B8.6 v1), Release 4 (FR-G-01…08, FR-M-03). FR-M-01 and FR-M-02 (the model and speech interface libraries) are Release 0 in PRD §C3.3 and §C3.10 and "the first release that uses them" in PRD §D1; the PRD text conflicts and the design records it (§12.2). They were built early.
 **Status:** In review
 
 `Status` values: `Draft` → `In review` (peer reviewing) → `Approved`. **Only the guide sets
@@ -24,8 +24,8 @@ document has been checked against a live Moodle or Moodle's own documentation. L
 only from `docs/literature-grading.md`, and the owner has verified all six sources against the original PDFs.
 
 **Current state.** This is the single revision summary. Earlier revision notes were folded into it, and the
-history is in the pull request description. Nothing in this document is approved, no test has been written or
-run, and no container, image or host has been built or run.
+history is in the pull request description. Nothing in this document is approved. Tests exist for the merged contracts and libraries (§4, §11, §13); no
+grading-module test has been written or run, and no sandbox container, image or host has been built or run.
 
 - **Sandbox:** one container per submission, as PRD §C3.5 says: clone, remove the network, verify, then run
   learner code (Student 3's proposed decision, not guide-approved; Q57, Q58, Q66 and Q68 stay open). Two
@@ -73,8 +73,8 @@ column is (proposed) unless the requirement itself states it.
 
 | Requirement | Release | Approach in one line | Main components |
 |---|---|---|---|
-| FR-M-01 | R0 | Shared library with one `model.run(task, inputs, output_schema)` call; a task registry that owns each task's input and output schemas; local, hosted and fake providers; versioned prompts; validated output with one retry; typed errors, timeouts and a budget guard (§4.2) | `libs/model_interface` |
-| FR-M-02 | R0 | `speech.transcribe(audio_path, language)` behind the same provider rules; callers always get one transcript with absolute timestamps (§4.2) | `libs/model_interface` (speech part) |
+| FR-M-01 | R0 (PRD §C3.3); "first release that uses it" (PRD §D1), see §12.2 | Shared library with one `model.run(task, inputs, output_schema)` call; a task registry that owns each task's input and output schemas; local, hosted and fake providers; versioned prompts; validated output with one retry; typed errors, timeouts and a budget guard (§4.2) | `libs/model_interface` |
+| FR-M-02 | R0 (PRD §C3.3); "first release that uses it" (PRD §D1), see §12.2 | `speech.transcribe(audio_path, language)` behind the same provider rules; callers always get one transcript with absolute timestamps (§4.2) | `libs/model_interface` (speech part) |
 | FR-G-01 | R4 | Fetch job reads assignments, submissions and the report file through B4 (`libs/moodle_ws`, normalized models, §4.1); parses the marking table (B1.3) with the shared parser; reads repository URL, demo link and report by the submission-content rule (§4.3) | `libs/moodle_ws`, fetch worker, shared marking-table parser |
 | FR-G-02 | R4 | One container per submission on a host that runs no other LearnOps service clones the repository, loses its network, then runs the allowed checks (§9.2); `http_ok` runs outside the sandbox (§9.3) (PRD §C3.5) | sandbox worker, http_check worker |
 | FR-G-03 | R4 | Draft job calls `model.run(task="grade_draft")` once per submission version; every criterion is validated in code against the marking table, check results and evidence (§4.3, §9.5); the overall draft grade is the sum of criterion scores (PRD), computed in code, not by the model (proposed) | draft worker, `grade_draft` prompt |
@@ -174,8 +174,8 @@ minimum method; the values and thresholds here do not come from it.
 
 | Contract | Provided / used | Fields or functions I rely on | Change needed? |
 |---|---|---|---|
-| B4 Moodle web-services usage | Provided (`contracts/moodle-ws.v1.md`) | Function list in §4.1 | Created in Release 0. Guide (PR #27): Markdown rules plus `moodle-ws.v1.schema.json` and the allow-list example `examples/moodle-ws.v1.functions.json` (Q1); normalized models and error classes are library documentation, not contract text (Q37) |
-| B5 Model and speech interface | Provided (`contracts/model-interface.v1.schema.json`) | `model.run`, `result.data`, `result.meta`, `speech.transcribe`, `transcript.segments`, `transcript.meta` | Created in Release 0. Proposed additive items in §4.2 (registry rule, error types) (Q38). `meta` follows decision 0001: no new fields in v1 (#8) |
+| B4 Moodle web-services usage | Provided (`contracts/moodle-ws.v1.md`) | Function list in §4.1 | Merged (#27, #64, #150, #167); not frozen. Guide (PR #27): Markdown rules plus `moodle-ws.v1.schema.json` and the allow-list example `examples/moodle-ws.v1.functions.json` (Q1); normalized models and error classes are library documentation, not contract text (Q37) |
+| B5 Model and speech interface | Provided (`contracts/model-interface.v1.schema.json`) | `model.run`, `result.data`, `result.meta`, `speech.transcribe`, `transcript.segments`, `transcript.meta` | Merged (#25); not frozen. Proposed additive items in §4.2 (registry rule, error types) (Q38). `meta` follows decision 0001: no new fields in v1 (#8) |
 | B1.3 Marking table | Used | `<!-- marking-table v1 -->` markers; columns Criterion, Points, Full marks when, Check; `—` means judgement only; `data-marking-table="v1"` in the HTML rendering | Proposed: criterion key rule and argument formats (§4.3, Q39) |
 | B1.1 Course package | Used (read only) | `submission: [onlinetext, file]` on assignments | Decided: the submission-content rule is PRD B1.5 (#87), used as it stands (§4.3a) |
 | B3 LTI 1.3 launch | Used | `sub`, `name`, `roles`, `context`; Instructor → Mentor, Administrator; Learner refused; `shared.course_link` | None. Launch container decision (Q35) |
@@ -187,8 +187,8 @@ Before the Release 0 freeze the proposals below are ordinary changes; after the 
 through `/contract-change` and is additive only (PRD §B.0, EXT-02). This is why they should be settled
 before the freeze.
 
-**Guide's decisions and contract files are different things.** The B4 and B5 contract files are drafts until
-they are merged and frozen; the guide has approved neither as a contract. "Decided by the guide" in this document
+**Guide's decisions and contract files are different things.** The B4 and B5 contract files are merged and
+not frozen; the guide reviews the whole contract set at the Release 0 gate and has approved neither as a frozen contract. "Decided by the guide" in this document
 means the guide's written answer: for B5, `docs/decisions/0001-b5-model-interface-v1.md`; for B4, the answers
 written on the pull request that carries the contract, which the contract text records when it merges. This
 document does not track which pull request is open or what its review state is; check GitHub. Where a line here
@@ -208,6 +208,7 @@ need, in the courses where it is enrolled for grading.
 | Submissions | `mod_assign_get_submissions`, `mod_assign_get_submission_status` | FR-G-01, FR-G-08 | (lab) / (lab) |
 | Submission files | Download through the token-authenticated file URL returned by the API | FR-G-01 (report file only) | (lab) / (lab) |
 | Write draft grade + feedback | `mod_assign_save_grade` with workflow state `readyforrelease` and feedback comments; never `released` | FR-G-06 | (lab), incl. the `workflowstate` parameter (PRD App-C 1) |
+| Stored-grade read-back | `mod_assign_get_grades` (one assignment id; B4 R1, R9) | FR-G-06 (the read-back in §10.1) | (lab) / (lab) |
 
 - **Parameters.** The PRD names only the `workflowstate` parameter and "feedback comments". Every other parameter name, field name and response shape is recorded in the contract file only after it has been checked on both lab sites (lab). If a name differs, the replacement is recorded in §B4, as the PRD requires.
 - **Capabilities.** The PRD gives no list. The minimum capabilities are worked out on the lab sites and recorded in the contract file, and SEC-03 then refers to that list (lab).
@@ -217,9 +218,10 @@ need, in the courses where it is enrolled for grading.
 - **Token** (PRD SEC-03, C-06): environment only, one per site: `MOODLE45_WS_TOKEN` and `MOODLE53_WS_TOKEN`. `.env.example` lists both with placeholders, and the old single `MOODLE_WS_TOKEN` is removed (guide's decision on Q24, PR #27). `libs/moodle_ws` redacts tokens from every logged URL, exception message and error shown in the UI; request URLs are never logged in full. (lab) If the file download accepts the token in a header, use that instead of a URL parameter.
 - **Format** (guide's decision on Q1, PR #27): `contracts/moodle-ws.v1.md` stays the normative rules text; `contracts/moodle-ws.v1.schema.json` and the example above give the allow-list in machine-readable form, as PRD §B.0 rule 1 asks. `contracts/CLAUDE.md` lists all three files.
 - **Traceability:** see §2 note (Q7).
-- **Library proposals** (proposed by the owner, Student 3; not guide decisions; the library is not merged). `libs/moodle_ws` adds `FunctionNotAllowed`, `WorkflowStateNotAllowed`, `InvalidParameters` and `MoodleConfigError` to the classes above. The same token on both sites is to be refused, because PRD B4 asks for one account per site. The client's `allowlist` argument is for tests only; making it keyword-only cannot stop a caller from widening the B4 list by itself, so how that is enforced is settled before row 5e in §13.
+- **Library proposals** (proposed by the owner, Student 3; not guide decisions; `libs/moodle_ws` is merged except the real transport, §13 row 5g). `libs/moodle_ws` adds `FunctionNotAllowed`, `WorkflowStateNotAllowed`, `InvalidParameters` and `MoodleConfigError` to the classes above. The same token on both sites is to be refused, because PRD B4 asks for one account per site. The client's `allowlist` argument is for tests only; making it keyword-only cannot stop a caller from widening the B4 list by itself, so how that is enforced is settled before row 5e in §13.
 
 **Moodle semantics policy** (proposed; every point confirmed in the lab before it is relied on):
+- Write rules from B4 §3a (not new here): a write is refused if the learner's state is already `readyforrelease` or `released` (R3) or marking workflow is off (R13); `applytoall` and `addattempt` are always sent as 0 (R15); a grade outside 0 to the maximum is refused before sending (R9). R3 holds on 5.3 and is best effort on 4.5.
 - Graded: submissions in the submitted state only. A draft-state submission is shown as "not submitted" and gets no checks or draft.
 - Group or team submissions: not supported in v1. Fetch marks such an assignment `unsupported` ("group submissions are not graded by this tool; grade in Moodle"). If detection is impossible, record it as a known limitation in the README.
 - Grading type must be points; other types are refused with a message.
@@ -228,18 +230,7 @@ need, in the courses where it is enrolled for grading.
 - A resubmission or reopened attempt is a new submission version when the identifying fields differ (§5.4).
 - The service account is enrolled in each course by an administrator (README step).
 
-**Lab verification list** (replaces PRD App-C item 1; items 1 to 10 are the ten checks in B4 §5, in the same order, and item 11 is an extra check from this design for Q31, not in B4; each item on 4.5 and 5.3, recorded in `docs/decisions/` and in B4; until recorded, dependent code uses only fakes):
-1. Every B4 function exists with the parameters used, including how workflow state and feedback comments are passed to `mod_assign_save_grade`.
-2. What the assignment functions return: description text, `idnumber`, grading type and maximum grade, marking-workflow setting. Where one is missing, name the replacement function and add it to B4.
-3. What identifies a submission attempt and its last change (used as the version snapshot).
-4. Behaviour when the workflow state is sent for an assignment where marking workflow is off.
-5. Behaviour when saving over a grade that is already released, or that another grader entered.
-6. Whether feedback comments are enabled on assignments built by Course Studio, and which format Moodle stores.
-7. Whether the marking-table markers and `data-marking-table` attribute survive Moodle's HTML handling, and how online text arrives (editor HTML, link wrapping).
-8. How suspended users, group submissions, and draft versus submitted statuses appear in the submission functions.
-9. Which capabilities the service account minimally needs for exactly the allowed functions (recorded for SEC-03).
-10. How the file download authenticates.
-11. Whether a grade written by the service account shows the service account as grader, and whether the adopting site accepts that (Q31).
+**Lab verification list** (replaces PRD App-C item 1). It is the list in `contracts/moodle-ws.v1.md` §5: 18 checks, each on the lab site the guide names, recorded in `docs/decisions/` and in B4; until recorded, dependent code uses only fakes. This document does not repeat the list, so the two cannot drift. One further check is proposed here and is not in B4 (Q31): **E1**, whether a grade written by the service account shows the service account as grader, and whether the adopting site accepts that. If the guide accepts E1, it is added to B4 §5 as check 19 through `/contract-change`.
 
 ### 4.2 B5: Model and speech interface (summary of `contracts/model-interface.v1.schema.json`)
 
@@ -277,7 +268,7 @@ These are drafts inside this document only. Nothing here changes a contract file
 **(b) Marking-table parser and model** (format owner Student 1; implementation proposed in `libs/contracts` first used by CK-09; Student 3 imports it; no second parser in this module) (Q39).
 - Output: `table_hash`; criteria, each with `key` (slug of the name, unique within the table), `position`, `name`, `points`, `full_marks_when`, `checks` (list of name and argument; empty for judgement only).
 - Rules: criterion names unique after slugging; points sum equals the assignment points; check names limited to the six PRD names; checks separated by `;`; one `:` splits name and argument; `—` alone means no check.
-- Argument formats: `readme_sections:<a,b,c>` comma-separated list matched case-insensitively against Markdown heading text at any level; `word_count:<n>` whole number of words in the report; `repo_file:<path>` relative path with no `..`; `command:<name>` a key in the check config; `http_ok:<field>` is `demo_url` in v1.
+- Argument formats for `readme_sections` and `word_count` are defined in PRD B1.3 and its shared vectors (`contracts/test-vectors/submission.v1.json`); they are not repeated here, and the rules still being completed in #215 are followed as merged. This module adds only: `repo_file:<path>` is a relative path with no `..`; `command:<name>` is a key in the check config; `http_ok:<field>` is `demo_url` in v1.
 
 **(c) Check config for `command:<name>`** (owner Student 1 for the schema, Student 3 for the loader) (Q33). A YAML file `GRADING_CHECKS_DIR/<course_shortname>.yaml` on the tools host, validated by a schema: `schema: learnops.checks/v1`; `image` (a key from the configured list of pre-baked check images); `commands` mapping a name to `argv` (a list, never a shell string) and `timeout_s`; optional `starter_hashes` for similarity; optional `limits` that can only reduce platform limits. A name in a marking table that is missing from the file fails with `command_not_configured`. The loader resolves commands when it creates the check job and passes them in the job payload, so the sandbox host never needs the file. Whether this schema is part of B1 or a new contract file is (guide).
 
@@ -294,7 +285,7 @@ All tables are in the `grading` schema unless marked shared. The PRD names four 
 
 ### 5.1 Identity
 
-- `site_id` is `moodle45` or `moodle53`. A Moodle course id is not unique across the two lab sites, so a course is always `(site_id, moodle_course_id)`, mapped to the LTI context through `shared.course_link`. The columns and primary key of `shared.course_link` are recorded by the B4 owner (Student 3) in a decision record before foreign keys are written (guide, issue #146, 20 Nov 2026: the columns stay with the B4 owner; the shared schema and its migrations are Student 2's).
+- `site_id` names the registered Moodle platform. `libs/moodle_ws` uses the interim values `moodle45` and `moodle53`; the final form is open (decision 0015, open item 2, and the guide's answers on #112), and the type is text so either holds. A Moodle course id is not unique across sites, so a course is always `(site_id, moodle_course_id)`, mapped to the LTI context through `shared.course_link`. The columns and primary key of `shared.course_link` are recorded by the B4 owner (Student 3) in a decision record before foreign keys are written (guide, issue #146, 20 Nov 2026: the columns stay with the B4 owner; the shared schema and its migrations are Student 2's).
 - Web routes use the internal course link id. CLIs take `--site` and `--course-shortname` (PRD B1: shortname is stable) and resolve to the same row.
 - `learner_ref` is `site_id` plus the Moodle user id from the enrolled-users call, never name, email or LTI `sub`.
 - Assignments are identified by Moodle `idnumber`, never by position or name (PRD EXT-06). If B4's assignment function does not return `idnumber` (lab), the replacement is recorded in B4 before the freeze.
@@ -371,7 +362,7 @@ shared.course_link  -- the shared schema is Module 2's; the columns are recorded
 
 ### 5.4 Submission version and state machine
 
-- A submission version is identified by `version_key`, built from the Moodle fields (lab) that identify the attempt and its last modification (item 3 of the lab list). `moodle_snapshot` stores those fields as read at fetch. If the identifying fields cannot be obtained, writing is blocked.
+- A submission version is identified by `version_key`, built from the Moodle fields (lab) that identify the attempt and its last modification (B4 §5 check 3). `moodle_snapshot` stores those fields as read at fetch. If the identifying fields cannot be obtained, writing is blocked.
 - States: `fetched`, `checked`, `drafted`, `in_review`, `approved` (all criteria resolved by approve or edit), `write_queued`, `written`, and the side states `write_unknown`, `conflict`, `refused`, `stale`. Any state moves to `stale` when a new fetch or a write precondition finds that Moodle's identifying fields changed; a `stale` version can never be written and its approvals stay in history; a new version row is created.
 - Editing after approval creates a new event and returns the version to `in_review`. The write always uses the latest events' `after` values, never the original draft. Rejecting or leaving any criterion unresolved blocks the write.
 
@@ -502,7 +493,6 @@ Versions: latest release on PyPI on 2026-10-25. Licences: read from PyPI metadat
 | jsonschema | 4.26.0 | MIT (PyPI; `COPYING`) | Contract validation | — |
 | pytest | 9.1.1 (`requirements-dev.txt`) | MIT (as recorded there) | Tests | — |
 | React, TypeScript, Playwright | Not pinned yet | To be checked when pinned (C-11) | Review UI and browser tests (PRD §A10) | — |
-| Alembic | 1.20.1 | MIT (PyPI; `LICENSE`) | Reversible migrations, one tool for the repository (Q36) | Plain SQL files with up and down steps |
 | Docker SDK for Python (`docker`) | 7.2.0 | Apache-2.0 (PyPI; `LICENSE`) | Sandbox control on the sandbox host | docker CLI |
 | PyYAML | 6.0.3 | MIT (PyPI; `LICENSE`) | Check config (§4.3c) | JSON |
 | Dulwich (pure-Python Git; sandbox image only, never on a worker host) | 1.2.19 (PyPI 2026-10-26) | Apache-2.0 OR GPL-2.0-or-later (PyPI; `COPYING`): used under Apache-2.0. Only runtime dependency on Python 3.12: urllib3 2.8.0, MIT (PyPI; `LICENSE.txt`) | `repo_clone` (§9.2) | GNU git executable: rejected, GPL-2.0 is not in C-11 (Q56) |
@@ -836,9 +826,9 @@ A write is made per submission version, never per criterion, and only when every
 
 **Preconditions,** checked by the write worker immediately before the Moodle call. Any failure stops the write, records the reason and changes nothing in Moodle:
 1. The approval events being written are the latest for that version, and the version is not `stale`.
-2. Moodle's current submission state equals the snapshot taken at fetch (identifying fields: lab list item 3).
+2. Moodle's current submission state equals the snapshot taken at fetch (identifying fields: B4 §5 check 3).
 3. The assignment's marking-workflow setting is on (lab: which B4 function exposes it, item 2). If none does, writes are blocked until the guide decides (Q26).
-4. The learner's current grade is not already released, and no grade by another grader was entered after the snapshot (lab item 5).
+4. The learner's current grade is not already released, and no grade by another grader was entered after the snapshot (B4 §5 check 5).
 5. The marking table's total equals the assignment's maximum grade, and the grading type is points.
 6. The text to be written is exactly the text the mentor saw in the review preview.
 
@@ -903,7 +893,7 @@ The T-numbered tests below are planned and none has been run against a Moodle si
 
 ### 11.1 Acceptance criteria (PRD §C3.7, extended)
 
-Pass rules are stated; none has been met. Each runs on both Moodle 4.5 and 5.3 where it touches Moodle (PRD C-03, E2).
+Pass rules are stated; none has been met. Each runs on both Moodle 4.5 and 5.3 where it touches Moodle (PRD C-03, E2). **Provisional limit:** the guide provides the 5.3 lab site only. B4 rule R3 (locked states) holds on 5.3 and is best effort on 4.5, so a Moodle-facing result is recorded as 5.3 and the 4.5 result as not tested until a 4.5 site exists.
 
 | # | Criterion | Dataset and method | Pass rule |
 |---|---|---|---|
@@ -1074,7 +1064,8 @@ The PRD is not edited by this document. These are the changes the proposals abov
 | A11, OPS-01, SEC-04 | Name the host that SEC-04 requires, which runs no other LearnOps service (proposed as a dedicated VM, Q23); sandbox worker starts there; Docker control interface not network-exposed; clone egress limited to allow-listed git hosts | §3, §9.2, §6.4 |
 | SEC-04, §C3.5 | Make the network rule the same in both places. Option for the guide (not chosen here): "no network for learner code; a clone step that runs no learner code may reach approved destinations only" (Q57). Also state what the 10-minute limit covers (Q58) | §9.2 |
 | §C3.7 | State what "reported" means for an attack the host cannot observe directly (Q65) | §9.2.9 |
-| SEC-03, App-C item 1 | Capability list recorded in B4 after lab work; replace item 1 with the ten checks in B4 §5, plus item 11 of §4.1 if the guide accepts it (Q31) | §4.1 |
+| §C3.3, §C3.10 | State the release of FR-M-01 and FR-M-02 the same way as PRD §D1 ("the first release that uses them"); the three texts now disagree | header, §2, §13 |
+| SEC-03, App-C item 1 | Capability list recorded in B4 after lab work; replace item 1 with the 18 checks in B4 §5, plus check E1 of §4.1 if the guide accepts it (Q31) | §4.1 |
 | C-05 | A written grade can be reverted only before release; documented in the README | §10.1 |
 | B1.1, B1.3, B1 | Submission-content rule, argument formats, criterion key rule, check-config schema; `command:setup` wording to match the dependency policy | §4.3, §9.2 |
 | EXT-09 | The marking-table parser lives in `libs/contracts` | §4.3b |
@@ -1187,7 +1178,7 @@ PRD, the release table or §13 until the guide decides.
 
 One requirement (or one tightly related group) per pull request. "Gate" is something that must be true before the pull request is merged or before its artifact is run. Every pull request updates `docs/traceability.md` and the README where relevant. The order below changes the earlier order so that lab verification comes before any fixture recorded from Moodle.
 
-**Release 0** (foundation; allowed before this document is approved, except where noted). **Status on 23 Nov 2026:** PRD D1, which changed after this plan was written, moves `libs/lti`, `libs/moodle_ws` and `libs/model_interface` (FR-M-01, FR-M-02) out of Release 0 into the first release that uses them, which for this module is Release 4. Rows 5a to 5g, 7 and 8 are therefore Release 4 work that was done early; the other rows stay Release 0.
+**Release 0** (foundation; allowed before this document is approved, except where noted). **Status on 23 Nov 2026:** PRD D1, which changed after this plan was written, moves `libs/lti`, `libs/moodle_ws` and `libs/model_interface` (FR-M-01, FR-M-02) out of Release 0 into the first release that uses them (for `model_interface` that may be Release 2 or 3, not only Release 4, because Modules 1 and 4 use it too). Rows 5a to 5g, 7 and 8 are therefore work of that later release that was done early; the other rows stay Release 0. PRD §C3.3 and §C3.10 still say Release 0 for FR-M-01 and FR-M-02 (§12.2).
 
 | Order | Pull request | Requirements | Depends on | Notes |
 |---|---|---|---|---|
