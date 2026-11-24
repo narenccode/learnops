@@ -1,7 +1,8 @@
 # B8.6 model comparison set (PRD B8, used by FR-M-03): PROVISIONAL.
 #
-# One fictional transcript as the input for one chapters item and one summary item. Their
-# expected outputs are AUTHOR-DRAFTED and NOT REVIEWED by a mentor. Grading-draft items wait for
+# One fictional transcript (t001) and one real checked B8.5 transcript (t002, lecture-05) are the inputs for
+# the chapters and summary items. Their expected outputs are AUTHOR-DRAFTED and NOT REVIEWED by a mentor.
+# t002 times are ESTIMATED until the owner measures the chapter starts. Grading-draft items wait for
 # B8.4 (merged: #31, #189, #190) and its mentor reference grades (Q13). Practice has an author-drafted
 # item; who supplies each input is decided (issue #186, Q12). No comparison has been run; there are
 # no results.
@@ -14,6 +15,12 @@ inputs:
     kind: transcript
     path: inputs/t001/transcript.en.json
     source_note: inputs/t001/source.md
+    provisional: true
+
+  - id: t002
+    kind: transcript
+    path: inputs/t002/transcript.en.json
+    source_note: inputs/t002/source.md
     provisional: true
 
   - id: b8-4
@@ -44,6 +51,28 @@ items:
       status: not_reviewed
     authored_by: Student 3
     note: Author-drafted expected summary; NOT REVIEWED. Input t001 stays for now (Student 4 on PR #33); a checked B8.5 transcript is added later as a second input, by its lecture id.
+
+  - id: ch-002
+    task: chapters
+    status: ready
+    provisional: true
+    input: t002
+    expected: expected/ch-002/chapters.json
+    expected_review:
+      status: not_reviewed
+    authored_by: Student 4
+    note: Author-drafted expected chapters for B8.5 lecture-05 (chapter and summary inputs come from Student 4, issue #186); NOT REVIEWED. The chapter start times are ESTIMATED from the word count, not measured on the recording; the owner replaces them (see inputs/t002/source.md).
+
+  - id: su-002
+    task: summary
+    status: ready
+    provisional: true
+    input: t002
+    expected: expected/su-002/summary.en.md
+    expected_review:
+      status: not_reviewed
+    authored_by: Student 4
+    note: Author-drafted expected summary for B8.5 lecture-05; NOT REVIEWED.
 
   - id: gd-001
     task: grade_draft

@@ -1072,8 +1072,8 @@ until it is complete.
 
 ## B8.6 model comparison set (PROVISIONAL), Release 0 foundation
 
-Files: `testdata/b8-6-model-comparison/` (manifest, rubric, six schemas, one transcript input,
-three expected outputs, two PROPOSED mentor review forms), `libs/contracts/tests/test_b8_6_dataset.py`. B8.6 is a test-data set
+Files: `testdata/b8-6-model-comparison/` (manifest, rubric, six schemas, two transcript inputs
+(one fictional, one checked B8.5 lecture with estimated times), five expected outputs, two PROPOSED mentor review forms), `libs/contracts/tests/test_b8_6_dataset.py`. B8.6 is a test-data set
 (PRD B8) with no requirement ID of its own. It is the input of FR-M-03 (Release 4), which is not
 implemented, so no row in the table above maps to it.
 

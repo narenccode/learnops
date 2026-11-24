@@ -1,0 +1,10 @@
+[
+  {"start": 0.0, "end": 39.4, "title": "Introduction"},
+  {"start": 39.4, "end": 179.2, "title": "Normalization"},
+  {"start": 179.2, "end": 230.9, "title": "Database transactions"},
+  {"start": 230.9, "end": 322.4, "title": "ACID properties"},
+  {"start": 322.4, "end": 368.7, "title": "Concurrency control"},
+  {"start": 368.7, "end": 405.2, "title": "Recovery"},
+  {"start": 405.2, "end": 442.2, "title": "Database security"},
+  {"start": 442.2, "end": 488.0, "title": "Conclusion"}
+]
