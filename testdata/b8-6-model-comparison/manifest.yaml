@@ -55,7 +55,7 @@ items:
         testdata/b8-4-synthetic-submissions/reference-grades/mentor-01/. None exists: B8.4 (33
         submissions, merged in #31, #189 and #190) has only the author's own grades, labelled as
         not reference grades.
-      - The student acting as mentor (chosen by the guide, accepted 24 Nov; issue #186, design Q13, B8.4 O3) grades all 33 submissions; a second grader on at least 10 (Q47) is for Release 4
+      - The guide's decision on issue 186 confirms that a student acting as mentor grades all 33 submissions (accepted 24 Nov; design Q13, B8.4 O3); a second grader on at least 10 (Q47) is for Release 4
       - GradeDraftInputV1 / GradeDraftV1 agreed (design §4.3d, Q41), before a model is run on this item
     note: >-
       Planned: the input is the B8.4 submissions (inputs entry b8-4) and the expected output the
