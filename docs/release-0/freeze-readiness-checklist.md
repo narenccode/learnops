@@ -9,7 +9,7 @@ four more commits, #130, #142, #145 and #147, merged). The first audit was at `3
 relying on it.
 **Refresh 2026-11-23** (`origin/main` `dedf578`, after #169 and #129 merged): only the B8.5 rows, the #129 row and the owner list were updated; no other row was re-read, and the verdict is unchanged.
 **Refresh 2026-11-24** (PR #213, from the lab 5.3 check of 2026-11-24): only the "Lab VMs ready (A11)" row was updated, to point to the new A11 readiness record (the App-C item 9 rows were updated by #212 the same day). No other row was re-read; this is not a re-audit of the checklist, and the verdict (NOT READY) is unchanged.
-**Narrow refresh 2026-11-25** (after PR #142 merged): records Student 2's M2 literature survey as completed and refreshes #142's PR/review status only. No other row was re-audited; the overall Release 0 verdict remains NOT READY.
+**Narrow refresh 2026-11-25** (after PR #142 merged and after the subsequent review request on PR #241): records the M2 literature survey's source-verification provenance and corrects the description of #142's automated review. The 13 directly opened references exceed the six-source minimum; MoodleDocs references [3], [10] and [11] were checked against archived copies only. No separate human peer approval of #142 is claimed. No other row was re-audited; the overall Release 0 verdict remains NOT READY.
 
 **What changed in the PRD since the first audit (PRs #113 and #116).** Release 0 (PRD §D1) now
 contains: lab VMs ready (A11); repository, CI, coding standards; contracts B1 to B8 v1 **frozen**;
@@ -37,7 +37,7 @@ to classify the row was not found. A merged PR is not treated as proof of its ac
 | Item | Status | Note |
 |---|---|---|
 | Video design document | **Draft** on `main` | `git log origin/main -- docs/design/video.md` shows #17, #24, #34, #47 and #93; none sets `Approved`. PR #140 (merged 2026-11-22) completed the draft and recorded the guide's answers; the document is still `Draft`, and the design approval is separate and the guide's alone |
-| Student 2 — M2 literature survey | **COMPLETED** | `docs/literature-checker.md`: 16 references across Moodle backup/restore and web services, course quality/availability/completion, LTI 1.3, Playwright and integration. Covers PRD C2.12 Survey (L2). PR #142 merged 2026-11-20; Akshita21-09's follow-up review approved the final revision on 2026-11-19; CI passed on the approved commit. |
+| Student 2 — M2 literature survey | **COMPLETED** | `docs/literature-checker.md` covers PRD C2.12 Survey (L2). Source-verification provenance in §2: the survey-preparation assistant opened and checked 13 references directly ([1], [2], [4]–[9], [12]–[16]), exceeding the six-source minimum; MoodleDocs references [3], [10], [11] were checked against archived copies only. PR #142 merged 2026-11-20; its follow-up APPROVED result was an automated Claude Code review run by @Akshita21-09, not a separate human peer approval. CI passed on the reviewed commit. |
 | PR #100 (S2 Svarah literature audit) | Merged | T13: 13 owner-verified sources (S2, P1 to P12), requirement of 6 met; coverage gaps remain |
 | PR #103 (G-6 evaluation preparation) | Merged | Preparation only: no official evaluation has run |
 | PR #96 (App-C 4 record) | Merged | Records NOT VERIFIED; no lab observation |
@@ -95,7 +95,7 @@ items 1 to 5, 7, 8, 10. The Release 0 notes must list where each one goes (not w
 | 9 | Moodle 5.3 AI features | **Release 0** | **Source-checked and lab-checked on 5.3; guide's approval pending** | Record `0012` (PR #156, merged 2026-11-22) now has the lab 5.3 result of 2026-11-24: seven provider plugins and two placements as in the source, no provider instance, both placements disabled, no speech or video action. Moodle 4.5 not tested. The guide's approval of its proposed outcome is the remaining action |
 | 10 | Backup/restore roles | First release that relies on it | **Blocked** | Needs lab |
 
-## 5. Pull requests (base query 2026-11-20; narrow status refresh 2026-11-25 for #142)
+## 5. Pull requests (base query 2026-11-20; #105 and #106 rows refreshed 2026-11-22; narrow #142 status refresh 2026-11-25)
 
 | PR | State | Review | Note |
 |---|---|---|---|
@@ -103,7 +103,7 @@ items 1 to 5, 7, 8, 10. The Release 0 notes must list where each one goes (not w
 | #105 T19 report and demo | **Merged** 2026-11-22 | Approved (Harshitha) | Documentation against the provisional criteria P1 to P6; not a completion claim |
 | #106 T13 literature (P1 to P12) | Merged 2026-11-22 | Approved (Harshitha, Akshita21-09) | Merged with 1 of 6 verified; since then all of P1 to P12 are owner-verified (owner's statement, 2026-11-23) |
 | #129 Lesson Processor demo | Merged 2026-11-23 | Approved (Harshitha, Akshita21-09, guide) | One-PR exception and the `libx264` exception (decision 0013) from the guide |
-| #142 M2 literature survey (Student 2) | **Merged 2026-11-20** | **Approved (Akshita21-09, 2026-11-19)** | 16 references; approval is for commit `d6ce2417`; final CI passed; file status updated to Complete for Release 0 in this PR |
+| #142 M2 literature survey (Student 2) | **Merged 2026-11-20** | **Automated review returned APPROVED (Claude Code run by Akshita21-09, 2026-11-19); no separate human peer approval recorded** | Approval is for commit `d6ce2417`; CI passed. Survey verification record: 13 primary URLs directly opened; MoodleDocs [3], [10], [11] archive-checked only. |
 | #115 CODEOWNERS after the freeze | Draft | Review required | |
 | #31, #33 B8.4, B8.6 datasets | Open / Draft | Review required | Provisional |
 | #35, #63 model-interface and moodle_ws skeletons | Draft | Review required / changes requested | Not Release 0 after the PRD change |
