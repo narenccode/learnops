@@ -50,7 +50,7 @@ B8.2 is never changed. The folders `missing-body`, `duplicate-id`, `protected-id
 | `ck-06-duplicate-idnumber` | CK-06 | mbz | pending-lab | two activities share `wk-01-task` |
 | `ck-06-invalid-idnumber` | CK-06 | mbz | pending-lab | idnumber `Week 1 Task` |
 | `ck-07-protected-item-changed` | CK-07 | mbz | pending-lab | Final project max grade 100 to 80 |
-| `ck-08-completion-criteria-missing-item` | CK-08 | mbz | pending-lab | completion criteria name a deleted activity |
+| `ck-08-completion-criteria-missing-item` | CK-08 | mbz | pending-lab | one course-completion criterion references nonexistent idnumber `deleted-activity`; no activity is deleted |
 | `ck-09-marking-table-sum` | CK-09 | package | built | table adds to 20, task worth 25 |
 | `ck-10-no-marking-workflow` | CK-10 | mbz | pending-lab | marking workflow off |
 | `ck-11-graded-practice-h5p` | CK-11 | mbz | pending-lab | practice H5P with grade 10 |
