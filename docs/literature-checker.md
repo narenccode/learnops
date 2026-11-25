@@ -5,7 +5,7 @@
 **Peer reviewer:** @Akshita21-09
 **Release:** Release 0 research supporting Release 1 implementation
 **Prepared:** 19 November 2026
-**Status:** Complete — owner source verification recorded (owner's statement, 26 November 2026).
+**Status:** Complete — owner source verification recorded (owner's statement, 25 November 2026).
 
 ## 1. Purpose and scope
 
@@ -17,7 +17,7 @@ The sources comprise official Moodle documentation, the 1EdTech standards, offic
 
 Sources were located through targeted searches of official Moodle, 1EdTech and Playwright documentation sites and scholarly journal/publisher records.
 
-**Source-access and verification record (19–26 November 2026):** The survey-preparation assistant opened and checked 13 references directly at their publisher or official source URLs: [1], [2], [4]–[9] and [12]–[16]. MoodleDocs references [3], [10] and [11] were not directly accessible to the automated research workflow, so the initial research notes for those entries relied on archived copies rather than direct access to the live pages. Those automated checks are research-preparation evidence only and do not satisfy CLAUDE.md §6a.5's owner-verification requirement.
+**Source-access and verification record (19–25 November 2026):** The survey-preparation assistant opened and checked 13 references directly at their publisher or official source URLs: [1], [2], [4]–[9] and [12]–[16]. MoodleDocs references [3], [10] and [11] were not directly accessible to the automated research workflow, so the initial research notes for those entries relied on archived copies rather than direct access to the live pages. Those automated checks are research-preparation evidence only and do not satisfy CLAUDE.md §6a.5's owner-verification requirement.
 
 **Owner verification record (25 November 2026; owner's statement):** @shraddha0103 reports personally opening and verifying **all 16 references retained in this survey, [1]–[16]**, including the live MoodleDocs pages for [3], [10] and [11]. The owner reports checking each source's title, author or issuing body, and the specific claim used in the survey. The three archive-based checks above describe only the earlier automated research preparation; they were superseded for owner verification by the owner's later checks of the live pages. Owner verification is therefore recorded as **complete** on the owner's statement dated 25 November 2026.
 
