@@ -9,7 +9,7 @@ anything.
 
 1. Every FR tagged for this release: implemented? linked to passing tests in `docs/traceability.md`?
 2. The module's acceptance criteria (PRD §C.x.7): each one, with the evidence that proves it.
-3. Latest integration-harness report: restore + role tests + smoke tests on Moodle 4.5 **and** 5.3, all passing?
+3. Latest integration-harness report: restore + role tests + smoke tests on Moodle 5.3, all passing?
 4. Contracts: unchanged since the last release, or changed only through §B.0 (check git history of `contracts/`).
 5. README, `.env.example`, changelog updated for this release.
 6. Security items (PRD §A13) relevant to this release reviewed; dependency scan clean.
