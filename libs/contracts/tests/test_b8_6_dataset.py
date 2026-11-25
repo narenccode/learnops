@@ -35,7 +35,7 @@ AUTOMATED here:
 NOT automated, and therefore NOT claimed:
   * that any expected output is correct or reviewed (none is reviewed; open decision O2);
   * the rubric's content (every definition is proposed or open, Q48), set size, or Q12 inputs;
-  * the agreement of the grading-draft item (gd-001 is ready because the B8.4 reference grades exist, but the GradeDraft contract is not agreed and the grades are not reviewed); that the guide's confirmation of the practice format is on record (it is reported, not linked); any model run or result.
+  * the agreement of the grading-draft item (gd-001 is ready because the B8.4 reference grades exist, but the GradeDraft contract is not agreed and the grades are not reviewed); that Akshita's approval of the practice format under PRD B.0 rule 3 is on record (issue #186, comment 7096886192); any model run or result.
 """
 
 from __future__ import annotations
