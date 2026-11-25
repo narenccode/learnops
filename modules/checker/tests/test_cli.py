@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -14,16 +15,12 @@ B8_2_PACKAGE = REPO_ROOT / "testdata" / "b8-2-sample-course" / "package"
 
 
 def run_checker(package: Path) -> subprocess.CompletedProcess[str]:
+    env = os.environ.copy()
+    env["PATH"] = str(Path(sys.executable).parent) + os.pathsep + env.get("PATH", "")
     return subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "checker.cli",
-            "check",
-            str(package),
-            "--json",
-        ],
+        ["checker", "check", str(package), "--json"],
         cwd=REPO_ROOT,
+        env=env,
         capture_output=True,
         text=True,
         check=False,
