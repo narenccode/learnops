@@ -145,11 +145,11 @@ variants:
     status: pending-lab
     path: null
     element: course-completion-criteria
-    planted_change: "One course-completion criterion is changed to reference the nonexistent idnumber `deleted-activity`; no activity is deleted"
+    planted_change: "One course-completion criterion is changed to use a `cmid` absent from the course model; `idnumber` is absent and no activity is deleted"
     expected: {rule: CK-08, element: course-completion-criteria, severity: error}
     reason: "The criteria refer to an item that no longer exists."
     also_expected: []
-    notes: "The referenced idnumber is syntactically valid but absent from the activity list, isolating CK-08 without removing a protected B8.1 item."
+    notes: "Use a criterion cmid that is absent from every activity in the merged model and omit idnumber because the builder cannot resolve it; no activity is deleted, so CK-07 is not triggered."
 
   - id: ck-09-marking-table-sum
     rule: CK-09
