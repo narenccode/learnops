@@ -6,9 +6,11 @@
 # section. They are the author's own work (Student 3), so they all belong to the development split
 # (design Q47); the sealed test split is still to be written by someone else.
 #
-# There are NO mentor reference grades, so the set is not complete (PRD B8.4 asks for reference
-# grades from at least one mentor). s028 (online text as editor HTML) is left out: B1.5 rule 5 is
-# unverified until the lab check. Its id is not reused.
+# Reference grades exist for all 33 (reference-grades/mentor-01/, written on 25 Nov 2026 by a student
+# acting as mentor, as the guide decided on issue #186: a recorded deviation from PRD B8.4 and G-5,
+# which say "mentor"). The set stays provisional: format acceptance (O7), the band definition and the
+# split are open, and the guide decides whether it counts as complete. s028 (online text as editor
+# HTML) is left out: B1.5 rule 5 is unverified until the lab check. Its id is not reused.
 #
 # All content is fictional and written for this project. No real learner data.
 schema: learnops.testdata.b8-4/v1
