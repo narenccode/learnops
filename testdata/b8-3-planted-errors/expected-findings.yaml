@@ -97,7 +97,7 @@ variants:
     status: pending-lab
     path: null
     element: "wk-02, wk-03"
-    planted_change: "Week 2 section waits for wk-03-task and week 3 section waits for wk-02-task"
+    planted_change: "Change only Week 2 section to wait for wk-03-task instead of wk-01-task; Week 3 already waits for wk-02-task in the B8.2 baseline"
     expected: {rule: CK-05, element: "wk-02, wk-03", severity: error}
     reason: "Each section waits for the other, so neither can ever open."
     also_expected: []
