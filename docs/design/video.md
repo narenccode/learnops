@@ -56,7 +56,7 @@ The diagram shows the components and flows named in PRD §A8, §A10, §C4.5, OPS
 
 ```mermaid
 flowchart LR
-    MENTOR(["Mentor / Admin"]) -->|launch from course| MOODLE["Moodle 4.5 / 5.3<br/>(unmodified)"]
+    MENTOR(["Mentor / Admin"]) -->|launch from course| MOODLE["Moodle 5.3<br/>(unmodified)"]
     MOODLE -->|LTI 1.3 launch| LTI["libs/lti"]
     subgraph M4["M4 Video pipeline"]
         SVC["Video service<br/>(FastAPI; serves React static build)"]
@@ -197,6 +197,7 @@ Routes **confirmed as proposed (Q4)**. Every state-changing request needs CSRF p
 | `PATCH /lessons/{id}/chapters` | Edit chapter **titles only**; the result is validated against the chapters schema [FR-V-05] | Mentor, Administrator |
 | `GET /lessons/{id}/snippet` | The relative path and the HTML snippet (video + captions track) [FR-V-13]; refused with a clear message until the lesson is approved [C-09] (**Proposed**, Q17) | Mentor, Administrator |
 | `POST /lessons/{id}/approve` | A mentor approves the AI-generated captions, chapters and summary: a first run, or a re-processed version that is waiting aside (which is then swapped in atomically). Records who and when, writes an audit entry [C-09, OPS-06, FR-V-11] (**Proposed**, Q17) | Mentor (own course), Administrator |
+| `POST /lessons/{id}/discard-pending` | A mentor discards a re-processed version that is waiting for approval: deletes it from `.pending/` and clears `pending_pipeline_version`; the approved outputs stay served; writes an audit entry [C-09, FR-V-11, OPS-06] (**Proposed**, Q17) | Mentor (own course), Administrator |
 | `POST /lessons/{id}/reprocess` | Re-run processing with a new `pipeline_version` [FR-V-11, §C4.2] | Administrator |
 
 Payloads are Pydantic models. Rules: a launch with any role not listed is refused with a clear message; authorisation on every request from the LTI session: role + course context [SEC-02].
@@ -227,7 +228,7 @@ Every CLI supports `--dry-run` (prints intended changes, changes nothing), `--ch
 | `video reprocess <lesson>` | New `pipeline_version`; old outputs stay until the new ones are complete and, for an approved lesson, approved [FR-V-11, C-09] | Re-run with the earlier `pipeline_version` while the raw files still exist; otherwise restore the previous folder from the backup [OPS-08] |
 | `video bbb-poll` | Poll BigBlueButton once and enqueue new recordings [FR-V-09] | `video remove <lesson>` for a lesson it created |
 | `video retention --check` | List raw files past their age and lessons older than the removal age (exit 1 when there are any) [FR-V-15] | Read-only |
-| `video retention --apply` | Delete raw files past `RETENTION_RAW_DAYS`; with `--lessons` and a confirmation, remove old lessons [FR-V-15] | Raw files: none by design after the retention period (restore from backup). Lessons: moved to a `.trash/` prefix in the media store and kept for 30 days; `video retention --restore <lesson>` moves one back |
+| `video retention --apply` | Delete raw files past `RETENTION_RAW_DAYS`; with `--lessons` and a confirmation, remove old lessons [FR-V-15] | Raw files: none by design after the retention period (restore from backup). Lessons: moved to a `.trash/` prefix in the media store and kept for 30 days, together with any waiting `.pending/` version; `video retention --restore <lesson>` moves one back, and a waiting version comes back still waiting for approval, never served until a mentor approves it [C-09] |
 
 ### Configuration (all through environment variables; `.env.example` lists every variable with a safe default or a placeholder [OPS-02])
 
@@ -328,7 +329,7 @@ The pipeline produces three kinds of AI output that reach learners: the transcri
 - **Review state.** A lesson is `draft` until a mentor has approved its outputs, and `approved` afterwards. This is separate from its processing state (`ready` still means "processed", as in FR-V-10). Editing a chapter title does not approve it.
 - **Approval.** A mentor of the lesson's course (or an administrator, see Q17) approves from the lesson detail page. The approval records who and when, and writes an audit entry [OPS-06].
 - **No snippet before approval.** The embed snippet and path of FR-V-13 are given only for an approved lesson. Before that, the page says "AI draft, not reviewed: approve it to get the embed snippet", and the status list shows "ready (AI draft)".
-- **A re-process never publishes unapproved output.** For a lesson that already has approved outputs, a re-process (FR-V-11) finishes into a waiting place (under a `.pending/` prefix of the course folder, like the `.trash/` prefix used for removal) and the approved outputs keep being served at the lesson path, so a snippet already pasted into a Moodle Page keeps showing approved captions, chapters and summary. The lesson detail page shows "a newer AI version is waiting for approval". Approving swaps the new folder in atomically and records the approver; a later re-process replaces the waiting version.
+- **A re-process never publishes unapproved output.** For a lesson that already has approved outputs, a re-process (FR-V-11) finishes into a waiting place (under a `.pending/` prefix of the course folder, like the `.trash/` prefix used for removal) and the approved outputs keep being served at the lesson path, so a snippet already pasted into a Moodle Page keeps showing approved captions, chapters and summary. The lesson detail page shows "a newer AI version is waiting for approval". Approving swaps the new folder in atomically and records the approver; a later re-process replaces the waiting version. A mentor of the course (or an administrator) can also **discard** a waiting version from the lesson detail page: it is deleted from `.pending/`, `pending_pipeline_version` is cleared, the approved outputs stay served, and an audit entry is written [OPS-06]. If no version is waiting, or a re-process job is still running and has not reached `.pending/`, `discard-pending` answers 409 with a clear message, writes no audit entry and deletes nothing; it never cancels a running job. `approve` and `discard-pending` both check `pending_pipeline_version` in the same transaction, so when two people act on the same waiting version at once exactly one wins and the other gets that 409. Removing a lesson removes its waiting version with it. **Nothing under `.pending/` or `.trash/` is served as media** (**Proposed**): the course folder is the media store that Moodle plays from by relative path, so the web server and proxy configuration must expose lesson folders only, never these two prefixes; otherwise unapproved or removed files would be reachable by anyone who guesses a path.
 - **What this does not do.** It does not change B6: the manifest and the lesson folder stay as the contract says, so the review state lives in `video.lesson`, not in `lesson.json`. For a **first** run, the AI files are written to the lesson folder, which has a predictable path, before anyone approves; the snippet is withheld, but someone who already knows the path could link to the files. That case is part of Q17.
 - **Summary.** `summary.en.md` follows the same rule; if the guide prefers, it is written to the lesson folder only after approval (Q17).
 
@@ -365,9 +366,9 @@ Messages say what happened and what to do next, in plain English [UI-05]. All us
 |---|---|---|---|
 | Unit | Functions and validators (contracts, rules, parsers) [§E1] | Proposed: small fixture files written for the tests and the B6 example files; no real recordings [§B8] | Proposed: FR-V-01 (type and size checks), FR-V-02 (slug rules), FR-V-08 (manifest written last), FR-V-12 (storage adapter), FR-V-15 (retention age) [§C4.3] |
 | Contract | Every example and generated file validates against its schema [§E1]; `lesson.json` validates against B6.3 [§C4.7] | At least one valid example file per contract [§B.0] | FR-V-08 |
-| Integration (harness) | Module smoke test in the harness [§D1, §E1]; restore + role tests + module smoke tests on fresh Moodle 4.5 and 5.3 sites every release [§E2] | Proposed: B8.5 lecture videos with reference transcripts [§B8.5]; a recording from a lab course on the lab BigBlueButton [§C4.7] | Proposed: FR-V-01, FR-V-03, FR-V-04, FR-V-05, FR-V-07, FR-V-08, FR-V-09 (§C4.7 criteria 1–5) |
-| End-to-end | Mentor flows in a real browser [§E1]; pasted snippet plays with captions in a Moodle Page on 4.5 and 5.3 [§C4.7] | Lab Moodle sites [§A11] | FR-V-13 |
-| Unit (C-09) | A first-run lesson is `draft`; the snippet route is refused for a draft and returned for an approved lesson; approval writes an audit entry. **After a re-process of an approved lesson, what is served at the lesson path is still the approved version until a mentor approves; approving swaps the new version in atomically and records the approver; a later re-process replaces the waiting version** | Fixture lessons; no real recordings | FR-V-05, FR-V-06, FR-V-11, FR-V-13 (**Proposed**) |
+| Integration (harness) | Module smoke test in the harness [§D1, §E1]; restore + role tests + module smoke tests on a fresh Moodle 5.3 site every release [§E2]; Moodle 5.3 only (decision 0017) | Proposed: B8.5 lecture videos with reference transcripts [§B8.5]; a recording from a lab course on the lab BigBlueButton [§C4.7] | Proposed: FR-V-01, FR-V-03, FR-V-04, FR-V-05, FR-V-07, FR-V-08, FR-V-09 (§C4.7 criteria 1–5) |
+| End-to-end | Mentor flows in a real browser [§E1]; pasted snippet plays with captions in a Moodle Page on 5.3 [§C4.7] | Lab Moodle sites [§A11] | FR-V-13 |
+| Unit (C-09) | A first-run lesson is `draft`; the snippet route is refused for a draft and returned for an approved lesson; approval writes an audit entry. **After a re-process of an approved lesson, what is served at the lesson path is still the approved version until a mentor approves; approving swaps the new version in atomically and records the approver; a later re-process replaces the waiting version; discarding a waiting version deletes it and leaves the approved outputs served (409 when nothing is waiting; approve and discard on the same version: exactly one wins; a restored lesson's waiting version is still waiting); nothing under `.pending/` or `.trash/` is served as media** | Fixture lessons; no real recordings | FR-V-05, FR-V-06, FR-V-11, FR-V-13 (**Proposed**) |
 | End-to-end (UI baseline) | The mentor flow in Playwright (the stack's browser tool) at the three PRD screen profiles and the three zoom levels: no horizontal scroll, a keyboard-only path through upload, status, lesson detail and snippet, visible focus. An automated contrast and labels check for WCAG 2.1 AA (tool and licence chosen and checked first, CLAUDE.md §2.10). Page load under 2 s measured on the lab network | The lab Moodle 5.3 site [§A11] (Moodle 5.3 only, decision 0017); test videos only | UI-01 to UI-03, UI-06 [§A14]; FR-V-10, FR-V-13 (**Proposed**) |
 
 **Acceptance criteria (PRD §C4.7) and how each is shown**:
@@ -379,7 +380,7 @@ Messages say what happened and what to do next, in plain English [UI-05]. All us
 | Caption word error rate measured on B8.5 and reported against the target set from the first baseline run (App-C 7). | Measured on B8.5 against the App-C 7 target |
 | `lesson.json` validates against B6.3; all paths relative; existing single-track lessons remain valid when `camera`/`screen` tracks are added later. | Contract tests [§E1] |
 | A BigBlueButton recording from a lab course appears in the correct live-class folder without manual steps. | Final demonstration step 3 [§E5] |
-| Pasted snippet plays the video with captions in a Moodle Page on 4.5 and 5.3. | Final demonstration step 3 [§E5]; end-to-end test |
+| Pasted snippet plays the video with captions in a Moodle Page on 5.3. | Final demonstration step 3 [§E5]; end-to-end test |
 
 Final demonstration [§E5, step 3]: a lecture is uploaded from the browser (with an interruption); a live class runs on BigBlueButton and is recorded; both appear with captions, chapters and slide index; the snippet plays in a Moodle Page.
 
@@ -464,7 +465,7 @@ One requirement (or one tightly related group) per pull request. Feature work st
 | 14 | Manifest | FR-V-08 | 9, 10, 11 (all required B6.2 files) | Release 3. `lesson.json` written last |
 | 15 | Status page | FR-V-10 | 6 | Release 3 |
 | 16 | Re-process | FR-V-11 | 14 | Release 3. The swap waits for approval when the lesson has approved outputs (C-09, row 17) |
-| 17 | Embed snippet, review state and the approve route | FR-V-13; C-09 (proposed, Q17) | 14 | Release 3. Builds `review_state`, `pending_pipeline_version`, `approved_by_sub` and `approved_at` (§5) and `POST /lessons/{id}/approve` (§6) |
+| 17 | Embed snippet, review state and the approve route | FR-V-13; C-09 (proposed, Q17) | 14 | Release 3. Builds `review_state`, `pending_pipeline_version`, `approved_by_sub` and `approved_at` (§5) and `POST /lessons/{id}/approve` and `POST /lessons/{id}/discard-pending` (§6) |
 | 18 | Retention | FR-V-15 | Q6 (decided); 14 | Release 3 |
 | 19 | BigBlueButton intake | FR-V-09 | App-C #4 verified; Q2, Q5 (decided); 14 | Release 3 |
 | 20 | Harness smoke test | Release 3 [§D1] | 1–19 | The harness is Module 2's |
