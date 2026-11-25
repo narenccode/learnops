@@ -35,7 +35,7 @@ AUTOMATED here:
 NOT automated, and therefore NOT claimed:
   * that any expected output is correct or reviewed (none is reviewed; open decision O2);
   * the rubric's content (every definition is proposed or open, Q48), set size, or Q12 inputs;
-  * the agreement of the grading-draft item (gd-001 is pending: B8.4 has no reference grades and the mentor is not confirmed); that the guide's confirmation of the practice format is on record (it is reported, not linked); any model run or result.
+  * the agreement of the grading-draft item (gd-001 is ready because the B8.4 reference grades exist, but the GradeDraft contract is not agreed and the grades are not reviewed); that the guide's confirmation of the practice format is on record (it is reported, not linked); any model run or result.
 """
 
 from __future__ import annotations
@@ -478,15 +478,23 @@ def grade_draft_problems(item: Doc, b8_4_dir: Path) -> list[str]:
     return []
 
 
-def test_the_grading_draft_item_is_pending_and_never_copies_b8_4(manifest: Doc) -> None:
+def test_the_grading_draft_item_points_at_b8_4_and_never_copies_it(
+    manifest: Doc,
+) -> None:
     item = next(i for i in manifest["items"] if i["id"] == "gd-001")
     source = next(i for i in manifest["inputs"] if i["id"] == "b8-4")
     assert item["task"] == "grade_draft"
     assert source["kind"] == "b8-4-set" and is_b8_4_path(source["path"])
-    # B8.4 has no mentor reference grades, so the item is pending: no input, no expected.
-    assert item["status"] == "pending"
-    assert "input" not in item and "expected" not in item
-    assert any("reference grades exist" in d for d in item["depends_on"])
+    # B8.4 holds the mentor reference grades, so the item is ready: its input and expected
+    # output point into B8.4, and no model runs on it before the GradeDraft contract is agreed.
+    assert item["status"] == "ready"
+    assert item["input"] == "b8-4"
+    assert (
+        item["expected"]
+        == "testdata/b8-4-synthetic-submissions/reference-grades/mentor-01"
+    )
+    assert item["expected_review"]["status"] == "not_reviewed"
+    assert any("GradeDraftInputV1" in d for d in item["depends_on"])
     assert any("mentor" in d and "confirms" in d for d in item["depends_on"])
     assert not any(p.name == "reference-grades" for p in SET_DIR.rglob("*"))
 

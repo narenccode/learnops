@@ -76,21 +76,23 @@ items:
 
   - id: gd-001
     task: grade_draft
-    status: pending
+    status: ready
     provisional: true
+    input: b8-4
+    expected: testdata/b8-4-synthetic-submissions/reference-grades/mentor-01
+    expected_review:
+      status: not_reviewed
+    authored_by: the student acting as mentor (B8.4 reference grades, #221)
     depends_on:
-      - >-
-        B8.4 reference grades exist: one mentor file per submission in
-        testdata/b8-4-synthetic-submissions/reference-grades/mentor-01/. None exists: B8.4 (33
-        submissions, merged in #31, #189 and #190) has only the author's own grades, labelled as
-        not reference grades.
-      - The guide's decision on issue 186 confirms that a student acting as mentor grades all 33 submissions (accepted 24 Nov; design Q13, B8.4 O3); a second grader on at least 10 (Q47) is for Release 4
+      - The guide's decision on issue 186 confirms that a student acting as mentor grades all 33 submissions (accepted 24 Nov, done 25 Nov; design Q13, B8.4 O3); a second grader on at least 10 (Q47) is for Release 4
       - GradeDraftInputV1 / GradeDraftV1 agreed (design §4.3d, Q41), before a model is run on this item
     note: >-
-      Planned: the input is the B8.4 submissions (inputs entry b8-4) and the expected output the
-      mentor reference grades, one file per submission, as `input` and `expected` once they exist.
-      Until then the item is pending and has neither. The mentor review form is in templates/
-      (PROPOSED).
+      The input is the B8.4 submissions (inputs entry b8-4) and the expected output the mentor
+      reference grades, one file per submission, both in the B8.4 set and not copied here. The
+      grades are labelled "student acting as mentor", a recorded deviation from PRD B8.4 and G-5,
+      and any report that uses them says so. They are not reviewed by a mentor. The set is ready
+      in the sense that the files exist; no model may be run on it until the GradeDraft contract
+      is agreed. The mentor review form is in templates/ (PROPOSED).
 
   - id: pr-001
     task: practice
