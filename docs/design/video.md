@@ -33,16 +33,16 @@ Requirement wording is copied from PRD §C4.3. The "approach" and "components" c
 | FR-V-01: Resumable chunked upload (tus protocol), chunk size configurable (default 90 MB, below a 100 MB proxy limit), max file 4 GB; accepts mp4, mov, mkv, webm. | R3 | Upload page with drag-and-drop, per-file progress, resume after reload [§C4.4]; size limit, type check by content, stored outside any web root until processed [SEC-05]. | Upload page [§C4.4]; `video.upload` [§C4.5] |
 | FR-V-02: Upload form chooses course (from LTI context), module and lesson (number + title → slug); accepts optional `camera` and `screen` tracks (stored and listed, not processed beyond validation in v1). | R3 | Lesson folder follows the B6.1 path template; slugs lowercase ASCII, hyphens, immutable [§B6.1]; `camera`/`screen` are reserved track roles [§B6.3], listed in the manifest in addition to the required `main` track (`720p.mp4`) [§B6.2, §B6.3], never instead of it in v1 (see §4). | Upload page [§C4.4] |
 | FR-V-03: Transcode to `720p.mp4` (H.264/AAC) when needed; optional `360p.mp4`; extract `poster.jpg`. | R3 | ffmpeg for transcode and poster [§C4.5] in worker containers [OPS-10]; `360p.mp4` behind a feature flag [§B6.2], listed with role `main-low` [§B6.3]; `poster.jpg` is required [§B6.2] but has no manifest field in B6.3 (see §4). | Workers; ffmpeg |
-| FR-V-04: Transcribe via B5.4; write `transcript.en.json` and `captions.en.vtt`. | R3 | `speech.transcribe(audio_path, language="en")` [§B5.4]; transcript in the B5.4 segment shape [§B6.2]; transcription runs in workers [OPS-10]. Only the PRD text of B5.4 is relied on; the B5 contract is not yet merged (see §4). | Workers; speech interface |
-| FR-V-05: Chapters via B5.1 from the transcript; write `chapters.json`; mentor can edit titles. | R3 | `model.run(task, inputs, output_schema)` [§B5.1]; `chapters.json` is `[{start, end, title}]` [§B6.2]; chapters editable on the lesson detail page [§C4.4]. | Model interface; lesson detail page |
+| FR-V-04: Transcribe via B5.4; write `transcript.en.json` and `captions.en.vtt`. | R3 | `speech.transcribe(audio_path, language="en")` [§B5.4]; transcript in the B5.4 segment shape [§B6.2]; transcription runs in workers [OPS-10]. B5 is merged (PR #25, not frozen), together with `libs/model_interface` and its speech part (see §4); the speech engine behind the lab endpoint is not chosen (Q9, parked). | Workers; speech interface |
+| FR-V-05: Chapters via B5.1 from the transcript; write `chapters.json`; mentor can edit titles. | R3 | `model.run(task, inputs, output_schema)` [§B5.1]; `chapters.json` is `[{start, end, title}]` [§B6.2]; chapters editable on the lesson detail page [§C4.4]. AI output is a draft until a mentor approves it [C-09, §9]. | Model interface; lesson detail page |
 | FR-V-06: Summary via B5.1; write `summary.en.md` (feature flag). | R3 | `model.run` [§B5.1]; optional file behind a feature flag [§B6.2]. | Model interface |
 | FR-V-07: Slide index: detect slide changes, write `slides.json` and thumbnails (feature flag, on by default). | R3 | ffmpeg for scene detection [§C4.5] in workers [OPS-10]; `slides.json` is `[{t, thumb, text?}]`, thumbnails 320 px wide [§B6.2]. | Workers; ffmpeg |
 | FR-V-08: Write `lesson.json` (B6.3) last, only when all required files exist. | R3 | Outputs written to a temporary folder and moved into place atomically [§C4.5]; partial outputs never exposed [§C4.8]. | Worker step `manifest` (last step of a job; see §5 and §13) |
 | FR-V-09: BigBlueButton intake: poll recordings via the BigBlueButton API (shared secret), fetch the **video** format output, map it to course and cohort using the recording metadata set by Moodle's BigBlueButton activity, and process it into the live-class path. | R3 | Live-class path `courses/{course_slug}/live-{cohort}/{nn}-{topic_slug}/` [§B6.1]; lab BigBlueButton has the video recording format enabled [§A11]; metadata fields verified in Release 0 [App-C 4]. The single **video** format output becomes the lesson's `main` track; the folder holds the same required B6.2 files as an uploaded lesson [§B6.2]. Separate camera and slide streams are F-2, out of scope [§C4.11]. `source.kind` for intake is `bbb`, with no `uploaded_by` (§4, Q5). | `bbb-poll` worker (Proposed, §3); BigBlueButton adapter |
 | FR-V-10: Status page per course: queued / processing (step) / ready / failed, with retry. | R3 | Failed step shown with reason and retry [§C4.8]; long operations show progress and can be left and resumed [UI-04]. | Status list [§C4.4]; `video.job`, `video.step` [§C4.5] |
-| FR-V-11: Re-process a lesson (new `pipeline_version`) without changing its path or deleting the previous outputs until the new ones are complete. | R3 | `pipeline_version` is recorded in the manifest's `processing` object [§B6.3]. Proposed: a re-process is a new job that writes into a new temporary folder and swaps it in only when every step has succeeded; until then the lesson stays `ready` and the previous outputs keep being served (§5). | Worker steps; administrator-only route (§6) |
+| FR-V-11: Re-process a lesson (new `pipeline_version`) without changing its path or deleting the previous outputs until the new ones are complete. | R3 | `pipeline_version` is recorded in the manifest's `processing` object [§B6.3]. Proposed: a re-process is a new job that writes into a new temporary folder and swaps it in only when every step has succeeded and, for a lesson that already has approved outputs, a mentor has approved the new ones [C-09, §9]; until then the lesson stays `ready` and the previous (approved) outputs keep being served (§5). | Worker steps; administrator-only route (§6) |
 | FR-V-12: Storage adapter: local folder or S3-compatible bucket, chosen by configuration (EXT-04). | R3 | Swapping a backend is configuration, not code [EXT-04]. | Storage adapter |
-| FR-V-13: Embed snippet: give the mentor the relative path and an HTML snippet (video + captions track) to paste into a Moodle Page. | R3 | Copy-snippet button on the lesson detail page [§C4.4]; media stored by relative path [C-08]. | Lesson detail page [§C4.4] |
+| FR-V-13: Embed snippet: give the mentor the relative path and an HTML snippet (video + captions track) to paste into a Moodle Page. | R3 | Copy-snippet button on the lesson detail page [§C4.4]; media stored by relative path [C-08]; the snippet is given only for a lesson a mentor has approved [C-09, §9]. | Lesson detail page [§C4.4] |
 | FR-V-14: *(Stretch)* Checkpoint questions per chapter via B5 → B7 items (separate activity) and `cues.json` entries. | R5 | AI-drafted only, mentor-approved, ungraded; starts only when Releases 1–4 meet their exit criteria [§C5]. Not designed here; to be added to this document before Release 5 starts. | Model interface; B7; `cues.json` |
 | FR-V-15: Retention: raw uploads and BigBlueButton intake files are deleted a configurable number of days after the lesson is ready (default 30); published lesson folders are never deleted automatically; a CLI lists and, with confirmation, removes lessons older than a configurable age (default off). | R3 | CLI with `--dry-run`, `--check` and a documented undo [C-05, OPS-05]. | CLI |
 
@@ -56,7 +56,7 @@ The diagram shows the components and flows named in PRD §A8, §A10, §C4.5, OPS
 
 ```mermaid
 flowchart LR
-    MENTOR(["Mentor / Admin"]) -->|launch from course| MOODLE["Moodle 4.5 / 5.3<br/>(unmodified)"]
+    MENTOR(["Mentor / Admin"]) -->|launch from course| MOODLE["Moodle 5.3<br/>(unmodified)"]
     MOODLE -->|LTI 1.3 launch| LTI["libs/lti"]
     subgraph M4["M4 Video pipeline"]
         SVC["Video service<br/>(FastAPI; serves React static build)"]
@@ -100,7 +100,7 @@ flowchart LR
 |---|---|---|---|
 | B6 Media paths and lesson manifest | Provided (owner: Student 4) [§B.0] | Path templates `courses/{course_slug}/{module_nn}-{module_slug}/{lesson_nn}-{lesson_slug}/` and `courses/{course_slug}/live-{cohort}/{nn}-{topic_slug}/`; slugs lowercase ASCII, hyphens, immutable; numbers zero-padded to two digits [§B6.1]. Lesson-folder files [§B6.2]. Manifest fields `schema`, `course_slug`, `lesson_id`, `title`, `duration_s`, `tracks` (`role`, `file`, `height`), `captions` (`lang`, `file`), `transcript`, `chapters`, `slides`, `cues`, `summary`, `source` (`kind`, `uploaded_by`, `original_name`), `processing` (`pipeline_version`, `completed_at`); all paths relative to the lesson folder; track roles `main` and `main-low` (from the B6.3 example), reserved roles `camera`, `screen`; a v1 reader ignores roles it doesn't play [§B6.3]. `media_signing.sign(relative_path, ttl_seconds=3600)`; implementations `none`, `hmac`, `s3`; the baseline pipeline never calls it [§B6.4]. Used by M1 (lesson slugs) [§C1.6], M2 (CK-12) [§C2.6] and F-1 [§B.0] | none (after Release 0: additive only, via `/contract-change`). B6.1, B6.4 (`libs/media_paths`) and B6.2/B6.3 (`contracts/`) are merged and on `main`; see below |
 | B3 LTI 1.3 launch | Used | Claims `sub`, `name`, `email` (if shared), `roles`, `context` (course id, title), `resource_link`, `deployment_id`; role mapping (Instructor → Mentor, Administrator → Administrator, Learner refused by baseline tools); session bound to (`sub`, context id), expires after 2 h idle; `shared.course_link` [§B3] | none. |
-| B5 Model and speech interface | Used | `model.run(task, inputs, output_schema)` → `result.data`, `result.meta` [§B5.1]; on invalid output one retry, then a clear error [§B5.2]; prompts are versioned files in `/libs/model_interface/prompts/`; every call logs `meta` to `shared.model_calls` [§B5.3]; `speech.transcribe(audio_path, language="en")` → `segments` (`start`, `end`, `text`, `words`), `meta` [§B5.4]. The B5 schema `contracts/model-interface.v1.schema.json` and decision `docs/decisions/0001-b5-model-interface-v1.md` are on `main` (PR #25); that decision still needs the guide's review. The speech engine behind the lab endpoint stays **PENDING** until the non-secret lab facts are recorded (`docs/decisions/0002-speech-options.md`, draft PR #98; Q9: no IP addresses, VM addresses or credentials are recorded) | none. |
+| B5 Model and speech interface | Used | `model.run(task, inputs, output_schema)` → `result.data`, `result.meta` [§B5.1]; on invalid output one retry, then a clear error [§B5.2]; prompts are versioned files in `/libs/model_interface/prompts/`; every call logs `meta` to `shared.model_calls` [§B5.3]; `speech.transcribe(audio_path, language="en")` → `segments` (`start`, `end`, `text`, `words`), `meta` [§B5.4]. The B5 schema `contracts/model-interface.v1.schema.json` and decision `docs/decisions/0001-b5-model-interface-v1.md` are on `main` (PR #25); that decision still needs the guide's review. The speech engine behind the lab endpoint stays **PENDING** until the non-secret lab facts are recorded (`docs/decisions/0002-speech-options.md`, PR #98 merged; parked by the guide on 2026-11-23 because the lab speech endpoint does not exist yet; Q9: no IP addresses, VM addresses or credentials are recorded) | none. |
 | B7 H5P practice output | Used, R5 only [§C4.6] | Standard `.h5p` file plus `course.yaml` entry (`type: h5p`, `idnumber`, `graded: false`); never graded; video checkpoints as a separate activity (default) and as `cues.json` entries [§B7] | none |
 | B8.5 Lecture videos | Provided (owner: Student 4) [§B8] | ≥ 5 Indian-English technical lectures (≥ 30 min total, enough for the first word-error-rate baseline run, App-C 7) with reference transcripts; recorded with written consent or openly licensed (licence verified and recorded). Status on `main` (refreshed 2026-11-23): **COMPLETE** under decision 0004 since PR #169: five lectures, 2380 s, transcripts marked `checked`, four written consent lines. The durations, hashes, file names, official-set provenance and speaker briefings are the owner's statements, not independently verified; no word error rate has been measured. The guide's temporary exceptions (four lectures, no 1800 s total) are not used | none. |
 
@@ -136,6 +136,9 @@ Tables in schema `video` are the four the PRD names [§C4.5]. The columns and st
 | `pipeline_version` | text, null | of the outputs now served |
 | `created_by_sub` | text, null | LTI `sub`; null for intake |
 | `created_at`, `ready_at`, `raw_deleted_at` | timestamptz | `raw_deleted_at` is set by retention [FR-V-15] |
+| `review_state` | text | `draft` while the lesson has no approved outputs yet (its first run), `approved` once a mentor has approved the outputs now served [C-09, §9] (**Proposed**, Q17) |
+| `pending_pipeline_version` | text, null | the `pipeline_version` of re-processed outputs that finished and wait aside for approval; null when none. The served outputs and `pipeline_version` do not change until approval [C-09, FR-V-11] (**Proposed**, Q17) |
+| `approved_by_sub`, `approved_at` | text null, timestamptz null | the LTI `sub` of whoever approved the outputs now served, and the time; replaced by the next approval (**Proposed**, Q17) |
 
 **`video.upload`**: one row per file of a lesson.
 
@@ -165,7 +168,7 @@ Tables in schema `video` are the four the PRD names [§C4.5]. The columns and st
 
 **`video.step`**: one row per step of a job: `validate`, `transcode`, `poster`, `extract_audio`, `transcribe`, `chapters`, `summary`, `slides`, `manifest`, `publish`. Columns: `id`, `job_id`, `name`, `state` (`pending`, `running`, `succeeded`, `failed`, `skipped`), `attempts`, `error_code`, `error_message`, `started_at`, `finished_at`. A step overwrites only its own outputs, so it can be re-run [§C4.5].
 
-**Lesson state, as the status list shows it [FR-V-10]:** `uploading` → `queued` → `processing` (with the current step) → `ready`, or `failed` with the failed step and a retry. A re-process leaves the lesson `ready` and its old outputs in place; only the job shows `running` until every step succeeds, then the new folder replaces the old one atomically [FR-V-11].
+**Lesson state, as the status list shows it [FR-V-10]:** `uploading` → `queued` → `processing` (with the current step) → `ready`, or `failed` with the failed step and a retry. A re-process leaves the lesson `ready` and its old outputs in place; only the job shows `running` until every step succeeds. For a lesson with approved outputs the new folder then waits aside, shown as "a newer AI version is waiting for approval", and replaces the old one atomically only when a mentor approves it [FR-V-11, C-09]; a lesson that has no approved outputs yet (its first run) is written as before.
 
 - Audit entries (who, what, when, course) for every state-changing operation go to `shared.audit_log` [OPS-06]. Chapter-title edits are audited, and the metric "manual chapter edits per lesson" [§C4.9] is counted from those entries.
 - The LTI context id is mapped to the Moodle course id and stored in `shared.course_link` [§B3].
@@ -192,10 +195,26 @@ Routes **confirmed as proposed (Q4)**. Every state-changing request needs CSRF p
 | `GET /lessons/{id}` | Lesson detail: steps, captions preview, slide thumbnails | Mentor, Administrator |
 | `POST /lessons/{id}/retry` | Retry the failed step [FR-V-10] | Mentor, Administrator |
 | `PATCH /lessons/{id}/chapters` | Edit chapter **titles only**; the result is validated against the chapters schema [FR-V-05] | Mentor, Administrator |
-| `GET /lessons/{id}/snippet` | The relative path and the HTML snippet (video + captions track) [FR-V-13] | Mentor, Administrator |
+| `GET /lessons/{id}/snippet` | The relative path and the HTML snippet (video + captions track) [FR-V-13]; refused with a clear message until the lesson is approved [C-09] (**Proposed**, Q17) | Mentor, Administrator |
+| `POST /lessons/{id}/approve` | A mentor approves the AI-generated captions, chapters and summary: a first run, or a re-processed version that is waiting aside (which is then swapped in atomically). Records who and when, writes an audit entry [C-09, OPS-06, FR-V-11] (**Proposed**, Q17) | Mentor (own course), Administrator |
+| `POST /lessons/{id}/discard-pending` | A mentor discards a re-processed version that is waiting for approval: deletes it from `.pending/` and clears `pending_pipeline_version`; the approved outputs stay served; writes an audit entry [C-09, FR-V-11, OPS-06] (**Proposed**, Q17) | Mentor (own course), Administrator |
 | `POST /lessons/{id}/reprocess` | Re-run processing with a new `pipeline_version` [FR-V-11, §C4.2] | Administrator |
 
 Payloads are Pydantic models. Rules: a launch with any role not listed is refused with a clear message; authorisation on every request from the LTI session: role + course context [SEC-02].
+
+### UI baseline (PRD A14)
+
+PRD §C4.4 says the UI "meets A14". **Proposed**; nothing is built or measured.
+
+| ID | How the upload page, status list and lesson detail meet it |
+|---|---|
+| UI-01 | Plain layout in a Bootstrap-compatible component style, so the adopting site can restyle it |
+| UI-02 | Works at 375×812, at 1366×768 (100 %, 125 % and 150 % zoom) and at 683×768; no horizontal scrolling. Upload progress and the status list reflow to one column on the phone profile |
+| UI-03 | Keyboard operable end to end (upload, resume, retry, edit a chapter title, approve, copy the snippet); visible focus; labelled form fields; colour contrast at least WCAG 2.1 AA |
+| UI-04 | Status page with per-file and per-step progress; an operation can be left and resumed [FR-V-10, FR-V-01] |
+| UI-05 | Messages say what happened and what to do next (§10) |
+| UI-06 | The status list and lesson detail load in under 2 s on the lab network, excluding processing jobs |
+| UI-07 | English only; every user-facing string in one place in the module |
 
 ### CLI (PRD C-05, OPS-05)
 
@@ -206,10 +225,10 @@ Every CLI supports `--dry-run` (prints intended changes, changes nothing), `--ch
 | Command | Purpose | Undo |
 |---|---|---|
 | `video process <lesson>` | Run the pipeline for a lesson that has uploaded files | `video remove <lesson>` puts the lesson folder in the trash prefix (below) |
-| `video reprocess <lesson>` | New `pipeline_version`; old outputs stay until the new ones are complete [FR-V-11] | Re-run with the earlier `pipeline_version` while the raw files still exist; otherwise restore the previous folder from the backup [OPS-08] |
+| `video reprocess <lesson>` | New `pipeline_version`; old outputs stay until the new ones are complete and, for an approved lesson, approved [FR-V-11, C-09] | Re-run with the earlier `pipeline_version` while the raw files still exist; otherwise restore the previous folder from the backup [OPS-08] |
 | `video bbb-poll` | Poll BigBlueButton once and enqueue new recordings [FR-V-09] | `video remove <lesson>` for a lesson it created |
 | `video retention --check` | List raw files past their age and lessons older than the removal age (exit 1 when there are any) [FR-V-15] | Read-only |
-| `video retention --apply` | Delete raw files past `RETENTION_RAW_DAYS`; with `--lessons` and a confirmation, remove old lessons [FR-V-15] | Raw files: none by design after the retention period (restore from backup). Lessons: moved to a `.trash/` prefix in the media store and kept for 30 days; `video retention --restore <lesson>` moves one back |
+| `video retention --apply` | Delete raw files past `RETENTION_RAW_DAYS`; with `--lessons` and a confirmation, remove old lessons [FR-V-15] | Raw files: none by design after the retention period (restore from backup). Lessons: moved to a `.trash/` prefix in the media store and kept for 30 days, together with any waiting `.pending/` version; `video retention --restore <lesson>` moves one back, and a waiting version comes back still waiting for approval, never served until a mentor approves it [C-09] |
 
 ### Configuration (all through environment variables; `.env.example` lists every variable with a safe default or a placeholder [OPS-02])
 
@@ -259,6 +278,7 @@ The first eight rows are decisions the PRD itself makes, so no alternatives are 
 | Plain SQL `up`/`down` migrations with a small runner | An ORM or a migration product | No new framework (CLAUDE.md §5). **Confirmed** | Q7 |
 | `boto3` as the S3 client | Another S3 client | **Confirmed**; licence checked and version pinned in §8 | Q12 |
 | ffmpeg as a separate process, an LGPL build, no GPL-only parts | Linking ffmpeg; a GPL build | C-11. **Confirmed**; the build must be checked first (§8) | Q10 |
+| No Video step requires a local GPU | A GPU-bound step | OPS-11. Transcription and chapters go through B5, to a local or a hosted provider chosen by configuration; ffmpeg transcode, poster and scene detection run on CPU (**Proposed**). A hosted production provider stays open and no B8.5 audio goes to a hosted provider | Q14 |
 
 ## 8. Libraries and licences
 
@@ -266,14 +286,15 @@ The PRD fixes the stack but not library versions or licences. Versions below wer
 
 | Library | Pinned version | Licence | Why needed | Alternative |
 |---|---|---|---|---|
-| FastAPI | 0.121.0 (verified; the version used by the Video demo, PR #129) | MIT (verified) | Web framework [§A10] | none (stack fixed) |
-| Starlette (installed by FastAPI) | 0.49.3 (verified; fixes CVE-2025-62727, so FastAPI must allow ≥ 0.49.1) | BSD-3-Clause (verified) | Used by FastAPI, including `FileResponse` | none |
+| FastAPI | 0.163.2 (verified; the version used by the Video demo, PR #129; it replaced 0.121.0 so that Starlette could be patched) | MIT (verified) | Web framework [§A10] | none (stack fixed) |
+| Starlette (installed by FastAPI) | 1.3.1 (verified; fixes the five open Dependabot alerts and CVE-2025-62727, so FastAPI must allow ≥ 1.3.1) | BSD-3-Clause (verified) | Used by FastAPI, including `FileResponse` | none |
+| OpenTelemetry API (installed by FastAPI 0.163.2, new with it) | 1.45.2 (verified) | Apache-2.0 (verified) | Required by FastAPI 0.163.2 for its native telemetry. FastAPI turns tracing, metrics and logs on by default through the *global* providers, which here are the no-op proxy providers, because only the API is installed (no SDK, no exporter) and `FASTAPI_OTEL_AUTO_CONFIGURE` is off by default. So nothing is recorded or exported, and no uploaded file content or request data is touched. Span attributes were not audited. If an SDK or exporter is ever added, FastAPI would start emitting spans, and that needs its own review (CLAUDE.md §6: never log file contents) | none |
 | React | 19.3.1 (verified) | MIT (verified) | Front end, static build [§A10] | none (stack fixed) |
 | TypeScript | 7.0.2 (verified) | Apache-2.0 (verified) | Front end [§A10] | none (stack fixed) |
 | Playwright (Python) | 1.65.2 (verified) | Apache-2.0 (verified) | Browser tests [§A10] | none (stack fixed) |
 | PostgreSQL | 16 [§A10]; minor version TO VERIFY: https://www.postgresql.org/support/versioning/ | TO VERIFY: https://www.postgresql.org/about/licence/ | Database [§A10] | none (stack fixed) |
 | ffmpeg | TO VERIFY: the lab image's `ffmpeg -version` output, including its configuration line (Q10). Record the version and build configuration in the decision record and the release notes | **LGPL build, no GPL-only parts (Q10).** Called as a separate process, never linked. Many builds enable the GPL encoder libx264 (a common Windows build is one; the Lesson Processor demo, PR #129, uses `libx264` for local demonstration only and is **not** an approved build), so the chosen LGPL build must still be able to write the H.264/AAC output that FR-V-03 and B6.2 require; if the lab build is GPL, use an LGPL build, or the guide decides an exception | Transcode, poster and scene detection [§C4.5] | none (stack fixed) |
-| LTI 1.3 library | See `docs/decisions/0001-lti-library.md` (Proposed, pending the guide) [App-C 6] | Recorded there | LTI 1.3 launches [§B3] | Chosen in Release 0 |
+| LTI 1.3 library | See `docs/decisions/0001-lti-library.md` (Stage 1 approved by the guide as option A on 2026-11-20: PyJWT, no LTI-specific library, PyLTI1p3Next as the fallback; Stage 2 accepted as implemented, subject to a review; the implementation is not approved and the ADR is not `Approved`) [App-C 6] | Recorded there | LTI 1.3 launches [§B3] | Chosen in Release 0 |
 | `tusd` (separate server) | v2.10.1 (latest release at 2026-11-19; pin it in the PR that adds it) | MIT (repository `LICENSE.txt`, read through the GitHub API on 2026-11-19; re-check the licence of the release you pin) | FR-V-01 resumable upload (Q11, **Confirmed**) | none (the guide ruled out writing the tus protocol in FastAPI) |
 | Database migrations | Plain SQL scripts and a small runner of our own; no library (Q7, **Confirmed**) | Our code, Apache-2.0 | OPS-07 | none |
 | `boto3` | 1.44.6 (PyPI, 2026-11-19; pin it in the PR that adds it) | Apache-2.0 (PyPI metadata, 2026-11-19) | S3-compatible backend [FR-V-12] (Q12, **Confirmed**) | none |
@@ -301,6 +322,17 @@ Other handling:
 - **Test data only:** test data only (§B8) [C-07]; B8.5 lectures are recorded with written consent or openly licensed; no real learner data in any set [§B8].
 - **Untrusted input:** uploads, handled as SEC-05.
 
+**AI output is a draft until a mentor approves it [C-09]** (**Proposed**; how it is recorded is a question for the guide, Q17).
+
+The pipeline produces three kinds of AI output that reach learners: the transcript and captions (speech, B5.4), the chapters (B5.1) and the summary (B5.1, behind a feature flag). Checkpoint questions (FR-V-14, stretch) are already mentor-approved only. Until a mentor approves them, the first three are drafts.
+
+- **Review state.** A lesson is `draft` until a mentor has approved its outputs, and `approved` afterwards. This is separate from its processing state (`ready` still means "processed", as in FR-V-10). Editing a chapter title does not approve it.
+- **Approval.** A mentor of the lesson's course (or an administrator, see Q17) approves from the lesson detail page. The approval records who and when, and writes an audit entry [OPS-06].
+- **No snippet before approval.** The embed snippet and path of FR-V-13 are given only for an approved lesson. Before that, the page says "AI draft, not reviewed: approve it to get the embed snippet", and the status list shows "ready (AI draft)".
+- **A re-process never publishes unapproved output.** For a lesson that already has approved outputs, a re-process (FR-V-11) finishes into a waiting place (under a `.pending/` prefix of the course folder, like the `.trash/` prefix used for removal) and the approved outputs keep being served at the lesson path, so a snippet already pasted into a Moodle Page keeps showing approved captions, chapters and summary. The lesson detail page shows "a newer AI version is waiting for approval". Approving swaps the new folder in atomically and records the approver; a later re-process replaces the waiting version. A mentor of the course (or an administrator) can also **discard** a waiting version from the lesson detail page: it is deleted from `.pending/`, `pending_pipeline_version` is cleared, the approved outputs stay served, and an audit entry is written [OPS-06]. If no version is waiting, or a re-process job is still running and has not reached `.pending/`, `discard-pending` answers 409 with a clear message, writes no audit entry and deletes nothing; it never cancels a running job. `approve` and `discard-pending` both check `pending_pipeline_version` in the same transaction, so when two people act on the same waiting version at once exactly one wins and the other gets that 409. Removing a lesson removes its waiting version with it. **Nothing under `.pending/` or `.trash/` is served as media** (**Proposed**): the course folder is the media store that Moodle plays from by relative path, so the web server and proxy configuration must expose lesson folders only, never these two prefixes; otherwise unapproved or removed files would be reachable by anyone who guesses a path.
+- **What this does not do.** It does not change B6: the manifest and the lesson folder stay as the contract says, so the review state lives in `video.lesson`, not in `lesson.json`. For a **first** run, the AI files are written to the lesson folder, which has a predictable path, before anyone approves; the snippet is withheld, but someone who already knows the path could link to the files. That case is part of Q17.
+- **Summary.** `summary.en.md` follows the same rule; if the guide prefers, it is written to the lesson folder only after approval (Q17).
+
 **For `docs/data-map.md`** (every data item stored or sent, where, for how long, and why [§E6]):
 
 | Data item | Stored where | Sent to | Kept for | Why |
@@ -310,6 +342,7 @@ Other handling:
 | Audio for transcription | Worker scratch folder only (**Proposed**) | Speech provider, local or hosted [§B5.4]; **B8.5 audio never goes to a hosted provider (Q14).** A hosted production provider stays open; if one is chosen, lesson audio may go to it under SEC-07 and the data map (Q14) | Deleted when the transcription step ends (**Proposed**) | FR-V-04 |
 | Transcript | Lesson folder [§B6.2] | Model provider, local or hosted [§B5.2], for chapters [FR-V-05] | As the lesson folder [FR-V-15] | FR-V-04, FR-V-05 |
 | Uploader LTI `sub` | Manifest `source.uploaded_by` [§B6.3]; `video.lesson.created_by_sub`; `shared.audit_log` [OPS-06] | Nowhere | As the lesson; in `shared.audit_log` **90 days, including the LTI `sub`** (Q15, **Confirmed**; recorded in the data map) | Audit |
+| Approver LTI `sub` (**Proposed**, C-09) | `video.lesson.approved_by_sub`; `shared.audit_log` [OPS-06] | Nowhere | As the lesson; in `shared.audit_log` 90 days, including the LTI `sub`, the same rule as the uploader's (Q15) | Records who approved the AI output [C-09] |
 
 ## 10. Error handling
 
@@ -325,6 +358,7 @@ Messages say what happened and what to do next, in plain English [UI-05]. All us
 | Invalid model output | One retry, then a clear error; never a silent partial result [§B5.2] | The step fails with a message; the mentor retries from the status page. A failed `chapters` step stops the lesson from becoming ready, because `chapters.json` is required [§B6.2] (**Proposed**) |
 | Session expired (2 h idle) | Session ends [§B3] | Re-launch from Moodle to continue [§B3] |
 | Role not allowed / Learner launch | Refused with a clear message [§A5, EXT-07] | Use Moodle |
+| Snippet requested before approval | Refused: "This lesson is an AI draft. Check the captions and chapters, then approve it to get the embed snippet." [C-09] (**Proposed**, Q17) | Review the lesson detail page, then approve |
 
 ## 11. Test plan
 
@@ -332,8 +366,10 @@ Messages say what happened and what to do next, in plain English [UI-05]. All us
 |---|---|---|---|
 | Unit | Functions and validators (contracts, rules, parsers) [§E1] | Proposed: small fixture files written for the tests and the B6 example files; no real recordings [§B8] | Proposed: FR-V-01 (type and size checks), FR-V-02 (slug rules), FR-V-08 (manifest written last), FR-V-12 (storage adapter), FR-V-15 (retention age) [§C4.3] |
 | Contract | Every example and generated file validates against its schema [§E1]; `lesson.json` validates against B6.3 [§C4.7] | At least one valid example file per contract [§B.0] | FR-V-08 |
-| Integration (harness) | Module smoke test in the harness [§D1, §E1]; restore + role tests + module smoke tests on fresh Moodle 4.5 and 5.3 sites every release [§E2] | Proposed: B8.5 lecture videos with reference transcripts [§B8.5]; a recording from a lab course on the lab BigBlueButton [§C4.7] | Proposed: FR-V-01, FR-V-03, FR-V-04, FR-V-05, FR-V-07, FR-V-08, FR-V-09 (§C4.7 criteria 1–5) |
-| End-to-end | Mentor flows in a real browser [§E1]; pasted snippet plays with captions in a Moodle Page on 4.5 and 5.3 [§C4.7] | Lab Moodle sites [§A11] | FR-V-13 |
+| Integration (harness) | Module smoke test in the harness [§D1, §E1]; restore + role tests + module smoke tests on a fresh Moodle 5.3 site every release [§E2]; Moodle 5.3 only (decision 0017) | Proposed: B8.5 lecture videos with reference transcripts [§B8.5]; a recording from a lab course on the lab BigBlueButton [§C4.7] | Proposed: FR-V-01, FR-V-03, FR-V-04, FR-V-05, FR-V-07, FR-V-08, FR-V-09 (§C4.7 criteria 1–5) |
+| End-to-end | Mentor flows in a real browser [§E1]; pasted snippet plays with captions in a Moodle Page on 5.3 [§C4.7] | Lab Moodle sites [§A11] | FR-V-13 |
+| Unit (C-09) | A first-run lesson is `draft`; the snippet route is refused for a draft and returned for an approved lesson; approval writes an audit entry. **After a re-process of an approved lesson, what is served at the lesson path is still the approved version until a mentor approves; approving swaps the new version in atomically and records the approver; a later re-process replaces the waiting version; discarding a waiting version deletes it and leaves the approved outputs served (409 when nothing is waiting; approve and discard on the same version: exactly one wins; a restored lesson's waiting version is still waiting); nothing under `.pending/` or `.trash/` is served as media** | Fixture lessons; no real recordings | FR-V-05, FR-V-06, FR-V-11, FR-V-13 (**Proposed**) |
+| End-to-end (UI baseline) | The mentor flow in Playwright (the stack's browser tool) at the three PRD screen profiles and the three zoom levels: no horizontal scroll, a keyboard-only path through upload, status, lesson detail and snippet, visible focus. An automated contrast and labels check for WCAG 2.1 AA (tool and licence chosen and checked first, CLAUDE.md §2.10). Page load under 2 s measured on the lab network | The lab Moodle 5.3 site [§A11] (Moodle 5.3 only, decision 0017); test videos only | UI-01 to UI-03, UI-06 [§A14]; FR-V-10, FR-V-13 (**Proposed**) |
 
 **Acceptance criteria (PRD §C4.7) and how each is shown**:
 
@@ -344,7 +380,7 @@ Messages say what happened and what to do next, in plain English [UI-05]. All us
 | Caption word error rate measured on B8.5 and reported against the target set from the first baseline run (App-C 7). | Measured on B8.5 against the App-C 7 target |
 | `lesson.json` validates against B6.3; all paths relative; existing single-track lessons remain valid when `camera`/`screen` tracks are added later. | Contract tests [§E1] |
 | A BigBlueButton recording from a lab course appears in the correct live-class folder without manual steps. | Final demonstration step 3 [§E5] |
-| Pasted snippet plays the video with captions in a Moodle Page on 4.5 and 5.3. | Final demonstration step 3 [§E5]; end-to-end test |
+| Pasted snippet plays the video with captions in a Moodle Page on 5.3. | Final demonstration step 3 [§E5]; end-to-end test |
 
 Final demonstration [§E5, step 3]: a lecture is uploaded from the browser (with an interruption); a live class runs on BigBlueButton and is recorded; both appear with captions, chapters and slide index; the snippet plays in a Moodle Page.
 
@@ -368,10 +404,10 @@ PRD Appendix C items that affect this module (results in `docs/decisions/`). **P
 |---|---|---|---|---|
 | 4 | BigBlueButton recording metadata fields set by Moodle's BigBlueButton activity, and the video-format output location (FR-V-09) | Yes | Record merged (PR #96, decisions 0005 and 0006); **NOT VERIFIED**, no lab observation | Student 4; §13 order 4 |
 | 5 | Exact H5P content-type versions on both Moodle versions | Yes | Decision 0008 exists; concerns FR-V-14 (Release 5) only | Student 1 owns B7 |
-| 6 | LTI 1.3 library choice and licence (§8) | No | `0001-lti-library.md` is Proposed, pending the guide | Guide |
-| 7 | Caption word-error-rate target (G-6) from a first baseline run | Yes | PENDING; evaluation preparation is merged (#103) | Student 4; §13 order 4 |
+| 6 | LTI 1.3 library choice and licence (§8) | No | `0001-lti-library.md`: Stage 1 approved by the guide as option A (2026-11-20); Stage 2 accepted as implemented, subject to a review; the ADR is not `Approved` and its conditions (licence record, version pins, vulnerability scan, a named reviewer) are still open (refreshed 2026-11-25) | Guide |
+| 7 | Caption word-error-rate target (G-6) from a first baseline run | Yes | PENDING; evaluation preparation is merged (#103). The B8.5 data set is COMPLETE (#169), and the guide decided on issue #186 (2026-11-23) that the word error rate is Release 3, so no measurement is due in Release 0 (refreshed 2026-11-25) | Student 4; §13 order 4 |
 | 8 | Licence or consent for every B8.5 video | No | Four written consent lines in decision 0004 (PR #169, merged); the audit #104 is merged; each speaker's briefing and the official-set provenance are the owner's statements | Student 4; §13 orders 3–4 |
-| 9 | Which AI features Moodle 5.3 itself provides (for overlap with chapters or summaries) | No | Not started. **In scope (Q16):** Student 4 checks Moodle 5.3's own AI features for overlap with chapters and summaries | Student 4 |
+| 9 | Which AI features Moodle 5.3 itself provides (for overlap with chapters or summaries) | No | Decision 0012 is on `main` (PR #156). Lab result: checked on the lab Moodle 5.3 site on 2026-11-24 (PR #212): the AI features are installed but cannot run (no provider configured, both placements off); Moodle 4.5 not tested. The guide's approval of the proposed outcome is pending (refreshed 2026-11-25). **In scope (Q16):** Student 4 checks Moodle 5.3's own AI features for overlap with chapters and summaries | Student 4 |
 
 ### Guide's answers (2026-11-19, PR #140)
 
@@ -387,7 +423,7 @@ The answers address the questions Q1–Q16 and the sections they name; they are 
 | Q6 | Yes: `.trash/` with a 30-day restore, and the proposed CLI with `--dry-run`, `--check`, `--config`; every command has its undo. | §6, §7 |
 | Q7 | Plain SQL `up`/`down` scripts with a small runner; no ORM or migration product. | §5, §8 |
 | Q8 | Keep `FEATURE_LOWRES_360P=false` (existing name); `FEATURE_SLIDE_INDEX=true`; `FEATURE_SUMMARIES=false`; add only `FEATURE_BBB_INTAKE=false`. | §6 |
-| Q9 | Same as #98: record the non-secret lab facts (no IPs, VM addresses or credentials); the engine stays PENDING until recorded. | §4 |
+| Q9 | Same as #98: record the non-secret lab facts (no IPs, VM addresses or credentials); the engine stays PENDING until recorded. *Update 2026-11-23: the guide parked this until the lab speech endpoint exists (PR #98, merged).* | §4 |
 | Q10 | Separate ffmpeg process, never linked; an LGPL build, no GPL-only parts; send the lab image's `ffmpeg -version` configuration before relying on it; H.264/AAC must be possible from the LGPL build; record version and configuration in the decision record and release notes. | §8 |
 | Q11 | A separate `tusd` server; verify its licence before adding it; do not write the tus protocol in FastAPI. | §3, §8 |
 | Q12 | `boto3`; verify the licence and pin it. | §8 |
@@ -398,9 +434,10 @@ The answers address the questions Q1–Q16 and the sections they name; they are 
 
 ### Still open after the answers
 
-- **Q9, the speech engine:** stays PENDING until the non-secret lab facts are recorded (draft PR #98).
-- **Q10, the ffmpeg build:** the lab image's `ffmpeg -version` output (with its configuration) must be sent to the guide first. Until then the H.264/AAC output from an LGPL build is not shown to be possible. **Compliance status:** the Lesson Processor demo (PR #129) runs whatever ffmpeg is installed locally or by `apt` in CI, and encodes with `libx264`, which is a GPL encoder. That build has not been checked against C-11 and is **not** an approved production build: it is a local demonstration, and its encoder must not be read as the build chosen for the pipeline. The production build is the LGPL build of Q10, once its configuration is shown.
+- **Q9, the speech engine:** stays PENDING. The guide parked ADR 0002 on 2026-11-23 (PR #98, merged): the lab speech endpoint does not exist yet, so there are no lab facts to record, and he will post the non-secret facts when it is built. No engine is chosen.
+- **Q10, the ffmpeg build:** the lab image's `ffmpeg -version` output (with its configuration) must be sent to the guide first; the guide said on 2026-11-23 it is needed when the Release 3 pipeline relies on an LGPL build. Until then the H.264/AAC output from an LGPL build is not shown to be possible. **Compliance status:** the Lesson Processor demo (PR #129) runs whatever ffmpeg is installed locally or by `apt` in CI, and encodes with `libx264`, which is a GPL encoder. The guide recorded a narrow exception for the demo only on 2026-11-22 (decision 0013, PR #129): ffmpeg runs as a separate program, nothing is added to `requirements.txt`, and the status stays "ffmpeg with libx264 is GPL; not an approved production build". The exception ends when the demo is removed or replaced and is not a precedent: the demo is a local demonstration, and its encoder must not be read as the build chosen for the pipeline. The production build is the LGPL build of Q10, once its configuration is shown.
 - **Q14, a hosted production provider:** not chosen.
+- **Q17, how C-09 is met for captions, chapters and summary (proposed):** a `review_state` on the lesson, a snippet that is given only after a mentor approves, and re-processed output that waits aside until approved while the approved version keeps being served (§9). The guide decides: (1) whether this is enough for a **first** run, where the AI files sit at a predictable path before approval, or whether they must stay out of the lesson folder until approval, which would change when `lesson.json` can be written (FR-V-08) and the 30-minute target for G-7; (2) whether an **administrator** may approve, since C-09 says "mentor"; (3) whether a re-process of an approved lesson should wait for approval at all, which the proposal says yes to.
 - **`tusd` and `boto3`:** licences read on 2026-11-19; versions are pinned in the PR that adds each one.
 - **Approval:** this document stays `Draft`. The owner marks it `In review`; only the guide sets `Approved`, in a pull request he merges.
 
@@ -415,27 +452,27 @@ One requirement (or one tightly related group) per pull request. Feature work st
 | 1 | B6 contract: schema and at least one valid example | B6 (contract) | none | **Release 0.** **Merged**: B6.3 PR #32, B6.2 PR #93. Frozen at the end of Release 0 |
 | 2 | `media_paths` shared library, including B6.4 with the `none` implementation | B6.1, B6.4 | 1 | **Release 0.** **Merged**: PRs #84, #85, #86 (split of #38) |
 | 3 | B8.5 lecture videos | B8.5 | none | **Release 0 test data.** Dataset checker and tests merged (#82, #89, #99, #125); the data (five lectures, 2380 s, transcripts, four consent lines) merged in #169 and the status is COMPLETE under decision 0004 |
-| 4 | Appendix C verification of items that concern the video pipeline | App-C #4, #7, #8 (and #6, #9, which are Release 0) | Lab; 3 for #7 and #8 | **Release 3** for #4, #7, #8 (PRD App-C: the first release that relies on them); #6 and #9 are Release 0. #4 record merged but NOT VERIFIED (#96); #7 preparation merged (#103); #8 audit #104 merged and four written consent lines in #169 (merged); speech ADR #98 (draft). Preparation may start earlier |
+| 4 | Appendix C verification of items that concern the video pipeline | App-C #4, #7, #8 (and #6, #9, which are Release 0) | Lab; 3 for #7 and #8 | **Release 3** for #4, #7, #8 (PRD App-C: the first release that relies on them); #6 and #9 are Release 0. #4 record merged but NOT VERIFIED (#96); #7 preparation merged (#103); #8 audit #104 merged and four written consent lines in #169 (merged); speech ADR #98 (merged; parked by the guide because the lab speech endpoint does not exist yet). Preparation may start earlier |
 | 5 | Storage adapter | FR-V-12 | Q3, Q12 (decided); 2 | Release 3. Moved before the upload because the upload stores through it |
 | 6 | Data model and job queue: migrations, `video.lesson/upload/job/step`, worker loop | §C4.5, OPS-07, OPS-10 | Q1, Q4, Q7 (decided); 5 | Release 3 |
 | 7 | Resumable upload | FR-V-01 | Q11 (decided: `tusd`); 5, 6 | Release 3 |
 | 8 | Upload form | FR-V-02 | 7; B3 launch | Release 3 |
 | 9 | Transcode and poster | FR-V-03 | Q10 (open: LGPL build check); 6 | Release 3 |
-| 10 | Transcription and captions | FR-V-04 | Q9 (open: lab facts); 6; B5 | Release 3 |
+| 10 | Transcription and captions | FR-V-04 | Q9 (parked: the lab speech endpoint does not exist yet); 6; B5 | Release 3 |
 | 11 | Chapters | FR-V-05 | 10 (chapters are made from the transcript) | Release 3 |
 | 12 | Summary | FR-V-06 | 10; Q8 (decided: off by default) | Release 3. Feature flag |
 | 13 | Slide index | FR-V-07 | 9 | Release 3. Feature flag, on by default |
 | 14 | Manifest | FR-V-08 | 9, 10, 11 (all required B6.2 files) | Release 3. `lesson.json` written last |
 | 15 | Status page | FR-V-10 | 6 | Release 3 |
-| 16 | Re-process | FR-V-11 | 14 | Release 3 |
-| 17 | Embed snippet | FR-V-13 | 14 | Release 3 |
+| 16 | Re-process | FR-V-11 | 14 | Release 3. The swap waits for approval when the lesson has approved outputs (C-09, row 17) |
+| 17 | Embed snippet, review state and the approve route | FR-V-13; C-09 (proposed, Q17) | 14 | Release 3. Builds `review_state`, `pending_pipeline_version`, `approved_by_sub` and `approved_at` (§5) and `POST /lessons/{id}/approve` and `POST /lessons/{id}/discard-pending` (§6) |
 | 18 | Retention | FR-V-15 | Q6 (decided); 14 | Release 3 |
 | 19 | BigBlueButton intake | FR-V-09 | App-C #4 verified; Q2, Q5 (decided); 14 | Release 3 |
 | 20 | Harness smoke test | Release 3 [§D1] | 1–19 | The harness is Module 2's |
 | 21 | README, `.env.example`, changelog, traceability, data map, release notes | §D2 items 5–7, §E4, §E6 | All | Release 3 exit criteria |
 | 22 | *(R5, stretch)* Checkpoints | FR-V-14 | Releases 2 and 3 [§D1]; Releases 1–4 exit criteria [§C5] | Release 5. Design added before it starts |
 
-Demonstration code outside this plan: the paths demo (PR #117, merged) and the lesson processor demo (PR #129, merged 2026-11-23) are local demonstrations, not the Release 3 pipeline. The guide answered on PR #129 (2026-11-19) that the demo may merge as an **explicit one-PR demonstration exception** to CLAUDE.md §6a.2 and §7 item 7. That exception covers that PR only: this design stays `Draft`, no design approval is implied, and feature work for the Release 3 pipeline waits until this document says `Status: Approved`.
+Demonstration code outside this plan: the paths demo (PR #117, merged) and the lesson processor demo (PR #129, merged 2026-11-23) are local demonstrations, not the Release 3 pipeline. The guide answered on PR #129 (2026-11-19) that the demo may merge as an **explicit one-PR demonstration exception** to CLAUDE.md §6a.2 and §7 item 7. That exception covers that PR only (the `libx264` use in it has its own narrow recorded exception, decision 0013, guide, 2026-11-22, limited to the demo): this design stays `Draft`, no design approval is implied, and feature work for the Release 3 pipeline waits until this document says `Status: Approved`.
 
 ## 14. Review and approval
 
