@@ -7,7 +7,7 @@
 
 ## Context
 
-PRD B3 says the LTI context id is mapped to the Moodle course id (through B4 web services) and stored in `shared.course_link`, keyed by `iss` plus context id. The guide decided that key (issue #58, 12 November 2026) and decided on #146 (20 November 2026) that **the columns stay with the B4 owner**, who records them in a decision record. The shared schema and its migrations are Student 2's. The B3 contract, the B3 ADR and the Studio, Grading and Video designs all point to this record and do not define the columns themselves. This is that record.
+PRD B3 says the LTI context id is mapped to the Moodle course id (through B4 web services) and stored in `shared.course_link`, keyed by `iss` plus context id. The guide decided that key (issue #58, 12 November 2026) and decided on #146 (20 November 2026) that **the columns stay with the B4 owner**, who records them in a decision record. The shared schema and its migrations are Student 2's. The B3 contract (section 7), the B3 ADR (OI-15) and the Studio design (section 12, item 33) say the columns are recorded by the B4 owner, and the Grading design cites this record. The Video design names the table and its keys only (section 5) and does not point to a record. None of them defines the columns. This is that record.
 
 What the consumers need from the table:
 
@@ -16,7 +16,7 @@ What the consumers need from the table:
 | Studio | A primary key to refer to (`studio.package.course_link_id`) | Studio design section 5 |
 | Grading | `(site_id, moodle_course_id)`, mapped to the LTI context; read-only access | Grading design sections 5.1 and 5.3 |
 | Video | `iss` and the LTI context id as keys; no Moodle course id stored in its own tables | Video design section 5 |
-| The gateway (`libs/lti`) | To write one row after the first successful launch for a course | B3 ADR section 14, contract section 7 |
+| Whoever writes the row (open item 5) | To write one row after the first successful launch for a course, once B4 has confirmed the course | B3 ADR section 14.1 (the first successful launch should write the record), section 14.2 (B4 resolves the course and maintains the mapping) |
 
 ## Decision
 
@@ -36,6 +36,7 @@ What the consumers need from the table:
 - Unique `(iss, lti_context_id)`: the key decided by the guide.
 - Unique `(site_id, moodle_course_id)`: one LTI context per Moodle course on a registered platform. (Proposed. Student 2 confirms with the shared schema.)
 - Check `moodle_course_id > 0`.
+- Proposed: check `lti_context_id = moodle_course_id::text`. B3 section 3.1 makes the context id the Moodle course id, a positive integer in ASCII digits with no leading zero, so the two always have the same digits. Both are stored on purpose: `lti_context_id` is the launch value as received and is the lookup key; `moodle_course_id` is the integer that B4 confirmed, which Grading and Video use with `site_id`. The check stops them drifting apart. (Student 2 confirms with the shared schema.)
 - One `site_id` per `iss`, taken from the platform registration. A table constraint cannot enforce this, so the gateway does.
 
 **Not stored**
@@ -44,16 +45,17 @@ What the consumers need from the table:
 - No site address, URL or credential. The address belongs to the platform registration, which is configuration.
 
 **Who writes and reads**
-- The gateway writes a row after a verified launch and a B4 course lookup that succeeds. It never writes from an unverified `iss` (B3 section 7.1).
+- **Proposed (not decided):** the row is written once, after a verified launch and a B4 course lookup that succeeds, and never from an unverified `iss` (B3 section 7.1). Which component performs the lookup and the write is open (item 5). The B3 ADR (section 14.2) says B4 resolves the course and maintains the mapping, and B3 section 7.1 approves the gateway only as a consumer of B4.
 - Modules only read the table. The grading design already gives the application role read-only access.
 - Student 2 owns the schema, the migration and its `down` step, as the guide decided. The migration is plain SQL `up` and `down`, as the shared runner of Q36 requires.
 
 ## Open items
 
-1. **The form of `context.id`.** Whether a `context.id` that is not a positive integer is refused, and how B4 sends it as `value`, is a B3 and B4 contract decision that waits for the guide (his assistant on #112, 17 November). This record stores it as received (text) and the Moodle id as an integer, so it holds either answer.
+1. **How B4 sends the course id.** The form of `context.id` is decided: B3 section 3.1 (merged in #83 on 18 November 2026, with the guide's approval) makes it a positive integer written as a string in ASCII digits, and refuses anything else (section 8). What is still open is only how B4 sends that value as `value` in `core_course_get_courses_by_field`; B4 section 2b says only that `field` and `value` are sent. This record stores the context id as received (text) and the Moodle id as an integer, so it holds either answer.
 2. **The form of `site_id`.** `libs/moodle_ws` still has the fixed site ids `moodle45` and `moodle53`. The guide's assistant noted on #112 that the B4 `site_id` should be a value from the platform registration, and the guide decided to use the 5.3 lab only for now. Which one the table uses is not decided here. The type (text) holds either.
 3. **A course B4 cannot see** (deleted, hidden from the service account, or renamed). Not decided. Proposal: keep the row, do not update `last_verified_at`, and let each consumer treat the course as unavailable. It depends on lab check OI-17, whether the service account can see the course.
-4. **Consumers' confirmation.** Student 1 (Studio, `course_link_id`), Student 2 (shared schema, the second unique constraint) and Student 4 (Video keys) confirm or object before the migration is written.
+4. **Consumers' confirmation.** Student 1 (Studio, `course_link_id`), Student 2 (shared schema, the second unique constraint and the check above) and Student 4 (Video keys) confirm or object before the migration is written. No confirmation is recorded yet; a peer review of this record is not one.
+5. **Which component writes the row.** B3 ADR section 14.1 says the first successful launch should write the record, and section 14.2 says B4 resolves the course and maintains the mapping. Studio design section 12, item 27 lists which component does the lookup and stores it (`libs/lti`, `libs/moodle_ws` or Studio) as "Needs guide". Not decided here. Proposal: the lookup is a B4 call (`libs/moodle_ws`), the gateway calls it after a verified launch, and one writer stores the row.
 
 ## What this changes
 
