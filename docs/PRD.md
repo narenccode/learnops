@@ -454,8 +454,8 @@ HTML table in the Moodle assignment description; the grading assistant parses it
       Inline markup is not removed: the heading `## **Setup**` has the text `**Setup**`. A name
       listed twice must exist once, and a missing name is reported once.
     - The README is read as UTF-8; a leading byte-order mark is removed, and LF, CRLF and CR each
-      end a line. A README that is missing or not valid UTF-8 fails the check, with every listed
-      section missing.
+      end a line. A README that is missing fails the check, with every listed section missing. A
+      README that is not valid UTF-8 is not defined in v1.
   - `word_count:<n>`: `n` is one or more ASCII digits (`0` to `9`) with no sign, space or
     underscore, and a value of at least 1. It is the minimum number of words in the report. A
     word is a piece of the report text between whitespace. Markup is removed before counting only
