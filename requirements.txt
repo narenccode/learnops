@@ -7,7 +7,6 @@ jsonschema==4.26.0                 # MIT. libs/moodle_ws/allowlist.py validates 
 referencing==0.37.0                # MIT. Needed by jsonschema
 
 # B3 LTI launch validation (ADR 0001 §0; selected option A).
-# PyJWT 2.15.1: MIT. cryptography 50.0.2: Apache-2.0 OR BSD-3-Clause.
-# Versions selected above known-vulnerable earlier pins; audited in CI with pip-audit.
-PyJWT==2.15.1
-cryptography==50.0.2
+# These pins are included in the CI vulnerability audit (ADR Appendix C).
+PyJWT==2.15.1                  # MIT
+cryptography==50.0.2           # Apache-2.0 OR BSD-3-Clause
