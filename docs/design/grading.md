@@ -120,7 +120,7 @@ Parts (PRD OPS-10: heavy work never runs inside a web request):
 | grading web service | web service | LTI launch, review pages and API, approve / edit / reject, status page. Never runs checks or model calls in a request; it only queues jobs. |
 | fetch, http_check, draft, similarity, write | workers (tools host) | All heavy or external work except sandboxed checks, fed by the job queue |
 | sandbox worker and reaper | worker (sandbox host) | Runs checks in containers through the local Docker socket; reaches only the job database, through a restricted role (§9.2) |
-| `grading fetch` / `draft` / `write` / `purge` / `sandbox`, `model-bench run` | CLIs | Same jobs from the command line (names from `modules/grading/CLAUDE.md`, plus proposed `purge`, `sandbox --check`, `write --revert`) |
+| `grading fetch` / `draft` / `write` / `purge` / `sandbox`, `model-bench run` | CLIs | Same jobs from the command line (names from `modules/grading/CLAUDE.md`, plus proposed `purge` and `sandbox --check`) |
 | `libs/model_interface` | shared library | B5; used by Modules 1, 3 and 4 (PRD §B.0) |
 | `libs/moodle_ws` | shared library | B4 client returning normalized models; used by Modules 2 and 3 (PRD §B.0, §C2.6) |
 | `libs/lti` | shared library | Used, not changed (CODEOWNERS: Students 2 and 1) |
@@ -213,7 +213,7 @@ need, in the courses where it is enrolled for grading.
 - **Parameters.** The PRD names only the `workflowstate` parameter and "feedback comments". Every other parameter name, field name and response shape is recorded in the contract file only after it has been checked on both lab sites (lab). If a name differs, the replacement is recorded in §B4, as the PRD requires.
 - **Capabilities.** The PRD gives no list. The minimum capabilities are worked out on the lab sites and recorded in the contract file, and SEC-03 then refers to that list (lab).
 - **Allow-list driven by the contract** (guide's decision on Q1, PR #27): `contracts/examples/moodle-ws.v1.functions.json` (schema `contracts/moodle-ws.v1.schema.json`) lists the allowed functions with the parameters used and, only where a name differs on a Moodle version, the replacement name. It holds **no verification state**; lab results go to `docs/decisions/`. `libs/moodle_ws` (proposed) builds its allow-list from that example and refuses any other function, and any workflow state other than `readyforrelease` in a grade write. A CI test checks that code and example agree once the library exists. This is a second guard behind the restricted external service.
-- **Normalized models** (proposed; library documentation, **not contract text**, guide's decision on Q37): `libs/moodle_ws` returns these, not Moodle's raw responses: `CourseV1`, `AssignmentV1` (idnumber, name, description_html, max_grade, grading type, marking_workflow_enabled, submission_types), `SubmissionV1` (learner_ref, version_snapshot, online_text, file_refs), `SubmissionStatusV1`, `GradeStateV1` (grade, workflow_state, released flag, grader_ref, modified), `GradeWriteRequestV1`, `GradeWriteResultV1`. Field names are LearnOps's own. A field Moodle does not provide on a version is absent and the client raises `NotSupported` when a caller needs it. Every Moodle response is validated into these models; a response that does not parse is `UnexpectedResponse`, never partial data.
+- **Normalized models** (proposed; library documentation, **not contract text**, guide's decision on Q37): `libs/moodle_ws` returns these, not Moodle's raw responses: `CourseV1`, `AssignmentV1` (assignment id, `cmid`, name, description_html, max_grade, grading type, marking_workflow_enabled, team_submission, submission_types; no `idnumber`: Moodle does not return it to the service account, B4 checks 17 and 18), `SubmissionV1` (learner_ref, version_snapshot, online_text, file_refs), `SubmissionStatusV1`, `GradeStateV1` (grade, workflow_state, released flag, grader_ref, modified), `GradeWriteRequestV1`, `GradeWriteResultV1`. Field names are LearnOps's own. A field Moodle does not provide on a version is absent and the client raises `NotSupported` when a caller needs it. Every Moodle response is validated into these models; a response that does not parse is `UnexpectedResponse`, never partial data.
 - **Error classes** (proposed; library documentation, not contract text, Q37): `MoodleUnreachable`, `TokenInvalid`, `PermissionDenied`, `UnexpectedResponse`, `NotSupported`.
 - **Token** (PRD SEC-03, C-06): environment only, one per site: `MOODLE45_WS_TOKEN` and `MOODLE53_WS_TOKEN`. `.env.example` lists both with placeholders, and the old single `MOODLE_WS_TOKEN` is removed (guide's decision on Q24, PR #27). `libs/moodle_ws` redacts tokens from every logged URL, exception message and error shown in the UI; request URLs are never logged in full. (lab) If the file download accepts the token in a header, use that instead of a URL parameter.
 - **Format** (guide's decision on Q1, PR #27): `contracts/moodle-ws.v1.md` stays the normative rules text; `contracts/moodle-ws.v1.schema.json` and the example above give the allow-list in machine-readable form, as PRD §B.0 rule 1 asks. `contracts/CLAUDE.md` lists all three files.
@@ -288,7 +288,7 @@ All tables are in the `grading` schema unless marked shared. The PRD names four 
 - `site_id` names the registered Moodle platform. `libs/moodle_ws` uses the interim values `moodle45` and `moodle53`; the final form is open (decision 0015, open item 2, and the guide's answers on #112), and the type is text so either holds. A Moodle course id is not unique across sites, so a course is always `(site_id, moodle_course_id)`, mapped to the LTI context through `shared.course_link`. The columns and primary key of `shared.course_link` are recorded by the B4 owner (Student 3) in a decision record before foreign keys are written (guide, issue #146, 20 Nov 2026: the columns stay with the B4 owner; the shared schema and its migrations are Student 2's).
 - Web routes use the internal course link id. CLIs take `--site` and `--course-shortname` (PRD B1: shortname is stable) and resolve to the same row.
 - `learner_ref` is `site_id` plus the Moodle user id from the enrolled-users call, never name, email or LTI `sub`.
-- Assignments are identified by Moodle `idnumber`, never by position or name (PRD EXT-06). If B4's assignment function does not return `idnumber` (lab), the replacement is recorded in B4 before the freeze.
+- **Assignment key.** Moodle does not return the `idnumber` of an assignment to the service account (lab, 25 Nov 2026: B4 checks 17 and 18, decision 0019), and the account must never hold `moodle/course:update`. **Decided by the guide (issue #186, 25 Nov 2026, [comment](https://github.com/narenccode/learnops/issues/186#issuecomment-7157135474), item 2):** an assignment is identified by its course-module id (`cmid`), with a stored mapping to the B1 `idnumber`. No function is added to B4 and no capability is widened. Never by position or name (PRD EXT-06 asks for the `idnumber`; the mapping supplies it). **Where the mapping comes from and who fills it (proposed, for the guide to confirm):** the first time a mentor opens a course, the tool lists its assignments with a suggested match to the course's B1 assignments (by marking-table title and position in the B1 package, shown as a suggestion only); the mentor confirms each match once, one click each; the confirmed pair is stored in a `grading.assignment_key` row (site, course, `cmid`, B1 `idnumber`, who confirmed, when) and is not asked again. An assignment with no confirmed match is not graded. Fewest mentor minutes: one confirmation per assignment, ever.
 
 ### 5.2 Tables
 
@@ -312,9 +312,11 @@ approval(id pk, version_id fk, draft_set_id fk, criterion_key,
   before jsonb, after jsonb, created_at;
   unique index on (draft_set_id, criterion_key, coalesce(based_on_event_id, zero uuid)))
 write_attempt(id pk, version_id fk, draft_set_id fk, idempotency_key unique,
-  status in (intent, written, unknown, conflict, refused, mismatch, reverted),
+  status in (intent, written, unknown, conflict, refused, mismatch),
   intended jsonb, moodle_snapshot jsonb, previous_state jsonb, error_code, created_at, finished_at)
 similarity_fingerprint(id pk, version_id fk, kind in (code, report), method_version, fingerprint jsonb, status)
+assignment_key(id pk, site_id, moodle_course_id, cmid, b1_idnumber, confirmed_by, confirmed_at,
+  unique (site_id, moodle_course_id, cmid))   -- proposed (§4.1, Q71): the mentor's one-time confirmation of cmid to B1 idnumber
 similarity_flag(id pk, version_a fk, version_b fk, score, threshold, kind, method_version, acknowledged_by)
 job(id pk, run_id uuid not null, type, site_id, moodle_course_id, version_id null, payload jsonb,
   status in (queued, running, done, failed, cancelled), attempts, max_attempts, run_after,
@@ -340,7 +342,7 @@ shared.course_link  -- the shared schema is Module 2's; the columns are recorded
 ### 5.3 Rules
 
 - **Append-only approvals.** The application role has no UPDATE or DELETE grant on `grading.approval` (the PRD's table, kept as append-only events), and a trigger rejects both. The unique index gives optimistic concurrency: two mentors acting on the same prior event cannot both succeed; the second gets a "changed by someone else, reload" response.
-- **Claiming a job:** select one row with status `queued` and `run_after <= now()`, or status `running` and `lease_expires_at < now()`, with `FOR UPDATE SKIP LOCKED`; set lease owner and expiry in the same transaction. Workers extend the lease with a heartbeat. A lease expiry returns the job to the pool; `attempts >= max_attempts` marks it `failed` with `error_code`.
+- **Claiming a job:** select one row with status `queued` and `run_after <= now()`, or status `running` and `lease_expires_at < now()`, with `FOR UPDATE SKIP LOCKED`; set lease owner and expiry in the same transaction. Workers extend the lease with a heartbeat. A lease expiry returns the job to the pool; `attempts >= max_attempts` marks it `failed` with `error_code`. **A `write` job is the exception:** it is never returned to the pool by a lease expiry or a backoff, and its `max_attempts` is 1. If its worker dies or Moodle does not answer, the attempt becomes `unknown` and the mentor decides (§10.1; B4 R8, R11).
 - **Job types and idempotency keys** (one key per job; queuing the same key returns the existing job):
 
 | Type | Worker | Payload | Idempotency key |
@@ -351,7 +353,6 @@ shared.course_link  -- the shared schema is Module 2's; the columns are recorded
 | `draft` | draft | version, check_run | `draft:<version>:<check_run>:<prompt_version>` |
 | `similarity` | similarity | course, assignment | `similarity:<course>:<assignment>:<method_version>` |
 | `write` | write | version, approval event ids | `write:<version>:<approval event id>` |
-| `revert` | write | write_attempt id | `revert:<write_attempt id>` |
 
 - **Run identity** (proposed; owner's proposal for Q70, settled when the guide approves the design). Each grading execution gets a unique `run_id` (uuid), stored as a column on `grading.job`; every other grading row reaches its run through its job. `--run` has a defined meaning and the same run cannot be started twice by accident. No change to `shared.audit_log` is needed: audit entries keep their object ids as they are.
 
@@ -389,7 +390,6 @@ State-changing requests need CSRF protection and secure, same-site cookies (PRD 
 | `/courses/{c}/submissions/{v}/redraft` | POST | Queues check and draft jobs for a new run |
 | `/courses/{c}/write` | POST | Queues write jobs for versions that are fully approved and not stale |
 | `/courses/{c}/write-attempts/{id}/retry` | POST | Retry after a failed or unknown write (PRD §C3.8), using §10.1 |
-| `/courses/{c}/write-attempts/{id}/revert` | POST | Revert before release only (§10.1) |
 | `/courses/{c}/flags/{id}/acknowledge` | POST | Mentor acknowledges a similarity flag |
 | `/courses/{c}/jobs/{id}` | GET | Progress for the status page (PRD UI-04) |
 | `/courses/{c}/jobs/{id}/cancel` | POST | Cancels a queued or running job |
@@ -406,7 +406,7 @@ Every CLI supports `--dry-run` (prints intended changes, changes nothing), `--ch
 |---|---|---|---|
 | `grading fetch --site <s> --course-shortname <n>` | Assignments and submissions it would queue | Moodle reachable, token valid, allow-listed functions answer | `grading purge --run <run>` deletes that run's rows |
 | `grading draft --assignment <id>` | Checks and drafts it would queue | Model endpoint reachable, budget remaining, sandbox host reachable | `grading draft --discard --assignment <id>` (proposed design, not a PRD requirement; CLI only, no web route): marks the assignment's current draft sets `discarded`, so they leave the review view, and returns those versions to `checked`. Draft content and `shared.model_calls` rows are kept, so model cost is not undone. It refuses a draft set that has any `grading.approval` event or `write_attempt`, or while a `draft` job for the assignment is running, and leaves it unchanged. A successful discard writes an audit entry. `--dry-run` lists what it would discard and refuse; `--check` exits 1 if any draft set would be refused; both are read-only and write no audit entry. To draft again, run `grading draft` (a new check run, a new model call, and possibly different output, §9.5) |
-| `grading write --approved-only` | Versions it would write and every precondition result | Preconditions for each approved version | `grading write --revert --attempt <id>` (§10.1) |
+| `grading write --approved-only` | Versions it would write and every precondition result | Preconditions for each approved version | Nothing to restore from LearnOps: the mentor undoes a written grade in Moodle while it is unreleased (README steps, §10.1) |
 | `grading sandbox` (runs the reaper once) | Probes it would run and expired containers and work directories it would remove; starts and removes nothing | Host reachable, image digest correct, no-route probe fails as required, reaper running | Nothing to restore: it removes only expired sandbox containers and work directories, which hold no kept data; an interrupted check job re-queues by lease expiry (§5.3) |
 | `grading purge --run <run>` | Rows it would delete and rows it must keep | Lists the run's rows; exit 1 if any is protected | Never deletes rows referenced by `grading.approval` or `write_attempt`; refuses the run if any exist; writes its own audit entry (who, run id, counts). Audit entries stay: they hold object ids as plain values (assumption: no foreign key; to confirm with Student 2). No restore exists: deleted rows are recovered only by `grading fetch` for the same run (new ids, re-read from Moodle) |
 | `model-bench run --set b8.6 --provider local\|hosted` | Calls it would make and estimated cost | Endpoints reachable, budget | Writes only report files and `shared.model_calls` rows; delete the report folder |
@@ -805,7 +805,7 @@ With the hosted provider, these items leave the lab. They are listed in the data
 | Check results and evidence | `grading.submission_check` | model provider (short evidence) | `GRADING_RETENTION_DAYS` | Draft and review |
 | Similarity fingerprints and flags | `grading.similarity_*` | not sent | `GRADING_RETENTION_DAYS` | Similarity flags |
 | Cloned learner repository | Per-job sandbox work volume on the sandbox host only (§9.2.2) | not sent | Deleted at the end of the run | Machine checks and fingerprints |
-| Drafts, approvals, write attempts | `grading.draft`, `grading.approval`, `write_attempt` | Moodle (approved grade and feedback only) | per project retention | Review, audit, revert |
+| Drafts, approvals, write attempts | `grading.draft`, `grading.approval`, `write_attempt` | Moodle (approved grade and feedback only) | per project retention | Review and audit |
 | Model and speech call metadata | `shared.model_calls` | not sent | per project retention | Cost and audit; no content, no audio path |
 
 ### 9.5 Learner-controlled content, injection, reproducibility
@@ -832,7 +832,7 @@ A write is made per submission version, never per criterion, and only when every
 6. The text to be written is exactly the text the mentor saw in the review preview.
 
 **Call order:**
-1. Insert a `write_attempt` row with status `intent`, the values to be written, the snapshot, a unique idempotency key (version plus approval event id), and the previous Moodle grade, feedback and state if readable (used for revert).
+1. Insert a `write_attempt` row with status `intent`, the values to be written, the snapshot, a unique idempotency key (version plus approval event id), and the previous Moodle grade, feedback and state if readable (shown to the mentor, who undoes a grade in Moodle by hand, §10.1).
 2. Call `mod_assign_save_grade` with workflow state `readyforrelease` (the only allowed state; the client allow-list refuses others). The workflow state is sent in this one call; there is no second write call, because the guide dropped `mod_assign_set_user_flags` on 11 November. The attempt is `written` only after the read-back passes.
 3. Read back the stored grade and its attempt number with `mod_assign_get_grades`, and the workflow state through B4, and compare with the intent. The grade comes back as text, so compare numbers, not strings. `mod_assign_get_grades` is the guide's decision 1 on the B4 findings pull request (#64) and is in the merged B4 contract (§2, R1). Whether feedback presence can be read back is (lab).
 4. Mark the attempt `written` only if the read-back matches. If it differs, mark `mismatch` and show the mentor the difference. Never retry silently.
@@ -841,9 +841,9 @@ A write is made per submission version, never per criterion, and only when every
 
 **Unknown outcome** (timeout or lost response): the attempt is `unknown`. LearnOps never writes again by itself (B4 R11; the guide on PR #72, 15 Nov: R11 wins over the earlier text here). It reads back once and shows the mentor the result: if Moodle already holds exactly the intended values, the attempt waits for the mentor to confirm it (B4 R14) and is marked `written` only then; if it holds other values and the identifying fields changed, mark `conflict`; if it holds the pre-write values, the mentor decides whether to send the write again, as a new attempt that runs every precondition. Nothing is sent without that decision.
 
-**Revert** (PRD C-05): `grading write --revert --attempt <id>` writes the stored previous values back using the same preconditions, only while the grade is unreleased. After a mentor releases a grade in Moodle LearnOps cannot revert it; the README says so plainly (Q29).
+**Undo** (PRD C-05). **Decided by the guide (issue #186, 25 Nov 2026, [comment](https://github.com/narenccode/learnops/issues/186#issuecomment-7157135474), item 1): manual undo in Moodle.** LearnOps does not write a grade back, so there is no revert endpoint, no `grading write --revert` and no `revert` job. The README gives the mentor Moodle's own steps to change or clear the grade while it is unreleased. On 5.3 the `readyforrelease` state makes the grade read-only, so the steps may first set the marking workflow state back. The README steps are checked on a lab site before they are written. After a mentor releases a grade LearnOps cannot undo it; the README says so plainly. Contract B4 does not change: R3 still refuses any write while the state is locked.
 
-**Reversal history** (proposed for the guide; Q70 stays open). Reversing a grade adds a new event and never edits the original: the audit history keeps the original result and the reversal, with who and when. How Moodle behaves on an undo is not known, and needs lab verification (B4 §5 check 5; Q17, Q29).
+**Locked and released grades in the lab** (Moodle 5.3, 25 Nov 2026; decision 0019, PR #234). A write over a grade in `readyforrelease` returns a success and keeps the old value (B4 check 16). A write over a grade that a person released also keeps the old value, but moves the state back to `readyforrelease` and removes the grade from the gradebook, with no error (check 5). An out-of-range grade is ignored, but still sets the state (check 15). The read-back is the only proof. The gap between the state check and the write is a risk that the guide decides (issue #112, [comment](https://github.com/narenccode/learnops/issues/112#issuecomment-7167733052)); until then it stays an accepted, documented limitation.
 
 (lab) Every behaviour above must be exercised on Moodle 4.5 and 5.3 before B4 is frozen.
 
@@ -853,7 +853,7 @@ All strings live in one module file (PRD UI-07). Messages say what happened and 
 
 | Code | Situation | State and recovery | Message |
 |---|---|---|---|
-| `moodle_unreachable` | Moodle not responding (fetch, write, launch lookup) | Job retried with backoff to `max_attempts`, then `failed`; launch shows an error page and no half-created session | "Moodle is not responding. The job will retry; check again in a few minutes." |
+| `moodle_unreachable` | Moodle not responding (fetch, launch lookup) | Job retried with backoff to `max_attempts`, then `failed`; launch shows an error page and no half-created session. **A write is never retried automatically** (B4 R8, R11): see `write_unknown` | "Moodle is not responding. The job will retry; check again in a few minutes." |
 | `token_invalid`, `permission_denied`, `unexpected_response` | Token rejected; missing capability or enrolment; B4 response does not parse | Jobs stop with no retry storm; shown on the status page; response shape logged without content | "Moodle rejected the service token or the account cannot do this here. Ask your administrator." |
 | `field_missing` | Repository, demo or report label absent | That check `error`; judgement criteria still drafted | "Check could not run: the submission has no (field name)." |
 | `host_not_allowed`, `url_not_allowed`, `clone_failed`, `clone_timeout`, `repo_too_large` | Clone failures (`url_not_allowed`: not `https://`, or the URL carries a user name or password) | `repo_clone` `fail` or `error` with the reason; other criteria drafted (PRD §C3.2, §C3.8) | "Check failed: repository not reachable." |
@@ -874,7 +874,7 @@ All strings live in one module file (PRD UI-07). Messages say what happened and 
 | `read_back_mismatch` | Moodle values differ after the write | Attempt `mismatch`; mentor sees the difference | "Moodle shows different values than the ones sent. Review in Moodle." |
 | `edit_conflict` | Stale `based_on_event_id` (409) | Request rejected, view reloads | "Someone else changed this. Reload and review." |
 | `session_expired` | LTI session over (2 h idle, PRD B3) | Typed text kept in the form | "Your session ended. Launch again from Moodle; your text is kept." |
-| `db_unavailable`, `lease_expired`, `not_checked` | Database down; worker died holding a job; similarity input missing | `/health` reports; workers stop claiming; web returns 503; job returns to the pool, `failed` after `max_attempts`; shown as "not checked" | "The service is temporarily unavailable." |
+| `db_unavailable`, `lease_expired`, `not_checked` | Database down; worker died holding a job; similarity input missing | `/health` reports; workers stop claiming; web returns 503; job returns to the pool (never a `write` job, see §5.3), `failed` after `max_attempts`; shown as "not checked" | "The service is temporarily unavailable." |
 
 Marking table missing or invalid: the assignment is skipped; CK-09 in the checker reports this upstream (PRD §C2.3); message "Fix the marking table in Course Studio or Moodle, then fetch again." (proposed). BigBlueButton and the media store are not used by this module.
 
@@ -958,7 +958,7 @@ Planned tests, not yet written. Groups name the test ids; each id maps to one te
 
 - **Unit and contract:** T01 marking-table parser (samples, unknown check, duplicates, bad sums, Studio round trip); T02 submission-content parser (five fixtures, raw and after a Moodle round trip); T03 check-config schema; T04 B4 allow-list example equals client allow-list; T05 token redaction; T06 to T09 B5 registry, errors, retries, budget and size guards, fake providers; T10 draft validation (out-of-range, extra, missing, renamed, bad evidence, full marks despite a failed check; total is the sum); T33 http_ok address guard; T34 similarity calibration, including fictional synthetic reference solutions (Q68); T35 contract examples validate.
 - **Integration:** T11 migration up/down/up; T12 append-only approvals; T13 queue behaviour; T14 kill and retry at each step; T15 route authorization walk; T16 cross-course access (404); T20 fetch with faults; T21 write refusals; T22 lost write response; T23 double write click; T36 logging privacy; T37 audit coverage; T58 draft discard: a draft set with no approval is marked `discarded`, keeps its content, leaves the review view, and an audit entry is written; a draft set with an approval or write attempt, or a running `draft` job, is refused and nothing changes; `--dry-run` and `--check` change nothing and write no audit entry.
-- **End-to-end and lab (both Moodle versions):** T17 learner refusal; T18 CSRF and cookies; T19 XSS and CSP; T24 write and revert; T25 no early visibility; T26 resubmission during a job; T38 review flow on three profiles; T42 smoke tests.
+- **End-to-end and lab (both Moodle versions):** T17 learner refusal; T18 CSRF and cookies; T19 XSS and CSP; T24 write and the manual undo steps on a lab site; T25 no early visibility; T26 resubmission during a job; T38 review flow on three profiles; T42 smoke tests.
 - **Security (sandbox host, after independent review):** T27 clone egress; T28 network cut (§9.2.2 step 4); T29 resource attacks; T30 check tampering; T31 reaper and concurrency; T32 sandbox database role.
 - **Security additions (proposed; sandbox host, after independent review; none written or run):** T43 IPv6 egress blocked during and after the clone step; T44 private, loopback, link-local and metadata addresses unreachable during the clone step, including through redirects and DNS answers; T45 image scan: no setuid or setgid binaries, no Docker socket, no devices, digest matches the list; T46 privileged actions refused in the container (mount, write to `/proc/sys`, raw socket, ptrace of another user, `setuid`); T47 disk and inode exhaustion gives `disk_limit` and leaves the host unaffected; T48 clone attacks: very large or compressed-object bomb, submodules, LFS pointers, `.gitattributes` filters, ssh, `git://` and `file://` URLs, a URL with a user name or password, a redirect to an internal host; T49 a background process started by one command check does not survive into the next; T50 output flood gives `output_truncated` with bounded worker memory; T51 after a run no learner output exists on the host disk (Docker logs, volumes, core files); T52 worker killed and daemon restarted mid-run: reaper and reconciliation clean up, the job is retried, no orphan volume; T53 per-check and total timeouts: SIGKILL, finished results kept, `sandbox_timeout` on the rest; T54 sandbox database functions: wrong or expired lease token refused, check keys outside the job refused, no direct table access; T55 network removal confirmed from the host and the probe fails, and a failed removal stops the run before learner code; T57 a process or connection started during the clone step does not outlast the removal; T56 (only if Q61 approves the evaluation) T27 to T55 and T57 repeated under `runsc`.
 - **Measurement:** T39 agreement (A1); T40 timing study (A2); T41 model comparison (A7).
@@ -994,7 +994,7 @@ Test data to produce: fake-Moodle recordings, malicious and tampering repositori
 | Q14 | (PRD App-C 1) Every B4 function exists on 4.5 and 5.3 with the parameters used, including `workflowstate`; minimum capabilities | yes | Owner, Release 0; list in §4.1 |
 | Q15 | (PRD App-C 9) Which AI features Moodle 5.3 itself provides, so LearnOps does not duplicate them | yes | Owner, Release 0 |
 | Q16 | Is a stronger sandbox runtime (e.g. gVisor) acceptable? It is a new tool | no | Guide; evaluation proposal in Q61 |
-| Q17 | How to undo a grade already written to Moodle (OPS-05) | yes | Owner; proposal in §10.1 (Q29) |
+| Q17 | How to undo a grade already written to Moodle (OPS-05). **Decided (guide, issue #186, 25 Nov 2026, [comment](https://github.com/narenccode/learnops/issues/186#issuecomment-7157135474), item 1):** manual undo in Moodle; no revert endpoint and no `grading write --revert`; the README steps are checked on a lab site before they are written (§10.1) | no | Decided |
 | Q18 | Storing similarity flags and the other additional tables not in the PRD's list | no | Owner; noted in the PR; §12.2 |
 | Q19 | Which hosted model provider and SDK (licence check), and the lab LLM endpoint's protocol. Proposed rules: §4.2 | yes | Guide |
 | Q20 | (PRD App-C 6) The LTI 1.3 library choice and licence; used through `libs/lti` | yes | Student 2 |
@@ -1010,7 +1010,7 @@ Test data to produce: fake-Moodle recordings, malicious and tampering repositori
 | Q25 | [D4] Whole-number scores; cap fraction when a required check fails, taken from the B8.4 pilot | no | Guide |
 | Q26 | [D3] If no B4 function exposes the marking-workflow setting: block all writes, or add a function to B4 | yes | Guide; lab result decides |
 | Q27 | [D6] Dependency policy for `command:`: pre-baked images, no package mirror in v1 | no | Guide |
-| Q28, Q29 | [D5, D8] Which git hosts are approved destinations (depends on Q69); revert allowed only before release | no | Guide |
+| Q28, Q29 | [D5, D8] Q28: which git hosts are approved destinations (depends on Q69). Q29 (revert before release) is closed by the decision on Q17: no revert, a manual undo in Moodle | no | Guide (Q28) |
 | Q30, Q31 | [D9, D10] Independent review of the sandbox before any learner code runs, and who reviews; is the service account recorded as grader acceptable to the adopting site | yes | Guide |
 | Q32 | [E1] Submission content rule (§4.3a). **Decided:** PRD B1.5 (#87) | yes | Closed |
 | Q33 | [E2] Check config as a YAML file on the tools host (§4.3c); Studio generation later | no | Guide and Student 1 |
@@ -1046,7 +1046,8 @@ Test data to produce: fake-Moodle recordings, malicious and tampering repositori
 | Q67 | Task schemas are Pydantic models, with the JSON Schema generated from them (root `CLAUDE.md` §6). The pin is added with the first import | no | Owner proposes; guide confirms when he approves the design |
 | Q68 | Similarity scope. **OPEN.** Student 3's proposed v1 decision, not guide-approved: compare submissions with other submissions of the same cohort; fictional synthetic reference solutions for testing only; instructor-provided reference solutions outside mandatory v1 scope; results are indicators for mentor review, not automatic plagiarism decisions (§3.1) | no | Guide confirms |
 | Q69 | Infrastructure dependency: the PRD names no git source. A11 lists none, yet `repo_clone`, the clone step and B8.4 repositories depend on one. What git source can the sandbox host reach, and where do B8.4 repositories live? This document assumes no host, address or availability | yes | Guide, lab administrator |
-| Q70 | `grading purge` and the run id. **Owner's proposal:** `run_id` on `grading.job`; purge keeps rows used by approvals and write attempts, writes its own audit entry, and does not depend on audit references (§5.3, §6.2). Reversal history: §10.1 | no | Owner proposes; guide confirms when he approves the design |
+| Q70 | `grading purge` and the run id. **Owner's proposal:** `run_id` on `grading.job`; purge keeps rows used by approvals and write attempts, writes its own audit entry, and does not depend on audit references (§5.3, §6.2) | no | Owner proposes; guide confirms when he approves the design |
+| Q71 | Assignment key: where the `cmid` to B1 `idnumber` mapping comes from and who fills it. **Owner's proposal (§4.1):** the mentor confirms each suggested match once, stored in `grading.assignment_key`; an assignment without a confirmed match is not graded. The guide decided the key itself (`cmid` with a stored mapping; issue #186, 25 Nov 2026) | no | Owner proposes; guide confirms |
 
 ### 12.1 Literature survey
 
@@ -1066,7 +1067,7 @@ The PRD is not edited by this document. These are the changes the proposals abov
 | §C3.7 | State what "reported" means for an attack the host cannot observe directly (Q65) | §9.2.9 |
 | §C3.3, §C3.10 | State the release of FR-M-01 and FR-M-02 the same way as PRD §D1 ("the first release that uses them"); the three texts now disagree | header, §2, §13 |
 | SEC-03, App-C item 1 | Capability list recorded in B4 after lab work; replace item 1 with the 18 checks in B4 §5, plus check E1 of §4.1 if the guide accepts it (Q31) | §4.1 |
-| C-05 | A written grade can be reverted only before release; documented in the README | §10.1 |
+| C-05 | A written grade is undone by the mentor in Moodle while it is unreleased (manual undo, README steps); LearnOps does not write it back (guide, #186, 25 Nov 2026) | §10.1 |
 | B1.1, B1.3, B1 | Submission-content rule, argument formats, criterion key rule, check-config schema; `command:setup` wording to match the dependency policy | §4.3, §9.2 |
 | EXT-09 | The marking-table parser lives in `libs/contracts` | §4.3b |
 | B4 | None needed for Q1 and Q37 (decided in PR #27). If a function name differs on a Moodle version, the PRD B4 text changes in the same pull request as the replacement (guide) | §4.1 |
@@ -1218,7 +1219,7 @@ One requirement (or one tightly related group) per pull request. "Gate" is somet
 | 20 | Draft worker, validation, `grade_draft` prompt v1 | FR-G-03 | 7, 19 | T10 |
 | 21 | Review API and UI | FR-G-05 | 14, 20 | T19, T38 |
 | 22 | Approval events and audit | FR-G-07 | 21 | T12, T37 |
-| 23 | Write worker, protocol, revert | FR-G-06 | 5g, 22, 3 | T21 to T24 |
+| 23 | Write worker and protocol (no revert; manual undo steps for the README, checked on a lab site) | FR-G-06 | 5g, 22, 3 | T21 to T24 |
 | 24 | Resubmission and stale handling | FR-G-08 | 23 | T26 |
 | 25 | Similarity fingerprints, worker, UI, calibration set with fictional synthetic reference solutions | FR-G-04 | 19, Q49, Q68 | T34 |
 | 26 | `model-bench` and report | FR-M-03 | 7, 11, 20 | T41 |
