@@ -1,0 +1,22 @@
+# Reference grade by mentor-01, a student acting as mentor (guide, issue #186): a recorded
+# deviation from PRD B8.4 and G-5. Graded on the B8.2 marking table before any AI draft.
+schema: learnops.testdata.b8-4.reference-grade/v1
+submission_id: s015
+rubric: b8-2-wk-02-task
+mentor_ref: mentor-01
+graded_at: '2026-11-25'
+blind_to_drafts: true
+criteria:
+- criterion: Repository
+  score: 5
+  reason: Repository clones.
+- criterion: Document answers
+  score: 0
+  reason: Demo shows an unrelated joke bot
+- criterion: README
+  score: 5
+  reason: README is complete.
+- criterion: Weak answers
+  score: 0
+  reason: No weak answers are identified.
+total: 10

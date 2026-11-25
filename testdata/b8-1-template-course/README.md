@@ -1,6 +1,6 @@
 # B8.1 Template Course Backup
 
-> **Status: rebuilt and tested on Moodle 5.3 on 2026-11-24 (the first build of 2026-11-23 was replaced; §8); the results are in §8 and in decision 0009. The release upload is pending.** The `.mbz` and its SHA-256 are in §1. Release 0 builds and tests on
+> **Status: rebuilt and tested on Moodle 5.3 on 2026-11-24 (the first build of 2026-11-23 was replaced; §8); the results are in §8 and in decision 0009. Released on 2026-11-24 as [`testdata-b8-1-v1`](https://github.com/narenccode/learnops/releases/tag/testdata-b8-1-v1), checked with `download.py --check`.** The `.mbz` and its SHA-256 are in §1. Release 0 builds and tests on
 > Moodle **5.3 only**; Moodle 4.5 is not tested; waived for Release 0 (B8.1 only; see [0009](../../docs/decisions/0009-b8-1-template-course.md) and the [register](../../docs/decisions/README.md)), and is not recorded as passed. Labels: **PRD** = stated by
 > the PRD. **Owner** = confirmed by the project owner in a GitHub reply. Sources used in this file: six
 > owner replies on Issue #55, cited by date or by name: 2026-11-07; 2026-11-11; 2026-11-12 at 06:46 UTC
@@ -269,9 +269,11 @@ the clean-up rule in §7 (Owner, the 14:43, 09:36 and 11-14 replies).
 | Course | Id | What it is |
 |---|---|---|
 | Template course | 7 | The template. Stays. Final project completion changed on 2026-11-24 (finding 2) |
-| Courses 8, 9, 10 | 8, 9, 10 | First run, 2026-11-23 (Harshitha): restore test, build copy of the sections-only backup, merge target. Superseded. Deleted after this results pull request merges |
-| Restore check | 11 | 2026-11-24 (Akshita): restored from the rebuilt file ("Template course copy 4"). Deleted after this results pull request merges |
-| Merge target and build copy | 12, 13 | 2026-11-24 (Akshita): course 12 is the merge target ("Template course copy 5"); course 13 is the build copy of the sections-only file ("Template course copy 6"). Deleted after this results pull request merges |
+| Courses 8, 9, 10 | 8, 9, 10 | First run, 2026-11-23 (Harshitha): restore test, build copy of the sections-only backup, merge target. Superseded. **Deleted on 2026-11-24** (clean-up record below) |
+| Restore check | 11 | 2026-11-24 (Akshita): restored from the rebuilt file ("Template course copy 4"). **Deleted on 2026-11-24** |
+| Merge target and build copy | 12, 13 | 2026-11-24 (Akshita): course 12 is the merge target ("Template course copy 5"); course 13 is the build copy of the sections-only file ("Template course copy 6"). **Deleted on 2026-11-24** |
+
+**Clean-up record (2026-11-24, afternoon, Akshita, after #202 merged).** Courses 8 to 13 were deleted one by one from Manage courses and categories, Category 1, each id checked before its delete; course 7 (the template) stays. The six 2026-11-23 backup files were deleted from the backup area (the course-7 backups of 15:59, 16:07, 16:13, 16:21 and 16:29, the last being the replaced release candidate of 12,591 bytes, and the course-9 sections-only backup of 16:57), at Harshitha's request on #202; the two 2026-11-24 files (`b8-1-template-course.v1.mbz`, `b8-1-sections-only.mbz`) were kept. Recycle bin (Category 1): checked; the page showed no retention period, and no recycle-bin setting was changed (guide, #55). Exact times of the deletions were not written down. Harshitha deleted her local copies of the 2026-11-23 files (#202).
 
 **Build record.** File `b8-1-template-course.v1.mbz`, 12,612 bytes, SHA-256 `d8869a012a39ae869c54f744d6c391387534bdab2389d8a8aecfd5b481c5585d`, built on Moodle 5.3+ (Build: 20261030, `2026100500.08`), backup format `moodle2` (backup format version 5.3 `2026100500`), type Course, mode Asynchronous, taken on 2026-11-24, after "Make a submission" was unticked on Final project in course 7 as the guide asked. The name was set on Moodle's Backup page, so the release file is Moodle's own backup file with no rename (finding 4). The SHA-256 is the same on the lab PC and on the laptop after copying. Inspection (Akshita): no `users.xml`; `users` setting 0; no email-like text in any `.xml` file; `badges.xml` holds `Template course badge`, status 0 (inactive); `final-project` (`assign_28`) has `completionsubmit` 0 and `completiongradeitemnumber` 0, which is "Receive a grade" only.
 
@@ -314,8 +316,8 @@ the clean-up rule in §7 (Owner, the 14:43, 09:36 and 11-14 replies).
 - [x] Check on the 5.3 site that completion tracking and course badges are on (the Owner says they are, Issue #55, 2026-11-11): read on 2026-11-24 with an administrator account (Akshita): completion tracking, badges and course badges are on.
 - [x] Build the template on Moodle 5.3 (§3 to §6); back it up with user data OFF; record release, format and SHA-256. Label the file "built on Moodle 5.3".
 - [x] Open the `.mbz` and check it for user data and for the badge (§7 step 4; §6, P35). If user data is present, stop and report on Issue #55.
-- [ ] Upload under tag `testdata-b8-1-v1`; put the SHA-256 in `download.py`, §1 and `testdata/README.md`; check that `download.py` and `download.py --check` give the same SHA-256.
-- [ ] Give the checker owner the `.mbz`, its SHA-256 and the §4 list.
+- [x] Upload under tag `testdata-b8-1-v1`; put the SHA-256 in `download.py`, §1 and `testdata/README.md`; check that `download.py` and `download.py --check` give the same SHA-256. Done on 2026-11-24 (Akshita): [the release](https://github.com/narenccode/learnops/releases/tag/testdata-b8-1-v1) has one asset of 12,612 bytes; run from `main` at `5488521`, both print OK with the recorded SHA-256.
+- [x] Give the checker owner the `.mbz`, its SHA-256 and the §4 list. Done on 2026-11-24: [handover on #202](https://github.com/narenccode/learnops/pull/202#issuecomment-7129918983) with the release link, the SHA-256, the §4 list and the merge finding.
 - [x] Comparison field list (§4): sent to Shraddha, so that the checker later compares the same fields (Owner, the 14:43 reply), and answered in her review of #141 (2026-11-19); the badge difference is recorded in §4.
 - [x] Restore on 5.3 only (4.5 is not tested; waived for Release 0 (B8.1 only; see [0009](../../docs/decisions/0009-b8-1-template-course.md) and the [register](../../docs/decisions/README.md)); the owner expects a 5.3 backup not to restore on 4.5: owner's report, §3, not verified), on the existing 5.3 lab site, into a new course each time, deleting each course by the clean-up rule in §7; record the Moodle version, the date and the outcome of each restore; make the sections-only backup (§7); run the merge test with the §4 tables.
 - [x] Record that Moodle 4.5 is not tested; waived for Release 0 (B8.1 only; see [0009](../../docs/decisions/0009-b8-1-template-course.md) and the [register](../../docs/decisions/README.md)), and its cost (a rebuild on 4.5 if PRD C-03 later needs it), in the decision record (`docs/decisions/0009-b8-1-template-course.md`) and in §8.
@@ -323,7 +325,7 @@ the clean-up rule in §7 (Owner, the 14:43, 09:36 and 11-14 replies).
 
 ## 9. Known limitations and pending decisions
 
-- The `.mbz` was rebuilt and tested on 5.3 on 2026-11-24 (§8); the Final project completion finding is resolved. Open: the release upload (Akshita, as the B8.1 owner, after this results pull request has the new SHA-256, then `download.py` and `download.py --check`) and the deletion of the old files and test courses. Every Proposal above that §8 does not confirm can still change; none is a confirmed requirement.
+- The `.mbz` was rebuilt and tested on 5.3 on 2026-11-24 (§8); the Final project completion finding is resolved. It was released and checked on 2026-11-24, and the old files and test courses were deleted the same day (§8). Moodle 4.5 stays not tested (decision 0009). Every Proposal above that §8 does not confirm can still change; none is a confirmed requirement.
 
 **Owner decisions and remaining work (2026-11-12, 2026-11-13 and 2026-11-14):**
 

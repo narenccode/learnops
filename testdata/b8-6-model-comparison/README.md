@@ -22,7 +22,7 @@ run, and nothing here says how well any model performs.
 |---|---|---|---|---|
 | Chapters | ch-001 | ready, PROVISIONAL | `inputs/t001/transcript.en.json` | `expected/ch-001/chapters.json`, NOT REVIEWED |
 | Summaries | su-001 | ready, PROVISIONAL | `inputs/t001/transcript.en.json` | `expected/su-001/summary.en.md`, NOT REVIEWED |
-| Grading drafts | gd-001 | **pending** | B8.4 submissions (`inputs/b8-4/source.md`; B8.4 is merged: 33 submissions, #31, #189 and #190) | B8.4 mentor reference grades: **none exist yet** (B8.4 has only the author's own grades, labelled as not reference grades), and the guide names the mentor (Q13). Review form: `templates/` (PROPOSED) |
+| Grading drafts | gd-001 | **pending** | B8.4 submissions (`inputs/b8-4/source.md`; B8.4 is merged: 33 submissions, #31, #189 and #190) | B8.4 mentor reference grades: **none exist yet** (B8.4 has only the author's own grades, labelled as not reference grades), and the student the guide chose to act as mentor (Q13, accepted 24 Nov) has not graded yet. Review form: `templates/` (PROPOSED) |
 | Practice drafts | pr-001 | ready, PROVISIONAL | `inputs/t001/transcript.en.json` | `expected/pr-001/practice.yaml`, NOT REVIEWED. Four multiple-choice checkpoint questions in the review-card shape proposed by Student 1 (FR-S-12); the format is confirmed by the guide (reported by Harshitha on 18 Nov; the link to his answer is still to be added) |
 
 "Ready" means the files exist. It does not mean they are agreed or reviewed.
@@ -85,7 +85,7 @@ The guide answered some of these on issue #186 (23 Nov 2026), and the grading de
 | O5 | Mentor review time for non-grading outputs: **proposed in design §11.4** (#197): reuse the grading protocol (Q46) for every task. The guide settles it when he approves the design | Q46 | Guide |
 | O6 | Grading-draft items: B8.4 merged, its submission-content rule (decided: PRD B1.5), reference grades (Q13), `GradeDraftV1` (Q41) | §4.3a, §4.3d | Guide, Students 1 and 3 |
 | O7 | Practice: task shape and output format (B7, FR-S-12, Release 5 stretch). **Proposed by Student 1 on PR #33**: multiple-choice checkpoint questions (H5P question set) in the review-card shape; ordering and the branching scenario left out of the first version, no short answer; B7 defines no draft format. Format confirmed by the guide (reported by Harshitha on 18 Nov; the link to his answer is still to be added); the lecture input is still open | Q12 | Students 1 and 4, guide |
-| O8 | Size of the set per task (the PRD gives none). **Proposed in design §11.4** (#197): five chapters and five summary items (one per B8.5 lecture), five practice items, and the grading items from the B8.4 test split (Q45). The guide settles it when he approves the design | — | Guide |
+| O8 | Size of the set per task (the PRD gives none). **Proposed in design §11.4** (#197): one chapters item and one summary item for one or two of the five B8.5 lectures (Student 4 confirms the number once the timings exist), five practice items, and the grading items from the B8.4 test split (Q45). The guide settles it when he approves the design | — | Guide |
 | O9 | **Decided (guide, issue #186):** Apache-2.0, like the repository (PRD C-11) | root `CLAUDE.md` §2.10 | Guide |
 | O10 | Accept this format as the B8.6 part of the B8 contract before the Release 0 freeze | `contracts/CLAUDE.md` | All four students, guide |
 | O11 | ~~Chapters content schema~~ **Closed:** B6.2 now defines it (`contracts/chapters.v1.schema.json`); this set uses it and keeps no schema of its own | PR #32 | Student 4 |
