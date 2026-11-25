@@ -2,8 +2,8 @@
 
 **Status:** decided by the guide on issue #186 (2026-11-23, design Q13 and B8.4 O3). Accepted by the
 student on 2026-11-24. The grades were delivered on 2026-11-25 (pull request #221).
-**Number:** 0016, the next free number when this was written (2026-11-25: `main` has 0001 to 0014 and
-open pull request #209 takes 0015). It is taken again at merge if another record has merged first.
+**Number:** 0016, the next free number when this was written (2026-11-25: `main` has 0001 to 0015, 0017
+and 0018; 0016 was kept for this record). It is taken again at merge if another record has merged first.
 
 ## Decision
 
@@ -37,10 +37,15 @@ and the label travels with the grades.
 
 ## Reason
 
-PRD B8.4 asks for reference grades from at least one mentor. The guide's reasons, from his comment:
-Akshita owns B8.2, so she knows the marking tables, and she did not write the 33 submissions. Grading
-before seeing any draft keeps the grades independent of the assistant. The label keeps the deviation
-visible.
+PRD B8.4 asks for reference grades from at least one mentor.
+
+**The guide's reason, from his comment:** Akshita owns B8.2, so she knows the marking tables, and she did
+not write the 33 submissions. His other two points are instructions and a lesson, not reasons: she grades
+every submission before she sees any draft from the grading assistant, and the label "student acting as
+mentor" travels with the grades.
+
+**The author's reading (Student 3's own words, not the guide's):** grading before seeing any draft keeps the
+grades independent of the assistant, and the label keeps the deviation visible to anyone who uses the grades.
 
 ## Where it was decided and done
 
