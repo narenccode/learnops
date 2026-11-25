@@ -529,18 +529,18 @@ script exist and are tested (the two rows below that name tests).
 
 These are pending and are not claimed by this change:
 
-- **The release asset (tag `testdata-b8-1-v1`).** The `.mbz` is built (SHA-256 in the B8.1 README §1), but it is
-  not uploaded. It waits for the guide's answer on the Final project completion finding (B8.1 README §8,
-  finding 2): a rebuild would give a new SHA-256. `download.py` and `download.py --check` against the release are
-  run after the upload.
+- **The release asset (tag `testdata-b8-1-v1`) is checked by hand, not in CI.** It was published on 2026-11-24
+  after the rebuild (one asset, 12,612 bytes), and `download.py` and `download.py --check` were run once from
+  `main` at `5488521` (both OK with the recorded SHA-256; decision 0009, "Release"). No CI job downloads it.
 - **The results are recorded, but only partly checked by a machine.** Nothing reads the `.mbz` in an automated
   test (it is not committed). The checks of 2026-11-23 and 2026-11-24 were done by hand: the archive was opened and read, and
   the BEFORE and AFTER tables were written from Moodle's own screens by the operator. The administrator-screen
-  checks (completion tracking, badges and course badges on) are not recorded yet.
+  checks (completion tracking, badges and course badges on) were read on 2026-11-24 and are recorded in decision 0009.
 - **Moodle 4.5 is not tested; waived for Release 0 (B8.1 only; see [0009](decisions/0009-b8-1-template-course.md) and the [register](decisions/README.md))**
   and is not claimed as passed.
-- **Clean-up.** The test courses (8, 9 and 10) are deleted after this change merges (the template, course 7,
-  stays); each deletion and the recycle-bin behaviour are recorded then.
+- **Clean-up is recorded, not verified by a machine.** Test courses 8 to 13 and the six 2026-11-23 backup files
+  were deleted on 2026-11-24 (the template, course 7, stays); the recycle bin showed no retention period
+  (decision 0009, "Test courses"). Exact times were not written down.
 
 ## B8.2 sample course (test data), Release 0 foundation
 
