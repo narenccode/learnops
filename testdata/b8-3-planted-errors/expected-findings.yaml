@@ -35,8 +35,6 @@ version: 1
 #     item 17  confirmed: a package failing B1 stops with the B1 errors, every CK rule is not checked
 #     item 22  B8.3 .mbz variants use Moodle 5.3 only; decision 0017 later made Moodle 5.3 the
 #              only supported version throughout LearnOps
-#   Peer review: Akshita approved the documentation update on PR #243 (2026-11-25); this is not
-#   guide approval, mapping-owner confirmation, or approval of the CK-08 / CK-12 proposals.
 #   Still open: Shraddha, as design owner, confirms the mapping after pending guide decisions;
 #   nine CK rule categories require `.mbz` inputs, represented by ten variants because CK-06 has
 #   two independent cases; all ten variants need the lab.
