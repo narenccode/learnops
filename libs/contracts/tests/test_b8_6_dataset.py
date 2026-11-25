@@ -498,15 +498,22 @@ def test_a_grading_draft_item_is_ready_only_when_the_reference_grades_exist(
     for item in manifest["items"]:
         if item["task"] == "grade_draft":
             assert grade_draft_problems(item, B8_4_DIR) == [], item["id"]
-    # In-memory negative controls: flipping the item to ready without grades must be caught.
+    # In-memory negative control: flipping the item to ready on a mentor folder that holds no
+    # grades must be caught. mentor-99 never exists; mentor-01 holds the B8.4 reference grades.
     ready: Doc = {
         "id": "gd-001",
         "task": "grade_draft",
         "status": "ready",
-        "expected": "testdata/b8-4-synthetic-submissions/reference-grades/mentor-01",
+        "expected": "testdata/b8-4-synthetic-submissions/reference-grades/mentor-99",
     }
     if B8_4_DIR.is_dir():
         assert grade_draft_problems(ready, B8_4_DIR) != []
+        # Positive control: mentor-01 has one reference grade per B8.4 submission.
+        complete = {
+            **ready,
+            "expected": ready["expected"].replace("mentor-99", "mentor-01"),
+        }
+        assert grade_draft_problems(complete, B8_4_DIR) == []
 
 
 def test_the_b8_4_input_exists_when_the_set_is_present(manifest: Doc) -> None:
