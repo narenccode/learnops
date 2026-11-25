@@ -46,7 +46,7 @@ B8.2 is never changed. The folders `missing-body`, `duplicate-id`, `protected-id
 | `ck-02-completion-never-met` | CK-02 | package | built | Page `wk-01-guide` given `completion: submit` |
 | `ck-03-points-total-mismatch` | CK-03 | package | built | `total_points` 120, tasks add to 100 |
 | `ck-04-unlock-missing-activity` | CK-04 | mbz | pending-lab | week 3 waits for a removed activity |
-| `ck-05-circular-unlock` | CK-05 | mbz | pending-lab | weeks 2 and 3 wait for each other |
+| `ck-05-circular-unlock` | CK-05 | mbz | pending-lab | Week 2 is changed to wait for `wk-03-task`; Week 3 already waits for `wk-02-task` in the B8.2 baseline |
 | `ck-06-duplicate-idnumber` | CK-06 | mbz | pending-lab | two activities share `wk-01-task` |
 | `ck-06-invalid-idnumber` | CK-06 | mbz | pending-lab | idnumber `Week 1 Task` |
 | `ck-07-protected-item-changed` | CK-07 | mbz | pending-lab | Final project max grade 100 to 80 |
