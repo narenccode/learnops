@@ -1,7 +1,7 @@
 # B8.3 expected findings (PRD B8.3, C2.3, C2.7). One entry per planted error.
 # Source of the mapping: docs/design/checker.md section 11.3 (Proposal, #148). Not yet confirmed by the guide.
 # These entries say what a future checker SHOULD report. No checker exists yet, so nothing here
-# proves detection. Every variant is a copy of B8.2 with ONE change; B8.2 itself is never changed.
+# proves detection. Each variant changes one thing from its applicable baseline: B8.2 for all variants except CK-07, which uses the merged course with the B8.1 template. B8.2 itself is never changed.
 #
 # Fields
 #   id              unique variant id (package variants: also the folder name)
@@ -36,7 +36,7 @@ version: 1
 #     item 22  the .mbz variants are built on Moodle 5.3 only for Release 0 (a new narrow exception
 #              that Akshita records); on 4.5 they are a rebuild
 #   Still open: Shraddha, as design owner, confirms the mapping (it stays `proposed` until then);
-#   Akshita updates docs/design/checker.md (it is still Draft); the nine .mbz variants need the lab.
+#   Akshita updates docs/design/checker.md (it is still Draft); nine CK rule categories require `.mbz` inputs, represented by ten separate variants because CK-06 has two independent cases; all ten variants need the lab.
 mapping_status: proposed
 mapping_source: "docs/design/checker.md section 11.3 at commit 4111e0c"
 confirmation: null   # {by: [...], reference: <issue/PR/decision link>, date: <YYYY-MM-DD>}
@@ -97,7 +97,7 @@ variants:
     status: pending-lab
     path: null
     element: "wk-02, wk-03"
-    planted_change: "Week 2 section waits for wk-03-task and week 3 section waits for wk-02-task"
+    planted_change: "Change only Week 2 section to wait for wk-03-task instead of wk-01-task; Week 3 already waits for wk-02-task in the B8.2 baseline"
     expected: {rule: CK-05, element: "wk-02, wk-03", severity: error}
     reason: "Each section waits for the other, so neither can ever open."
     also_expected: []
@@ -145,11 +145,11 @@ variants:
     status: pending-lab
     path: null
     element: course-completion-criteria
-    planted_change: "Course completion criteria name an activity that was deleted from the course"
+    planted_change: "One course-completion criterion is changed to use a `cmid` absent from the course model; `idnumber` is absent and no activity is deleted"
     expected: {rule: CK-08, element: course-completion-criteria, severity: error}
     reason: "The criteria refer to an item that no longer exists."
     also_expected: []
-    notes: "Badge criteria could be a second variant; not planted yet."
+    notes: "Use a criterion cmid that is absent from every activity in the merged model and omit idnumber because the builder cannot resolve it; no activity is deleted, so CK-07 is not triggered."
 
   - id: ck-09-marking-table-sum
     rule: CK-09
@@ -198,7 +198,7 @@ variants:
     reason: "Media must be a relative path, not a full fixed URL (PRD C-08)."
     also_expected: []
     assertable: false   # PROVISIONAL: not asserted until checker design section 12 item 19 is decided
-    notes: "CK-12 reads media_refs of the B2 model (design section 3.4). Whether the model builder extracts media from a page body into media_refs is open (section 12 item 19). Until it is agreed and tested end to end, this variant only plants the URL in the source file; its expected finding is not asserted."
+    notes: "The intended v1 scope is embedded media only: Markdown images and HTML img/video/audio/source/track references in activity bodies; ordinary links (including PDFs) and iframe embeds are excluded. The builder must populate media_refs using the shared extraction rule. The B2 contract change and test vectors remain open under checker design section 12 item 19 and still need guide approval, and end-to-end extraction is not verified; this variant plants the URL in the source file only, so its expected finding is not asserted yet."
 
   - id: ck-13-unlock-without-completion
     rule: CK-13
