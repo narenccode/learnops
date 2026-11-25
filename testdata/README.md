@@ -77,8 +77,8 @@ and is not yet confirmed (see above).
 - **Licence:** Apache-2.0 (decided by the guide, issue #186; PRD C-11).
 - **Status:** 33 submissions against the marking tables of all four B8.2 tasks, in the submission
   form of PRD B1.5, all in the development split. The count meets the PRD minimum of 30, but there
-  are no mentor reference grades, so the set is not complete (a student acting as mentor, chosen by the guide on issue #186, grades them, O3). The
-  format still needs an owner's approval (O7). The author's own grades for 25 of them are in
+  now mentor reference grades for all 33, written on 25 Nov by a student acting as mentor (chosen by the guide on issue #186, O3; #221). The
+  set stays provisional: the format still needs an owner's approval (O7), and the guide decides at the Release 0 gate whether B8.4 counts as complete. The author's own grades for 25 of them are in
   `author-grades/`, labelled "author-graded, not reference grades" (guide, issue #186).
 
 ## B8.5 Lecture videos (owner: Student 4), COMPLETE
@@ -178,5 +178,6 @@ for example `1834 s (30 min 34 s)`.
 - **Status:** two chapters items (`ch-001` on `t001`, `ch-002` on `t002`), two summary items (`su-001`,
   `su-002`) and one practice item (`pr-001`) with author-drafted expected outputs, NOT REVIEWED and
   provisional; the `ch-002` chapter starts were measured on the lecture-05 recording by Student 4. The grading-draft item is pending: B8.4 is merged (33
-  submissions), but it has no mentor reference grades. Who supplies and reviews each input is
+  submissions) and has mentor reference grades for all 33 (#221), but the item still has no
+  `input` or `expected` files. Who supplies and reviews each input is
   decided (issue #186). No comparison has been run.
