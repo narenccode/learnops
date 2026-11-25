@@ -76,21 +76,23 @@ items:
 
   - id: gd-001
     task: grade_draft
-    status: pending
+    status: ready
     provisional: true
+    input: b8-4
+    expected: testdata/b8-4-synthetic-submissions/reference-grades/mentor-01
+    expected_review:
+      status: not_reviewed
+    authored_by: Student 1, as the student acting as mentor (B8.4 reference grades, #221)
     depends_on:
-      - >-
-        B8.4 reference grades exist: one mentor file per submission in
-        testdata/b8-4-synthetic-submissions/reference-grades/mentor-01/. Met on 25 Nov: all 33
-        files exist (#221), written by a student acting as mentor.
       - The guide's decision on issue 186 confirms that a student acting as mentor grades all 33 submissions (accepted 24 Nov, done 25 Nov; design Q13, B8.4 O3); a second grader on at least 10 (Q47) is for Release 4
       - GradeDraftInputV1 / GradeDraftV1 agreed (design §4.3d, Q41), before a model is run on this item
     note: >-
-      Planned: the input is the B8.4 submissions (inputs entry b8-4) and the expected output the
-      mentor reference grades, one file per submission, as `input` and `expected`. The grades now
-      exist; the item stays pending until GradeDraftInputV1 / GradeDraftV1 are agreed and the
-      files are linked, and has neither until then. The mentor review form is in templates/
-      (PROPOSED).
+      The input is the B8.4 submissions (inputs entry b8-4) and the expected output the mentor
+      reference grades, one file per submission, both in the B8.4 set and not copied here. The
+      grades are labelled "student acting as mentor", a recorded deviation from PRD B8.4 and G-5,
+      and any report that uses them says so. They are not reviewed by a mentor. The set is ready
+      in the sense that the files exist; no model may be run on it until the GradeDraft contract
+      is agreed. The mentor review form is in templates/ (PROPOSED).
 
   - id: pr-001
     task: practice

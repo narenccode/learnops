@@ -177,7 +177,7 @@ for example `1834 s (30 min 34 s)`.
 - **Licence:** Apache-2.0 (decided by the guide, issue #186; PRD C-11).
 - **Status:** two chapters items (`ch-001` on `t001`, `ch-002` on `t002`), two summary items (`su-001`,
   `su-002`) and one practice item (`pr-001`) with author-drafted expected outputs, NOT REVIEWED and
-  provisional; the `ch-002` chapter starts were measured on the lecture-05 recording by Student 4. The grading-draft item is pending: B8.4 is merged (33
-  submissions) and has mentor reference grades for all 33 (#221), but the item still has no
-  `input` or `expected` files. Who supplies and reviews each input is
+  provisional; the `ch-002` chapter starts were measured on the lecture-05 recording by Student 4. The grading-draft item `gd-001` is ready and
+  provisional: its input is the 33 B8.4 submissions and its expected output the mentor reference grades for all 33 (#221, labelled "student
+  acting as mentor"), both pointed at in B8.4 and not copied; it is not reviewed, and no model may be run on it until the GradeDraft contract is agreed. Who supplies and reviews each input is
   decided (issue #186). No comparison has been run.
