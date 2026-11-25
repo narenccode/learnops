@@ -1,4 +1,5 @@
-# Author grade. NOT a reference grade: no mentor has graded this submission (guide, issue #186).
+# Author grade. NOT a reference grade: the author's own grading. The mentor reference grade for this submission is in
+# ../reference-grades/mentor-01/ (a student acting as mentor; guide, issue #186).
 schema: learnops.testdata.b8-4.author-grade/v1
 submission_id: s023
 rubric: b8-2-wk-03-task

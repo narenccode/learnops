@@ -3,7 +3,7 @@
 **Module:** video — Student 4, Video Pipeline
 **Owner:** Nagashree V (GitHub: vnaags) · **Peer reviewer:** Harshithamanjunatha
 **Release(s):** Release 3 (core), Release 5 (stretch)
-**Status:** Draft
+**Status:** In review
 
 `Status` values: `Draft` → `In review` (peer reviewing) → `Approved`. **Only the guide sets
 `Approved`**, in a pull request the guide merges. Feature code for this module starts only when the
@@ -13,7 +13,7 @@ status is `Approved` (foundation work listed in §13 under "Release 0" is allowe
 > structure follows `docs/design/TEMPLATE.md`. Where the PRD is silent, this revision wrote a
 > **Proposed** design. The guide's assistant answered the numbered questions **Q1–Q16** on 2026-11-19
 > (PR #140, §12); items he confirmed are marked **Confirmed (Qn)**. The answers address those
-> questions, **not the approval**: this document stays `Draft`, the owner marks it `In review`, and
+> questions, **not the approval**: the owner marked this document `In review` on 2026-11-25, and
 > only the guide sets `Approved`. Nothing here changes a contract or the PRD.
 
 ## 1. Purpose and scope
@@ -439,7 +439,7 @@ The answers address the questions Q1–Q16 and the sections they name; they are 
 - **Q14, a hosted production provider:** not chosen.
 - **Q17, how C-09 is met for captions, chapters and summary (proposed):** a `review_state` on the lesson, a snippet that is given only after a mentor approves, and re-processed output that waits aside until approved while the approved version keeps being served (§9). The guide decides: (1) whether this is enough for a **first** run, where the AI files sit at a predictable path before approval, or whether they must stay out of the lesson folder until approval, which would change when `lesson.json` can be written (FR-V-08) and the 30-minute target for G-7; (2) whether an **administrator** may approve, since C-09 says "mentor"; (3) whether a re-process of an approved lesson should wait for approval at all, which the proposal says yes to.
 - **`tusd` and `boto3`:** licences read on 2026-11-19; versions are pinned in the PR that adds each one.
-- **Approval:** this document stays `Draft`. The owner marks it `In review`; only the guide sets `Approved`, in a pull request he merges.
+- **Approval:** this document is `In review` (marked by the owner on 2026-11-25, with the owner box in §14 ticked). The peer reviewer checks it next; only the guide sets `Approved`, in a pull request he merges.
 
 Other items stay in §4 and §13: the B8.5 evidence, App-C 4 (lab run) and App-C 7 (WER baseline) need lab work, not a decision.
 
@@ -472,10 +472,10 @@ One requirement (or one tightly related group) per pull request. Feature work st
 | 21 | README, `.env.example`, changelog, traceability, data map, release notes | §D2 items 5–7, §E4, §E6 | All | Release 3 exit criteria |
 | 22 | *(R5, stretch)* Checkpoints | FR-V-14 | Releases 2 and 3 [§D1]; Releases 1–4 exit criteria [§C5] | Release 5. Design added before it starts |
 
-Demonstration code outside this plan: the paths demo (PR #117, merged) and the lesson processor demo (PR #129, merged 2026-11-23) are local demonstrations, not the Release 3 pipeline. The guide answered on PR #129 (2026-11-19) that the demo may merge as an **explicit one-PR demonstration exception** to CLAUDE.md §6a.2 and §7 item 7. That exception covers that PR only (the `libx264` use in it has its own narrow recorded exception, decision 0013, guide, 2026-11-22, limited to the demo): this design stays `Draft`, no design approval is implied, and feature work for the Release 3 pipeline waits until this document says `Status: Approved`.
+Demonstration code outside this plan: the paths demo (PR #117, merged) and the lesson processor demo (PR #129, merged 2026-11-23) are local demonstrations, not the Release 3 pipeline. The guide answered on PR #129 (2026-11-19) that the demo may merge as an **explicit one-PR demonstration exception** to CLAUDE.md §6a.2 and §7 item 7. That exception covers that PR only (the `libx264` use in it has its own narrow recorded exception, decision 0013, guide, 2026-11-22, limited to the demo): this design is `In review`, no design approval is implied, and feature work for the Release 3 pipeline waits until this document says `Status: Approved`.
 
 ## 14. Review and approval
 
-- [ ] Owner: I understand and can explain every section.
+- [x] Owner: I understand and can explain every section.
 - [ ] Peer reviewer: checked against the PRD chapter and the contracts; comments resolved.
 - [ ] Guide: approved (sets `Status: Approved`).
