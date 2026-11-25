@@ -1,0 +1,19 @@
+# Reference grade by mentor-01, a student acting as mentor (guide, issue #186): a recorded
+# deviation from PRD B8.4 and G-5. Graded on the B8.2 marking table before any AI draft.
+schema: learnops.testdata.b8-4.reference-grade/v1
+submission_id: s022
+rubric: b8-2-wk-03-task
+mentor_ref: mentor-01
+graded_at: '2026-11-25'
+blind_to_drafts: true
+criteria:
+- criterion: Test list
+  score: 0
+  reason: No TESTS.md.
+- criterion: Demo still works
+  score: 0
+  reason: Demo is unavailable.
+- criterion: Fixes
+  score: 0
+  reason: No two explained fixes.
+total: 0

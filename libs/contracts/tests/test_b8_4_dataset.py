@@ -6,8 +6,9 @@ agreed (see that folder's README, "Open decisions").
 
 AUTOMATED here:
   * the four schemas are valid Draft 2020-12 schemas; the manifest, every submission.yaml and
-    every expected.yaml validate; any reference-grade file validates (none exists yet); every
-    author grade validates and is labelled "author", never a mentor's;
+    every expected.yaml validate; every reference-grade file validates and follows its marking
+    table, and mentor-01 has exactly one blind grade per submission; every author grade validates
+    and is labelled "author", never a mentor's;
   * manifest ids are unique and match the submission folders one to one; rubric,
     near_duplicate_of and resubmission_of references resolve;
   * each rubric's course package and task body exist, the assignment idnumber is in the course
@@ -24,8 +25,8 @@ AUTOMATED here:
     four B8.2 tasks, belongs to the development split, and holds no editor-HTML submission.
 
 NOT automated, and therefore NOT claimed:
-  * reference grades from at least one mentor (PRD B8.4). None exists (mentor not named, design
-    Q13), so the set is not complete. This is a release-gate check to add when a mentor has graded;
+  * that the mentor-01 grades are a fair judgement: they are by a student acting as mentor (O3), a
+    recorded deviation from PRD B8.4 and G-5; a second grader is for Release 4;
   * the sealed test split (design Q47): every submission is by the same author, so all are
     development;
   * that a submission extractor (Module 3) reads these files: the reader below is a stand-in, checked against the shared vectors;
@@ -362,11 +363,24 @@ def test_reference_grade_files_are_valid(
         assert reference_grade_problems(grade, tables[grade["rubric"]]) == [], path
 
 
+def test_mentor_01_graded_every_submission_once_and_blind(manifest: Doc) -> None:
+    """PRD B8.4: reference grades from at least one mentor. mentor-01 (a student acting as mentor,
+    O3) has exactly one file per submission, named after it, graded before any AI draft."""
+    folder = REFERENCE_GRADES_DIR / "mentor-01"
+    paths = sorted(folder.glob("*.yaml"))
+    assert {p.stem for p in paths} == {s["id"] for s in manifest["submissions"]}
+    for path in paths:
+        grade = load_yaml(path)
+        assert grade["submission_id"] == path.stem, path
+        assert grade["mentor_ref"] == "mentor-01", path
+        assert grade["blind_to_drafts"] is True, path
+
+
 def test_reference_grade_rules_catch_bad_grades(
     validators: dict[str, Draft202012Validator],
     tables: dict[str, list[tuple[str, int, list[str]]]],
 ) -> None:
-    # In-memory only: no reference grade is written to the repository until a mentor grades.
+    # In-memory only: these bad grades are never written to the repository.
     rows = tables["b8-2-wk-02-task"]
     grade: Doc = {
         "schema": "learnops.testdata.b8-4.reference-grade/v1",
