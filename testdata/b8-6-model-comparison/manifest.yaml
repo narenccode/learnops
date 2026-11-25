@@ -82,7 +82,7 @@ items:
     expected: testdata/b8-4-synthetic-submissions/reference-grades/mentor-01
     expected_review:
       status: not_reviewed
-    authored_by: Student 1, as the student acting as mentor (B8.4 reference grades, #221)
+    authored_by: the student acting as mentor (B8.4 reference grades, #221)
     depends_on:
       - The guide's decision on issue 186 confirms that a student acting as mentor grades all 33 submissions (accepted 24 Nov, done 25 Nov; design Q13, B8.4 O3); a second grader on at least 10 (Q47) is for Release 4
       - GradeDraftInputV1 / GradeDraftV1 agreed (design §4.3d, Q41), before a model is run on this item
