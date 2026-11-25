@@ -1,0 +1,110 @@
+# B8.6 model comparison set (PRD B8, used by FR-M-03): PROVISIONAL.
+#
+# One fictional transcript (t001) and one real checked B8.5 transcript (t002, lecture-05) are the inputs for
+# the chapters and summary items. Their expected outputs are AUTHOR-DRAFTED and NOT REVIEWED by a mentor.
+# t002: the chapter starts are measured by the owner; the segment times between them are synthetic. Grading-draft items wait for
+# B8.4 (merged: #31, #189, #190) and its mentor reference grades (Q13). Practice has an author-drafted
+# item; who supplies each input is decided (issue #186, Q12). No comparison has been run; there are
+# no results.
+schema: learnops.testdata.b8-6/v1
+status: provisional
+rubric: rubric.yaml
+
+inputs:
+  - id: t001
+    kind: transcript
+    path: inputs/t001/transcript.en.json
+    source_note: inputs/t001/source.md
+    provisional: true
+
+  - id: t002
+    kind: transcript
+    path: inputs/t002/transcript.en.json
+    source_note: inputs/t002/source.md
+    provisional: true
+
+  - id: b8-4
+    kind: b8-4-set
+    path: testdata/b8-4-synthetic-submissions/manifest.yaml
+    source_note: inputs/b8-4/source.md
+    provisional: true
+
+items:
+  - id: ch-001
+    task: chapters
+    status: ready
+    provisional: true
+    input: t001
+    expected: expected/ch-001/chapters.json
+    expected_review:
+      status: not_reviewed
+    authored_by: Student 3
+    note: Author-drafted expected chapters; NOT REVIEWED. Input t001 is the fictional transcript; the checked B8.5 lecture-05 transcript is the second input t002, with its own item ch-002.
+
+  - id: su-001
+    task: summary
+    status: ready
+    provisional: true
+    input: t001
+    expected: expected/su-001/summary.en.md
+    expected_review:
+      status: not_reviewed
+    authored_by: Student 3
+    note: Author-drafted expected summary; NOT REVIEWED. Input t001 is the fictional transcript; the checked B8.5 lecture-05 transcript is the second input t002, with its own item su-002.
+
+  - id: ch-002
+    task: chapters
+    status: ready
+    provisional: true
+    input: t002
+    expected: expected/ch-002/chapters.json
+    expected_review:
+      status: not_reviewed
+    authored_by: Student 4
+    note: Author-drafted expected chapters for B8.5 lecture-05 (chapter and summary inputs come from Student 4, issue #186); NOT REVIEWED. The chapter start times (nine chapters, the first being the spoken consent statement at 0 s) are measured by the owner on the recording; the segment times inside a chapter are synthetic (see inputs/t002/source.md).
+
+  - id: su-002
+    task: summary
+    status: ready
+    provisional: true
+    input: t002
+    expected: expected/su-002/summary.en.md
+    expected_review:
+      status: not_reviewed
+    authored_by: Student 4
+    note: Author-drafted expected summary for B8.5 lecture-05; NOT REVIEWED.
+
+  - id: gd-001
+    task: grade_draft
+    status: ready
+    provisional: true
+    input: b8-4
+    expected: testdata/b8-4-synthetic-submissions/reference-grades/mentor-01
+    expected_review:
+      status: not_reviewed
+    authored_by: the student acting as mentor (B8.4 reference grades, #221)
+    depends_on:
+      - The guide's decision on issue 186 confirms that a student acting as mentor grades all 33 submissions (accepted 24 Nov, done 25 Nov; design Q13, B8.4 O3); a second grader on at least 10 (Q47) is for Release 4
+      - GradeDraftInputV1 / GradeDraftV1 agreed (design §4.3d, Q41), before a model is run on this item
+    note: >-
+      The input is the B8.4 submissions (inputs entry b8-4) and the expected output the mentor
+      reference grades, one file per submission, both in the B8.4 set and not copied here. The
+      grades are labelled "student acting as mentor", a recorded deviation from PRD B8.4 and G-5,
+      and any report that uses them says so. They are not reviewed by a mentor. The set is ready
+      in the sense that the files exist; no model may be run on it until the GradeDraft contract
+      is agreed. The mentor review form is in templates/ (PROPOSED).
+
+  - id: pr-001
+    task: practice
+    status: ready
+    provisional: true
+    input: t001
+    expected: expected/pr-001/practice.yaml
+    expected_review:
+      status: not_reviewed
+    authored_by: Student 3
+    depends_on:
+      - The practice draft format (FR-S-12 review card, proposed by Student 1 on PR #33) is approved by Akshita under PRD B.0 rule 3 (issue #186: the guide's rule is item 3 of his comment 7088877318; Akshita's approval is comment 7096886192); design Q12 stays open for the lecture input
+      - Student 4 answered on PR #33: t001 stays the provisional input; a B8.5 transcript becomes a second input only after it is marked checked in the B8.5 inventory (testdata/README.md), referenced by its lecture id (lecture-NN)
+      - The B7 contract (PR #54) defines no draft format, so the format is B8.6's own test-data shape
+    note: Four multiple-choice checkpoint questions (H5P question set) drawn from the fictional transcript t001; author-drafted, NOT REVIEWED. Ordering and the branching scenario are left out of the first version, short answer is not used, and interactive video is for lab demonstrations only.

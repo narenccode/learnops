@@ -1,7 +1,7 @@
 # `libs/contracts`: shared contract validators (PRD EXT-09)
 
 Validates documents against the contracts in the repository folder `contracts/`. Today it
-validates the **B1 course package** (PRD B1). Modules import it; they never copy it.
+validates the **B1 course package** (PRD B1) and the **B2 course model** (PRD B2). Modules import it; they never copy it.
 
 Not to be confused with `contracts/` at the repository root, which holds schemas and examples
 (data), not Python.
@@ -27,6 +27,26 @@ files, so it cannot check body files and lists them as not checked.
 `report.ok` is true when there are no errors. It does **not** mean everything was checked: read
 `report.not_checked`.
 
+## Validating a B2 course model
+
+```python
+from contracts import validate_course_model
+
+report = validate_course_model(model)   # a parsed course-model JSON document
+```
+
+`validate_course_model(doc)` checks the document against the B2 schema
+(`contracts/course-model.v1.schema.json`) and, when `source.timezone` is a non-empty string,
+that Python's `zoneinfo.ZoneInfo` resolves it (a schema cannot check a name). It returns the
+same `ValidationReport`; its issues use rule `B2`. A missing, null, empty or non-text timezone
+is left to the schema's rules, so it is reported once. It reads no files and no environment
+variables, and does not raise on a malformed document.
+
+It does **not** run the checker's rules CK-01 to CK-13: they belong to the checker module. For
+this function `report.not_checked` is always empty, and that does **not** mean those rules
+passed, only that this library holds no pending B2 rules. `report.ok` means the structure and
+the time zone are valid, nothing more.
+
 ## What is checked
 
 The schema first (structure, B1.1). When `course.yaml` is valid, also:
@@ -35,17 +55,38 @@ The schema first (structure, B1.1). When `course.yaml` is valid, also:
 |---|---|
 | `idnumber`s are unique within the package (sections and activities together) | B1.2 rule 6, first half |
 | Extra protected idnumbers from `ValidationConfig`, in both modes | B1.4 |
+| Unlock rule by mode, in document order (the section number, `idnumber` and title are not read; an absent `unlock` equals both fields null). Full: the first section must have `after` null; every later section needs `after` naming the single assignment of the section just before it, and that section must hold exactly one assignment. Sections-only: every listed section, a single one included, needs `after`. It may name a template activity that is not in the package, and a name that matches nothing after the merge is the checker's CK-04; it must not name an activity of its own section or a later one. Cycles across sections are the checker's CK-05. Section-level `cm = -1` in `availability.py` resolves strictly before the section | B1.2 rule 2 |
+| B2 course model: `validate_course_model(doc)` (see above) runs the B2 schema and the `zoneinfo` check, and is separate from `validate_package`. The pieces for the future builder are `timezone_issues(model)`, which checks `source.timezone` with `zoneinfo`, and `site_timezone(os.environ)` reads `SITE_TIMEZONE` with no default and raises `ConfigError` when it is missing or invalid | B2 |
 | `validate_package` only: every `body` names a file inside the package folder (not missing, not a folder, no `..`, absolute path or link that leaves the folder). Only that the file exists is checked, never its content | B1.1 |
+
+## Lesson files: chapters, slides, cues (PRD B6.2)
+
+```python
+from contracts import validate_chapters, validate_slides, validate_cues, check_within_duration
+
+report = validate_cues(json.loads(Path("cues.json").read_text("utf-8")))  # a parsed JSON array
+```
+
+`validate_chapters`, `validate_slides` and `validate_cues` check a parsed file against its schema
+(`contracts/<name>.v1.schema.json`) and return the same report as above. Chapters also get the rules a
+schema cannot express: `end` after `start`, ascending order, no overlap (gaps are allowed). A cue with
+a type in the track-role slug form that the contract does not list is valid; `readable_cues` returns what a v1 reader acts on
+and `cue_is_required` tells whether a cue can be skipped. `check_within_duration(duration_s, ...)` is
+the consumer-level rule that no time is after `duration_s` of `lesson.json`: the schemas do not do it.
+Not checked (listed in `report.not_checked`): that the files named exist, that an `h5p` ref is a real
+activity, that a `url` is allowed by the player.
 
 ## What is not checked (always listed in `report.not_checked`)
 
-One guide Page and one task Assignment per week, the unlock chain, the points total, completion
+One guide Page and one task Assignment per week, the points total, completion
 on unlock activities, an idnumber never reused across package versions, the marking table, the
 Check vocabulary and `protected_section`. Their ownership or details are still open (see
 `docs/design/studio.md` §12, `docs/design/grading.md` Q39 and the pull requests of this
 library). The body files are also listed when the validator did not check them: for a parsed
 document, or for a package whose `course.yaml` has errors. Marking workflow (CK-10) is not a
-package field.
+package field. The `.h5p` file of an `h5p` activity (B7) is never looked for: not that it exists,
+not that it is valid, not its content type, so interactive video (lab demonstrations only) is not
+checked either. `h5p_files_not_checked` says so.
 
 The checker's rules (CK-01…CK-13) work on the course model (B2) and stay in Module 2.
 
@@ -142,10 +183,21 @@ python libs/contracts/validate_examples.py [--check | --dry-run] [--contracts-di
   refuses links that leave its package folder; this tool does not.
 - The summary counts every example found, so passed, failed and not validated (the examples of an
   unusable schema) always add up to it.
-- Not checked yet: examples that no schema matches (orphans such as `moodle-ws.v1.json` are skipped
-  and the run can still exit 0), other file types next to the examples, duplicate keys, and `NaN`,
-  `Infinity` and `-Infinity`. On #68 the guide set orphans, unsupported files, duplicate keys and
-  strict JSON as a later pull request: they are not in this stack.
+- **Examples no schema takes, and files that are not examples** are reported, so nothing is
+  skipped without a word. `orphan_example`: a `.json`, `.yaml` or `.yml` file directly in
+  `contracts/examples/` that is not `<name>.v<N>.<suffix>.<ext>` of an existing schema (for example
+  `moodle-ws.v1.json`, or a file of a version that has no schema). `orphan_example_folder`: a folder
+  in `contracts/examples/` named after no schema, such as the folder of a misnamed schema.
+  `unsupported_file`: any other file directly in `contracts/examples/`, or at the top of a
+  schema's example folder (`readme.txt`, `README.md`). Subfolders of an example folder (B1's
+  `weeks/`) and hidden files (`.gitkeep`) are not examples and are not reported. Each problem
+  has a `next:` hint. The run exits 1.
+- **Strict parsing.** A key repeated in one object is an error in JSON and in YAML (Python and
+  PyYAML would silently keep the last value). In YAML the report gives the line and column.
+  A YAML merge key (`<<: *anchor`) is not a repeated key, and the same key in different objects is
+  fine. `NaN`, `Infinity` and `-Infinity` are errors in JSON, because they are not JSON. The error
+  is `unreadable_example`, like any other file that cannot be read. YAML's own `.nan` and `.inf`
+  are not checked.
 - Exit codes: `0` when every example passes, `1` when any problem is found, `2` for a usage error
   or a missing contracts folder. The tool only reads files: `--check` (the default) and
   `--dry-run` do the same, and there is nothing to undo.

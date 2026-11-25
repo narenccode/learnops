@@ -137,8 +137,8 @@ git push -u origin <module>/design-doc-skeleton
 
 Git prints a link. Open it, click the small arrow next to **Create pull request**, choose **Create draft pull request**, and fill in the checklist. Keep it a draft while you fill in the document (the review bot skips drafts). When it is ready:
 1. click **Ready for review** and wait for the **checks** to turn green;
-2. do what the bot's **Next step** line says (usually: ask your **peer reviewer** to review);
-3. when the label is `ready-to-merge`, click **Squash and merge**.
+2. read the bot's advice, then pick one reviewer (usually your **peer reviewer**);
+3. click **Enable auto-merge**: the PR merges by itself once it is approved and the checks pass.
 
 You cannot push to `main` directly: it is protected, on purpose.
 
@@ -158,7 +158,7 @@ Read in this order. Make a list of anything unclear and send it to your guide (�
 
 ### The rules you can never break (the short version; the full list is in `CLAUDE.md` §2)
 1. **Never modify Moodle or BigBlueButton.** No plugins, themes, patches or database edits. Connect only through Moodle backups, Moodle web services, LTI 1.3, a browser (tests), and BigBlueButton's API.
-2. Everything must work on **Moodle 4.5 and 5.3**.
+2. Everything must work on **Moodle 5.3**.
 3. **No secrets in the repository.** No API keys, tokens or passwords in code, tests, docs or logs. Use environment variables, and document them in `.env.example`.
 4. **Test data only.** No real learner data, real course content or real recordings.
 5. **AI output is always a draft** until a mentor approves it. Tools never release grades.
@@ -171,10 +171,10 @@ Read in this order. Make a list of anything unclear and send it to your guide (�
 - Commit messages start with the requirement ID when there is one, e.g. `FR-S-03: validate marking table`.
 - Every pull request: requirement IDs listed, `/preflight` passing, tests added, `docs/traceability.md` updated, your peer reviewer approved. The reviewer **runs the tests**, not just reads the code.
 - Merge with **Squash and merge** only.
-- **The review bot.** Open a **draft** PR while you work, click **Ready for review** when done, do what the bot's **Next step** line says, get one peer's approval, and merge when the label is `ready-to-merge`. Read [docs/REVIEW-PROCESS.md](REVIEW-PROCESS.md) once: it has the steps, the labels, and prompts for your Claude Code. Keep GitHub email notifications on for this repository.
+- **The review bot.** Open a **draft** PR while you work, click **Ready for review** when done, read the bot's advice, ask one teammate to review, and turn on auto-merge. Details: `docs/REVIEW-PROCESS.md`.
 
 ### Contracts (PRD Part B)
-- Until Release 0 is frozen, each owner creates their contract files in `contracts/` through a normal pull request that **all four of you approve**. Claude Code will ask permission before it touches `contracts/`; approve it when that is really your intention.
+- Until Release 0 is frozen, each owner creates their contract files in `contracts/` through a normal pull request that one owner of an affected module approves (the guide approves the PRD text). Claude Code will ask permission before it touches `contracts/`; approve it when that is really your intention.
 - After the freeze, contracts change only through `/contract-change` (additive and optional only).
 - Never change a contract as a side effect of other work.
 
@@ -226,7 +226,7 @@ First prompt to try in Claude Code: `/design-doc studio`
 First prompt to try in Claude Code: `/design-doc checker`
 
 ### Student 3 (`Harshithamanjunatha`): Grading assistant + model interface
-1. **Contract B4: Moodle web-services usage.** `contracts/moodle-ws.v1.md`: the function list with parameters, the minimum capabilities, and which entries still need checking against Moodle 4.5 and 5.3 once the lab exists (PRD §B4, Appendix C).
+1. **Contract B4: Moodle web-services usage.** `contracts/moodle-ws.v1.md`: the function list with parameters, the minimum capabilities, and which entries still need checking against Moodle 5.3 once the lab exists (PRD §B4, Appendix C).
 2. **Contract B5: model and speech interface.** `contracts/model-interface.v1.schema.json` plus a **skeleton of `libs/model_interface/`**: the task registry, a local provider, a fake provider for tests, the versioned `prompts/` folder, structured-output validation, and unit tests. **No API keys anywhere.**
 3. **Sandbox design** for running untrusted learner code (PRD §C3.5, SEC-04) in your design document.
 4. Plan the **synthetic submissions** (test set B8.4): what a good, average and poor submission looks like; who will write reference grades.

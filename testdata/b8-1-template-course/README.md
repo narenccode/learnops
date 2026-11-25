@@ -1,11 +1,14 @@
 # B8.1 Template Course Backup
 
-> **Status: skeleton.** No `.mbz` exists; nothing is verified on Moodle. Labels: **PRD** = stated by
-> the PRD. **Owner** = confirmed by the project owner in a GitHub reply. Sources used in this file: five
+> **Status: rebuilt and tested on Moodle 5.3 on 2026-11-24 (the first build of 2026-11-23 was replaced; §8); the results are in §8 and in decision 0009. Released on 2026-11-24 as [`testdata-b8-1-v1`](https://github.com/narenccode/learnops/releases/tag/testdata-b8-1-v1), checked with `download.py --check`.** The `.mbz` and its SHA-256 are in §1. Release 0 builds and tests on
+> Moodle **5.3 only**; Moodle 4.5 is not tested; waived for Release 0 (B8.1 only; see [0009](../../docs/decisions/0009-b8-1-template-course.md) and the [register](../../docs/decisions/README.md)), and is not recorded as passed. Labels: **PRD** = stated by
+> the PRD. **Owner** = confirmed by the project owner in a GitHub reply. Sources used in this file: six
 > owner replies on Issue #55, cited by date or by name: 2026-11-07; 2026-11-11; 2026-11-12 at 06:46 UTC
-> (cited as 2026-11-12); 2026-11-12 at 14:43 UTC (cited as "the 14:43 reply"); and 2026-11-13 at 09:36 UTC
-> (cited as "the 09:36 reply", a separate, later reply). A plain "Owner" with no date means an owner reply
-> on Issue #55. Other sources: Issue #65 (2026-11-12, section identity) and Issue #61 (2026-11-11, licence;
+> (cited as 2026-11-12); 2026-11-12 at 14:43 UTC (cited as "the 14:43 reply"); 2026-11-13 at 09:36 UTC
+> (cited as "the 09:36 reply", a separate, later reply); 2026-11-14 at 12:19 UTC (cited as "the
+> 11-14 reply": it replaces the earlier "build on 4.5" decision, see §3); and 2026-11-18 (cited as "the
+> 11-18 reply", with the question number it answers, for example P27). A plain "Owner" with no date
+> means an owner reply on Issue #55. Other sources: Issue #65 (2026-11-12, section identity) and Issue #61 (2026-11-11, licence;
 > the 2026-11-12 reply on #55 refers to it). A row that cites another source says so. **Proposal** = marked
 > a proposal by the owner or in a Draft design document, configurable, not a confirmed requirement.
 > **PENDING GUIDE CONFIRMATION** = open decision. **PENDING MOODLE LAB** = a fact only a Moodle site can
@@ -21,10 +24,12 @@ Owner), so §4 gives a plain list of expected protected items and no separate fo
 | Item | Value |
 |---|---|
 | Owner and release | Student 1 (PRD §B8); Release 0 test data (PRD §D1) |
-| Delivery | Owner: GitHub release asset, tag `testdata-b8-1-v1`, fetched by a download script; `*.mbz` is already gitignored |
+| Delivery | Owner: GitHub release asset, tag `testdata-b8-1-v1`, fetched by a download script; `*.mbz` is already gitignored. The README and the release label the file "built on Moodle 5.3" (Owner, the 11-14 reply) |
+| Rebuilds | Owner (the 11-18 reply, P24): a rebuild is a new asset under a new tag, `testdata-b8-1-v2` (then v3, ...). v1 is kept; update the SHA-256 and this README to name the current asset. Never overwrite a tag. A wrong upload is deleted and replaced by a new version, never overwritten (P33) |
 | Backup file name | Proposal (Owner, 2026-11-12): `b8-1-template-course.v1.mbz` |
-| Download script | Proposal (Owner, 2026-11-12): `testdata/b8-1-template-course/download.sh` (not written yet) |
-| SHA-256 of the `.mbz` | PENDING MOODLE LAB (record here and in `testdata/README.md` when the backup exists) |
+| Download script | `download.py` in this folder. Owner (the 11-18 reply, P33): `--check` is read-only: it verifies the SHA-256 of the `.mbz` already at the configured path and writes or deletes nothing; `--dry-run` prints the source and target and writes nothing; the plain run downloads to a `.part` file first, and if its SHA-256 verification fails, or the download fails or is stopped, the `.part` file is removed; the undo is deleting the downloaded `.mbz`. It is Python, not the `download.sh` proposed on 2026-11-12, because the project stack is Python and the lab PCs may run Windows. Until the SHA-256 is recorded in it, the script refuses to download (exit 2). Tests: `libs/contracts/tests/test_b8_1_files.py` |
+| SHA-256 of the `.mbz` | `d8869a012a39ae869c54f744d6c391387534bdab2389d8a8aecfd5b481c5585d` (12,612 bytes; the build record is in §8). This is the 24 Nov rebuild: the guide asked for it on issue #112 (§8, finding 2), and the 23 Nov file was replaced and is never uploaded. Recorded in `download.py` and `testdata/README.md` too |
+| Private lab address in the file | The `.mbz` carries a **private lab address** (the badge's issuer URL and the links in its award message, and the site address Moodle stores in every backup) and nothing else about the lab: no users and no email addresses (checked, §8). The address cannot be removed by a setting on 5.3, so the file is published as it is and is not edited by hand (guide, [issue #112, 2026-11-23](https://github.com/narenccode/learnops/issues/112#issuecomment-7101983721), item 4). The address is not written anywhere else in the repository |
 
 ## 2. Source and licence
 
@@ -36,19 +41,20 @@ PRD C-07 and §B8: test data only, no real learner data (CLAUDE.md rule 4: no re
 | Creator | The B8.1 owner (Student 1) provides the `.mbz` (Owner) |
 | Licence | Owner (Issue #55, 2026-11-12, referring to the answer on Issue #61, 2026-11-11): Apache-2.0, the same as the repository (PRD C-11, root `LICENSE`) |
 | Source of the content | Owner (Issue #55, 2026-11-12): fictional content written for LearnOps. No real learner data and no third-party material |
-| Badge image | Owner (2026-11-12): a plain image generated by the project under Apache-2.0, with no third-party image. Which tool generates it, and where the image file is kept: PENDING GUIDE CONFIRMATION |
-| Moodle site used to build it | PENDING MOODLE LAB |
+| Badge image | Owner (2026-11-12): a plain image generated by the project under Apache-2.0, with no third-party image. Owner (the 11-18 reply, P9b): a plain square PNG, its source kept in this folder with a record of how it was made. **How it was made:** `make_badge.py` (Python standard library only, no font or third-party image) writes `badge.png`, 512 x 512 pixels, a blue square with a dark-blue 32-pixel border. `python testdata/b8-1-template-course/make_badge.py --check` confirms the committed image matches the script |
+| Moodle site used to build it | The Moodle 5.3 lab site (Owner, the 11-14 reply). Release exactly as Moodle shows it: **5.3+ (Build: 20261030)**; rebuilt on 2026-11-24 |
 
 ## 3. Moodle version and backup details
 
 | Item | Value |
 |---|---|
-| Moodle release used | Owner (2026-11-12): build the template on **Moodle 4.5**, the oldest supported version (PRD C-03: must work on 4.5 and 5.3). The owner's reason is that a backup restores into the same or a newer version, so a 4.5 backup restores on 5.3. **That compatibility is the owner's statement; it has not been verified in the Moodle lab** (PENDING MOODLE LAB, §8). Both lab sites exist (Owner). Not built yet |
+| Moodle release used | Owner (the 11-14 reply, which replaces the 2026-11-12 decision to build on 4.5): build the template on **Moodle 5.3** and run every restore and the sections-only merge test on **5.3**, to save time. The owner reports (Issue #55, 2026-11-14) that Moodle documents that a backup restores into the same or a newer version only, so a template built on 5.3 is expected not to restore on 4.5. This is the owner's report: it has not been checked in the lab or against the Moodle documentation for this project, and the PRD does not state it. Not built yet |
+| Moodle 4.5 | **Not tested; waived for Release 0 (B8.1 only; see [0009](../../docs/decisions/0009-b8-1-template-course.md) and the [register](../../docs/decisions/README.md)).** It is not recorded as passed. It can be tested later with the same steps. Known cost (Owner, the 11-14 reply): if the project later needs the template on 4.5 (PRD C-03: must work on 4.5 and 5.3), it is rebuilt once on 4.5. The decision record and §8 record the waiver with its date |
 | Course full name, short name, format | Proposal (Owner, 2026-11-12): full name `Template course`, short name `template`, the default Topics (Custom sections) format |
-| User data in the backup | OFF, so the file contains no users (Owner). Check on the finished file, including for real learner data: PENDING MOODLE LAB |
-| Exact build, backup format version, other backup settings, file size, date | PENDING MOODLE LAB |
+| User data in the backup | OFF, so the file contains no users (Owner). Checked on the rebuilt file on 2026-11-24 (Akshita): no `users.xml`, the `users` setting in `moodle_backup.xml` is 0, nobody is enrolled, and no email-like text is in the file (§8) |
+| Exact build, backup format version, other backup settings, file size, date | Build 5.3+ (Build: 20261030); backup format `moodle2`, `backup_version` 2026100500, `backup_release` 5.3; file size 12,612 bytes; date 2026-11-24. Settings of the 24 Nov backup (recorded by Akshita from the Backup page): **on** = activities, blocks, files, filters, badges, calendar events, groups, competencies, custom fields, content bank content, legacy files; **off** = users, anonymise user information, role assignments, comments, user completion details, logs, grade history, user state of H5P content |
 | Section identity | Owner (Issue #65, 2026-11-12): Moodle sections have no `idnumber` on 4.5 or 5.3, so the template's sections carry none. Sections are matched by section number, and the protected section is found by its number (PRD §B1.4). The matching change to the B1 contract is a separate `/contract-change` pull request, not part of B8.1 |
-| `protected_section` (PRD §B1.4: configurable, no default) | Proposal (Owner, 2026-11-07): section 3, kept configurable |
+| `protected_section` (PRD §B1.4: configurable, no default) | Section 3 (Owner, #61 A2, 2026-11-16; first proposed on 2026-11-07). The value stays configurable: the contract and the validator never hard-code it |
 | Availability and visibility | Owner (2026-11-12): no availability rules; everything is visible |
 
 **Section layout** (titles, activities and `idnumber`s in the table below: Owner, 2026-11-12). The
@@ -63,11 +69,17 @@ non-protected content to leave alone. The `tpl-` prefix keeps these `idnumber`s 
 | 3 | `Final project` | The two protected items (§4) |
 
 `Sample task` is **ungraded**. Proposal (Owner, 2026-11-12, Points): the Final project Assignment gets
-the 100 points and is the only graded item (§4). The owner did not name `Sample task` in that answer; it
-is ungraded because the Final project is the only graded item.
+the 100 points and is the only graded item (§4). Owner (the 11-18 reply, P27): `Sample task` is an
+Assignment left ungraded. On 5.3, find and record the name of the setting that leaves no grade item (or 0
+points), and the completion setting (submit): recorded on 2026-11-23, read from the 5.3 screens: `Grade > Type` = `None`; `Use marking workflow` = `No`; completion = `Add requirements`, then `Make a submission` (`View the activity` unticked). The 24 Nov rebuild has `completionsubmit` 1 and no grade completion on `tpl-sample-task`; it did not re-check the grade type, so `Grade > Type` = `None` rests on the 23 Nov screens.
 
-Not given by the owner, so still open: the text of the two Pages, and the other settings of `Sample task`
-(for example the submission types): PENDING GUIDE CONFIRMATION.
+**Text of the three activities** (Owner, the 11-18 reply, P27; fictional):
+
+| Activity | Text |
+|---|---|
+| `Welcome` (Page) | Welcome to the template course. It shows the weekly pattern: a guide page and a task. Add your weeks after it. |
+| `Sample guide` (Page) | This is a sample guide page. It shows where weekly guidance goes. |
+| `Sample task` (Assignment, description) | This is a sample task. It is not graded; the final project is the only graded item. |
 
 ## 4. Protected items
 
@@ -75,12 +87,12 @@ PRD §B1.4: owned by the template; never generated, changed or duplicated by Lea
 PRD defaults, configurable (Owner). Completion and badge: Owner. Placement and settings: Proposal,
 unless a row below says Owner.
 
-**Expected protected items** (plain list for the checker; to be checked on the finished `.mbz`: PENDING MOODLE LAB):
+**Expected protected items** (plain list for the checker; checked on the rebuilt `.mbz` on 2026-11-24: all four items are in it, §8):
 
 | idnumber | Type | Section | Count |
 |---|---|---|---|
-| `final-project` | Assignment | 3 "Final project" (Owner for the title; the number 3 is a Proposal) | 1 |
-| `course-feedback` | Feedback | 3 "Final project" (Owner for the title; the number 3 is a Proposal) | 1 |
+| `final-project` | Assignment | 3 "Final project" (Owner for the title; Owner, #61 A2, for the number 3) | 1 |
+| `course-feedback` | Feedback | 3 "Final project" (Owner for the title; Owner, #61 A2, for the number 3) | 1 |
 | none | Course completion criteria | course level | 2: final project, feedback (Owner) |
 | none | Course badge "Template course badge" | course level | 1 (Owner) |
 
@@ -93,32 +105,53 @@ that holds the two activities; it is not one of the four items.
 |---|---|
 | Final project | Proposal (Owner, Issue #55, 2026-11-07, item 6): Moodle Assignment; 5 files; 1 attempt; completion on grade; no rubric (a mentor adds it) |
 | Course feedback: type, name, idnumber | Owner (Issue #55, 2026-11-07, item 2): Moodle's own Feedback activity, named "Course feedback", idnumber `course-feedback` (the PRD default) |
-| Course feedback: anonymous | **Conflicting owner answers, not resolved here.** Item 2 of the 2026-11-07 reply states it as part of the answer ("Moodle's own Feedback activity, anonymous, ..."). Item 6 of the same reply lists "an anonymous Feedback activity" among the settings the owner said to mark as proposals. PENDING GUIDE CONFIRMATION: whether anonymity is confirmed or a proposal. Until answered, this README does not treat it as confirmed |
+| Course feedback: anonymous | **Owner-confirmed** (the 11-18 reply, P28): anonymous. The 2026-11-07 reply intended it; listing it among the proposals was the mistake |
 | Points | Proposal (Owner, 2026-11-12): the Final project Assignment gets the 100 points and is the only graded item, so `Sample task` (§3) is ungraded. The Moodle default is left, so the points count in the course total. The owner said not to design around it |
 | Final project Assignment name | Owner (the 14:43 reply): `Final project`, idnumber `final-project` |
-| Exact Moodle setting names and values on 4.5 and 5.3 | PENDING MOODLE LAB |
+| Exact Moodle setting names and values on 5.3 (4.5: not tested; waived for Release 0 (B8.1 only; see [0009](../../docs/decisions/0009-b8-1-template-course.md) and the [register](../../docs/decisions/README.md))) | Recorded in §8, read from the 5.3 screens: the 5.3 completion choices are `None`, `Students must manually mark the activity as done` and `Add requirements`; under `Add requirements` the boxes are `View the activity`, `Make a submission` and `Receive a grade` (`Any grade` or `Passing grade`) for an assignment, and `View the activity` and `Submit feedback` for the feedback activity; the other fields read: `Grade > Type` = `None`, `Use marking workflow`, `Record user names` = `Anonymous`. **Final project has both `Receive a grade` and `Make a submission` ticked**, where the guide asked for `receive a grade` only (§8, finding 2) |
 
 **Baseline for the merge test.** PRD §C1.7 expects the protected items "unchanged (same idnumbers,
 same count, badge and completion criteria intact)"; the list above is the baseline. Totals for the
-finished template: PENDING MOODLE LAB.
+finished template: five activities (`tpl-welcome`, `tpl-sample-guide`, `tpl-sample-task`, `final-project`, `course-feedback`) plus Moodle's own `Announcements` forum in section 0; one graded item (`final-project`, 100 points); two completion criteria; one badge, not available (§8).
 
 **Comparison method (Owner, the 14:43 reply).** Before and after the sections-only merge, write down the
 same table for each protected item, with these fields taken from Moodle's own screens: type, name,
 idnumber, section number, points, completion setting and visibility. The two tables must be equal. The
 B8.1 owner was to send this field list to Shraddha, so that the checker later compares the same fields:
-**sent** (reported by the B8.1 owner; no date or channel is recorded here). Her response and the alignment
-with the checker are **pending**; no confirmation from her is recorded. How the fields apply to the course
-completion criteria and the badge, which have no section number or points: PENDING GUIDE CONFIRMATION (the
-owner said "each protected item" and did not say). The earlier Draft proposal in `docs/design/studio.md`
-(compare `idnumber`s, count, badge and completion criteria) is not the confirmed method.
+**sent and answered**: Shraddha confirmed the fields in her review of #141 (2026-11-19); the one difference
+for the badge is recorded below. The earlier Draft proposal in
+`docs/design/studio.md` (compare `idnumber`s, count, badge and completion criteria) is not the confirmed
+method.
+
+**How the fields apply to each item** (Owner, the 11-18 reply, P32). Never leave a field blank; the two
+tables must be equal field by field.
+
+| Field | Final project, Course feedback | Course completion | Course badge |
+|---|---|---|---|
+| Type | filled | filled | filled |
+| Name | filled | filled | filled |
+| idnumber | filled | not applicable | not applicable |
+| Section number | filled | not applicable | not applicable |
+| Points | filled | not applicable | not applicable |
+| Completion | the completion setting | the criteria list | the award rule |
+| Visibility | filled | not applicable | not applicable |
+| Extra fields | none | none | issuer, description, active state |
+
+**The manual and the checker comparisons differ for the badge** (Shraddha, checker owner, review of
+#141, 2026-11-19). The checker builds its model from the `.mbz` (course model v1, B2). For the final
+project and the course feedback, that model holds all seven fields above; for course completion, its
+criteria list. For the badge it holds only the name and the award rule: **issuer, description and active
+state are not in model v1**, so only the lab tables compare them. If 5.3 leaves the unawarded badge out
+of the `.mbz` (P35, §6), the model has no badge at all; the checker treats that as the recorded deviation,
+not as a missing protected item, and takes it from the decision record after lab step 8.5.
 
 ## 5. Course completion configuration
 
 | Setting | Value |
 |---|---|
 | Criteria | PRD §B1.4 lists "Course completion criteria and course badge" as protected and says they "Point to the two items above" (`final-project`, `course-feedback`). Owner (Issue #55, 2026-11-07): final project graded AND course feedback submitted |
-| Completion on the course | PRD §A11 says lab sites have completion tracking on. Owner (Issue #55, update of 2026-11-11): it is switched on in both lab sites (4.5 and 5.3), on by default; not yet checked by the B8.1 owner on a site. Completion settings of the template course itself: PENDING MOODLE LAB |
-| State after restore, including after a sections-only merge | PENDING MOODLE LAB |
+| Completion on the course | PRD §A11 says lab sites have completion tracking on. Owner (Issue #55, update of 2026-11-11): it is switched on in both lab sites (4.5 and 5.3), on by default; not yet checked by the B8.1 owner on the 5.3 site. Checking it needs an administrator screen: ask the guide (Owner, the 11-14 reply). Completion settings of the template course itself: PENDING MOODLE LAB |
+| State after restore, including after a sections-only merge | Restored copy (course 11) and merge target (course 12), 24 Nov: the completion criteria are unchanged (§8) |
 
 ## 6. Badge configuration
 
@@ -126,26 +159,33 @@ owner said "each protected item" and did not say). The earlier Draft proposal in
 |---|---|
 | Badge | PRD §B1.4 lists the course badge as protected; its row, shared with the completion criteria, says "Point to the two items above" (`final-project`, `course-feedback`), and gives no other description. Owner (Issue #55, 2026-11-07): course badge "Template course badge"; awarded on course completion; inactive in the template; placeholder issuer |
 | Description | Owner (2026-11-12): `Awarded when the template course is completed (placeholder).` |
-| Image and image licence | Owner (2026-11-12): a plain image generated by the project, under Apache-2.0, with no third-party image (see §2) |
-| Placeholder issuer text | PENDING GUIDE CONFIRMATION (the owner said "placeholder issuer" but gave no text) |
-| Course badges on the lab sites | Owner (Issue #55, update of 2026-11-11): switched on in both lab sites, on by default; not yet checked by the B8.1 owner on a site |
-| Badge in the `.mbz` on 4.5 and 5.3; state after restore and merge | PENDING MOODLE LAB |
+| Image and image licence | Owner (2026-11-12): a plain image generated by the project, under Apache-2.0, with no third-party image. The file is `badge.png` in this folder, made by `make_badge.py` (see §2) |
+| Placeholder issuer text | Owner (the 11-18 reply, P9b): `LearnOps lab (placeholder)` |
+| If 5.3 leaves the unawarded badge out of a users-off backup | Owner (the 11-18 reply, P35). Find out first, in lab step 8.5 (open the `.mbz` and look for the badge). If it is left out: record the deviation ("the `.mbz` contains no unawarded badge"; PRD B8.1 expects a badge) in `docs/decisions/0009-b8-1-template-course.md`, this README and the B8.1 row of `docs/traceability.md`; keep the `.mbz` free of users; add the badge by hand to each restored course with `badge.png` and the settings above. **Never add a test user to carry the badge.** The merge test then compares the badge after the manual add, and the record says the `.mbz` does not hold it |
+| Course badges on the lab sites | Owner (Issue #55, update of 2026-11-11): switched on in both lab sites, on by default; not yet checked by the B8.1 owner on the 5.3 site. Checking it needs an administrator screen: ask the guide (Owner, the 11-14 reply) |
+| Badge in the `.mbz` on 5.3; state after restore and merge (4.5: not tested; waived for Release 0 (B8.1 only; see [0009](../../docs/decisions/0009-b8-1-template-course.md) and the [register](../../docs/decisions/README.md))) | **The badge is in the `.mbz`:** `badges.xml` holds `Template course badge`, status 0 (not available), issuer `LearnOps lab (placeholder)`. It is present on the restored copy and unchanged after the merge (§8). The risk of P35 did not occur on this build, so no manual badge add was needed. The issuer text is the guide's own wording ([answer P9b, 2026-11-18](https://github.com/narenccode/learnops/issues/55#issuecomment-6985988243)) |
 
 ## 7. Restore instructions
 
 **Not written yet:** the restore steps are not verified (PRD App-C items 2 and 3). **Fixed:** Moodle's
-own Backup/Restore only (CLAUDE.md rule 1). Owner (2026-11-12): the site administrator restores backups,
-using Moodle's own Restore (PRD §A5); App-C item 10 still verifies the roles. For this manual test the
-route is Moodle's own Restore page in the browser, as the site administrator (Owner, the 14:43 reply). The
+own Backup/Restore only (CLAUDE.md rule 1). Owner (the 11-14 reply, which replaces "as the site
+administrator"): the B8.1 owner uses their own account on the 5.3 lab site, with Moodle's built-in
+**Manager** role at site level. The Manager role can back up, restore and merge courses and cannot change
+site settings; a step that needs an administrator screen goes to the guide. The Manager account was not
+tested on every step: if a restore or merge screen refuses it, write down the exact message and tell the
+guide on Issue #55; do not work around it. Using the Manager account for these tests is the guide's
+decision (the 11-14 reply); PRD §A5 names the site administrator as the role that restores courses. App-C
+item 10 still verifies which roles hold the backup and restore capabilities. For this
+manual test the route is Moodle's own Restore page in the browser (Owner, the 14:43 reply). The
 command-line route is the harness's separate question (App-C item 3). A sections-only backup is merged into
 a course made from the template (PRD §B1.4).
 
 | Item (Owner decision, or pending lab detail) | Status |
 |---|---|
 | Restore route for the harness (App-C item 3: admin CLI or browser automation) | The harness's own question, separate from B8.1 (Owner, the 14:43 reply). Not decided here |
-| Exact steps and options to create a course and to merge | PENDING MOODLE LAB |
-| Clean-up after a test restore | Owner (the 09:36 reply): Every course created for a test is deleted after its result is recorded and checked. The merge-test course follows the merge-test sequence below. How to delete a course: PENDING MOODLE LAB. Whether the sections-only copy and failed builds count as courses created for a test, and what happens to local copies: PENDING GUIDE CONFIRMATION |
-| Cross-version restore | Owner (the 14:43 reply): build the template once, on 4.5, and test the restore on 4.5 and on 5.3. Do not test 5.3 to 4.5: the owner says Moodle's documentation says restoring into an older version is not supported. For each restore, record the Moodle version, the date and the outcome. That a 4.5 backup restores on 5.3 is the owner's statement and is not yet verified in the Moodle lab: PENDING MOODLE LAB |
+| Exact steps and options to create a course and to merge | Run on 2026-11-24 (and 2026-11-23 for the first build): Restore with `Restore as a new course`; merge with `Restore into this course`, then `Merge the backup course into this course`, defaults kept (§8). The completion, feedback and course-completion labels are from the screenshots (§8); the menu labels of the Restore and Backup pages were reported by the operator |
+| Clean-up after a test restore | Owner (the 09:36 reply): every course created for a test is deleted after its result is recorded and checked. Owner (the 11-18 reply, P25, P26, P33): that includes restored copies and the merge target; **the template course stays**. Local copies, screenshots, logs and the downloaded `.mbz` stay local, out of Git, and are deleted once the evidence is in the record. Any deletion beyond a test course needs the guide's approval. Do not change site settings or the recycle bin. How to delete a course on 5.3: PENDING MOODLE LAB |
+| Cross-version restore | Owner (the 11-14 reply, which replaces the 14:43 reply on this point): build the template on 5.3 and run every restore and the sections-only merge on 5.3 only. Moodle 4.5 is not tested; waived for Release 0 (B8.1 only; see [0009](../../docs/decisions/0009-b8-1-template-course.md) and the [register](../../docs/decisions/README.md)). There is no 4.5 restore test and no 5.3-to-4.5 test in Release 0; the owner expects a 5.3 template not to restore on 4.5 (owner's report, §3; not verified). For each restore, record the Moodle version, the date and the outcome |
 
 ### Release 0 sections-only backup
 
@@ -156,22 +196,28 @@ test must use section numbers after 3, because a merge restore keeps the name an
 that already exists at that number. Studio replaces this later. PRD §B1.4: sections-only output excludes
 the protected items and their section.
 
-**Draft steps: the author's proposal, not confirmed by the owner, untested and unverified.** No step has
-been run. Moodle menu and option names are filled in when the steps are run (PENDING MOODLE LAB).
+**Steps (Owner, the 11-18 reply, P15c, P30, P31).** Run on 2026-11-24 on Moodle 5.3+ (Build: 20261030), after the first run of 2026-11-23; the
+results are in §8. Moodle menu and option labels are as reported by the operator; the completion and feedback labels are from screenshots (§8).
 
-1. *(Draft)* Restore the template (§1) into a new course on Moodle 4.5. This copy is for building the
-   backup only.
-2. *(From the owner's method)* In the copy, remove the protected items. Exactly which items: see "Exact
-   backup contents" below.
-3. *(From the owner's method)* Give the sections for the merge test section numbers 4 and up.
-4. *(From the owner's method; options are not decided)* Make the backup of the copy with Moodle's Backup
-   page. Backup settings: PENDING GUIDE CONFIRMATION.
-5. *(Draft; the sequence it points to is the owner's, below)* Run the merge-test sequence below with that
-   backup (PRD §B1.4, §C1.7, App-C item 2).
+1. Restore the template (§1) into a new course on Moodle 5.3. This copy keeps sections 1 to 3; **do not
+   renumber it**.
+2. In the copy, add two generated sections **by hand**, numbered 4 and 5, each with one Page and one
+   Assignment. The B8.2 sample is only a package, and Studio's sections-only build is Release 2, so
+   neither is a shortcut here.
+3. Make the sections-only backup on Moodle's Backup page, with **user data off**. It contains **only
+   sections 4 and 5 and their activities**: no sections 1 to 3, no `tpl-` activities, no section 3, no
+   final project, no feedback, no course completion criteria and no badge. Exclude them on the Backup
+   page and record each choice.
+4. Check the user data in every `.mbz` you make (the template and the sections-only backup): open the
+   archive and record whether a users folder exists, what the backup XML records for users, and whether
+   any username or email appears. Do not assume the layout. If any user data is present, **stop and
+   report on Issue #55**. The site holds test data only.
+5. Run the merge-test sequence below with that backup (PRD §B1.4, §C1.7, App-C item 2). Sections 1 to 3
+   of the target keep their name and summary because they already exist at those numbers.
 
 **Merge-test sequence (Owner, the 09:36 reply).** The merge target is a course restored from the template,
 so it is a test course like any other. Once a course is deleted nothing can be re-checked, so the order
-below is fixed. Nothing here has been run.
+below is fixed. Nothing here is recorded as run.
 
 1. Restore the template into a new course.
 2. Record the "before" table for every protected item: type, name, idnumber, section number, points,
@@ -184,81 +230,123 @@ below is fixed. Nothing here has been run.
 6. If the two tables differ: keep the course and report the difference on Issue #55 before taking further
    action. A difference means the merge changed a protected item.
 
-**Our mapping (not the owner's words).** The sections-only backup for step 3 is made first, by draft steps 1
-to 4 above. How the §4 fields apply to the course completion criteria and the badge in step 2 is PENDING
-GUIDE CONFIRMATION (§4).
+**Our mapping (not the owner's words).** The sections-only backup for step 3 is made first, by steps 1 to 4
+above. The "before" and "after" tables use the fields of §4, as the 11-18 reply (P32) applies them to the
+completion criteria and the badge.
 
 Screenshots and logs stay local and are not committed (§8). The decision-record number is still taken when
-you merge, after rebasing (Owner, Issue #55, 2026-11-12); no numbering convention is assumed here. How the
-record is held before then is PENDING GUIDE CONFIRMATION (§9).
+you merge, after rebasing (Owner, Issue #55, 2026-11-12); no numbering convention is assumed here. The
+results go in the existing record, `docs/decisions/0009-b8-1-template-course.md`, before the merge-test
+course is deleted (Owner, the 11-18 reply, P34).
 
-**Exact backup contents and missing details: all PENDING GUIDE CONFIRMATION. No solution is assumed.**
+**Backup contents** (Owner, the 11-18 reply, P15c, P30): settled by steps 1 to 4 above. Still to record in
+the lab: the exact Backup-page choices that exclude sections 1 to 3 and the protected items, and the
+contents of the two generated sections: recorded in §8 (the sections-only backup row and the build record).
 
-| Open point | Why it is open |
-|---|---|
-| Whether sections 1 to 3 and their activities (`tpl-welcome`, `tpl-sample-guide`, `tpl-sample-task`) are in the backup | The owner did not say. PRD §B1.4 excludes the protected items and their section. The effect of merging sections that already exist in the template is not known |
-| Which of the four PRD §B1.4 protected items are removed from the copy and absent from the backup: (1) final project assignment (`final-project`), (2) course feedback activity (`course-feedback`), (3) course completion criteria, (4) course badge | The owner's method says "the protected items" and does not list them. PRD §B1.4 names all four. These items are separate from the protected section that holds the two activities (see the next row) |
-| Whether the protected section itself (section 3, `protected_section`) is in the copy or in the backup | PRD §B1.4 says the protected section is excluded; the owner's method says only to remove the protected items from the copy. Whether section 3 stays in the copy, and whether it is in the backup, is not decided |
-| Whether "protected items removed" includes the course badge and the completion criteria | PRD §B1.4 counts them as protected; the owner's words say "the protected items" |
-| How the sections to leave out are excluded on Moodle's Backup page | Not described by the owner |
-| Backup settings (for example user data) and the content of the generated sections | Not described by the owner |
+## 8. Verification results (Moodle 5.3; Moodle 4.5 not tested)
 
-## 8. Verification results for Moodle 4.5 and 5.3
+Scope: B8.1 only. B8.2 has its own decision (A5 on PR #61), recorded with B8.2 and not restated here. C-03 still applies to the harness (FR-C-08).
 
-**Nothing has been verified, and no lab verification has been attempted.** Owner: both sites exist, with
+**The B8.1 build, the restore and the merge test ran on 2026-11-23 on Moodle 5.3+ (Build: 20261030). The guide then asked for a rebuild (issue #112, 2026-11-24), and the rebuild, its restore check and its merge test ran on 2026-11-24 on the same build; the results below are those of 2026-11-24.** Owner: both sites exist, with
 completion tracking and course badges switched on in both (Owner, correcting an earlier answer on
-2026-11-11: on by default). Student accounts and the B8.1 owner's access are not ready; the owner will
-say when they are, and gave no date (Owner, 2026-11-12; the 14:43 reply: the guide prepares the sites and
-the accounts and will say here when they are ready). Results need a real run (PRD §E2), stating data set,
-method, date, evidence and who measured (PRD §E3). Until the harness approach to fresh sites is decided,
-test on the existing lab sites: restore into a new course each time, record the result, and delete the
-course by the clean-up rule in §7 (Owner, the 14:43 and 09:36 replies).
+2026-11-11: on by default). **Lab access is ready, in person (Owner, the 11-14 reply):** the B8.1 owner
+uses a lab PC and the browser, with their own account on the Moodle 5.3 lab site and the built-in
+Manager role at site level. Access being ready does not mean any verification is complete. The site
+address and the password were to be given in person; neither is recorded here or in any comment. Results need a real run (PRD §E2), stating data set, method, date,
+evidence and who measured (PRD §E3). Until the harness approach to fresh sites is decided, test on the
+existing 5.3 lab site: restore into a new course each time, record the result, and delete the course by
+the clean-up rule in §7 (Owner, the 14:43, 09:36 and 11-14 replies).
 
 | Check | Moodle 4.5 | Moodle 5.3 |
 |---|---|---|
-| Site and exact release used | PENDING MOODLE LAB | PENDING MOODLE LAB |
-| Template `.mbz` restores without error | PENDING MOODLE LAB | PENDING MOODLE LAB |
-| Protected items, completion criteria and badge match §4 to §6 | PENDING MOODLE LAB | PENDING MOODLE LAB |
-| Sections-only merge leaves protected items unchanged (PRD §C1.7) | PENDING MOODLE LAB | PENDING MOODLE LAB |
+| Site and exact release used | Not tested; waived for Release 0 (B8.1 only; see [0009](../../docs/decisions/0009-b8-1-template-course.md) and the [register](../../docs/decisions/README.md)) | 5.3+ (Build: 20261030), 2026-11-24, lab site (address not recorded) |
+| Template `.mbz` restores without error | Not tested; waived for Release 0 (B8.1 only; see [0009](../../docs/decisions/0009-b8-1-template-course.md) and the [register](../../docs/decisions/README.md)) | Restored without errors as a new course (course 11), 2026-11-24, from the file with the SHA-256 in §1 |
+| Protected items, completion criteria and badge match §4 to §6 | Not tested; waived for Release 0 (B8.1 only; see [0009](../../docs/decisions/0009-b8-1-template-course.md) and the [register](../../docs/decisions/README.md)) | Match (course 11): sections 1 `Orientation`, 2 `Sample week`, 3 `Final project`; the five idnumbers; only Final project graded (100 points); completion = Final project AND Course feedback; badge present, not available, issuer `LearnOps lab (placeholder)`; no users enrolled; Final project completion is `Receive a grade` only |
+| Sections-only merge leaves protected items unchanged (PRD §C1.7) | Not tested; waived for Release 0 (B8.1 only; see [0009](../../docs/decisions/0009-b8-1-template-course.md) and the [register](../../docs/decisions/README.md)) | **PASS** (course 12): BEFORE and AFTER equal in every cell, 2026-11-24. Finding 3 applies |
+
+**Run record (PRD §E3).** Data set: B8.1 template course, rebuilt on 2026-11-24 (first build 2026-11-23, replaced). Method: Moodle's own Backup and Restore in the browser on the 5.3 lab site, the backup archive opened and read, and the §4 comparison tables written from Moodle's own screens. Measured by Akshita (Student 1, the B8.1 owner) in the lab on 2026-11-24, under the guide's option 2 ([issue #112, 2026-11-24](https://github.com/narenccode/learnops/issues/112)); the first build and test of 2026-11-23 was run by Harshitha with the guide's OK ([issue #112, 2026-11-23](https://github.com/narenccode/learnops/issues/112#issuecomment-7101983721)). Evidence: the numbers of 2026-11-24 are Akshita's report on [PR #202](https://github.com/narenccode/learnops/pull/202) (comment of 2026-11-24); she gave the same SHA-256 for the lab PC and for her laptop after copying. Screenshots, logs and tables stay local and are not committed; the 23 Nov screenshots are named in `docs/decisions/0009-b8-1-template-course.md`. No logins, tokens or lab addresses are written here.
+
+| Course | Id | What it is |
+|---|---|---|
+| Template course | 7 | The template. Stays. Final project completion changed on 2026-11-24 (finding 2) |
+| Courses 8, 9, 10 | 8, 9, 10 | First run, 2026-11-23 (Harshitha): restore test, build copy of the sections-only backup, merge target. Superseded. **Deleted on 2026-11-24** (clean-up record below) |
+| Restore check | 11 | 2026-11-24 (Akshita): restored from the rebuilt file ("Template course copy 4"). **Deleted on 2026-11-24** |
+| Merge target and build copy | 12, 13 | 2026-11-24 (Akshita): course 12 is the merge target ("Template course copy 5"); course 13 is the build copy of the sections-only file ("Template course copy 6"). **Deleted on 2026-11-24** |
+
+**Clean-up record (2026-11-24, afternoon, Akshita, after #202 merged).** Courses 8 to 13 were deleted one by one from Manage courses and categories, Category 1, each id checked before its delete; course 7 (the template) stays. The six 2026-11-23 backup files were deleted from the backup area (the course-7 backups of 15:59, 16:07, 16:13, 16:21 and 16:29, the last being the replaced release candidate of 12,591 bytes, and the course-9 sections-only backup of 16:57), at Harshitha's request on #202; the two 2026-11-24 files (`b8-1-template-course.v1.mbz`, `b8-1-sections-only.mbz`) were kept. Recycle bin (Category 1): checked; the page showed no retention period, and no recycle-bin setting was changed (guide, #55). Exact times of the deletions were not written down. Harshitha deleted her local copies of the 2026-11-23 files (#202).
+
+**Build record.** File `b8-1-template-course.v1.mbz`, 12,612 bytes, SHA-256 `d8869a012a39ae869c54f744d6c391387534bdab2389d8a8aecfd5b481c5585d`, built on Moodle 5.3+ (Build: 20261030, `2026100500.08`), backup format `moodle2` (backup format version 5.3 `2026100500`), type Course, mode Asynchronous, taken on 2026-11-24, after "Make a submission" was unticked on Final project in course 7 as the guide asked. The name was set on Moodle's Backup page, so the release file is Moodle's own backup file with no rename (finding 4). The SHA-256 is the same on the lab PC and on the laptop after copying. Inspection (Akshita): no `users.xml`; `users` setting 0; no email-like text in any `.xml` file; `badges.xml` holds `Template course badge`, status 0 (inactive); `final-project` (`assign_28`) has `completionsubmit` 0 and `completiongradeitemnumber` 0, which is "Receive a grade" only.
+
+**Sections-only backup (build copy, course 13).** File `b8-1-sections-only.mbz`, 6,246 bytes, SHA-256 `38b2d06ced0167c622895aa3aad0eff9c2b95a0ba5ee2b9c16deb626cab32b59`, rebuilt from the new template. Built from a restore of the new file into course 13, then adding section 4 `Week 4` (Page `Week 4 notes`, Assignment `Week 4 task`) and section 5 `Week 5` (Page `Week 5 notes`, Assignment `Week 5 task`), with fictional text and assignment dates left at Moodle's defaults; sections 0 to 3 unchanged. Options: Include enrolled users off, Include badges off, the rest default; in the schema only Week 4, Week 5 and their four activities are ticked (Select None, then tick); user data is locked off on each. Contents: sections 4 `Week 4` and 5 `Week 5` only (no section 0), activities `page_76`, `assign_77`, `page_78` and `assign_79`. No `users.xml` (`users` = 0), no `badges.xml`, no `completion.xml`, and no `idnumber` in any activity (neither `final-project`, `course-feedback` nor `tpl-`).
+
+**BEFORE and AFTER tables (merge target, course 12).** Written from Moodle's own screens (Akshita, 2026-11-24); every cell is equal. The merge added only sections 4 and 5 and their four activities (4 sections and 6 activities before, 6 and 10 after); the new `Week 4` and `Week 5` tasks have no completion set, so the course completion criteria list is unchanged.
+
+| Field | Final project | Course feedback | Course completion | Course badge |
+|---|---|---|---|---|
+| Type | Assignment | Feedback | Course completion | Course badge |
+| Name | Final project | Course feedback | not applicable | Template course badge |
+| idnumber | `final-project` | `course-feedback` | not applicable | not applicable |
+| Section number | 3 | 3 | not applicable | not applicable |
+| Points | 100 | no grade item | not applicable | not applicable |
+| Completion | receive a grade only | submit feedback | Final project AND Course feedback, ALL required | awarded on course completion |
+| Visibility | shown | shown | not applicable | not applicable |
+| Issuer | not applicable | not applicable | not applicable | LearnOps lab (placeholder) |
+| Description | not applicable | not applicable | not applicable | Awarded when the template course is completed (placeholder). |
+| Active state | not applicable | not applicable | not applicable | not available |
+
+**Findings.**
+
+1. **Second `Announcements` forum (App-C item 2 observation, first build only).** The 2026-11-23 sections-only backup also held section 0 and Moodle's own `Announcements` forum, so that merge added a second `Announcements` forum to the merge target; it is not a protected item, and the result was still PASS. The 2026-11-24 sections-only file has no section 0, so this does not occur with it (Akshita).
+2. **Final project completion: resolved by a rebuild.** The 2026-11-23 template had both `Receive a grade` and `Make a submission` ticked on Final project; the guide asked for `receive a grade` only. The template is the reference for check CK-07, so the extra condition would have been carried into every check. The guide chose option 2 on [issue #112](https://github.com/narenccode/learnops/issues/112) (2026-11-24): on 2026-11-24 Akshita unticked `Make a submission` on course 7 (`Receive a grade`, `Any grade`, stays ticked), took a new v1 backup (the SHA-256 in §1), and repeated the restore check and the merge test (both PASS, §8). The old file was never uploaded.
+3. **Private lab address in the file.** See §1: the file carries a private lab address and nothing else about the lab (guide, [issue #112](https://github.com/narenccode/learnops/issues/112#issuecomment-7101983721), item 4).
+4. **File name.** On 2026-11-24 the name `b8-1-template-course.v1.mbz` was set on Moodle's Backup page, so the release file is Moodle's own backup file with no rename. (The 2026-11-23 file was a renamed copy of Moodle's own file; it is replaced.)
+
+**Administrator-screen checks (read-only, 2026-11-24, Akshita):** Enable completion tracking: on; Enable badges: on; Enable course badges: on (also: web services enabled, REST protocol enabled). **Not recorded:** screenshots of the 2026-11-24 run were not seen by the writer; the report on PR #202 is the record. For the 2026-11-23 run, the message Moodle printed after the merge, the restore result page, the backup initial-settings pages and the badge issuer fields have no screenshot.
 
 | Question | Status |
 |---|---|
-| Test sites for the restore tests | Owner (the 14:43 reply): the existing lab sites, a new course for each restore, deleted by the clean-up rule in §7, until the harness approach to fresh sites is decided. The guide prepares the sites and the accounts and will say when they are ready: PENDING GUIDE CONFIRMATION (no date) |
+| Test sites for the restore tests | Owner (the 14:43 and 11-14 replies): the existing 5.3 lab site, a new course for each restore, deleted by the clean-up rule in §7, until the harness approach to fresh sites is decided. The site and the B8.1 owner's own account are ready (Owner, the 11-14 reply) |
 | Where screenshots, logs and comparison tables are kept | Owner (the 14:43 reply): screenshots and logs stay local and nothing from them is committed. Check each for personal data first. A short, text-only results table goes in the decision record and names the local files |
-| Whether this §8 table is also filled in, or the results go only in the decision record | PENDING GUIDE CONFIRMATION (the owner asked for the table in the decision record and did not say) |
+| Whether this §8 table is also filled in, or the results go only in the decision record | Both, with the same results (Owner, the 11-18 reply, P33, P34) |
 
 **Checklist for when the lab is ready** (tasks, not results):
 
-- [ ] Owner confirms: student accounts exist and the B8.1 owner has access to both sites. Then check on each site that completion tracking and course badges are on (the Owner says they are, Issue #55, 2026-11-11).
-- [ ] Build the template on Moodle 4.5 (§3 to §6); back it up with user data OFF; record release, format and SHA-256.
-- [ ] Upload under tag `testdata-b8-1-v1`; check the download script gives the same SHA-256.
-- [ ] Give the checker owner the `.mbz`, its SHA-256 and the §4 list.
-- [ ] Comparison field list (§4): sent to Shraddha, so that the checker later compares the same fields (Owner, the 14:43 reply). Her response and the alignment with the checker are pending; no confirmation from her is recorded.
-- [ ] Restore on 4.5 and on 5.3 (not 5.3 to 4.5), on the existing lab sites, into a new course each time, deleting each course by the clean-up rule in §7; record the Moodle version, the date and the outcome of each restore; make the sections-only backup (§7); run the merge test with the §4 tables.
-- [ ] Keep screenshots and logs local (not committed), check them for personal data, and record App-C item 2 in `docs/decisions/` (PRD) with a short, text-only results table that names the local files, before the merge-test course is deleted (Owner, the 14:43 and 09:36 replies).
+- [x] Owner confirmed that the B8.1 owner's lab access is ready, in person, on the 5.3 site (the 11-14 reply). This is access only: it is not a lab verification result, and no check below is complete because of it.
+- [x] Student accounts: not needed. No student accounts exist on the 5.3 site; the B8.1 owner's Manager account is enough. If a step needs a student, ask the guide for a test account (Owner, the 11-18 reply, P19b).
+- [x] Check on the 5.3 site that completion tracking and course badges are on (the Owner says they are, Issue #55, 2026-11-11): read on 2026-11-24 with an administrator account (Akshita): completion tracking, badges and course badges are on.
+- [x] Build the template on Moodle 5.3 (§3 to §6); back it up with user data OFF; record release, format and SHA-256. Label the file "built on Moodle 5.3".
+- [x] Open the `.mbz` and check it for user data and for the badge (§7 step 4; §6, P35). If user data is present, stop and report on Issue #55.
+- [x] Upload under tag `testdata-b8-1-v1`; put the SHA-256 in `download.py`, §1 and `testdata/README.md`; check that `download.py` and `download.py --check` give the same SHA-256. Done on 2026-11-24 (Akshita): [the release](https://github.com/narenccode/learnops/releases/tag/testdata-b8-1-v1) has one asset of 12,612 bytes; run from `main` at `5488521`, both print OK with the recorded SHA-256.
+- [x] Give the checker owner the `.mbz`, its SHA-256 and the §4 list. Done on 2026-11-24: [handover on #202](https://github.com/narenccode/learnops/pull/202#issuecomment-7129918983) with the release link, the SHA-256, the §4 list and the merge finding.
+- [x] Comparison field list (§4): sent to Shraddha, so that the checker later compares the same fields (Owner, the 14:43 reply), and answered in her review of #141 (2026-11-19); the badge difference is recorded in §4.
+- [x] Restore on 5.3 only (4.5 is not tested; waived for Release 0 (B8.1 only; see [0009](../../docs/decisions/0009-b8-1-template-course.md) and the [register](../../docs/decisions/README.md)); the owner expects a 5.3 backup not to restore on 4.5: owner's report, §3, not verified), on the existing 5.3 lab site, into a new course each time, deleting each course by the clean-up rule in §7; record the Moodle version, the date and the outcome of each restore; make the sections-only backup (§7); run the merge test with the §4 tables.
+- [x] Record that Moodle 4.5 is not tested; waived for Release 0 (B8.1 only; see [0009](../../docs/decisions/0009-b8-1-template-course.md) and the [register](../../docs/decisions/README.md)), and its cost (a rebuild on 4.5 if PRD C-03 later needs it), in the decision record (`docs/decisions/0009-b8-1-template-course.md`) and in §8.
+- [x] Keep screenshots and logs local (not committed), check them for personal data, and add the App-C item 2 results to the same decision record (`docs/decisions/0009-b8-1-template-course.md`) as a short, text-only results table that names the local files, before the merge-test course is deleted (Owner, the 14:43 and 09:36 replies).
 
 ## 9. Known limitations and pending decisions
 
-- No `.mbz` exists and nothing is tested. Every Proposal above can change; none is a confirmed requirement.
+- The `.mbz` was rebuilt and tested on 5.3 on 2026-11-24 (§8); the Final project completion finding is resolved. It was released and checked on 2026-11-24, and the old files and test courses were deleted the same day (§8). Moodle 4.5 stays not tested (decision 0009). Every Proposal above that §8 does not confirm can still change; none is a confirmed requirement.
 
-**Owner decisions and remaining work (2026-11-12 and 2026-11-13):**
+**Owner decisions and remaining work (2026-11-12, 2026-11-13 and 2026-11-14):**
 
 | Item | Status |
 |---|---|
-| Decision record for App-C item 2 | Path `docs/decisions/NNNN-b8-1-template-course.md`. The next free number is taken when you merge, after rebasing (Owner, Issue #55, 2026-11-12). No number is assigned here. The record also holds a short, text-only results table that names the local evidence files (Owner, the 14:43 reply). The results must be in the record before the merge-test course is deleted (Owner, the 09:36 reply); how the record is held before its number is taken: PENDING GUIDE CONFIRMATION. Not written yet |
-| `docs/traceability.md` | Owner: one B8.1 entry, following the B1 and B8 pattern, no FR id, citing PRD B8.1 and B1.4. Added in PR #57 (commit `928c6a8`), not merged |
-| `testdata/README.md` entry | Updated for the 2026-11-12 owner answers. It now records the owner-confirmed Apache-2.0 licence and the owner-confirmed section titles and activity idnumbers. The protected-section number and the final-project settings remain proposals. The `.mbz` file and its SHA-256 are still pending, because no backup exists yet |
+| Decision record for App-C item 2 | `docs/decisions/0009-b8-1-template-course.md`, added in PR #95 at the guide's request (2026-11-16). It holds the 4.5 waiver (phrase, B8.1-only scope, cost, links to the guide's comments). The number is the next one no open pull request claims; it is taken again at merge, after rebasing (Owner, Issue #55, 2026-11-12), and a renumbering is one file rename plus the paths in this README, the runbook and `docs/traceability.md`. The same file later holds the short, text-only results table that names the local evidence files (Owner, the 14:43 reply); the results must be in it before the merge-test course is deleted (Owner, the 09:36 reply). The results table is not written yet |
+| `docs/traceability.md` | Owner: one B8.1 entry, following the B1 and B8 pattern, no FR id, citing PRD B8.1 and B1.4. Added in PR #57, merged on 2026-11-13 |
+| `testdata/README.md` entry | Updated for the 2026-11-12 owner answers. It now records the owner-confirmed Apache-2.0 licence and the owner-confirmed section titles and activity idnumbers. The protected-section number is owner-confirmed (#61 A2); the final-project settings remain proposals. The `.mbz` file and its SHA-256 are still pending, because no backup exists yet |
 
 **Still open:**
 
 | Open item | Status |
 |---|---|
-| Student accounts and the B8.1 owner's access to both Moodle sites (the guide prepares the sites and the accounts and will say when they are ready) | PENDING GUIDE CONFIRMATION (not ready; no date) |
-| Text of the Pages, settings of `Sample task`, placeholder issuer text, badge image tool and location | PENDING GUIDE CONFIRMATION |
-| How the §4 comparison fields apply to the course completion criteria and the badge (no section number or points) | PENDING GUIDE CONFIRMATION |
-| Whether the §8 results table is also filled in, or the results go only in the decision record | PENDING GUIDE CONFIRMATION |
-| How the decision record is held before its number is taken at merge, because the results must be in it before the merge-test course is deleted (§7) | PENDING GUIDE CONFIRMATION (the owner has not said; no numbering or naming convention is assumed) |
-| Comparison field list for Shraddha (an action, not a decision) | Owner's instruction (the 14:43 reply). Sent (reported by the B8.1 owner). Her response and the alignment with the checker: pending; no confirmation from her is recorded |
-| Exact contents of the sections-only backup (which sections are in or out; which of the four PRD §B1.4 protected items are removed: final project assignment, course feedback activity, course completion criteria, course badge; whether the protected section 3 is in the copy or the backup; backup settings; content of generated sections); see §7 | PENDING GUIDE CONFIRMATION |
-| Whether the course feedback activity is anonymous as a confirmed setting or a proposal (conflicting owner answers, §4) | PENDING GUIDE CONFIRMATION |
-| The 4.5-to-5.3 restore compatibility the owner stated | PENDING MOODLE LAB (not verified) |
+| Lab access for the B8.1 owner | Ready, in person: own account on the Moodle 5.3 lab site, Manager role at site level (Owner, the 11-14 reply). Access only; not a lab verification result |
+| Student accounts on the lab sites | Answered (the 11-18 reply, P19b): none exist and B8.1 does not need them; ask the guide if a step needs one |
+| Text of the Pages, settings of `Sample task`, placeholder issuer text, badge image tool and location | Answered (the 11-18 reply, P27, P9b): see §3, §2 and §6. Recorded on 2026-11-23: `Grade > Type` = `None` and completion `Make a submission` for `Sample task` (§3) |
+| How the §4 comparison fields apply to the course completion criteria and the badge (no section number or points) | Answered (the 11-18 reply, P32): see the table in §4 |
+| Whether the §8 results table is also filled in, or the results go only in the decision record | Answered (the 11-18 reply, P33): both, with the same results |
+| How the decision record is held before its number is taken at merge, because the results must be in it before the merge-test course is deleted (§7) | Answered (the 11-18 reply, P34): the results table goes in `docs/decisions/0009-b8-1-template-course.md`, naming the local evidence files, before the merge-test course is deleted |
+| Whether 5.3 keeps an unawarded badge in a users-off backup | **Answered 2026-11-23: yes.** The unawarded, not-available badge is in the users-off `.mbz` on this 5.3 build (§6). What to do either way is settled in §6 (the 11-18 reply, P35) |
+| Comparison field list for Shraddha (an action, not a decision) | Owner's instruction (the 14:43 reply). Sent, and answered in Shraddha's review of #141 (2026-11-19): the checker's course model v1 holds the badge's name and award rule only, so issuer, description and active state are compared only in the lab tables (§4) |
+| Exact contents of the sections-only backup (which sections are in or out; which of the four PRD §B1.4 protected items are removed: final project assignment, course feedback activity, course completion criteria, course badge; whether the protected section 3 is in the copy or the backup; backup settings; content of generated sections); see §7 | Answered (the 11-18 reply, P15c, P30, P31): only generated sections 4 and 5, user data off; see §7 steps 1 to 4 |
+| Whether the course feedback activity is anonymous as a confirmed setting or a proposal (conflicting owner answers, §4) | Answered (the 11-18 reply, P28): owner-confirmed, anonymous |
+| Moodle 4.5 | Not tested; waived for Release 0 (B8.1 only; see [0009](../../docs/decisions/0009-b8-1-template-course.md) and the [register](../../docs/decisions/README.md)). The owner expects a 5.3 template not to restore on 4.5 (owner's report, §3; not verified); if PRD C-03 later needs the template on 4.5, it is rebuilt once on 4.5 (Owner, the 11-14 reply) |

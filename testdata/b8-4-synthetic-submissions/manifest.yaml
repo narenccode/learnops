@@ -1,0 +1,433 @@
+# B8.4 synthetic submissions (PRD B8): PROVISIONAL.
+#
+# 33 fictional submissions written against the marking tables of the four tasks of the merged B8.2
+# sample course (testdata/b8-2-sample-course), in the submission form of PRD B1.5: online text with
+# Repository:, Demo: and Report: lines, and a report file only when the online text has no Report:
+# section. They are the author's own work (Student 3), so they all belong to the development split
+# (design Q47); the sealed test split is still to be written by someone else.
+#
+# Reference grades exist for all 33 (reference-grades/mentor-01/, written on 25 Nov 2026 by a student
+# acting as mentor, as the guide decided on issue #186: a recorded deviation from PRD B8.4 and G-5,
+# which say "mentor"). The set stays provisional: format acceptance (O7), the band definition and the
+# split are open, and the guide decides whether it counts as complete. s028 (online text as editor
+# HTML) is left out: B1.5 rule 5 is unverified until the lab check. Its id is not reused.
+#
+# All content is fictional and written for this project. No real learner data.
+schema: learnops.testdata.b8-4/v1
+status: provisional
+rubrics:
+- id: b8-2-wk-01-task
+  course_package: testdata/b8-2-sample-course/package/course.yaml
+  assignment_idnumber: wk-01-task
+  task_body: testdata/b8-2-sample-course/package/weeks/01-task.md
+  provisional: true
+  note: B8.2 sample course (merged). The rubric is final; the set that uses it is provisional.
+- id: b8-2-wk-02-task
+  course_package: testdata/b8-2-sample-course/package/course.yaml
+  assignment_idnumber: wk-02-task
+  task_body: testdata/b8-2-sample-course/package/weeks/02-task.md
+  provisional: true
+  note: B8.2 sample course (merged). The rubric is final; the set that uses it is provisional.
+- id: b8-2-wk-03-task
+  course_package: testdata/b8-2-sample-course/package/course.yaml
+  assignment_idnumber: wk-03-task
+  task_body: testdata/b8-2-sample-course/package/weeks/03-task.md
+  provisional: true
+  note: B8.2 sample course (merged). The rubric is final; the set that uses it is provisional.
+- id: b8-2-wk-04-task
+  course_package: testdata/b8-2-sample-course/package/course.yaml
+  assignment_idnumber: wk-04-task
+  task_body: testdata/b8-2-sample-course/package/weeks/04-task.md
+  provisional: true
+  note: B8.2 sample course (merged). The rubric is final; the set that uses it is provisional.
+
+submissions:
+- id: s001
+  rubric: b8-2-wk-02-task
+  learner_ref: learner-01
+  intended_level: strong
+  edge_cases: []
+  ambiguous: false
+  split: development
+  authored_by: Student 3
+  provisional: true
+
+- id: s002
+  rubric: b8-2-wk-02-task
+  learner_ref: learner-02
+  intended_level: partial
+  edge_cases:
+  - readme_section_missing
+  - ambiguous_judgement
+  ambiguous: true
+  split: development
+  authored_by: Student 3
+  provisional: true
+
+- id: s003
+  rubric: b8-2-wk-02-task
+  learner_ref: learner-03
+  intended_level: strong
+  edge_cases:
+  - near_duplicate
+  ambiguous: false
+  split: development
+  authored_by: Student 3
+  provisional: true
+  near_duplicate_of: s001
+
+- id: s004
+  rubric: b8-2-wk-01-task
+  learner_ref: learner-04
+  intended_level: strong
+  edge_cases: []
+  ambiguous: false
+  split: development
+  authored_by: Student 3
+  provisional: true
+
+- id: s005
+  rubric: b8-2-wk-01-task
+  learner_ref: learner-05
+  intended_level: weak
+  edge_cases:
+  - readme_missing
+  - demo_unreachable
+  - report_under_word_count
+  ambiguous: false
+  split: development
+  authored_by: Student 3
+  provisional: true
+
+- id: s006
+  rubric: b8-2-wk-01-task
+  learner_ref: learner-06
+  intended_level: incorrect
+  edge_cases:
+  - repo_not_cloneable
+  - check_passes_but_criterion_unmet
+  - off_topic
+  - ambiguous_judgement
+  ambiguous: true
+  split: development
+  authored_by: Student 3
+  provisional: true
+
+- id: s007
+  rubric: b8-2-wk-01-task
+  learner_ref: learner-07
+  intended_level: strong
+  edge_cases: []
+  ambiguous: false
+  split: development
+  authored_by: Student 3
+  provisional: true
+
+- id: s008
+  rubric: b8-2-wk-01-task
+  learner_ref: learner-08
+  intended_level: partial
+  edge_cases:
+  - readme_section_missing
+  - report_just_over_word_count
+  ambiguous: false
+  split: development
+  authored_by: Student 3
+  provisional: true
+
+- id: s009
+  rubric: b8-2-wk-01-task
+  learner_ref: learner-09
+  intended_level: partial
+  edge_cases:
+  - report_under_word_count
+  ambiguous: false
+  split: development
+  authored_by: Student 3
+  provisional: true
+
+- id: s010
+  rubric: b8-2-wk-01-task
+  learner_ref: learner-10
+  intended_level: weak
+  edge_cases:
+  - demo_timeout
+  - report_under_word_count
+  ambiguous: false
+  split: development
+  authored_by: Student 3
+  provisional: true
+
+- id: s011
+  rubric: b8-2-wk-01-task
+  learner_ref: learner-11
+  intended_level: incorrect
+  edge_cases:
+  - repo_not_cloneable
+  - report_under_word_count
+  - check_passes_but_criterion_unmet
+  - off_topic
+  ambiguous: false
+  split: development
+  authored_by: Student 3
+  provisional: true
+
+- id: s012
+  rubric: b8-2-wk-02-task
+  learner_ref: learner-12
+  intended_level: partial
+  edge_cases:
+  - readme_section_missing
+  ambiguous: false
+  split: development
+  authored_by: Student 3
+  provisional: true
+
+- id: s013
+  rubric: b8-2-wk-02-task
+  learner_ref: learner-13
+  intended_level: weak
+  edge_cases:
+  - readme_missing
+  - demo_unreachable
+  ambiguous: false
+  split: development
+  authored_by: Student 3
+  provisional: true
+
+- id: s014
+  rubric: b8-2-wk-02-task
+  learner_ref: learner-14
+  intended_level: weak
+  edge_cases:
+  - demo_timeout
+  ambiguous: false
+  split: development
+  authored_by: Student 3
+  provisional: true
+
+- id: s015
+  rubric: b8-2-wk-02-task
+  learner_ref: learner-15
+  intended_level: incorrect
+  edge_cases:
+  - check_passes_but_criterion_unmet
+  - off_topic
+  ambiguous: false
+  split: development
+  authored_by: Student 3
+  provisional: true
+
+- id: s016
+  rubric: b8-2-wk-02-task
+  learner_ref: learner-16
+  intended_level: incorrect
+  edge_cases:
+  - repo_not_cloneable
+  - demo_unreachable
+  ambiguous: false
+  split: development
+  authored_by: Student 3
+  provisional: true
+
+- id: s017
+  rubric: b8-2-wk-03-task
+  learner_ref: learner-17
+  intended_level: strong
+  edge_cases: []
+  ambiguous: false
+  split: development
+  authored_by: Student 3
+  provisional: true
+
+- id: s018
+  rubric: b8-2-wk-03-task
+  learner_ref: learner-18
+  intended_level: strong
+  edge_cases: []
+  ambiguous: false
+  split: development
+  authored_by: Student 3
+  provisional: true
+
+- id: s019
+  rubric: b8-2-wk-03-task
+  learner_ref: learner-19
+  intended_level: partial
+  edge_cases:
+  - check_passes_but_criterion_unmet
+  ambiguous: false
+  split: development
+  authored_by: Student 3
+  provisional: true
+
+- id: s020
+  rubric: b8-2-wk-03-task
+  learner_ref: learner-20
+  intended_level: partial
+  edge_cases:
+  - repo_file_missing
+  ambiguous: false
+  split: development
+  authored_by: Student 3
+  provisional: true
+
+- id: s021
+  rubric: b8-2-wk-03-task
+  learner_ref: learner-21
+  intended_level: weak
+  edge_cases:
+  - label_missing
+  ambiguous: false
+  split: development
+  authored_by: Student 3
+  provisional: true
+  pending_rules:
+  - missing_label
+
+- id: s022
+  rubric: b8-2-wk-03-task
+  learner_ref: learner-22
+  intended_level: weak
+  edge_cases:
+  - repo_file_missing
+  - demo_unreachable
+  ambiguous: false
+  split: development
+  authored_by: Student 3
+  provisional: true
+
+- id: s023
+  rubric: b8-2-wk-03-task
+  learner_ref: learner-23
+  intended_level: incorrect
+  edge_cases:
+  - repo_not_cloneable
+  - check_passes_but_criterion_unmet
+  - off_topic
+  ambiguous: false
+  split: development
+  authored_by: Student 3
+  provisional: true
+
+- id: s024
+  rubric: b8-2-wk-03-task
+  learner_ref: learner-24
+  intended_level: incorrect
+  edge_cases:
+  - check_passes_but_criterion_unmet
+  - off_topic
+  ambiguous: false
+  split: development
+  authored_by: Student 3
+  provisional: true
+
+- id: s025
+  rubric: b8-2-wk-04-task
+  learner_ref: learner-25
+  intended_level: strong
+  edge_cases: []
+  ambiguous: false
+  split: development
+  authored_by: Student 3
+  provisional: true
+
+- id: s026
+  rubric: b8-2-wk-04-task
+  learner_ref: learner-26
+  intended_level: strong
+  edge_cases:
+  - near_duplicate
+  - report_just_over_word_count
+  ambiguous: false
+  split: development
+  authored_by: Student 3
+  provisional: true
+  near_duplicate_of: s025
+
+- id: s027
+  rubric: b8-2-wk-04-task
+  learner_ref: learner-27
+  intended_level: partial
+  edge_cases:
+  - report_under_word_count
+  ambiguous: false
+  split: development
+  authored_by: Student 3
+  provisional: true
+
+- id: s029
+  rubric: b8-2-wk-04-task
+  learner_ref: learner-29
+  intended_level: weak
+  edge_cases:
+  - readme_section_missing
+  - demo_unreachable
+  - report_under_word_count
+  ambiguous: false
+  split: development
+  authored_by: Student 3
+  provisional: true
+
+- id: s030
+  rubric: b8-2-wk-04-task
+  learner_ref: learner-30
+  intended_level: weak
+  edge_cases:
+  - demo_timeout
+  - readme_section_missing
+  - report_under_word_count
+  ambiguous: false
+  split: development
+  authored_by: Student 3
+  provisional: true
+
+- id: s031
+  rubric: b8-2-wk-04-task
+  learner_ref: learner-31
+  intended_level: incorrect
+  edge_cases:
+  - check_passes_but_criterion_unmet
+  - off_topic
+  - ambiguous_judgement
+  ambiguous: true
+  split: development
+  authored_by: Student 3
+  provisional: true
+
+- id: s032
+  rubric: b8-2-wk-04-task
+  learner_ref: learner-32
+  intended_level: incorrect
+  edge_cases:
+  - repo_not_cloneable
+  - demo_unreachable
+  - report_under_word_count
+  ambiguous: false
+  split: development
+  authored_by: Student 3
+  provisional: true
+
+- id: s033
+  rubric: b8-2-wk-02-task
+  learner_ref: learner-33
+  intended_level: partial
+  edge_cases:
+  - label_missing
+  - ambiguous_judgement
+  ambiguous: true
+  split: development
+  authored_by: Student 3
+  provisional: true
+
+- id: s034
+  rubric: b8-2-wk-02-task
+  learner_ref: learner-34
+  intended_level: partial
+  edge_cases:
+  - label_repeated
+  - ambiguous_judgement
+  ambiguous: true
+  split: development
+  authored_by: Student 3
+  provisional: true

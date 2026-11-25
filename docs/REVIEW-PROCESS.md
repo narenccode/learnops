@@ -5,8 +5,8 @@
 Read Parts 1 to 3 once, slowly. Then follow Part 4 each time you finish a piece of work. Part 8 is a
 complete worked example. Part 9 lists what to do when something looks wrong.
 
-Contents: 1 What and why · 2 Words you will meet · 3 Before you start · 4 The steps · 5 Reading the bot's comment ·
-6 Being the peer reviewer · 7 The labels · 8 A worked example · 9 When something goes wrong · 10 Rules ·
+Contents: 1 What and why · 2 Words you will meet · 3 Before you start · 4 The steps · 5 Reading the bot's advice ·
+6 Being the peer reviewer · 7 Auto-merge · 8 A worked example · 9 When something goes wrong · 10 Rules ·
 11 Prompts for your Claude Code
 
 ---
@@ -22,17 +22,19 @@ The repository has a main copy called **`main`**. This is the official, working 
 1. You make your own copy of the work, called a **branch**, and do your changes there.
 2. When your change is finished, you open a **pull request** (PR). A PR is a web page that says:
    "Please check my change, and if it is good, add it to `main`."
-3. Your change is checked twice, then you add it to `main` yourself.
-
-**The two checks**
+3. Your change is checked by the tests and by one teammate, then GitHub adds it to `main` by itself.
 
 | Check | Who | What it does |
 |---|---|---|
-| 1. The **review bot** | A program on GitHub | Checks the project rules within a minute, writes a comment, and puts a coloured **label** on your PR. After your peer approves, it also asks an AI for advice. |
-| 2. Your **peer reviewer** | One team mate | Reads your change, runs the tests, and clicks **Approve** if it is good. |
+| 1. The **checks** | GitHub, automatically | Runs the tests, the format check and the secret scan. A red cross blocks the merge |
+| 2. Your **reviewer** | One teammate | Reads your change, runs the tests, and clicks **Approve** if it is good |
 
-**The guide** (your teacher) is **not** involved in normal work. The bot calls the guide only when a project
-rule is broken or when a decision is needed. In that case the PR waits and the guide replies.
+The **review bot** also writes one comment with advice within a minute. It never blocks anything: your
+reviewer decides what must change.
+
+**The guide** approves design documents, reviews contract changes after Release 0 is frozen, and runs the
+release checks. For everything else, ask your reviewer first. If you are still stuck, write it in the daily
+check-in issue.
 
 **Why so careful?** It stops mistakes reaching the project, it keeps every change explained and traceable, and it
 teaches you the way professional teams work.
@@ -49,13 +51,14 @@ teaches you the way professional teams work.
 | **Commit** | A saved step of your work, with a short message that says what you did |
 | **Push** | Sending your commits from your computer up to GitHub |
 | **Pull request (PR)** | A web page on GitHub asking for your branch to be added to `main` |
-| **Draft PR** | A PR marked "still working". The bot ignores drafts |
+| **Draft PR** | A PR marked "still working". Nothing checks a draft |
 | **Ready for review** | The button that turns a draft into a normal PR and starts the checks |
 | **Review bot** | The program that checks your PR. On GitHub it is called `github-actions` and has a grey **Bot** tag |
 | **Peer reviewer** | The one team mate who reviews your PR (see the table in `docs/GETTING-STARTED.md`, section 2) |
 | **Approve** | A peer's "yes, this is good" |
-| **Label** | A coloured tag on the right side of the PR that tells you what to do next |
+| **Auto-merge** | A button on your PR. Once clicked, GitHub merges the PR by itself when it is approved and the checks pass |
 | **Check** | An automatic test run by GitHub. Shown as a green tick or a red cross |
+| **Check-in issue** | One pinned issue where each of us writes three lines a day: done, next, blocked by |
 | **Merge** | Adding your PR to `main`. We always use **Squash and merge**: all your small commits become one tidy entry |
 | **Requirement ID** | A code like `FR-S-03` from the PRD. It says which requirement your work is for |
 
@@ -68,7 +71,7 @@ Do these once. If you followed `docs/GETTING-STARTED.md`, most are done.
 - [ ] You accepted the invitation to the `learnops` repository (an email from GitHub; click **View invitation**, then **Accept invitation**).
 - [ ] You can open `https://github.com/narenccode/learnops` and you are signed in (your profile picture shows at the top right).
 - [ ] The project is on your computer (`git clone`, done in `GETTING-STARTED.md`, step 4) and `pre-commit install` was run there.
-- [ ] **You get GitHub's emails.** Click your **profile picture** (top right) → **Settings** → **Notifications**. Under "Participating, @mentions and custom" tick **Email**. Then open the `learnops` page, click **Watch** (top right) and choose **Participating and @mentions**. The bot uses email to tell you what to do next.
+- [ ] **You get GitHub's emails.** Click your **profile picture** (top right) → **Settings** → **Notifications**. Under "Participating, @mentions and custom" tick **Email**. Then open the `learnops` page, click **Watch** (top right) and choose **Participating and @mentions**. GitHub emails you when someone asks you to review or comments on your PR.
 
 ---
 
@@ -142,45 +145,38 @@ When your work is finished:
 
 The grey Draft tag disappears. The bot starts within a minute.
 
-### Step 6. Read the bot's comment and act on it (github.com)
+### Step 6. Read the bot's advice (github.com)
 
-1. About a minute later, a new comment appears on your PR from **github-actions** with a grey **Bot** tag.
-2. Its title is **Automated review**. Find the line that starts **Next step**. Do exactly what it says.
-3. A coloured **label** also appears on the right side of the page, under **Labels**. Part 7 explains each.
-4. If the comment lists problems under **Fix before merging**: fix them on your computer, then `git add`,
-   `git commit` and `git push`. **The bot re-checks by itself** within a minute and updates its comment. You do not click anything.
-   **Fix everything the comment lists first, then push once.** Do not push after every small fix (see the rule in Part 10).
+1. About a minute later a comment from **github-actions** appears, titled **Automated advice**.
+2. Read the **Summary** and the **Next step** lines.
+3. Fix the items under **Please fix** that you agree with. If you disagree with one, say why in a reply. The
+   advice can be wrong; your reviewer decides.
+4. Fix everything first, then push once. The comment updates itself after each push.
 
-Part 5 shows a real comment with each part explained.
+### Step 7. Ask one teammate to review, and turn on auto-merge (github.com)
 
-### Step 7. Ask your peer reviewer to approve (github.com)
+1. On the right side under **Reviewers**, click the gear and pick your reviewer:
+   - code inside a module: your peer (see `docs/GETTING-STARTED.md`, section 2);
+   - documents in `docs/` and shared files: any teammate who is free;
+   - a change in `contracts/`: an owner of a module that uses the contract (PRD §B.0 table). After
+     Release 0 is frozen, the guide is also asked automatically.
+2. Scroll to the bottom of the **Conversation** tab and click **Enable auto-merge**, then
+   **Confirm auto-merge**. Choose **Squash and merge** if GitHub asks.
+3. That is all. When the reviewer approves and the checks are green, GitHub merges your PR by itself and
+   emails you.
+4. If your reviewer requests changes: fix, push, and click **Re-request review** next to their name.
+5. If GitHub says **This branch has conflicts**, click **Update branch** if it is offered, or ask Claude
+   (prompt in Part 11). If it only says the branch is **out-of-date**, you do not need to do anything.
+6. GitHub needs the newest push to be approved by a teammate other than the person who pushed it. After you push to a pull request that is already approved, click **Re-request review**: the earlier approval does not cover the new commits.
 
-**Before you ask, fetch `main` and merge your pull request's base branch** (`git fetch origin`, then `git merge origin/main`; for a stacked pull request, merge its parent branch) and push. A branch that is behind its base runs an old copy of the review workflow, which can send the wrong status email or label. If the merge has conflicts, resolve them and run the tests before pushing. The bot checks the merged result again after the push.
+### Step 8. If nobody reviews within one working day
 
-1. On your PR page, look at the right side under **Reviewers**. Several names may be listed (GitHub adds everyone who owns the files you changed). Your peer reviewer is one of them.
-2. Tell your peer in your team chat: "My PR is ready: [link to your PR]". (The bot also reminds them by name if nothing happens for two days.)
-3. They review it (Part 6 shows how) and approve. **One approval from one person is enough.** For design documents and other shared files in `docs/`, **any teammate who is free** can do it; it does not have to be your usual peer. For code inside a module, the approval must come from your peer reviewer (or the guide). The bot's **Next step** line tells you who can approve your PR.
-4. **If you push new commits after they approved,** their approval stays. The bot and the tests check the new version again, and the AI reviews it again. If you change something big after the approval, tell your peer so they can look at it.
+Ask another teammate who can approve (the bot's **Next step** line names them), and write it in the
+check-in issue under **Blocked by**.
 
-### Step 8. Wait for the AI advice, if the label asks (github.com)
+### Step 9. After the merge
 
-About a minute after your peer approves, the bot updates its comment with advice from an AI. Then the label changes:
-
-- **`ready-to-merge`**: all done, go to Step 9.
-- **`needs-rework`**: the AI found a real problem. Fix it (Step 6, point 4).
-
-The AI **can be wrong**. If you disagree with an item, check it yourself and write a reply in a comment on the PR.
-
-### Step 9. Merge (github.com)
-
-Only when the label is **`ready-to-merge`**:
-
-1. Scroll to the bottom of the **Conversation** tab.
-2. The checks box must say **All checks have passed** with green ticks, including **guide-bot** and **ci / checks**.
-3. Click **Squash and merge**, then **Confirm squash and merge**.
-4. Your PR page turns purple and says **Merged**. If a **Delete branch** button appears, click it.
-
-The button stays grey until everything is satisfied. That is not a fault. Read the box to see what is still missing.
+Your PR page turns purple and says **Merged**. GitHub deletes the branch on github.com by itself.
 
 ### Step 10. Clean up (computer)
 
@@ -194,37 +190,23 @@ Then go back to Step 1 for your next task.
 
 ---
 
-## 5. Reading the bot's comment
-
-This is the shape of a real comment. The text in brackets explains each part.
+## 5. Reading the bot's advice
 
 ```
-Automated review: Needs rework                       <- the verdict (matches the label)
+Automated advice
+This comment is advice. It never blocks merging.      <- always true
+Summary: Please fix the items under Please fix ...    <- one line on the whole PR
+Next step: Ask a teammate to review ...               <- who can approve, and auto-merge
 
-Next step: Fix the items listed in the bot comment   <- DO THIS FIRST
-and push. The bot re-checks by itself.
-
-Fix before merging                                   <- must be fixed
-- docs/design/studio.md: Section 2 lists no real     <- file and what is wrong
-  requirement ... (PRD C1.3)                         <- where to read more
-
-Better ways to do it (advice)                        <- optional ideas
-- A checklist box is malformed ...
-
-Could not verify                                     <- the bot could not check this
-- Whether the full PRD defines goal G-1 ...             (it is not an error)
-
-AI review: deepseek-flash, 6656 in / 1212 out        <- small print: the AI that gave the advice
-Checked commit 567779e ...
+Please fix                                            <- things the rule checks or the AI think are wrong
+- docs/design/studio.md: Section 2 lists no real requirement ... (PRD C1.3)
+Questions for your reviewer                           <- points a person should look at
+Suggestions                                           <- optional ideas
+Could not check                                       <- not an error; a person checks that part
 ```
 
-How to use it:
-
-- **Next step** first. Always.
-- **Fix before merging:** all of these must be fixed before you can merge.
-- **Advice:** read it. Fix it if you agree. You may leave it if you do not. Note why in a reply.
-- **Could not verify:** nothing for you to fix. It means a person must check that part.
-- The comment is **updated in place**. You will not get a new long comment after each push. When the verdict changes, the bot also writes one **short** comment that names you, and GitHub emails you.
+- Read **Summary** and **Next step** first.
+- The comment is updated in place after every push. It never names you, so it sends no email.
 
 ---
 
@@ -247,34 +229,18 @@ You review a team mate's PR and run its tests. This is the human check, and the 
    - **Request changes**: something must be fixed first.
 6. Click **Submit review**.
 
-If you approve, the bot continues automatically. If you request changes, the label becomes `needs-rework`.
+If you approve and the checks are green, the PR merges by itself. Review within one working day of being asked; start each work session with the reviews you owe.
 
 Review for: does it do what the requirement says; are there tests; does it break a rule in `CLAUDE.md`; would
 someone else understand the code? Do not approve something you did not run or do not understand. Ask a question instead.
 
 ---
 
-## 7. The labels
+## 7. Auto-merge
 
-The label is on the right side of the PR page, under **Labels**. It is your signpost.
-
-| Label | Meaning | What you do |
-|---|---|---|
-| `awaiting-peer` | The rule check passed | Ask a teammate who can approve to review (Step 7) |
-| `needs-rework` | Something must be fixed | Read the bot comment, fix, push |
-| `awaiting-ai` | The AI service was unavailable | Nothing. The bot tries again by itself every 30 minutes |
-| `ready-to-merge` | Your peer approved and the bot is satisfied | **Squash and merge** (Step 9) |
-| `rule-violation` | A project rule is broken | **Do not merge.** The guide decides and will reply |
-| `needs-judgement` | A decision only the guide can make | **Do not merge.** The guide will reply |
-| `awaiting-owners` | A contract change: every affected owner, then the guide, must review | Ask each affected owner to review. **Do not merge.** The guide merges last |
-
-Normal order for a good PR: `awaiting-peer` → `ready-to-merge`.
-
-**Risk.** The bot also rates every PR **low** or **high** risk and shows it near the top of its comment. A high
-risk rating does **not** stop a merge by itself: if the rules pass, your peer approved, the AI found no problem
-and the checks are green, you may merge a high-risk PR too. The guide is called in only when a high-risk PR has
-something unresolved (an open question from the AI, or the AI could not review it). For low-risk PRs the AI's
-open questions are shown as advice and never need the guide.
+There are no labels to watch. GitHub shows the state of your PR in the box at the bottom of the
+**Conversation** tab: **Review required**, **Changes requested**, **Some checks were not successful**, or
+**Auto-merge enabled**. When the review and the checks are both done, the PR merges by itself.
 
 ---
 
@@ -282,20 +248,18 @@ open questions are shown as advice and never need the guide.
 
 Maya (author) and Raj (her peer reviewer) work on requirement `FR-S-03`.
 
-| When | Who | What happens |
+| Step | Who | What happens |
 |---|---|---|
-| Monday 10:00 | Maya | `git switch -c studio/fr-s-03-validate`, writes code, commits, `git push -u origin ...` |
-| Monday 10:20 | Maya | On GitHub: **New pull request** → **Create draft pull request**. Fills the form. Keeps working and pushing |
-| Monday 15:00 | Maya | Work finished. Opens the PR, scrolls down, clicks **Ready for review** |
-| Monday 15:01 | Bot | Comment appears: **Needs rework**. *Next step:* fix the items. Item: "no test file in this PR". Label `needs-rework` |
-| Monday 15:30 | Maya | Adds a test, `git commit`, `git push` |
-| Monday 15:31 | Bot | Comment updates to **Waiting for the peer review**. Label `awaiting-peer`. A short comment says: "@Raj, please review". Raj gets an email |
-| Monday 17:00 | Raj | Opens the PR, **Files changed**, runs `/preflight`, clicks **Review changes → Approve → Submit review** |
-| Monday 17:01 | Bot | The AI reviews. Comment updates: one piece of advice, no blocking items. Label `ready-to-merge`. A short comment: "@Maya the status is now Ready to merge" |
-| Monday 17:05 | Maya | Opens the PR. The checks box shows green ticks. Clicks **Squash and merge → Confirm**. Done |
-| Monday 17:06 | Maya | `git switch main`, `git pull`, `git branch -d studio/fr-s-03-validate` |
+| 1 | Maya | `git switch -c studio/fr-s-03-validate`, writes code, commits, pushes, opens a **draft** PR |
+| 2 | Maya | Work finished: clicks **Ready for review** |
+| 3 | Bot | Comment **Automated advice**: under **Please fix**, "no test file in this PR" |
+| 4 | Maya | Adds a test, pushes once. The comment updates: "The rule checks found nothing to fix" |
+| 5 | Maya | Picks Raj as reviewer and clicks **Enable auto-merge** |
+| 6 | Raj | Opens **Files changed**, runs `/preflight`, clicks **Review changes → Approve → Submit review** |
+| 7 | GitHub | The checks are green and Raj approved: the PR merges by itself. Maya gets an email |
+| 8 | Maya | `git switch main`, `git pull`, `git branch -d studio/fr-s-03-validate` |
 
-The guide did nothing. If at 15:01 the label had been `rule-violation`, Maya would stop and wait for the guide.
+The guide did nothing, and nobody waited for a label.
 
 ---
 
@@ -303,19 +267,14 @@ The guide did nothing. If at 15:01 the label had been `rule-violation`, Maya wou
 
 | What you see | What it means and what to do |
 |---|---|
-| **No bot comment after 5 minutes** | Is the PR still a draft? (Look for the grey Draft tag. Click **Ready for review**.) If it is not a draft, tell the guide |
-| **Squash and merge is grey** | Something is still missing. Read the box above the button: it lists what (a check, the peer approval, the bot) |
-| **My peer approved, but the label is still `awaiting-peer`** | Wait two minutes and refresh the page. If nothing changes, tell the guide |
-| **My peer approved, but the label went back to `needs-rework`** | You pushed after the approval and the bot or the AI found a problem in the new version. Fix it and push; the approval stays, so you do not need another review |
-| **The bot blocks me and I am sure it is wrong** | Do not argue with it and do not try to trick it. At the bottom of your PR write a comment that starts with `@narenccode` and says: which bot item, why you think it is wrong, and your evidence (a PRD line or a test result). The guide is emailed and will either tell you what to change or approve the merge by hand. Keep working on something else meanwhile |
-| **The bot says "No tests" or "traceability not updated" but my change only renames or tidies code** | In your PR description add a line `Refactor only: <one sentence on what you changed and why behaviour is the same>`. The bot then treats those two items as advice, and your reviewer must agree with your claim |
-| **The bot comment says "The bot hit an internal error"** | It is the bot's fault, not yours. The guide has already been told. Carry on; the guide will reply or approve the merge by hand |
-| **The bot says "AI review unavailable"** | The AI service is down or out of credit. The guide has been told and can run the review again by hand. If you do not hear back within a day, write a comment starting `@narenccode` |
+| **My PR did not merge although it was approved** | Read the box at the bottom of the Conversation tab: a red check, a missing approval from an owner of one of the files, or auto-merge was not turned on |
+| **The bot's advice is wrong** | Reply under it with one line saying why. Your reviewer decides. You do not need the guide |
+| **No bot comment after 5 minutes** | Is the PR still a draft? If not, carry on: the advice is optional |
+| **The bot says "No tests" or "traceability not updated" but my change only renames or tidies code** | In your PR description add a line `Refactor only: <one sentence on what you changed and why behaviour is the same>`. Your reviewer must agree with your claim |
 | **`git push` says I cannot push to `main`** | Correct, nobody can. Make a branch (Step 1) and push that |
 | **`git commit` fails and says files were modified** | Normal. A check tidied your files. Run `git add` on them again and repeat the `git commit` |
 | **`git push` is rejected: "non-fast-forward" or "fetch first"** | Someone changed the branch. Run `git pull` and push again. If unsure, ask Claude (prompt below) before doing anything else |
 | **The PR says "This branch has conflicts"** | Your branch and `main` changed the same lines. Ask Claude (prompt below) to help; do not guess |
-| **Label is `rule-violation` or `needs-judgement`** | Do nothing except wait. The guide has been told. Do not merge |
 | **The CI check (`ci / checks`) shows a red cross** | Click **Details**, read the first error in the log, fix it, push |
 | **I clicked something by mistake** | Almost everything on GitHub can be undone. Do not worry. Tell the guide before you do anything else |
 
@@ -325,12 +284,15 @@ The guide did nothing. If at 15:01 the label had been `rule-violation`, Maya wou
 
 - Never push to `main`. Always use a branch and a PR.
 - Open the PR as a draft; click **Ready for review** only when finished.
-- One piece of work per PR. Small is easier to review.
-- **Push in sizeable batches, not tiny changes.** While your PR is a draft, push as often as you like: nothing is checked. After you click **Ready for review**, every push starts a new round of checks and a new AI review (each one costs a little money and time). So collect your fixes, check them yourself with `/preflight`, and push once. Your peer's approval stays after a push.
+- One piece of work per PR. Small is easier to review. Aim for about 800 changed lines or fewer.
+- **Push in sizeable batches.** After **Ready for review**, each push runs the checks and the AI advice again (the AI advice runs at most five times per PR).
 - **You** are responsible for your code. The bot and the AI can be wrong or miss things. Read every comment and test your change yourself.
 - Your PR title, description and code are sent to an AI service called DeepSeek. The repository is public and uses test data only. **Never put passwords, keys or real learner data in a PR.**
 - Design documents are marked `Approved` only by the guide.
-- If the bot looks broken, tell the guide. Do not try to get around it.
+- **At most two of your PRs are ready for review at the same time.** Finish (merge or close) one before you open the next. Drafts do not count.
+- **Every PR starts from `main`.** Do not build a PR on top of another unmerged PR. If you need someone's unmerged work, review it first so it merges.
+- **Review within one working day** when you are asked.
+- **Write your check-in every working day** in the pinned check-in issue: done, next, blocked by.
 
 ---
 

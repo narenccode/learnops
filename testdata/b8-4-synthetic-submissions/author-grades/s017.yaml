@@ -1,0 +1,20 @@
+# Author grade. NOT a reference grade: the author's own grading. The mentor reference grade for this submission is in
+# ../reference-grades/mentor-01/ (a student acting as mentor; guide, issue #186).
+schema: learnops.testdata.b8-4.author-grade/v1
+submission_id: s017
+rubric: b8-2-wk-03-task
+graded_by: author
+reference_grade: false
+graded_at: '2026-11-17'
+blind_to_drafts: true
+criteria:
+- criterion: Test list
+  score: 8
+  reason: TESTS.md has six questions with expected answers.
+- criterion: Demo still works
+  score: 7
+  reason: Demo opens and answers a listed question.
+- criterion: Fixes
+  score: 10
+  reason: Two fixes explained clearly, each tied to a test question.
+total: 25

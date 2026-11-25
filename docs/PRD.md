@@ -9,7 +9,7 @@
 | Owner | Project guide |
 | Contributors | Student 1–4 (module owners) |
 | Status | Draft. Becomes binding when the guide approves it. |
-| Change rule | Changes only by pull request. Sections marked **Contract** also need approval from every affected module owner and the guide (§B.0). |
+| Change rule | Changes only by pull request. Sections marked **Contract** follow §B.0 rule 3. |
 
 > **How to read this document.** Part A describes the whole system and its fixed rules. Part B is
 > the set of **shared contracts**: the exact formats and interfaces between modules. Part C has one
@@ -52,10 +52,10 @@ other work. Five tasks consume most of their time:
 |---|---|---|---|
 | G-1 Fast course creation | Mentor time to load a 4-week course | ≤ 15 min (vs 2–3 h) | Release 2 |
 | G-2 Course errors caught before learners see them | Planted errors detected (test set B8.3) | 100 % | Release 1 |
-| G-3 Every role works on every screen | Role tests passing: 5 roles × 3 screen profiles × Moodle 4.5 and 5.3 | 100 % | Release 1 |
+| G-3 Every role works on every screen | Role tests passing: 5 roles × 3 screen profiles × Moodle 5.3 | 100 % | Release 1 |
 | G-4 Less grading time | Minutes per submission, assisted vs manual | ≥ 50 % reduction | Release 4 |
 | G-5 Trustworthy grading drafts | Draft grade within one band of the mentor's grade (B8.4) | ≥ 80 % | Release 4 |
-| G-6 Every video usable | Caption word error rate on Indian-English lectures (B8.5) | Measured and reported; target fixed in Release 0 | Release 3 |
+| G-6 Every video usable | Caption word error rate on Indian-English lectures (B8.5) | Measured and reported; target fixed from the first baseline run (App-C 7) | Release 3 |
 | G-7 Recordings processed quickly | Time from a 90-min recording becoming available to captions, chapters and index ready | ≤ 30 min | Release 3 |
 | G-8 Large uploads work | 700 MB file through a proxy that limits requests to 100 MB, with one interruption | Succeeds and resumes | Release 3 |
 | G-9 Practice with little effort (stretch) | Mentor review time for one week's practice | ≤ 5 min | Release 5 |
@@ -91,10 +91,11 @@ passwords**.
 | Release grades to learners | In **Moodle** only | ❌ | In Moodle only |
 | Practice review (stretch) | ✅ | ❌ | ✅ |
 | Tool configuration, model provider, keys | ❌ | ❌ | ✅ (environment only) |
-| *(Extension, Release 6)* Watch lessons in the dual-stream player; answer cue activities | ✅ (preview) | ✅ (enrolled courses only) | ✅ |
+| *(Extension, Release 6; Learner access conditional on EXT-07 / OI-25 approval)* Watch lessons in the dual-stream player; answer cue activities | ✅ (preview) | Planned (enrolled courses only); subject to OI-25 approval and the approved contract/gateway approach | ✅ |
 
-Rules: a launch with any role not listed is refused with a clear message. A user sees only data
-for the course (LTI context) they launched from, except administrators.
+Rules: role URIs not listed in §B3 are ignored. A launch is refused, with a clear message, only if
+no recognised role remains. A user sees only data for the course (LTI context) they launched from,
+except administrators.
 
 ## A6. Scope
 
@@ -128,7 +129,7 @@ The baseline (Releases 0–5) is built so these plug in without rework (§A9).
 |---|---|
 | C-01 | Moodle and BigBlueButton are installed **as released and never modified**. No plugins, no patches, no edits to their code or database. |
 | C-02 | Tools connect to Moodle **only** through: Moodle backup files restored with Moodle's own Restore; Moodle's standard web-services API; LTI 1.3 External tool launches; a browser (tests only). |
-| C-03 | Everything works on **Moodle 4.5 and Moodle 5.3**. |
+| C-03 | Everything works on **Moodle 5.3**. |
 | C-04 | Generated course content follows the course pattern in §B1.2 and never alters protected activities (§B1.4). |
 | C-05 | Every command-line tool supports `--dry-run`, `--check` and has a documented undo. |
 | C-06 | No secrets (API keys, tokens, passwords) in the repository. Configuration through environment variables; `.env.example` documents them. |
@@ -144,7 +145,7 @@ The baseline (Releases 0–5) is built so these plug in without rework (§A9).
 ```mermaid
 flowchart TB
     subgraph PLATFORM["Unmodified platforms"]
-        MOODLE["Moodle 4.5 / 5.3"]
+        MOODLE["Moodle 5.3"]
         BBB["BigBlueButton 3.0"]
     end
     subgraph LEARNOPS["LearnOps (this project)"]
@@ -190,7 +191,7 @@ The rule: **future features must be new consumers of data that already exists, n
 | EXT-04 | **Adapters at every external dependency** | Model provider, speech provider, storage backend (local folder or S3-compatible) and Moodle access sit behind interfaces with one adapter each. Swapping one is configuration, not code. |
 | EXT-05 | **Feature flags** | Optional features (practice, summaries, slide index, BigBlueButton intake) can be switched on or off per deployment. |
 | EXT-06 | **Stable identifiers** | Activities identified by Moodle `idnumber`; lessons by slug; never by position or display name. |
-| EXT-07 | **Reserved extension points** | The LTI gateway already validates the Learner role and refuses it with "not available in this version". F-1 (player) and F-3 (tutor) will enable Learner launches without changing the gateway. |
+| EXT-07 | **Reserved extension points** | Baseline tools refuse Learner-only launches with "not available in this version". Learner access for F-1 (player) and F-3 (tutor) is a planned extension, not currently supported. Whether it can be enabled without changing the gateway or the B3 schema is unresolved (ADR 0001, OI-25): the guide must decide how Learner is represented in the normalised launch result and whether the v1 enum can be extended or a new contract version is required. No Learner support is claimed until that decision and any required contract change are approved (§B.0). |
 | EXT-08 | **Data produced now for features built later** | The video pipeline produces the slide index (`slides.json`) and cue file (`cues.json`) now; F-1 will display them. |
 | EXT-09 | **One shared library per cross-cutting concern** | `lti`, `moodle_ws`, `model_interface`, `contracts` (schemas + validators), `media_paths`. Modules import them; they never copy code. |
 
@@ -282,8 +283,8 @@ Moodle sites have: completion tracking on; web services enabled with a dedicated
 ## A15. Assumptions
 
 1. The lab VMs and AI services are available from Release 0.
-2. Moodle's standard web-services functions listed in §B4 exist on 4.5 and 5.3 (verified in Release 0; see §App-C).
-3. Moodle's Restore can merge sections from a backup into an existing course (verified in Release 0).
+2. Moodle's standard web-services functions listed in §B4 exist on 5.3 (verified in the first release that relies on them; see §App-C).
+3. Moodle's Restore can merge sections from a backup into an existing course (verified in the first release that relies on it).
 4. Lecture videos with reference transcripts can be obtained with permission (§B8.5).
 5. A hosted-API key with a spending cap is provided by the guide for the comparison study.
 6. Course reuse for a new cohort is done with Moodle's own **Copy course**. Course Studio is the
@@ -311,7 +312,7 @@ Moodle sites have: completion tracking on; web services enabled with a dedicated
 
 1. Each contract has an owner, a version (`v1`, `v2`, …) and a JSON Schema in `/contracts`, with at least one valid example file.
 2. **Frozen at the end of Release 0.** After that: additive, optional fields only (EXT-02).
-3. A change is a pull request that updates the schema, the examples, this PRD section, and the tests of every module that uses the contract, approved by all affected owners and the guide.
+3. A change is a pull request that updates the schema, the examples, this PRD section, and the tests of every module that uses the contract. **Until Release 0 is frozen**, it needs the approval of one owner of an affected module; the guide approves the PRD text and reviews the whole contract set once at the Release 0 gate. **After the freeze**, the guide's approval is also required for the contract itself (enforced through CODEOWNERS). A consuming module adds its tests when its code that reads the contract exists; before that, the shared contract tests cover the change.
 4. Every module validates contract data it reads and writes against the schema; invalid data is rejected with a clear error.
 
 | Contract | Owner | Used by |
@@ -344,7 +345,7 @@ course:
 sections:
   - number: 1
     title: "Week 1 — Set up your tools"
-    idnumber: wk-01
+    idnumber: wk-01                 # optional authoring label (B1.2 rule 6)
     unlock:
       after: null                 # first week: open
       start_date: null            # optional ISO date
@@ -368,6 +369,19 @@ sections:
     activities: [...]
 ```
 
+- **Paths (C-08).** `body` is a path inside the package folder. It follows exactly the same
+  relative-path rule as the B6.3 lesson manifest (`$defs/relative_path` in
+  `contracts/lesson-manifest.v1.schema.json`): not empty; not absolute; no URL scheme or drive
+  letter; forward slashes only, no backslashes; no whitespace; no `?` or `#`; no empty, `.` or `..`
+  segment; no control or format character, that is, nothing in the Unicode 15.0.0 categories Cc
+  and Cf (the complete categories, as listed in the schema's `relative_path` description); and no
+  `%` anywhere, so no percent-encoded form. The path is never decoded or normalized. The B1
+  pattern is a copy of the B6 pattern, so the two contracts cannot differ, and a test checks that
+  they are equal. A package that used a name this rule rejects (for example a file name with a
+  space) must rename the file. Shared test cases:
+  `contracts/test-vectors/relative-path.v1.json`. Windows reserved names and Unicode
+  normalization are not enforced in v1, as in B6.3.
+
 ### B1.2 Course pattern rules (validated)
 
 1. Each week section contains exactly **one guide Page and one task Assignment**. Optional extra activities: URL, Label, ungraded H5P practice (B7).
@@ -375,7 +389,17 @@ sections:
 3. Graded points across the course sum to `total_points` (default 100).
 4. Assignments use marking workflow (so grades stay hidden until released, §B4).
 5. Completion tracking is on for every activity used in an unlock rule.
-6. All `idnumber`s are unique within the course, lowercase ASCII with hyphens, and never reused for a different activity.
+6. All `idnumber`s that are present are unique within the course (a section's `idnumber` is optional, see below), lowercase ASCII with hyphens, and never reused for a different activity.
+
+**The section `idnumber` is optional.** It is an authoring label for Studio: Moodle stores no
+`idnumber` for a section, so a section is identified by its `number`. A restore, a reverse import
+(FR-S-08) and the round trip (C1.7) match a section by its number, and a reverse import leaves the
+field out. A section may omit `idnumber`. When it is present it must be a valid idnumber (absent is
+the only way to have none: `null` and an empty string are errors) and it is unique within the
+package (rule 6). Every activity has an `idnumber`. A protected item is defined by its `idnumber`
+(B1.4), so CK-07, which matches a protected item by its `idnumber`, does not apply to a section
+without one. The configurable `protected_section` number of B1.4 is a separate rule and is unchanged.
+Decision record `docs/decisions/0007-b1-optional-section-idnumber.md`.
 
 ### B1.3 Marking table format
 
@@ -393,7 +417,67 @@ HTML table in the Moodle assignment description; the grading assistant parses it
 ```
 
 - `Points` sum to the assignment's `points`.
-- `Check` is optional; allowed values are defined in §C3.5 (machine checks). `—` means mentor judgement only.
+- `Check` is optional; allowed values are defined in §C3.5 (machine checks). A cell that contains
+  only `—` means no machine check: mentor judgement only.
+- **Check formats (v1).** An assignment body has one marking table and uses only the checks of
+  §C3.5. When a `Check` cell has several checks, they are separated by `;` (as in the example
+  above). Spaces around each check and around its argument are ignored. The check name is the
+  text before the first `:`; the rest is its argument. Check names are lowercase and
+  case-sensitive: `word_count:5` is the check, and `Word_Count:5` is an unknown name.
+  - `readme_sections:<a,b,c>`: a comma-separated list of section names. Each name is matched
+    case-insensitively, ignoring spaces around it, against the text of the Markdown headings of
+    the repository's README. Every listed section must exist. A section name cannot contain a
+    comma or a semicolon: `,` separates the names and `;` separates the checks, so
+    `readme_sections:Setup;Usage` is the check `readme_sections:Setup` followed by a check named
+    `Usage`, which is unknown and fails validation.
+    - The README is the file named exactly `README.md` at the root of the repository (the package
+      root). A README in a subfolder or with another name is not used.
+    - A heading is an ATX heading: up to three spaces, then one to six `#` characters, then a
+      space or a tab and the heading text. A line with four or more spaces before the `#` is not
+      a heading. An optional closing sequence of `#` characters is removed only when a space or
+      a tab comes before it and only spaces or tabs follow it, so `## Setup ##` is the heading
+      text `Setup` and `## C#` is `C#`. Trailing spaces and tabs are removed and the heading text
+      is trimmed. A section name is matched against the whole heading text, so the heading
+      `Setup instructions` does not satisfy the name `Setup`.
+    - A line inside a fenced code block is not a heading. A fence line starts, after up to three
+      spaces, with at least three backticks (` ``` `) or at least three tildes (`~~~`); four or
+      more spaces do not make a fence, and a line that starts with fewer than three of the same
+      character, such as `` `npm install` ``, is not a fence. A closing fence uses the same
+      character as the opening fence and is at least as long. A fence that is not closed runs to
+      the end of the file.
+    - A Setext heading (a line of text underlined with `=` or `-`) is not a heading.
+    - **Matching.** A name and a heading text are compared after Unicode normalisation NFC and
+      case folding, and with each run of spaces or tabs inside them treated as one space, so
+      `Straße` matches the heading `STRASSE` and `Getting started` matches `Getting  started`.
+      Other characters are compared as they are: a non-breaking space is not a space, so
+      `Getting started` does not match a heading with a non-breaking space between the words.
+      Inline markup is not removed: the heading `## **Setup**` has the text `**Setup**`. A name
+      listed twice must exist once, and a missing name is reported once.
+    - The README is read as UTF-8; a leading byte-order mark is removed, and LF, CRLF and CR each
+      end a line. A README that is missing fails the check, with every listed section missing. A
+      README that is not valid UTF-8 is not defined in v1.
+  - `word_count:<n>`: `n` is one or more ASCII digits (`0` to `9`) with no sign, space or
+    underscore, and a value of at least 1. It is the minimum number of words in the report. A
+    word is a piece of the report text between whitespace. Markup is removed before counting only
+    when the report comes from online text (§B1.5); a report file is counted as it is.
+    - Space, tab and the line ends separate words. Whether other Unicode white space, such as the
+      non-breaking space, separates words is not defined in v1.
+    - Every piece counts, including one that is only punctuation such as `#` or `-`, and a URL is
+      one word. Online text in plain format has no markup to remove, so Markdown symbols in it
+      are counted as they are, as in a report file.
+    - A report file is read as UTF-8, and a leading byte-order mark is removed; it is not part of
+      the report. A report file that is not valid UTF-8 is not defined in v1. Whitespace and
+      character references in editor HTML stay with the HTML details of §B1.5.
+  - `http_ok:<field>`: `demo_url` is the only field in v1.
+  - An unknown check name fails validation (§C3.5). So does a known check whose argument breaks
+    a format defined here, for example `word_count:0` or `word_count:+5` (CK-09). An empty
+    section list (`readme_sections:`), an empty section name (`readme_sections:a,,b`), an empty
+    field (`http_ok:`) and a trailing `;` fail the same way (CK-09). The `command:<name>` check
+    and its configuration, the argument format of `repo_file:<path>`, the criterion keys, and the
+    other parsing details of a marking table are not defined here.
+  - Shared test cases for a `Check` cell, with the result a parser must give, are in
+    `contracts/test-vectors/check-cells.v1.json`. They cover what this section states and decide
+    none of the points above that it leaves open.
 - The HTML rendering keeps the `data-marking-table="v1"` attribute so the table can be parsed back.
 
 ### B1.4 Protected activities and output modes
@@ -414,6 +498,105 @@ duplicated** by LearnOps:
   (configurable `protected_section` number).
 - The validator rejects a package that contains a protected `idnumber` in either mode.
 
+### B1.5 Submission content
+
+A learner's submission carries the parts that a marking table's checks read: a repository link, a
+demo link and a report. This section says how a reader of submissions finds each part. It does not
+say how a check decides pass or fail. A submission has online text and, where `submission` (B1.1)
+includes `file`, may have uploaded files. The online text carries labelled lines:
+
+1. **Labels.** The labels are `Repository:`, `Demo:` and `Report:`. A label is matched without
+   regard to case, at the start of a line; spaces before the label are ignored. One label per line.
+2. **Values.** The value of `Repository:` and `Demo:` is the text after the colon, with the spaces
+   at both ends removed. B1 does not require `https`; whether a link works is decided by the check
+   that reads it.
+3. **Report.** The report is the text after `Report:` (text on the same line counts), up to the end
+   of the online text. A line inside the report that starts with a label, for example `Demo:`, is
+   part of the report and is not a label.
+4. **Report file.** When the online text has no `Report:` section and the assignment accepts
+   files, a file named `report.md` is the report; if there is none, a file named `report.txt`.
+   Other uploaded files are ignored by grading in v1.
+5. **HTML.** Online text may arrive as editor HTML. The markup is removed first, and each paragraph
+   or line break ends a line. Then rules 1 to 4 apply. *The exact result for HTML is unverified
+   until the lab check on Moodle 4.5 and 5.3 (App-C); the contract can only gain optional fields
+   after the freeze (EXT-02).*
+6. **Nothing is repaired.** Text that does not match rule 1, such as a misspelled label or a label
+   that is not at the start of a line, is not a label.
+7. **Missing and repeated labels.** The labels `Repository:` and `Demo:` must appear before
+   `Report:`: from the line of `Report:` to the end, every line is part of the report (rule 3).
+   If `Repository:` or `Demo:` is not found before the report starts, the check that reads it is
+   recorded as `error` with reason `field_missing`. If it is found more than once before the
+   report starts, the check is recorded as `error` with reason `field_repeated` (the first one
+   does not win). A second `Report:` line is part of the report; it is not `field_repeated`. If
+   there is no report (no `Report:` section and no report file), the check that reads the report
+   is recorded as `error` with reason `field_missing`. An `error` on one check does not stop the
+   others: every other criterion of the marking table is still graded.
+8. **What each check reads.** `repo_clone` reads `Repository`; `http_ok:demo_url` reads `Demo`;
+   `word_count` reads the report.
+9. **Task text.** A task body should tell the learner how to label each part, for example with the
+   three lines of example 1 below. This is guidance and is not validated.
+
+**Not defined in v1.** This section does not say how a reader treats an empty label value, line
+endings and trailing blank lines, HTML details beyond rule 5 (such as character entities and
+links), or an assignment whose `submission` has only `onlinetext` or only `file`. These are open
+decisions, listed in `docs/traceability.md`.
+
+**Examples.** Shared test cases, with the expected results, are in
+`contracts/test-vectors/submission.v1.json`. Every module that reads submissions must give these
+results. The file also has cases for the `readme_sections` rules of B1.3 (README file, headings,
+semicolons). The five examples:
+
+1. *All labels.*
+
+   ```text
+   Repository: https://example.org/alice/demo-assistant
+   Demo: https://example.org/alice/demo
+   Report: I built a small assistant. It worked after I fixed the prompt.
+   ```
+
+   All three parts are found. The report has 12 words.
+
+2. *Labels in HTML* (expected result unverified until the lab check).
+
+   ```text
+   <p>Repository: https://example.org/alice/demo-assistant</p><p>Demo: https://example.org/alice/demo</p><p>Report: I built a small assistant.<br>It worked after I fixed the prompt.</p>
+   ```
+
+   The same three parts are found. The report is two lines and has 12 words.
+
+3. *Missing demo.*
+
+   ```text
+   Repository: https://example.org/bob/demo-assistant
+   Report: Short note.
+   ```
+
+   The `http_ok:demo_url` check is `error` with reason `field_missing`. The repository and the
+   report (2 words) are found.
+
+4. *Report as a file.* The online text has no `Report:` section:
+
+   ```text
+   Repository: https://example.org/carol/demo-assistant
+   Demo: https://example.org/carol/demo
+   ```
+
+   and the learner uploads `report.md` with the text `# Reflection`, an empty line, and
+   `I built an assistant and it answered badly at first.`. The report is `report.md`, counted as it
+   is (12 words, the `#` is one of them).
+
+5. *A report that contains `Demo:`.*
+
+   ```text
+   Repository: https://example.org/dave/demo-assistant
+   Demo: https://example.org/dave/demo
+   Report: The next line starts with the word Demo, and it is part of this report.
+   Demo: https://example.org/dave/other
+   ```
+
+   The demo is the first `Demo:` line. The last line is part of the report (17 words), so it is not
+   a repeated label.
+
 ## B2. Course model (v1)
 
 A normalised JSON description of a course, read by the checker. Produced from a Moodle backup
@@ -433,17 +616,18 @@ information is lost.
 | Moodle role | Platform; each LearnOps tool registered as an External tool (LTI 1.3) by the administrator |
 | Tool endpoints | Login initiation, launch (redirect), JWKS; one registration per tool (Studio, Checker, Grading, Video) |
 | Message type | `LtiResourceLinkRequest` (Deep Linking not required in v1) |
-| Claims used | `sub`, `name`, `email` (if shared), `roles`, `context` (course id, title), `resource_link`, `deployment_id` |
-| Role mapping | `…/membership#Instructor` → Mentor; `…/institution/person#Administrator` → Administrator; `…/membership#Learner` → refused by the baseline tools (EXT-07); accepted only by the player tool from Release 6 (§C6) |
+| Claims inspected by the LTI gateway | `iss`, `aud`, `azp`, `https://purl.imsglobal.org/spec/lti/claim/version`, `exp`, `nonce`, `sub`, `name`, `email` (if shared), `roles`, `context` (course id, title), `resource_link`, `deployment_id`, and the message type. The version claim must equal `"1.3.0"`; it, `aud`, `azp`, `exp` and `nonce` are used only to validate the launch (§A13 SEC-01) |
+| Normalised launch result (what modules receive) | `iss`, `sub`, `deployment_id`, message type, one role (Mentor or Administrator), `context` (id, title), `resource_link` (id), `name` and `email` (if shared). Modules never receive the raw ID token, the nonce, the state or other validation-only token material. Fields and schema: `contracts/lti-launch.v1.md` and `contracts/lti-launch.v1.schema.json` |
+| Role mapping | `…/membership#Instructor` → Mentor; `…/institution/person#Administrator` → Administrator; `…/membership#Learner` → Learner-only launches are refused by the baseline tools (EXT-07). Release 6 player support for Learner is conditional on the guide resolving ADR 0001 OI-25 and approving the required contract and gateway compatibility approach (§B.0); no Release 6 Learner acceptance is currently guaranteed |
 | Grade/completion return | Not used by the baseline. The player (Release 6) may use LTI Assignment and Grade Services for watch completion (FR-X-13, feature flag) |
-| Session | Server-side session bound to (`sub`, context id); expires after 2 h idle; re-launch from Moodle to continue |
-| Course binding | The LTI context id is mapped to the Moodle course id (via web services, §B4) and stored in `shared.course_link` |
+| Session | Server-side session bound to (`iss`, `sub`, context id); expires after 2 h idle; re-launch from Moodle to continue |
+| Course binding | The LTI context id is mapped to the Moodle course id (via web services, §B4) and stored in `shared.course_link`, keyed by `iss` plus context id |
 
 ## B4. Moodle web-services usage (v1)
 
 - One dedicated **service account** per Moodle site, with a token restricted to an external service containing only the functions below.
 - The account has only the capabilities those functions need, in the courses where it is enrolled for grading.
-- Function list (each verified on 4.5 and 5.3 in Release 0; replacements recorded here if names differ):
+- Function list (each verified on 5.3 in the first release that relies on them; replacements recorded here if names differ):
 
 | Purpose | Function |
 |---|---|
@@ -453,9 +637,23 @@ information is lost.
 | Submissions | `mod_assign_get_submissions`, `mod_assign_get_submission_status` |
 | Submission files | Download through the token-authenticated file URL returned by the API |
 | Write draft grade + feedback | `mod_assign_save_grade` with marking-workflow state **`readyforrelease`** and feedback comments; never `released` |
-| Workflow state | `mod_assign_set_user_flags` (only if needed to set the state) |
+| Stored-grade read-back | `mod_assign_get_grades` |
 
-- **Draft rule:** grades written by LearnOps stay invisible to learners until the mentor releases them in Moodle (marking workflow). Only mentor-approved drafts are written.
+- Parameters LearnOps sends (names from the Moodle 4.5 and 5.3 source; their behaviour is still checked in the lab, App-C item 1). "Always sent" is LearnOps's rule, not Moodle's: Moodle itself requires the seven `mod_assign_save_grade` parameters, `assignid` and `assignmentids`, while `field`, `value` and `userid` on the other two functions have defaults in Moodle and are sent anyway:
+
+| Function | Always sent | Optional |
+|---|---|---|
+| `core_course_get_courses_by_field` | `field`, `value` | — |
+| `mod_assign_get_submission_status` | `assignid`, `userid` | — |
+| `mod_assign_save_grade` | `assignmentid`, `userid`, `grade`, `attemptnumber`, `addattempt`, `workflowstate`, `applytoall` | `plugindata`, `advancedgradingdata` |
+| `mod_assign_get_grades` | `assignmentids` | — |
+
+- **Course identification:** a course is looked up by its id (`field` = `id`) or, as an alternative, its shortname (`field` = `shortname`); never by its idnumber. Moodle returns a course's idnumber only to accounts with `moodle/course:update`, which the service account does not have.
+- **Draft rule:** grades written by LearnOps stay invisible to learners until the mentor releases them in Moodle (marking workflow). Only mentor-approved drafts are written. A grade write sends only the workflow state `readyforrelease`. After each write, LearnOps reads the result back and reports the write as done only when both are confirmed: `lastattempt.gradingstatus` is exactly `readyforrelease` (from `mod_assign_get_submission_status` for that assignment and learner), and the stored grade for that learner and attempt is numerically equal to the grade sent. If either is different, missing, ambiguous or cannot be read, the write is reported as not verified. The stored grade is read with `mod_assign_get_grades` and compared as a number after parsing, never as text, with no tolerance.
+- **Write rules** (guide's decisions on PR #64; full text in `contracts/moodle-ws.v1.md` §3): `attemptnumber` is always the explicit attempt being graded, never `-1`, and the read-back matches that attempt. A write is refused before anything is sent if the learner's state is already `readyforrelease` or `released`, or if the grade is below zero or above the assignment's maximum. A failed read-back is reported as not verified and the write is never repeated. A write whose outcome is unknown is never retried automatically: it is read back and the mentor decides what happens next. Suspended learners are skipped and reported as skipped. A missing submission, a missing grade and an access failure are separate outcomes, never reported as success, and the other learners are still processed.
+- The service account's capabilities are listed in `contracts/moodle-ws.v1.md` §4.
+
+**Grade-write safety and Moodle-version limitation (rule R3 in `contracts/moodle-ws.v1.md` §3a).** Before sending a grade write, LearnOps checks the current grade workflow state and refuses the write without sending anything if the grade is already locked (`readyforrelease` or `released`). The write uses `readyforrelease`, never `released`, and LearnOps reads the stored grade (`mod_assign_get_grades`) and the workflow state (`mod_assign_get_submission_status`) back before reporting the result. If the post-write state is `released`, the result is `NOT_VERIFIED`; it must not be reported as a verified draft write. A normal write that remains `readyforrelease` may be verified when the read-back matches. On Moodle 5.3, if a grade becomes locked after the pre-write check, Moodle retains the old grade and the read-back detects the mismatch, so the result is `NOT_VERIFIED` (read from Moodle's code, not yet run; B4 lab check 16). **Moodle 4.5 is best-effort:** there is no atomic check-and-write operation, and if another grader changes the state to `readyforrelease` between LearnOps' pre-write check and its write, Moodle may allow LearnOps to overwrite that grade (read from Moodle's code, not yet run; B4 lab check 16). The resulting `readyforrelease` state cannot be distinguished from a normal successful write by the available read-back, so this race may be reported as verified. This limitation is accepted for v1, is not claimed to be prevented or detected, and must be stated in release notes. LearnOps does not add a second pre-write read; grades are never released by the tool.
 
 ## B5. Model and speech interface (v1)
 
@@ -473,10 +671,13 @@ result = model.run(
 # result.meta      -> provider, model, input/output tokens, latency_ms, cost_estimate, prompt_version
 ```
 
+`cost_estimate` is a numeric estimate in US dollars (USD). For a local model with no billed inference cost, report `0.0`. If cost is unknown or the provider does not report it, report `null`; unknown cost must never be represented as zero. `input_tokens` and `output_tokens` may also be `null` when the provider does not report usage.
+
 ### B5.2 Providers
 
 - `local`: the lab LLM endpoint (default in the lab).
 - `hosted`: one hosted LLM API, through the provider's official SDK.
+- `fake`: a deterministic provider for automated tests that calls no model. The service refuses it unless an explicit test-only setting is on, and that setting is refused in the lab and in production.
 - Chosen by `MODEL_PROVIDER` and `MODEL_NAME`; keys from environment variables only.
 - Structured output is validated; on invalid output: one retry, then a clear error (never a silent partial result).
 
@@ -493,7 +694,13 @@ transcript = speech.transcribe(audio_path, language="en")
 # transcript.meta     -> provider, model, duration_s, latency_ms, cost_estimate
 ```
 
-Providers: `local` (lab Whisper-family service) or `hosted` (a speech-to-text API). Same rules as B5.2.
+- `start`, `end` and `duration_s` are seconds. Segment and word times count from the start of the original audio, also when the audio is processed in chunks.
+- Every segment's `end` is greater than or equal to its `start`, and so is every word's `end` to its `start`.
+- Segments and words may arrive out of time order; a consumer sorts them by `start`.
+- `segments` may be `[]` (for example, silent audio), a segment's `text` may be empty, and `words` may be `[]`.
+- `cost_estimate` follows B5.1 (USD; `0.0` for a local model with no billed cost; `null` when unknown).
+
+Providers: `local` (lab Whisper-family service), `hosted` (a speech-to-text API) or `fake` (automated tests only). Same rules as B5.2.
 
 ## B6. Media paths and lesson manifest (v1)
 
@@ -518,9 +725,44 @@ Slugs: lowercase ASCII, hyphens, immutable. Numbers zero-padded to two digits.
 | `chapters.json` | `[{start, end, title}]` | Yes |
 | `summary.en.md` | Short summary | Optional (feature flag) |
 | `slides.json` + `slides/NNN.jpg` | Slide-change index: `[{t, thumb, text?}]`, thumbnails 320 px wide | Optional (feature flag, on by default) |
-| `cues.json` | `[{t, type, ref, label}]`: moments where an activity should appear | Optional |
+| `cues.json` | `[{t, type, ref, label, required?}]`: moments where an activity should appear | Optional |
 | `camera.mp4`, `screen.mp4` | Separate tracks for F-1 | Optional; accepted and listed, not played in v1 |
 | `lesson.json` | The manifest (B6.3) | Yes |
+
+**Shapes of `chapters.json`, `slides.json` and `cues.json` (v1).** Each file is a bare JSON array,
+described by `contracts/chapters.v1.schema.json`, `contracts/slides.v1.schema.json` and
+`contracts/cues.v1.schema.json`. Unknown fields are accepted (B.0, EXT-02).
+
+- **Times** (`start`, `end`, `t`) are numbers of seconds from the beginning of the main track, never
+  `HH:MM:SS`, and at least 0. Fractional seconds are allowed. `duration_s` is kept unrounded. When a
+  validator has the manifest and one of `chapters.json`, `slides.json` or `cues.json`, every `start`,
+  `end` and `t` in that file must be at most the unrounded manifest `duration_s`, with no tolerance.
+  This is a consumer-level cross-file check; the individual JSON schema cannot enforce it.
+- **`chapters.json`**: `[{start, end, title}]`. `end` is greater than `start`; chapters are in
+  ascending order of `start` and do not overlap; gaps between chapters are allowed. These three
+  rules are checked by the validator, not by the schema (a schema cannot compare two properties);
+  a chapter that starts before any earlier chapter has ended is an overlap. `title` contains at
+  least one character that is not whitespace.
+- **`slides.json`**: `[{t, thumb, text?}]`. `thumb` follows the manifest's relative-path rule (B6.3),
+  is relative to the lesson folder, starts with `slides/` and ends in lowercase `.jpg` with at least
+  one character before it (`slides/.jpg` is invalid); its number of digits is not fixed. `text` is
+  optional plain text with no restriction in v1.
+- **`cues.json`**: `[{t, type, ref, label, required?}]`. `label` is required, shown to the learner,
+  and contains at least one character that is not whitespace; it has no length limit in v1.
+  `required: true` means the learner cannot skip the cue; when it is missing the cue is skippable.
+  `ref` is never empty. Types supported in v1 and their `ref`: `h5p`, the Moodle activity
+  `idnumber` (EXT-06), in the form of B1.2 rule 6 (lowercase ASCII letters and digits separated by
+  single hyphens); `image`, a path relative to the lesson folder (the B6.3 rule); `url`, an absolute
+  `https` address (C-08 does not apply to it) with a host, without user information, `@` before the
+  path, or a backslash. The contract checks only this basic syntax; the player parses the address and
+  checks its host against its configured allow-list (FR-X-12). `type` is written like a track role:
+  lowercase ASCII letters and digits separated by single hyphens, so underscores, dots and spaces
+  are rejected. The schema accepts any such token, and a v1 reader ignores a cue whose type it does
+  not know; for such a type `ref` is any non-empty string. A branching scenario is a B7 practice
+  item and uses `h5p`.
+- **Release scope.** Release 3 writes all three files; `cues.json` may then be an empty array `[]`.
+  Release 5 adds the `h5p` cue entries (FR-V-14). A lesson with no cues may leave `cues.json` out
+  (the manifest's `cues` path stays optional); an empty array is also valid.
 
 ### B6.3 Lesson manifest
 
@@ -587,8 +829,8 @@ url = media_signing.sign(relative_path, ttl_seconds=3600)
 
 ## B7. H5P practice output (v1, stretch)
 
-- Content types pinned in Release 0 (exact library versions recorded): question set (checkpoints), drag-the-words or drag-and-drop / ordering, branching scenario. Interactive video only in lab demonstrations (with openly licensed videos).
-- Each practice item is a standard `.h5p` file plus an entry in `course.yaml` (`type: h5p`, `idnumber`, `graded: false`).
+- Content types pinned in the first release that uses them (exact library versions recorded): question set (checkpoints), drag-the-words or drag-and-drop / ordering, branching scenario. Interactive video only in lab demonstrations (with openly licensed videos).
+- Each practice item is a standard `.h5p` file plus an entry in `course.yaml` (`type: h5p`, `idnumber`, `graded: false`, `file`: a relative path to the `.h5p` file).
 - Placed after the week's guide Page; **never graded** (no grade item; the checker enforces this).
 - Video checkpoints are produced in two modes: a separate activity after the video (default), and `cues.json` entries for the future player (F-1).
 
@@ -600,7 +842,7 @@ url = media_signing.sign(relative_path, ttl_seconds=3600)
 | B8.2 Sample course | A fictional 4-week project-based course package following B1 | Student 1 |
 | B8.3 Planted-error courses | Variants of B8.2, each with known errors from the checker catalogue (§C2.3), with an answer file | Student 2 |
 | B8.4 Synthetic submissions | ≥ 30 submissions (repo + demo link + short report) across quality levels, with reference grades from at least one mentor | Student 3 |
-| B8.5 Lecture videos | ≥ 5 Indian-English technical lectures (≥ 30 min total, enough for the Release 0 baseline) with reference transcripts; recorded with written consent or openly licensed (licence verified and recorded) | Student 4 |
+| B8.5 Lecture videos | ≥ 5 Indian-English technical lectures (≥ 30 min total, enough for the first word-error-rate baseline run, App-C 7) with reference transcripts; recorded with written consent or openly licensed (licence verified and recorded) | Student 4 |
 | B8.6 Model comparison set | Fixed inputs and expected outputs for practice drafts, grading drafts, chapters and summaries | Student 3 |
 
 No real learner data in any set.
@@ -652,15 +894,15 @@ editor stacked; preview behind a tab. Meets A14.
 
 ### C1.5 Technical requirements
 - `.mbz` generation writes Moodle's backup structure for the activity types used (page, assign, url, label, h5pactivity) with completion, availability, grade items and marking workflow.
-- Generated backups target the Moodle 4.5 backup format and must restore on 4.5 **and** 5.3 (C-03).
-- Every build is restored automatically in CI or the harness (M2) on fresh 4.5 and 5.3 sites.
+- Generated backups must restore on Moodle 5.3 (C-03).
+- Every build is restored automatically in CI or the harness (M2) on fresh 5.3 sites.
 - Data: `studio.package` (id, course link, current version), `studio.package_version` (hash, author, created), `studio.build` (mode, mbz path, result).
 
 ### C1.6 Contracts
 Provides: B1, B7. Uses: B2 (validation via checker library), B3, B5 (stretch), B6 (lesson slugs).
 
 ### C1.7 Acceptance criteria
-- [ ] B8.2 sample course: package → `.mbz` (full) → restored on fresh 4.5 and 5.3 → M2 checker reports 0 errors.
+- [ ] B8.2 sample course: package → `.mbz` (full) → restored on fresh 5.3 → M2 checker reports 0 errors.
 - [ ] Sections-only build restored by merge into B8.1 template: protected items unchanged (same idnumbers, same count, badge and completion criteria intact).
 - [ ] A package containing a protected idnumber is rejected with a clear message.
 - [ ] Reverse import of the restored course → package → rebuild produces an equivalent course (checker diff: no differences in structure, rules or points).
@@ -685,7 +927,7 @@ Editing a live Moodle course directly; quizzes and Moodle-stored rubrics; worksh
 ### C1.12 Bloom mapping
 Survey (L2): Moodle backup format, IMS Common Cartridge limits, course-as-code. Analyze (L4): map the
 course pattern to backup elements. Design (L6): schema, validator, generator. Develop (L3): editor,
-generator, reverse import. Integrate (L3): restore on 4.5 and 5.3. Evaluate (L5): restore tests,
+generator, reverse import. Integrate (L3): restore on 5.3. Evaluate (L5): restore tests,
 time-to-load measurement.
 
 ## C2. Module 2 — Course checker, role tests and integration harness (owner: Student 2)
@@ -697,7 +939,7 @@ real browser, and runs the integration test of the whole toolkit. Value: P2; pro
 ### C2.2 User stories
 - As a mentor, I run the checker on my course and get a list of problems with the exact fix.
 - As an administrator, I run role tests after any change and see pass/fail per role and screen size.
-- As the integration lead, I run one command that builds the sample course, checks it, restores it on both Moodle versions and runs all role tests.
+- As the integration lead, I run one command that builds the sample course, checks it, restores it on Moodle 5.3 and runs all role tests.
 
 ### C2.3 Functional requirements
 
@@ -708,9 +950,9 @@ real browser, and runs the integration test of the whole toolkit. Value: P2; pro
 | FR-C-03 | Rule catalogue v1 (each rule with id, severity, message, fix hint): **CK-01** unreachable section or activity; **CK-02** completion rule that can never be met; **CK-03** graded points ≠ target total; **CK-04** unlock rule refers to a missing activity; **CK-05** circular unlock rules; **CK-06** duplicate or invalid idnumber; **CK-07** protected item missing, duplicated or changed; **CK-08** course completion or badge criteria refer to missing items; **CK-09** assignment without a valid marking table, or marking-table points ≠ assignment points; **CK-10** assignment without marking workflow; **CK-11** practice (H5P) activity with a grade item; **CK-12** media referenced by a full fixed URL instead of a relative path; **CK-13** activity used in an unlock rule without completion tracking. | R1 |
 | FR-C-04 | Output: human-readable report (web + CLI) and machine-readable JSON; exit code per OPS-05. | R1 |
 | FR-C-05 | Compare two course models (diff of structure, rules, points), used by M1's reverse-import test. | R1 |
-| FR-C-06 | Role tests (Playwright) for visitor, signed-in non-member, learner, mentor, administrator, on the three screen profiles (UI-02), on Moodle 4.5 and 5.3. | R1 |
+| FR-C-06 | Role tests (Playwright) for visitor, signed-in non-member, learner, mentor, administrator, on the three screen profiles (UI-02), on Moodle 5.3. | R1 |
 | FR-C-07 | Role expectations are data: a YAML file per course listing what each role must see and must **not** see (negative tests are mandatory). | R1 |
-| FR-C-08 | Integration harness: one command runs sample build (M1) → check → restore on fresh 4.5 and 5.3 → role tests → grading and video smoke tests (when those releases exist); produces one report. | R1, extended each release |
+| FR-C-08 | Integration harness: one command runs sample build (M1) → check → restore on fresh 5.3 → role tests → grading and video smoke tests (when those releases exist); produces one report. | R1, extended each release |
 | FR-C-09 | Mentor web view (opened via LTI from the course): run the checker on a course package from Course Studio, or on a `.mbz` the mentor uploads after making it with Moodle's own Backup page (no automatic backups are taken by LearnOps). | R1 |
 
 ### C2.4 UI requirements
@@ -789,7 +1031,7 @@ evidence, editable feedback; approve/reject buttons; similarity flags. Works on 
 `repo_clone` (repository URL in the submission clones), `repo_file:<path>` (file exists),
 `readme_sections:<list>`, `command:<name>` (named command from the course's check config runs and
 exits 0), `http_ok:<field>` (URL from the submission returns HTTP 2xx within 10 s; run outside the
-sandbox), `word_count:<min>` (report or text). Unknown check names fail validation (CK-09 in M2).
+sandbox), `word_count:<min>` (report). Unknown check names fail validation (CK-09 in M2).
 
 **Sandbox:** one container per submission; no network after the clone step; non-root; 2 CPU, 2 GB
 RAM, 10-minute limit; read-only base image; destroyed after the run; on a host with no other
@@ -876,10 +1118,10 @@ Provides: B6. Uses: B3, B5 (model and speech), B7 (stretch), B8.5.
 ### C4.7 Acceptance criteria
 - [ ] 700 MB file uploaded through a 100 MB-limited proxy with one forced interruption: completes and plays.
 - [ ] For a 90-minute recording: lesson ready (captions, transcript, chapters, slide index, manifest) ≤ 30 min after it becomes available.
-- [ ] Caption word error rate measured on B8.5 and reported against the Release 0 target.
+- [ ] Caption word error rate measured on B8.5 and reported against the target set from the first baseline run (App-C 7).
 - [ ] `lesson.json` validates against B6.3; all paths relative; existing single-track lessons remain valid when `camera`/`screen` tracks are added later.
 - [ ] A BigBlueButton recording from a lab course appears in the correct live-class folder without manual steps.
-- [ ] Pasted snippet plays the video with captions in a Moodle Page on 4.5 and 5.3.
+- [ ] Pasted snippet plays the video with captions in a Moodle Page on 5.3.
 
 ### C4.8 Error handling
 Upload: resumable; clear messages for type/size. Processing: failed step shown with reason and retry;
@@ -939,7 +1181,7 @@ the right moment instead of after the video; recorded and live lessons look the 
 
 | ID | Requirement | Release |
 |---|---|---|
-| FR-X-01 | Learner launch through the LTI gateway (enables Learner role for the player only, per EXT-07); course and lesson from the launch. | R6 |
+| FR-X-01 | Learner launch through the LTI gateway, with course and lesson from the launch (planned for the player; see EXT-07). **Conditional:** not compatible with the current B3 v1 contract, whose normalised result has no Learner role. It depends on the guide resolving ADR 0001 OI-25 and approving the required contract and gateway approach (§B.0). | R6 |
 | FR-X-02 | Read `lesson.json` (B6.3); play tracks by role: `camera` + `screen` → dual modes; `main` only → single-video mode. | R6 |
 | FR-X-03 | Layout modes: **dual** (screen large, camera small), **side-by-side** (equal), **picture-in-picture** (camera over screen) and **picture-in-picture swapped**, **camera only**, **slides only**. The learner's last mode is remembered per course. | R6 |
 | FR-X-04 | Synchronisation: one master clock; drift between tracks corrected when it exceeds 150 ms; seek, pause and speed apply to both. | R6 |
@@ -1028,7 +1270,7 @@ Each release is **frozen, tagged and adoptable on its own**. Releases are number
 
 | Release | Name | Contents | Depends on |
 |---|---|---|---|
-| **Release 0** | Foundation | Lab VMs ready (A11); repository, CI, coding standards; contracts B1–B8 v1 **frozen**; shared libraries `lti`, `moodle_ws`, `model_interface` (FR-M-01, FR-M-02), `contracts`, `media_paths`; test data B8 v1; verification of assumptions (App-C); design document per module approved | — |
+| **Release 0** | Foundation | Lab VMs ready (A11); repository, CI, coding standards; contracts B1–B8 v1 **frozen** (B4 freezes separately, after its lab checks pass on 5.3: decision 0018); shared libraries `contracts` and `media_paths`; test data B8 v1; App-C items 6 and 9; design document per module approved. The libraries `lti`, `moodle_ws` and `model_interface` (FR-M-01, FR-M-02) and the other App-C items belong to the first release that uses them; the Release 0 notes list where each one goes. | — |
 | **Release 1** | Course quality | Module 2: checker (FR-C-01…05, 09), role tests (FR-C-06, 07), harness v1 (FR-C-08) | R0 |
 | **Release 2** | Course creation | Module 1: Course Studio (FR-S-01…11); harness extended to build → check → restore | R0, R1 |
 | **Release 3** | Video | Module 4: video pipeline (FR-V-01…13, FR-V-15) incl. BigBlueButton intake, summaries, slide index, manifest, retention; harness smoke test | R0 |
@@ -1043,13 +1285,13 @@ without any extension release. Extension releases follow the same exit criteria 
 built by this team after the baseline or by a later team.
 
 Work on later releases may start in parallel (e.g. Modules 3 and 4 build on Release 0 while
-Module 2 finishes Release 1); **freezing** follows the order above.
+Module 2 finishes Release 1); a release is **frozen** once every release in its "Depends on" column is frozen.
 
 ## D2. Release exit criteria (all must hold)
 
 1. Every FR tagged for the release is implemented and linked to passing tests (traceability, E4).
 2. The module's acceptance criteria (§C.x.7) pass.
-3. Restore and role-test matrix passes on Moodle 4.5 and 5.3 (harness report attached).
+3. Restore and role-test matrix passes on Moodle 5.3 (harness report attached).
 4. Contracts unchanged, or changed only additively under B.0.
 5. README (install, configure, run, check, undo), `.env.example`, changelog updated.
 6. Security items for the release reviewed (A13), dependency scan clean.
@@ -1073,13 +1315,13 @@ Module 2 finishes Release 1); **freezing** follows the order above.
 |---|---|---|
 | Unit | Functions and validators (contracts, rules, parsers) | CI, every PR |
 | Contract | Every example and generated file validates against its schema | CI, every PR |
-| Integration | Harness: build → check → restore (4.5, 5.3) → role tests → module smoke tests | Lab, every two weeks and before each release |
+| Integration | Harness: build → check → restore (5.3) → role tests → module smoke tests | Lab, every two weeks and before each release |
 | End-to-end | Role tests and mentor flows in a real browser | Lab, before each release |
 | Measurement | G-1…G-10 with logged evidence | At the release that delivers each goal |
 
 ## E2. Moodle compatibility matrix
 
-Every release: restore + role tests + module smoke tests on fresh Moodle 4.5 and 5.3 sites,
+Every release: restore + role tests + module smoke tests on fresh Moodle 5.3 sites,
 recorded in the release's harness report.
 
 ## E3. Measurement rules
@@ -1132,13 +1374,13 @@ requests; report chapter; final-demo segment.
 | Integration | L3 Apply |
 | Testing and evaluation | L5 Evaluate |
 
-## App-C. To verify in Release 0 (record results in `docs/decisions/`)
+## App-C. To verify (items 6 and 9 in Release 0; each other item in the first release that relies on it; record results in `docs/decisions/`)
 
-1. Every web-services function in B4 exists on 4.5 and 5.3 with the parameters used (incl. `workflowstate` on `mod_assign_save_grade`).
+1. Every web-services function in B4 exists on 5.3 with the parameters used (incl. `workflowstate` on `mod_assign_save_grade`).
 2. Moodle Restore merges a sections-only backup into a template course without touching protected items.
-3. A CLI restore route for the harness (Moodle's admin CLI if available on both versions; otherwise browser automation).
+3. A CLI restore route for the harness (Moodle's admin CLI if available on 5.3; otherwise browser automation).
 4. BigBlueButton recording metadata fields set by Moodle's BigBlueButton activity (for course mapping) and the video-format output location.
-5. Exact H5P content-type versions available on both Moodle versions.
+5. Exact H5P content-type versions available on Moodle 5.3.
 6. The LTI 1.3 library choice and its licence.
 7. Caption word-error-rate target (G-6) from a first baseline run.
 8. Licence or consent for every B8.5 video.
@@ -1149,7 +1391,7 @@ requests; report chapter; final-demo segment.
 
 | Risk | Mitigation |
 |---|---|
-| Undocumented Moodle backup format changes between versions | Restore tests on both versions every build (E2) |
+| Undocumented Moodle backup format changes between versions | Restore tests every build (E2) |
 | Contract drift between modules | Freeze at Release 0; B.0 change rule; contract tests in CI |
 | Sandbox escape in grading | SEC-04; malicious-repository acceptance test |
 | AI drafts wrong | Draft-only (C-09); measured agreement and wrong-answer rate |

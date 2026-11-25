@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:learnops:testdata:b8-6:output-review:v1",
+  "title": "B8.6 mentor review of one AI output: chapters, summary or practice (PROPOSED TEMPLATE)",
+  "description": "A blinded mentor's review of one AI output on the three levels of rubric.yaml (output_review). PROPOSED: the levels and questions are not decided (design Q48, O3). No real review exists; templates/ holds an invented example.",
+  "type": "object",
+  "required": [
+    "schema",
+    "item",
+    "draft_id",
+    "mentor_ref",
+    "reviewed_at",
+    "blind_to_provider",
+    "time_spent_seconds",
+    "level",
+    "checks"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": { "const": "learnops.testdata.b8-6.output-review/v1" },
+    "item": { "type": "string", "pattern": "^(ch|su|pr)-[0-9]{3}$" },
+    "draft_id": {
+      "type": "string",
+      "pattern": "^draft-[0-9]{3}$",
+      "description": "An opaque id. It never names the provider, so the mentor stays blind to it."
+    },
+    "mentor_ref": { "type": "string", "pattern": "^mentor-[0-9]{2}$" },
+    "reviewed_at": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+    "blind_to_provider": { "type": "boolean" },
+    "time_spent_seconds": { "type": "integer", "minimum": 0 },
+    "level": {
+      "enum": ["acceptable", "acceptable_with_edits", "unusable_or_wrong"],
+      "description": "Must equal the level ids in rubric.yaml output_review (a test checks this)."
+    },
+    "checks": {
+      "type": "object",
+      "required": [
+        "matches_the_input",
+        "answers_or_facts_are_correct",
+        "says_something_the_input_does_not",
+        "usable_without_help"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "matches_the_input": { "enum": ["yes", "no"] },
+        "answers_or_facts_are_correct": { "enum": ["yes", "no"] },
+        "says_something_the_input_does_not": { "enum": ["yes", "no"] },
+        "usable_without_help": { "enum": ["yes", "no"] }
+      }
+    },
+    "edits_needed": { "type": "string" },
+    "note": { "type": "string" }
+  }
+}

@@ -1,0 +1,31 @@
+# Author's expected outcome. NOT a reference grade: no scores.
+# Rubric: B8.2 b8-2-wk-01-task (PR #61).
+schema: learnops.testdata.b8-4.expected-outcome/v1
+submission_id: s007
+rubric: b8-2-wk-01-task
+provisional: true
+criteria:
+- criterion: Working demo
+  checks:
+  - check: http_ok:demo_url
+    expected: pass
+    reason: hosting.demo_stub is answers.
+  judgement: meets
+  rationale: The demo link opens and the helper answers a test question about opening hours.
+- criterion: Repository and README
+  checks:
+  - check: repo_clone
+    expected: pass
+    reason: hosting.publish_repo is true.
+  - check: readme_sections:Setup
+    expected: pass
+    reason: repo/README.md has the headings Setup.
+  judgement: meets
+  rationale: The repository clones and the README has a Setup section that says what to install.
+- criterion: Reflection
+  checks:
+  - check: word_count:150
+    expected: pass
+    reason: The report has 154 words; the minimum is 150 (PROVISIONAL counting rule).
+  judgement: meets
+  rationale: Over 150 words on what was built and two concrete things that went wrong.

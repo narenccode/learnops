@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:learnops:testdata:b8-6:practice:v1",
+  "title": "B8.6 expected practice draft: multiple-choice checkpoint questions (PROPOSED, test data, not a contract)",
+  "description": "One practice draft as the review card of PRD FR-S-12 shows it: question, correct answer, distractors, explanation. Proposed by Student 1 on PR #33 and approved by Akshita under PRD B.0 rule 3 (issue #186: the guide's rule is item 3 of his comment 7088877318; Akshita's approval is comment 7096886192) (design Q12). B7 (PR #54) defines no JSON structure for a draft or a review card, so this is a test-data shape for B8.6 only. If Studio later needs it as a fixed B5 task output, that goes through /contract-change.",
+  "type": "object",
+  "required": ["schema", "item", "input", "content_type", "questions"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": { "const": "learnops.testdata.b8-6.practice/v1" },
+    "item": { "type": "string", "pattern": "^pr-[0-9]{3}$" },
+    "input": { "type": "string", "pattern": "^t[0-9]{3}$" },
+    "content_type": {
+      "enum": ["question_set"],
+      "description": "The H5P content type (B7: question set, H5P.QuestionSet). Ordering (drag and drop) and the branching scenario are left out of the first version. Interactive video is for lab demonstrations only and is never used here. Each practice item uses one type."
+    },
+    "questions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "question", "correct_answer", "distractors", "explanation", "source", "source_seconds"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^q[0-9]+$" },
+          "question": { "type": "string", "minLength": 10 },
+          "correct_answer": { "type": "string", "minLength": 1 },
+          "distractors": {
+            "type": "array",
+            "minItems": 2,
+            "uniqueItems": true,
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "explanation": { "type": "string", "minLength": 10 },
+          "source": { "type": "string", "pattern": "^t[0-9]{3}$", "description": "The input the question is drawn from." },
+          "source_seconds": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": { "type": "number", "minimum": 0 },
+            "description": "[start, end] of the part of the input the question is drawn from, in seconds."
+          }
+        }
+      }
+    }
+  }
+}

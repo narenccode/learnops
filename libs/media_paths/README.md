@@ -1,12 +1,127 @@
 # Media Paths
 
-Shared Python library for validating LearnOps media paths and building media URLs.
+Shared Python library for generating and validating LearnOps media paths and building media URLs.
 
 ## Requirements
 
-- EXT-09: the shared `media_paths` library, including the B6.4 media signing interface (`none`
-  baseline implementation)
+- EXT-09: the shared `media_paths` library, including the B6.1 media path templates and the B6.4
+  media signing interface (`none` baseline implementation)
 - C-08: media is stored as relative paths
+
+## Install, configure, run, check, undo
+
+PRD §D2.5 asks for these five steps in the README of each release deliverable.
+
+**Install.** There is nothing to install. The library is plain Python (3.12) using only the standard
+library, and it is not a pip package. Modules and demos import it with `libs` on the path, because
+it is imported as `media_paths`, not `libs.media_paths`:
+
+```bash
+PYTHONPATH=libs python -c "import media_paths; print(media_paths.__name__)"
+```
+
+**Configure.** Through environment variables only (PRD OPS-02), listed in `.env.example`. The library
+itself reads two of them, in `create_media_signer()`:
+
+| Variable | Used for | Baseline value |
+|---|---|---|
+| `MEDIA_SIGNING` | Selects the signer | `none` (`hmac` and `s3` raise `MediaSigningConfigError`) |
+| `MEDIA_BASE_URL` | Base URL the `none` signer puts in front of the relative path | The media store's `http://` or `https://` address; the lab value is a placeholder |
+
+`MEDIA_PATH_TEMPLATE` (also in `.env.example`) is **not** read by the library: the caller reads it
+and passes it to `check_course_lesson_template` or `check_live_class_template` once at start-up
+(see "Loading a custom template" below). No secret is needed or accepted; a base URL containing a
+user name or password is rejected.
+
+**Run.** It is a library, not a service or a command-line tool, so there is nothing to start. The
+runnable demonstration is the D4 demo, which prints every outcome and exits 0 when all of them are
+as expected:
+
+```bash
+PYTHONPATH=libs python -B modules/video/demo/paths_demo.py
+```
+
+**Check.** From the repository root:
+
+```bash
+python -m pytest libs/media_paths/tests/ -v
+python -m mypy libs
+python -m ruff check libs/media_paths
+```
+
+**Undo.** The library keeps no state: it creates no file, folder, database row or network call, so
+there is nothing to remove. To stop using it, stop importing it and revert the configuration
+(`MEDIA_SIGNING`, `MEDIA_BASE_URL`, `MEDIA_PATH_TEMPLATE`). Relative paths already stored by a tool
+are plain strings and stay valid. Changing a path template changes only the paths built afterwards;
+folders already created keep their names (slugs are immutable, PRD B6.1). The command-line rule
+(`--dry-run`, `--check`, undo, PRD C-05) does not apply, because there is no command.
+
+## Path generation
+
+- `course_lesson_path(course_slug, module_number, module_slug, lesson_number, lesson_slug, template=DEFAULT_COURSE_LESSON_TEMPLATE)`
+- `live_class_path(course_slug, cohort, number, topic_slug, template=DEFAULT_LIVE_CLASS_TEMPLATE)`
+
+Default templates (PRD B6.1):
+
+```text
+courses/{course_slug}/{module_nn}-{module_slug}/{lesson_nn}-{lesson_slug}/
+courses/{course_slug}/live-{cohort}/{nn}-{topic_slug}/
+```
+
+A custom template may use only the placeholders of the default template of its own path type,
+by plain name. `{module_nn}`, `{lesson_nn}` and `{nn}` are filled from `module_number`,
+`lesson_number` and `number`, zero-padded to two digits. Slugs and `cohort` are lowercase ASCII
+letters and digits separated by single hyphens (`2026-01` is a valid cohort); numbers are an `int`
+from 1 to 99 (`bool`, `float` and `str` are rejected). A wrong type raises `TypeError`; a wrong
+value raises `ValueError`.
+
+### Loading a custom template
+
+A custom template (for example `MEDIA_PATH_TEMPLATE`) is checked **once, when it is loaded**.
+Load it with `check_course_lesson_template(text)` or `check_live_class_template(text)`, pass the
+result as `template=`, and add a file name with `posixpath.join`, checking the result:
+
+```python
+import os
+import posixpath
+
+from media_paths import check_course_lesson_template, course_lesson_path, validate_relative_path
+
+template = check_course_lesson_template(os.environ["MEDIA_PATH_TEMPLATE"])  # at start-up
+folder = course_lesson_path("python", 1, "basics", 2, "intro", template=template)
+path = posixpath.join(folder, "720p.mp4")  # not folder + "/" + "720p.mp4"
+assert validate_relative_path(path)
+```
+
+The defaults end with `/`; a custom template need not (no rule on this has been decided).
+`posixpath.join` handles both. `folder + "/" + "720p.mp4"` gives `.../intro//720p.mp4` for the
+defaults (an empty segment, rejected by `validate_relative_path`); `folder + "720p.mp4"` gives
+`.../intro720p.mp4` for a custom folder without a trailing `/`.
+
+The path functions accept only a loaded `CourseLessonTemplate` / `LiveClassTemplate`; a plain
+string raises `TypeError`. A template is rejected with a `ValueError` that names the problem if it:
+
+- leaves out a placeholder that identifies the item (lessons: `{course_slug}`, `{module_slug}`,
+  `{lesson_slug}`; live classes: `{course_slug}`, `{cohort}`, `{topic_slug}`), so two items
+  could share one folder. Number placeholders are optional;
+- puts two of those in one path segment, such as `{course_slug}{module_slug}/` (guide decision:
+  `ab` + `c` and `a` + `bc` would share a folder). A number may share it (`{module_nn}-{module_slug}`);
+- uses any other placeholder (`{}`, `{0}`, `{name.attr}`, `{name[0]}`), has a format spec or
+  conversion (`{module_nn:>3}`) or unbalanced braces (use `{{` or `}}`), or produces a path that
+  is not a safe relative path (see Validation below).
+
+**Custom templates can collide.** Nothing checks the two templates against each other, so the
+library does **not** prevent a lesson and a live class from getting the same folder (decided for v1:
+documented limit, no cross-check; revisit after Release 0). The defaults cannot collide (a lesson's
+module segment starts with two digits, a live-class segment with `live-`), but custom templates can,
+in either direction. Keep the two types apart yourself.
+
+- Custom lesson template `courses/{course_slug}/{module_slug}/{lesson_slug}/`, `module_slug` =
+  `live-batch-01`, `lesson_slug` = `01-recap`: `courses/python/live-batch-01/01-recap/`, the
+  default live-class folder for cohort `batch-01`, number 1, topic `recap`.
+- Custom live-class template `courses/{course_slug}/{cohort}/{nn}-{topic_slug}/`, `cohort` =
+  `01-basics`, number 2, topic `intro`: `courses/python/01-basics/02-intro/`, the default lesson
+  folder for module 1 `basics`, lesson 2 `intro`.
 
 ## Media signing (PRD B6.4)
 

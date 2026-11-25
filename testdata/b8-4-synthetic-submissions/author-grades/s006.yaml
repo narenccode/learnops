@@ -1,0 +1,20 @@
+# Author grade. NOT a reference grade: the author's own grading. The mentor reference grade for this submission is in
+# ../reference-grades/mentor-01/ (a student acting as mentor; guide, issue #186).
+schema: learnops.testdata.b8-4.author-grade/v1
+submission_id: s006
+rubric: b8-2-wk-01-task
+graded_by: author
+reference_grade: false
+graded_at: '2026-11-17'
+blind_to_drafts: true
+criteria:
+- criterion: Working demo
+  score: 0
+  reason: Demo returns HTTP 200 but shows unrelated content.
+- criterion: Repository and README
+  score: 2
+  reason: Repository does not clone; README has a Setup section but clone fails.
+- criterion: Reflection
+  score: 7
+  reason: Well over 150 words; describes what worked and what went wrong.
+total: 9

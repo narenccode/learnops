@@ -1,0 +1,11 @@
+[
+  {"start": 0.0, "end": 22.0, "title": "Consent statement"},
+  {"start": 22.0, "end": 40.0, "title": "Introduction"},
+  {"start": 40.0, "end": 180.0, "title": "Normalization"},
+  {"start": 180.0, "end": 230.0, "title": "Database transactions"},
+  {"start": 230.0, "end": 316.0, "title": "ACID properties"},
+  {"start": 316.0, "end": 359.0, "title": "Concurrency control"},
+  {"start": 359.0, "end": 392.0, "title": "Recovery"},
+  {"start": 392.0, "end": 437.0, "title": "Database security"},
+  {"start": 437.0, "end": 488.0, "title": "Conclusion"}
+]

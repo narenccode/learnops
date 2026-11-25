@@ -2,9 +2,9 @@
 
 **Module:** Video (M4, Student 4: Nagashree V, `vnaags`).
 **Requirement:** `docs/GETTING-STARTED.md` (Student 4, "Literature survey for **your** module": at least 6 sources, each opened and verified) and PRD C4.12 "Bloom mapping" (Survey, L2: Indian-English speech recognition, lecture segmentation, summarisation, resumable upload protocols).
-**Status:** Draft. **1 of at least 6 sources recorded. The survey is not complete.**
+**Status:** Draft. **Owner-verified sources: 13 (S2 and P1 to P12); the requirement of 6 is met.** The survey is still a Draft and is NOT complete in coverage: the gaps listed below (lecture-specific segmentation and summarisation, BigBlueButton `metadata.xml`, WER normalisation) are open. The owner states (2026-11-23) that all twelve entries P1 to P12 were opened and verified; the verification is the owner's statement and covers the facts each entry states.
 
-This file is the single consolidated Video-module survey. `docs/GETTING-STARTED.md` allows a survey in `docs/design/<module>.md` §12 or in `docs/literature-<module>.md`; this file uses the second option. Sources are added one at a time, each only after the owner has opened and verified it (`CLAUDE.md` §6a, rule 5: AI tools can invent citations).
+This file is the single consolidated Video-module survey. `docs/GETTING-STARTED.md` allows a survey in `docs/design/<module>.md` §12 or in `docs/literature-<module>.md`; this file uses the second option. Sources are added one at a time, each only after the owner has opened and verified it (`CLAUDE.md` §6a, rule 5: AI tools can invent citations). AI-researched candidates are kept in a separate "Pending entries" section, labelled PENDING OWNER VERIFICATION, and are not counted.
 
 **How to read an entry.** Each entry separates four kinds of statement:
 
@@ -20,8 +20,35 @@ Published results are not LearnOps results. No LearnOps speech evaluation has be
 | ID | Source | Type | Owner verification |
 |---|---|---|---|
 | S2 | Javed et al., *Svarah: Evaluating English ASR Systems on Indian Accents* (arXiv 2305.15760 v1) | Research paper (benchmark dataset and evaluation) | Complete: all five PDF pages inspected |
+| P1 | Radford et al., *Robust Speech Recognition via Large-Scale Weak Supervision* (arXiv 2212.04356) | Indian-English ASR (model) | Owner opened the source and confirmed the entry matched it (2026-11-23); the verification covers the facts the entry states, not parts it marks as unread |
+| P2 | Bhogale et al., *Vistaar: Diverse Benchmarks and Training Sets for Indian Language ASR* (arXiv 2305.15386) | Indian-language ASR | Owner opened the source and confirmed the entry matched it (2026-11-23); the verification covers the facts the entry states, not parts it marks as unread |
+| P5 | tus resumable upload protocol 1.0.x | Resumable upload | Owner opened the source and confirmed the entry matched it (2026-11-23); the verification covers the facts the entry states, not parts it marks as unread |
+| P9 | W3C, *Web Content Accessibility Guidelines (WCAG) 2.1*, success criterion 1.2.2 *Captions (Prerecorded)* | Captioning accessibility | Owner opened the source and confirmed the entry matched it (2026-11-23); the verification covers the facts the entry states, not parts it marks as unread |
+| P10 | W3C, *WebVTT: The Web Video Text Tracks Format* (Candidate Recommendation Draft, 20 May 2026) | Caption file format (`captions.en.vtt`) | Owner opened the source and confirmed the entry matched it (2026-11-23); the verification covers the facts the entry states, not parts it marks as unread |
+| P3 | Hearst, *Text Tiling: Segmenting Text into Multi-paragraph Subtopic Passages* (Computational Linguistics 23(1), 1997) | Lecture segmentation | Owner opened the source and confirmed the entry matched it (2026-11-23); the verification covers the facts the entry states, not parts it marks as unread |
+| P4 | Atri et al., *See, Hear, Read: Leveraging Multimodality with Guided Attention for Abstractive Text Summarization* (arXiv 2105.09601) | Summarisation | Owner opened the source and confirmed the entry matched it (2026-11-23); the verification covers the facts the entry states, not parts it marks as unread |
+| P6 | IETF Internet-Draft *Resumable Uploads for HTTP* (draft-ietf-httpbis-resumable-upload) | Resumable upload | Owner opened the source and confirmed the entry matched it (2026-11-23); the verification covers the facts the entry states, not parts it marks as unread |
+| P7 | BigBlueButton documentation, recording development page | BigBlueButton recordings | Owner opened the source and confirmed the entry matched it (2026-11-23); the verification covers the facts the entry states, not parts it marks as unread |
+| P8 | BigBlueButton documentation, API page (getRecordings) | BigBlueButton recordings | Owner opened the source and confirmed the entry matched it (2026-11-23); the verification covers the facts the entry states, not parts it marks as unread |
+| P11 | nginx documentation, `client_max_body_size` in `ngx_http_core_module` | Reverse-proxy upload size limit | Owner opened the source and confirmed the entry matched it (2026-11-23); the verification covers the facts the entry states, not parts it marks as unread |
+| P12 | Jurafsky and Martin, *Speech and Language Processing* (3rd ed. draft), chapter 16 *Automatic Speech Recognition* | WER definition (textbook) | Owner opened the source and confirmed the entry matched it (2026-11-23); the verification covers the facts the entry states, not parts it marks as unread |
 
-Topics in C4.12 with no source recorded yet: lecture segmentation, summarisation, resumable upload protocols, and BigBlueButton recordings. Further speech-recognition sources are also still to be added.
+### Pending entries
+
+None. All twelve AI-researched entries (P1 to P12) were first read by an AI assistant (Claude Code, web fetch, 16 and 22 Nov 2026), not by the owner; the owner then opened each source and confirmed it (2026-11-23). Where an entry still says a part of a page was not read, or a fact is UNKNOWN, the owner has not reported otherwise, so that statement stands.
+
+### Coverage against C4.12 survey topics
+
+| Topic | Verified (owner) | Pending | Gap |
+|---|---|---|---|
+| Indian-English speech recognition | S2, P1, P2, P12 | none | No source on technical-lecture WER; whether chapter 16 of P12 defines WER and normalisation was not reported, so it is not recorded; no normalisation source |
+| Lecture segmentation | P3 | none | P3 is 1997 text segmentation, not lecture video or ASR transcripts; no modern lecture-specific source |
+| Summarisation | P4 | none | P4 is conference-talk video; no lecture-transcript summarisation paper read |
+| Resumable upload protocols | P5, P6, P11 | none | P11 documents one proxy's limit and its 413 error; still no evidence on browser limits or on real-world robustness |
+| BigBlueButton recordings | P7, P8 | none | The owner confirmed on 2026-11-23 that the P7 page does not mention `metadata.xml`, so its format needs another source (P8 or a lab recording) |
+| Captioning accessibility and caption format | P9, P10 | none | The entries cover the page headers and the one criterion; the WebVTT cue syntax and the other WCAG criteria were not read |
+
+Summary: 13 owner-verified sources (S2 and P1 to P12); the requirement of 6 is met. The coverage gaps above are still to be addressed.
 
 ---
 
@@ -294,4 +321,152 @@ These are references as listed in the paper. They have **not** been opened or ve
 
 ---
 
-*Next sources to add (not yet opened or verified; no entries made):* further Indian-English or lecture speech-recognition evidence, a definition of WER and its limits, lecture segmentation, summarisation, resumable upload protocols, and BigBlueButton recordings.
+# Entries P1 to P12 (all owner-verified, 2026-11-23)
+
+Labels in these entries: **Source-stated** (printed on the page read), **Our interpretation** (AI-assistant reasoning about LearnOps; not published evidence), **NOT PRINTED** (not on the page; not filled in). Quotes are short. Abstracts are paraphrased, not verbatim. Only the entries marked OWNER-VERIFIED say the owner opened the source; the others were read by an AI assistant only.
+
+## P1. Whisper: Robust Speech Recognition via Large-Scale Weak Supervision
+
+**Status: OWNER-VERIFIED (2026-11-23): the owner opened the source and confirmed the entry matched it.** Already named in S2's references ([1], listed there as CoRR abs/2212.04356; S2 did not open it separately).
+
+- **Title:** Robust Speech Recognition via Large-Scale Weak Supervision
+- **Authors (printed order):** Alec Radford, Jong Wook Kim, Tao Xu, Greg Brockman, Christine McLeavey, Ilya Sutskever
+- **Identifier / URL:** arXiv 2212.04356; https://arxiv.org/abs/2212.04356
+- **Version/date:** only v1 listed, submitted 6 Dec 2022. **Venue:** NOT PRINTED. **Licence:** the page links the arXiv non-exclusive distribution licence; no code or model licence is printed there.
+- **Source-stated:** speech systems trained on 680,000 hours of multilingual, multitask data transfer zero-shot to standard benchmarks, are often competitive with prior supervised results and approach human accuracy and robustness; models and inference code are released.
+- **Our interpretation:** the authors' claims are on standard benchmarks. They are not Indian-English lecture results; S2 (verified) is the only evidence here on Indian-accented English, and it evaluated Whisper (WER on Svarah in S2 §6.1).
+- **Relevance (interpretation):** informs the candidate-model list for the speech-options decision (`docs/decisions/0002-speech-options.md`, still proposed in an open PR at the time of writing). Model and code licences must be checked at their source before any adoption; this entry does not establish them. All speech calls stay behind `libs/model_interface` (`CLAUDE.md` §2.6).
+- **Limits:** no LearnOps WER measured.
+
+## P2. Vistaar: Diverse Benchmarks and Training Sets for Indian Language ASR
+
+**Status: OWNER-VERIFIED (2026-11-23): the owner opened the source and confirmed the entry matched it.**
+
+- **Authors (printed order):** Kaushal Santosh Bhogale, Sai Sundaresan, Abhigyan Raman, Tahir Javed, Mitesh M. Khapra, Pratyush Kumar
+- **Identifier / URL:** arXiv 2305.15386; https://arxiv.org/abs/2305.15386 (full text read from the HTML version, https://arxiv.org/html/2305.15386v2; the PDF fetch returned no extractable text)
+- **Versions:** v1 24 May 2023; v2 2 Aug 2023. **Venue line on page:** "Accepted in INTERSPEECH 2023". **Licence:** arXiv non-exclusive distribution licence (paper text); dataset, code and model licences NOT PRINTED on the pages read.
+- **Source-stated:** 59 benchmarks across 12 Indian languages; 3 public and 2 commercial systems evaluated; Whisper fine-tuned on 10.7K hours into IndicWhisper, lowest WER on 39 of 59 benchmarks with an average 4.1 WER reduction; data, code and models stated as open-sourced. NPTEL is described as training data ("conversational speech from classroom lecture recordings of undergraduate and graduate level engineering courses"), 857 hours in its Table 2, and is not among the 59 benchmarks.
+- **NOT PRINTED:** any Indian-English test set or accent analysis; WER normalisation; a limitations section (the text does say Indian-language WERs are still large).
+- **Our interpretation:** the paper is about Indian languages, not Indian-accented English, so it does not answer the English-lecture question. Its NPTEL note shows that lecture-style engineering speech exists as training data, which is the closest it comes to our domain.
+- **Relevance (interpretation):** motivates evaluating per domain and per language rather than trusting headline WER; relevant to the B8.5 lecture set and the caption-WER measure (PRD G-6).
+- **Limits:** no English evaluation; results not LearnOps results.
+
+## P3. Hearst: Text Tiling
+
+**Status: OWNER-VERIFIED (2026-11-23): the owner opened the source and confirmed the entry matched it.**
+
+- **Title (as printed on the ACL Anthology page):** Text Tiling: Segmenting Text into Multi-paragraph Subtopic Passages
+- **Author:** Marti A. Hearst. **Journal:** Computational Linguistics, Volume 23, Number 1, pages 33-64, March 1997 (from the volume title; the Month field is blank). **Publisher:** MIT Press.
+- **URL:** https://aclanthology.org/J97-1003/ (ACL Anthology ID J97-1003). **DOI:** NOT PRINTED on that page. **Abstract:** NOT PRINTED there. **Licence:** the page footer says pre-2016 materials are CC BY-NC-SA 3.0.
+- **Search-snippet statements (not confirmed on the Anthology page; confirm in the PDF):** the method splits expository text into contiguous multi-paragraph segments using lexical co-occurrence and distribution patterns, and was compared against human judgements of subtopic boundaries on 12 texts.
+- **Evaluation section read by the owner (text of section 6.1 pasted 2026-11-23):** judgments were obtained from seven readers for each of 12 magazine articles of 1,800 to 2,500 words (one longer text of 2,932 words was also used) with little structural demarcation; readers marked the paragraph boundaries where the topic changed. The average kappa against the group decision (a gap counts as a boundary when at least three of seven judges marked it) was .647, which the author calls the low end of the acceptable range. Section 6.2 says the evaluation collection is very small, so the results are only a suggestion. This confirms the "12 texts" figure; the lexical co-occurrence description above was not in the pasted part and rests on the search snippet.
+- **Our interpretation:** this is text segmentation of written expository text. It says nothing about speech transcripts, ASR errors, or lecture video. A transcript has no paragraphs, so applying it needs sentence or time-window units chosen by us.
+- **Relevance (interpretation):** a classic baseline for transcript-based chapter boundaries (PRD C4 chapters). A design document should treat it as a baseline idea only and evaluate on B8.5 with reference chapters.
+- **Limits:** 1997; written text; no lecture data.
+
+## P4. See, Hear, Read (AVIATE / FLORAL)
+
+**Status: OWNER-VERIFIED (2026-11-23): the owner opened the source and confirmed the entry matched it.**
+
+- **Authors (printed order):** Yash Kumar Atri, Shraman Pramanick, Vikram Goyal, Tanmoy Chakraborty
+- **Identifier / URL:** arXiv 2105.09601; https://arxiv.org/abs/2105.09601. **Versions:** v1 20 May 2021; v2 15 Sep 2021. **Comment line:** "Journal paper accepted in Knowledge Based Systems" (volume, pages and DOI NOT PRINTED). **Licence:** CC BY 4.0 (arXiv page).
+- **Source-stated (paraphrase):** existing methods use short videos and short summaries; the authors introduce AVIATE, described as a large-scale abstractive summarisation dataset of videos of diverse duration compiled from conference presentations (NDSS, ICML, NeurIPS), with paper abstracts as reference summaries; they propose FLORAL, a multimodal Transformer decoder model, and report ROUGE-L gains of 1.39 on How2 and 2.74 on AVIATE over baselines.
+- **Our interpretation:** the videos are conference talks with paper-abstract targets, not classroom lectures; ROUGE gains do not tell us whether a summary is acceptable to a mentor. LearnOps rule: AI output is a draft needing mentor approval (`CLAUDE.md` §2.5).
+- **Relevance (interpretation):** shows summarisation of long presentation video is a research task with a multimodal option, but the PRD baseline is transcript-based, so P4 is background only.
+- **Not covered:** a Springer article (Benedetto et al., DOI 10.1007/s10639-023-11855-w) surfaced in a search as a closer match on lecture summarisation, but its page redirected to a login and was **not read**. No metadata is recorded. It is a candidate for the owner to open.
+
+## P5. tus resumable upload protocol 1.0.x
+
+**Status: OWNER-VERIFIED (2026-11-23): the owner opened the source and confirmed the entry matched it.**
+
+- **URL:** https://tus.io/protocols/resumable-upload (source repository: https://github.com/tus/tus-resumable-upload-protocol)
+- **Source-stated:** "Version: 1.0.0 (SemVer)", dated 2016-03-25. Core methods HEAD, PATCH, OPTIONS; headers include Upload-Offset, Upload-Length, Tus-Resumable, Tus-Version, Tus-Extension, Tus-Max-Size. Named extensions: Creation (incl. defer-length), Creation With Upload, Expiration, Checksum, Termination, Concatenation. "Licensed under the MIT license" (repository shows LICENSE.txt); copyright Transloadit Ltd and Contributors 2013-2016. Authors printed: Felix Geisendörfer, Kevin van Zonneveld, Tim Koschützki, Naren Venkataraman, Marius Kleidl; "authored and owned by the tus community".
+- **Our interpretation:** the client reads the server's offset with HEAD and resumes with PATCH from that offset; a stable, openly licensed spec. A protocol spec is not evidence of robustness on our network or behind our proxy.
+- **Relevance (interpretation):** one candidate for the upload service design (C4 resumable upload, upload robustness in the Bloom "Evaluate" list). The licence applies to the specification; the licence of any server or client library must be checked separately (`CLAUDE.md` §2.10).
+- **Limits:** no robustness or proxy-limit measurements.
+
+## P6. IETF Internet-Draft: Resumable Uploads for HTTP
+
+**Status: OWNER-VERIFIED (2026-11-23): the owner opened the source and confirmed the entry matched it.** **This is a draft, not a standard.**
+
+- **Title:** Resumable Uploads for HTTP. **Draft name:** draft-ietf-httpbis-resumable-upload.
+- **Editors (as printed):** M. Kleidl (Transloadit), G. Zhang (Apple Inc.), L. Pardue (Apple).
+- **URLs:** https://datatracker.ietf.org/doc/draft-ietf-httpbis-resumable-upload/ ; https://httpwg.org/http-extensions/draft-ietf-httpbis-resumable-upload.html
+- **State when read:** the Datatracker page showed revision -15 dated 2 November 2026, "Active Internet-Draft (httpbis WG)", intended status Proposed Standard, expiring 6 May 2027, no RFC number. The httpwg.org page showed a "-latest" copy labelled published 12 November 2026, expiring 16 May 2027. **Re-checked 2026-11-23:** Datatracker still showed revision -15 (2 November 2026, expiring 6 May 2027); the httpwg.org copy now read "Published 17 November 2026", expiring 21 May 2027, with no changes listed since -15 and no revision number printed. The two pages still disagree; both are recorded, neither is chosen. This will change; re-check before citing.
+- **Source-stated:** mechanism for resumable uploads over HTTP. Headers Upload-Offset, Upload-Complete, Upload-Length, Upload-Limit; status code 104 (Upload Resumption Supported); media type application/partial-upload. After interruption the client asks the upload resource for its offset (HEAD) and resumes with PATCH. The Status of This Memo says drafts may be updated, replaced or obsoleted at any time.
+- **Our interpretation:** the draft is the standards-track counterpart of tus's idea but is unstable, so a design should not depend on its header names. Licence of the document: NOT PRINTED on the pages read.
+- **Relevance (interpretation):** informs the ADR comparing tus with the draft for the upload service. A final decision belongs to the design document and the guide.
+
+## P7. BigBlueButton documentation: recording (development)
+
+**Status: OWNER-VERIFIED (2026-11-23): the owner opened the source and confirmed the entry matched it.**
+
+- **URL:** https://docs.bigbluebutton.org/development/recording (header "Version: 4.0"; the page does not say it applies to a single BBB version). Authorship and publication date: NOT PRINTED. Licence: NOT PRINTED in what was read.
+- **Source-stated:** lifecycle stages Capture, Archive, Sanity, Process, Publish, Playback. Directories: raw `/var/bigbluebutton/recording/raw/<internal-meeting-id>/`, process and publish under `/var/bigbluebutton/recording/{process,publish}/presentation/<internal-meeting-id>/`, playback under `/var/bigbluebutton/published/presentation/<internal-meeting-id>/`. `events.xml` sits in the raw directory (contains e.g. RecordStatusEvent and ParticipantJoinEvent entries). `processing_time` records processing duration. The "presentation" workflow is the default; a separate "video" workflow can produce a single video file (webm shown in a config example). Recordings are requested with `record=true` on the API `create` call.
+- **NOT PRINTED / not seen:** `metadata.xml` was not found in the portion read, so its contents are unverified here. The owner opened the page on 2026-11-23 and confirmed that it does not mention `metadata.xml`; its format must come from another source (P8 or a recording on the lab BigBlueButton). Whether published recording files can be taken as separate audio, webcam and screen tracks is not established.
+- **Our interpretation:** BBB output is a pipeline with an event log and a presentation-format playback, so intake probably has to start from published artefacts or the API, not from the raw directory; that is a design question for the owner.
+- **Relevance (interpretation):** informs BBB intake (PRD C4 BigBlueButton intake) and the verification of the lab BigBlueButton (the repository's App-C item for recording metadata). Our rule that Moodle and BBB are never modified (`CLAUDE.md` §2.1) means intake can only use BBB's documented outputs and API.
+- **Limits:** documents version 4.0 by header; the lab BBB version was not checked here.
+
+## P8. BigBlueButton documentation: API (getRecordings)
+
+**Status: OWNER-VERIFIED (2026-11-23): the owner opened the source and confirmed the entry matched it.**
+
+- **URL:** https://docs.bigbluebutton.org/development/api (header "Version: 4.0"; about 155k characters; the last ~15k were not read and the middle was only summarised).
+- **Verbatim-read (changelog):** getRecordings gained meta and state filters (1.0); thumbnails and a participants element (1.1); pagination with offset and limit (2.6); totalElements (2.7). The owner pasted the whole "Updates to API in BigBlueButton" section on 2026-11-23 and it matches these four lines. The same section also lists, under 2.2, `getRecordingTextTracks` (list the caption or subtitle files available for a recording) and `putRecordingTextTrack` (upload a caption or subtitle file; a track with the same kind and lang is replaced), and under 1.1 that `updateRecordings` can edit meta parameters. Not used by the pipeline design yet; recorded as page-stated facts.
+- **From an extracted summary, not read verbatim (re-check on the page):** parameters meetingID, recordID, state, meta, offset, limit; response with recordID, meetingID, internalMeetingID, name, published, state, startTime, endTime, participants, metadata, playback formats (type, url, processingTime, length) and state values processing, processed, published, unpublished, deleted.
+- **Our interpretation:** these fields, if confirmed, would be the documented route to find a finished recording without touching BBB internals.
+- **Relevance (interpretation):** feeds the BBB-intake design and the lab verification of recording metadata. Not verified against the lab's BBB.
+- **Limits:** partly read; version-dependent.
+
+## P9. WCAG 2.1, success criterion 1.2.2 Captions (Prerecorded)
+
+**Status: OWNER-VERIFIED (2026-11-23): the owner opened the source and confirmed the entry matched it.** Page headers and the criterion's text were read by an AI assistant (fetched 2026-11-22); the owner then opened the page.
+
+- **URL:** https://www.w3.org/TR/WCAG21/ (title "Web Content Accessibility Guidelines (WCAG) 2.1"; header "W3C Recommendation 06 May 2025").
+- **Read:** success criterion 1.2.2, *Captions (Prerecorded)*, conformance **Level A**. Paraphrase: captions must be provided for prerecorded audio in synchronised media, unless the media is a labelled alternative to text.
+- **Our interpretation:** a caption file for every lecture video (`captions.en.vtt`, required by PRD B6.2) is what this criterion expects of a lesson page. Whether Moodle's own player meets the rest of WCAG on the lab sites is not claimed.
+- **Relevance (interpretation):** supports why `captions.en.vtt` is a required file. PRD UI-03 names WCAG 2.1 AA for contrast.
+- **Limits:** only one criterion read; Level A, not AA; not a statement about caption **accuracy** (that is G-6).
+
+## P10. WebVTT: The Web Video Text Tracks Format
+
+**Status: OWNER-VERIFIED (2026-11-23): the owner opened the source and confirmed the entry matched it.** Page header read by an AI assistant (fetched 2026-11-22); the owner then opened the page. The cue syntax was **not** read.
+
+- **URL:** https://www.w3.org/TR/webvtt1/ (header "W3C Candidate Recommendation Draft, 20 May 2026"; a 2019 Candidate Recommendation is listed as the previous version).
+- **Our interpretation:** the format of the required file `captions.en.vtt` (PRD B6.2). The page is a Candidate Recommendation Draft, not a final Recommendation.
+- **Relevance (interpretation):** the pipeline writes this format from the B5.4 transcript segments; a validator for the file should follow this specification.
+- **Limits:** syntax, timestamps and cue settings not read; status is a draft.
+
+## P11. nginx: `client_max_body_size`
+
+**Status: OWNER-VERIFIED (2026-11-23): the owner opened the source and confirmed the entry matched it.** The directive's text was read by an AI assistant (fetched 2026-11-22); the owner then opened the page.
+
+- **URL:** https://nginx.org/en/docs/http/ngx_http_core_module.html (directive `client_max_body_size`, contexts http, server, location).
+- **Read:** the default is `1m`; a request body above the configured size gets the **413 (Request Entity Too Large)** error; the page notes that browsers cannot display this error correctly; `0` disables the check.
+- **Our interpretation:** an example of the proxy limit the PRD means by "below a 100 MB proxy limit" (FR-V-01, chunk size 90 MB). It shows why one large upload request fails behind a default proxy and why chunking is needed.
+- **Relevance (interpretation):** supports the chunked, resumable upload design. It is one product's documentation; the PRD's 100 MB is the project's assumption, not nginx's default.
+- **Limits:** one proxy; says nothing about browsers or about resumable-upload robustness.
+
+## P12. Jurafsky and Martin, Speech and Language Processing, chapter 16
+
+**Status: OWNER-VERIFIED (2026-11-23): the owner opened the source and confirmed the entry matched it.**
+
+- **URL:** https://web.stanford.edu/~jurafsky/slp3/ (page header "Speech and Language Processing (3rd ed. draft)", release dated 19 August 2026; the contents list "16: Automatic Speech Recognition").
+- **Not read:** the chapter itself. **UNKNOWN:** whether and how it defines word error rate and its normalisation; this must be checked by opening the chapter.
+- **Our interpretation:** a candidate textbook source for the WER definition the survey still lacks.
+- **Relevance (interpretation):** would support the WER procedure in `docs/decisions/0002-speech-options.md` section 7.3 and `libs/speech_eval`.
+- **Limits:** a draft edition; nothing in this entry is a result about Indian English.
+
+---
+
+# Remaining gaps and risks
+
+1. **Verification:** all twelve entries P1 to P12 are owner-verified (owner's statement, 2026-11-23), on top of S2. Anything an entry still says was not read stays unread unless the owner reports otherwise.
+2. **Indian-English lecture ASR:** no source covers technical-lecture WER; P2 covers Indian languages, not English. A WER definition and normalisation source is missing.
+3. **Lecture segmentation and summarisation:** only an old text-segmentation paper (P3) and a conference-talk summarisation paper (P4). The unread Springer article is a lead only.
+4. **Resumable upload:** specifications and one proxy's documented limit (P11); no evidence on browser limits or robustness (the PRD's "upload robustness" evaluation is LearnOps's own to measure).
+5. **BBB:** `metadata.xml` (not on the P7 page, owner-confirmed), separate tracks and the lab BBB version are unverified.
+6. **Not yet covered:** privacy and consent literature for lecture recordings (an Indian data-protection source could not be fetched on 2026-11-22), and Moodle-side video embedding (the Moodle documentation site refused automated requests). Captioning accessibility is covered only by P9 and P10, at header level.
+
+*Next sources to add (owner-verified entries only count once the owner has opened them):* the sources above, plus the gap areas.

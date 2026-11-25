@@ -1,0 +1,19 @@
+# PROVISIONAL submission. Fictional; written for this project (Apache-2.0).
+schema: learnops.testdata.b8-4.submission/v1
+id: s012
+onlinetext: |-
+  Repository: https://git.lab.invalid/learner-12/tennis-club-guide.git
+  Demo: https://demo.lab.invalid/learner-12/
+  Report: Two questions my guide answers badly:
+
+  1. "Can my friend play with me?" returns the shoes paragraph. The guest rule says "guests", not
+  "friend", so no words overlap except "play", and "play" appears in the shoes rule too.
+
+  2. "Are the lights on in summer?" returns the floodlight paragraph, which only covers October to
+  March. The answer looks right but leaves out that the lights are off in summer, because the
+  handbook never says it.
+onlinetext_format: plain
+repo_dir: repo
+hosting:
+  publish_repo: true
+  demo_stub: answers

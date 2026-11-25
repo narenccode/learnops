@@ -1,0 +1,20 @@
+# Author grade. NOT a reference grade: the author's own grading. The mentor reference grade for this submission is in
+# ../reference-grades/mentor-01/ (a student acting as mentor; guide, issue #186).
+schema: learnops.testdata.b8-4.author-grade/v1
+submission_id: s026
+rubric: b8-2-wk-04-task
+graded_by: author
+reference_grade: false
+graded_at: '2026-11-17'
+blind_to_drafts: true
+criteria:
+- criterion: Final demo
+  score: 8
+  reason: Demo opens and answers a question from the rules.
+- criterion: README
+  score: 7
+  reason: README has Setup, Usage and Limits sections.
+- criterion: Reflection
+  score: 10
+  reason: Over 250 words; clearly covers what would change and what was learned.
+total: 25

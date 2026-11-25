@@ -1,0 +1,15 @@
+# PROVISIONAL submission. Fictional; written for this project (Apache-2.0).
+schema: learnops.testdata.b8-4.submission/v1
+id: s011
+onlinetext: |-
+  Repository: https://git.lab.invalid/learner-11/recipe-scaler.git
+  Demo: https://demo.lab.invalid/learner-11/
+  Report: This week I wrote a recipe scaler. You give it a recipe and the number of people, and
+  it multiplies every quantity. It was fun because I cook a lot. Fractions like one third of an egg
+  were the hardest part, so it rounds eggs up to a whole one. The page I linked shows my favourite
+  soup recipe, which I scaled for twelve people for a family dinner last weekend.
+onlinetext_format: plain
+repo_dir: repo
+hosting:
+  publish_repo: false
+  demo_stub: unrelated_page

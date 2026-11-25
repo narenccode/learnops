@@ -1,0 +1,19 @@
+# Reference grade by mentor-01, a student acting as mentor (guide, issue #186): a recorded
+# deviation from PRD B8.4 and G-5. Graded on the B8.2 marking table before any AI draft.
+schema: learnops.testdata.b8-4.reference-grade/v1
+submission_id: s027
+rubric: b8-2-wk-04-task
+mentor_ref: mentor-01
+graded_at: '2026-11-25'
+blind_to_drafts: true
+criteria:
+- criterion: Final demo
+  score: 8
+  reason: Demo works.
+- criterion: README
+  score: 7
+  reason: README met requirements.
+- criterion: Reflection
+  score: 9
+  reason: Reflection covers changes and learning but has 249 words, which is one below the minimum.
+total: 24
