@@ -21,8 +21,8 @@ pull request #223 takes 0016). It is taken again at merge if another record has 
   `mod_assign_get_grades` added to the test service for the run; only the workflow state `readyforrelease`
   written; a grade that must be released set by a person in Moodle's grading screen, never through the web
   service.
-- **Read calls:** the six read functions, by a read-only demo connection (the demo scripts are on draft PR #139,
-  not merged) and by hand.
+- **Read calls:** the six read functions, by a read-only demo connection (the demo scripts are on the branch
+  `demo/h2-grading-tier1`; their pull request, #139, is closed and was never merged) and by hand.
 - **Write calls:** by hand, with a small helper kept outside the repository that allows only the eight functions
   of section 2. Every write was read back with `mod_assign_get_grades` and `mod_assign_get_submission_status`.
 - **Parameters of the write functions** were read from the site's own web-service documentation, which was
