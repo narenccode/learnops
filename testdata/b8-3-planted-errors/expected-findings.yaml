@@ -33,10 +33,13 @@ version: 1
 #              listed as unreachable with its cause, but is NOT a separate CK-01 finding; the report
 #              line says "explained by CK-0x". CK-01 still fires when no other rule explains the item
 #     item 17  confirmed: a package failing B1 stops with the B1 errors, every CK rule is not checked
-#     item 22  the .mbz variants are built on Moodle 5.3 only for Release 0 (a new narrow exception
-#              that Akshita records); on 4.5 they are a rebuild
-#   Still open: Shraddha, as design owner, confirms the mapping (it stays `proposed` until then);
-#   Akshita updates docs/design/checker.md (it is still Draft); nine CK rule categories require `.mbz` inputs, represented by ten separate variants because CK-06 has two independent cases; all ten variants need the lab.
+#     item 22  B8.3 .mbz variants use Moodle 5.3 only; decision 0017 later made Moodle 5.3 the
+#              only supported version throughout LearnOps
+#   Peer review: Akshita approved the documentation update on PR #243 (2026-11-25); this is not
+#   guide approval, mapping-owner confirmation, or approval of the CK-08 / CK-12 proposals.
+#   Still open: Shraddha, as design owner, confirms the mapping after pending guide decisions;
+#   nine CK rule categories require `.mbz` inputs, represented by ten variants because CK-06 has
+#   two independent cases; all ten variants need the lab.
 mapping_status: proposed
 mapping_source: "docs/design/checker.md section 11.3 at commit 4111e0c"
 confirmation: null   # {by: [...], reference: <issue/PR/decision link>, date: <YYYY-MM-DD>}
@@ -145,6 +148,7 @@ variants:
     status: pending-lab
     path: null
     element: course-completion-criteria
+    assertable: false   # PROVISIONAL: manual .mbz edit method needs guide approval
     planted_change: "PROPOSED, pending guide approval: after merging with the B8.1 template, manually edit the `.mbz` completion-criterion XML so one criterion uses a `cmid` absent from the merged course model; `idnumber` remains absent and no activity is deleted. This is a manual-backup-edit exception, not a Moodle setting."
     expected: {rule: CK-08, element: course-completion-criteria, severity: error}
     reason: "The criteria refer to an item that no longer exists."
