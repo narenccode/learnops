@@ -601,9 +601,10 @@ the expected results of `answer.yaml`. The guide confirmed this boundary (§12 i
 variants keep these expected results.
 
 **What can be built without the lab:** the package variants (CK-02, CK-03, CK-09, CK-12). The `.mbz`
-variants (CK-01, 04, 05, 06, 07, 08, 10, 11, 13) need a lab session: a course restored from B8.2 with
-one setting changed, and a backup with user data off, recorded as B8.1 records its backup (CK-07 from
-the merged course with the B8.1 template). PRD C-03 asks for **Moodle 4.5 and 5.3**. For Release 0 the
+variants (CK-01, 04, 05, 06, 07, 08, 10, 11, 13) need a lab session: these are **9 CK rule categories**
+represented by **10 separate variants**, because CK-06 has two independent cases (duplicate and invalid
+`idnumber`). Each variant is a course restored from B8.2 with one setting changed, then backed up with
+user data off, as B8.1 records its backup (CK-07 comes from the merged course with the B8.1 template). PRD C-03 asks for **Moodle 4.5 and 5.3**. For Release 0 the
 guide allowed the `.mbz` variants on **Moodle 5.3 only**, ending at the Release 1 restore and role-test
 matrix (§12 item 22). The exception is held in
 [decision 0014](../decisions/0014-b8-3-mbz-variants-moodle-5-3.md) and its row in
