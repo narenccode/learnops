@@ -1,8 +1,10 @@
 # B8.4 reference grades
 
-**Empty on purpose.** PRD §B8 requires reference grades "from at least one mentor". No mentor has
-been named yet (design Q13), so this folder has no grade files. Nobody else may write one, and
-neither may an AI tool. The author's `expected.yaml` files are not grades, and the author's own
+**Empty on purpose.** PRD §B8 requires reference grades "from at least one mentor". The guide decided
+on issue #186 (comment 7097143671) that one student acts as the mentor for the Release 0
+reference grades; she accepted on 24 Nov, and has not graded yet, so this folder has no grade files.
+Nobody else may write one, and neither may an AI tool. The grades are labelled "student acting as
+mentor": a recorded deviation from PRD B8.4 and G-5, and any report that uses them says so. The author's `expected.yaml` files are not grades, and the author's own
 grades are in `../author-grades/`, labelled as author grades. They are not reference grades.
 
 When a mentor grades:

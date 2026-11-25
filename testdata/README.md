@@ -77,7 +77,7 @@ and is not yet confirmed (see above).
 - **Licence:** Apache-2.0 (decided by the guide, issue #186; PRD C-11).
 - **Status:** 33 submissions against the marking tables of all four B8.2 tasks, in the submission
   form of PRD B1.5, all in the development split. The count meets the PRD minimum of 30, but there
-  are no mentor reference grades, so the set is not complete (the guide names the mentor, O3). The
+  are no mentor reference grades, so the set is not complete (a student acting as mentor, chosen by the guide on issue #186, grades them, O3). The
   format still needs an owner's approval (O7). The author's own grades for 25 of them are in
   `author-grades/`, labelled "author-graded, not reference grades" (guide, issue #186).
 
