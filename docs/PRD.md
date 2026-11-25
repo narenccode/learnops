@@ -1270,7 +1270,7 @@ Each release is **frozen, tagged and adoptable on its own**. Releases are number
 
 | Release | Name | Contents | Depends on |
 |---|---|---|---|
-| **Release 0** | Foundation | Lab VMs ready (A11); repository, CI, coding standards; contracts B1–B8 v1 **frozen**; shared libraries `contracts` and `media_paths`; test data B8 v1; App-C items 6 and 9; design document per module approved. The libraries `lti`, `moodle_ws` and `model_interface` (FR-M-01, FR-M-02) and the other App-C items belong to the first release that uses them; the Release 0 notes list where each one goes. | — |
+| **Release 0** | Foundation | Lab VMs ready (A11); repository, CI, coding standards; contracts B1–B8 v1 **frozen** (B4 freezes separately, after its lab checks pass on 5.3: decision 0018); shared libraries `contracts` and `media_paths`; test data B8 v1; App-C items 6 and 9; design document per module approved. The libraries `lti`, `moodle_ws` and `model_interface` (FR-M-01, FR-M-02) and the other App-C items belong to the first release that uses them; the Release 0 notes list where each one goes. | — |
 | **Release 1** | Course quality | Module 2: checker (FR-C-01…05, 09), role tests (FR-C-06, 07), harness v1 (FR-C-08) | R0 |
 | **Release 2** | Course creation | Module 1: Course Studio (FR-S-01…11); harness extended to build → check → restore | R0, R1 |
 | **Release 3** | Video | Module 4: video pipeline (FR-V-01…13, FR-V-15) incl. BigBlueButton intake, summaries, slide index, manifest, retention; harness smoke test | R0 |
