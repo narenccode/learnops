@@ -18,4 +18,6 @@ httpx==0.28.1      # BSD-3-Clause. FastAPI's TestClient needs it (modules/video/
 #   pydantic 2.14.4 (MIT), pydantic-core 2.50.5 (MIT), annotated-types 0.8.0 (MIT),
 #   annotated-doc 0.0.7 (MIT), typing-inspection 0.4.5 (MIT), typing-extensions 4.16.0 (PSF-2.0),
 #   anyio 4.16.0 (MIT), idna 3.20 (BSD-3-Clause), httpcore 1.0.9 (BSD-3-Clause), h11 0.16.0 (MIT),
-#   click 8.5.1 (BSD-3-Clause), certifi 2026.11.20 (MPL-2.0, unmodified)
+#   click 8.5.1 (BSD-3-Clause), certifi 2026.11.20 (MPL-2.0, unmodified),
+#   opentelemetry-api 1.45.2 (Apache-2.0; NEW with fastapi 0.163.2, which requires it unconditionally; it needs only
+#   typing-extensions. Only the API is installed, no SDK or exporter, so nothing is recorded or exported: see docs/design/video.md section 8)
