@@ -102,10 +102,11 @@ trigger written in B2 terms, the severity, the message and the fix hint. The rul
 the PRD unchanged. Every rule reads only the B2 course model (decision 0003); none reads the raw `.mbz`
 or package.
 
-**Severity (Proposal, §12 item 12).** In v1 every rule is an **error**: each one enforces a PRD rule
+**Severity (decided by the guide, §12 item 12).** In v1 every rule is an **error**: each one enforces a PRD rule
 (B1.2, B1.3, B1.4, B7, C-08, C-09) whose breach either stops a learner, gives a wrong grade or breaks
 a protected item. No rule is a warning in v1. The report still groups by severity (C2.4), so a later
-warning-level rule is an additive change.
+warning-level rule is an additive change. If a mentor finds a rule too strict in use, its severity is
+changed through this design, never in code.
 
 **Report state per rule (§3.6).** For each rule and each item it applies to, the result is `pass`,
 `finding` or `not checked` (the last when the model lacks the data: a null value, decision 7, or a
@@ -118,7 +119,7 @@ number.
 
 | Rule (PRD name) | Triggers when (B2 terms) | Input it can judge | Message (Proposal) | Fix hint (Proposal) |
 |---|---|---|---|---|
-| **CK-01** Unreachable section or activity | The path simulation (§3.5) **proves** the section or activity can never open for a learner: its availability, or its section's, evaluates to `false`. An item whose availability is `unknown` (an unsupported or grade condition, `visible: null`, unknown completion of the item it waits for) is `not checked`, never CK-01. An item with `visible: false` is hidden on purpose and is not CK-01 | Package and `.mbz` | "{title} ({idnumber}) in section {section} can never be reached by a learner: its access condition can never be met." | "Change the access condition of {title}, or of the item it waits for, so a learner who works through the course in order can reach it." |
+| **CK-01** Unreachable section or activity | The path simulation (§3.5) **proves** the section or activity can never open for a learner: its availability, or its section's, evaluates to `false`, and no CK-04, CK-05 or CK-13 finding explains why (then the item is listed as unreachable, "explained by CK-0x", and is not a CK-01 finding: "Rules that fire together" below). An item whose availability is `unknown` (an unsupported or grade condition, `visible: null`, unknown completion of the item it waits for) is `not checked`, never CK-01. An item with `visible: false` is hidden on purpose and is not CK-01 | Package and `.mbz` | "{title} ({idnumber}) in section {section} can never be reached by a learner: its access condition can never be met." | "Change the access condition of {title}, or of the item it waits for, so a learner who works through the course in order can reach it." |
 | **CK-02** Completion rule that can never be met | An activity's `completion` asks for something the activity cannot give: `use_grade` or `pass_grade` with `grade_item` null; `submit` on a type with no submission (for example `page`, `url`, `label`) | Package and `.mbz` | "{title} ({idnumber}) can never be marked complete: its completion rule asks for {condition}, which this activity does not have." | "Change the completion rule of {title} to one the activity supports, for example 'view' for a page, or add the missing grade item." |
 | **CK-03** Graded points ≠ target total | The sum of `grade_item.max_grade` over graded activities differs from the independent target `course.total_points` (rules in §3.2 "CK-03: independent grading target") | Package always; `.mbz` only with an independent target, else `not checked` | "The graded activities add up to {sum} points, but the course target is {target} (difference {difference})." | "Change the points of the graded activities, or the course target, so they are equal. Graded items counted: {list}." |
 | **CK-04** Unlock rule refers to a missing activity | An `availability` completion condition names a `cm` that is no activity in the model, or a `cm = -1` (previous activity) that resolves to nothing (decision 5) | Package and `.mbz` | "The access condition of {title} ({idnumber}) waits for an activity that is not in the course." | "Point the condition at an activity that exists in this course, or remove the condition." |
@@ -151,12 +152,22 @@ the `cmid` of another activity in the same model):
 | CK-12 | `media_refs: ["https://example.invalid/media/diagram.png"]` |
 | CK-13 | Activity B waits for `{"type": "completion", "cm": 4}`, and activity 4 has `completion: {"tracking": "none"}` |
 
-**Rules that fire together.** Some planted errors necessarily cause a second finding: a cycle (CK-05),
-a missing target (CK-04) or an untracked activity (CK-13) also leaves the waiting item unreachable
-(CK-01). Whether CK-01 is reported for an item whose cause is already a CK-04, CK-05 or CK-13 finding is
-open (§12 item 13). The B8.3 mapping (§11.3) states the expected findings either way.
+**Rules that fire together: the root cause is reported once (decided by the guide, §12 item 13).** A
+cycle (CK-05), a missing target (CK-04) or an untracked activity (CK-13) also leaves the waiting item
+unreachable. That item is still listed as unreachable, with its cause (FR-C-02), but it is **not** counted
+as a separate CK-01 finding: its report line says "explained by CK-0x" (§3.6). The mentor fixes one thing
+and sees why. CK-01 is reported as its own finding only when no CK-04, CK-05 or CK-13 finding explains
+the item, for example a date window that has already closed. The alternative, reporting CK-01 as well,
+was not chosen because it doubles the findings for one cause.
 
-**Boundary between B1 validation and CK rules (Proposal; the guide may change it under §12 item 17).**
+How "explains" is traced (Proposal): an unreachable item is explained by CK-0x when every condition that
+makes its availability, or its section's, `false` is `false` only because of that finding: the condition
+names a missing activity (CK-04), is part of a cycle (CK-05), or names an activity whose
+`completion.tracking` is `none` (CK-13), directly or through an item that is itself explained. If any
+`false` part has another cause, the item is a CK-01 finding. An item explained by more than one finding
+lists each of them.
+
+**Boundary between B1 validation and CK rules (decided: the guide confirmed this proposal, §12 item 17).**
 A package is first checked by the shared B1 validator (`libs/contracts`), as the B.0 rule 4 asks of
 every contract document. Then:
 
@@ -181,7 +192,7 @@ becomes a finding:
 | Result for an item | Meaning | Reported as |
 |---|---|---|
 | **reachable** | A learner can open it, shown step by step | `pass` |
-| **unreachable** | Every way to open it was evaluated, and none can ever be met | CK-01 `finding` |
+| **unreachable** | Every way to open it was evaluated, and none can ever be met | CK-01 `finding`; or, when a CK-04, CK-05 or CK-13 finding explains it, listed as unreachable "explained by CK-0x" and not counted as a CK-01 finding (§3.4, §12 item 13) |
 | **unknown** | Opening it depends on something the simulation cannot evaluate (below) | `not checked`, with the reason; never CK-01 |
 
 **Conditions (three-valued).** Each availability condition evaluates to `true`, `false` or `unknown`:
@@ -233,6 +244,11 @@ the open set nor the never-completed set changes. Then every item is **reachable
 result. Findings are grouped by severity (C2.4); each shows the rule id, severity, message, fix hint and
 the affected item (section number, title, `idnumber`, and a link in the web report).
 
+**Unreachable items explained by another finding (§3.4, §12 item 13).** They are listed under the finding
+that explains them, never as a separate CK-01 finding, and are not counted in `summary.errors`. The CLI
+and web line reads, for example: "Week 3 (wk-03) cannot be reached: explained by CK-04." In JSON they are
+in `unreachable_explained` (field name a Proposal, §12 item 19).
+
 **JSON (Proposal; field names to be fixed before FR-C-04 starts, §12 item 19):**
 
 ```json
@@ -246,10 +262,17 @@ the affected item (section number, title, `idnumber`, and a link in the web repo
      "fix_hint": "Change the points of the graded activities, or the course target, so they are equal.",
      "item": {"section": null, "idnumber": null, "title": null}}
   ],
+  "unreachable_explained": [],
   "not_checked": [
     {"rule": "CK-08", "reason": "The package model has no course completion or badge data."}
   ]
 }
+```
+
+With a CK-04 finding on week 3, `unreachable_explained` holds one entry instead of a CK-01 finding:
+
+```json
+{"item": {"section": 3, "idnumber": "wk-03", "title": "Week 3"}, "explained_by": ["CK-04"]}
 ```
 
 The JSON never contains file contents, tokens or personal data (§9.3).
@@ -509,6 +532,7 @@ The checker does not automatically repair a course or modify its live configurat
 | Level | What is tested | Test data | Requirement IDs |
 |---|---|---|---|
 | Unit | Course-model parsing, availability evaluation, completion rules, each CK rule (one test per rule with the §3.4 example, plus a passing case), model comparison and report formatting | Small synthetic B2 fixtures, including valid courses and individual planted errors | FR-C-01–FR-C-05 |
+| Unit (rules that fire together) | An item made unreachable by a CK-04, CK-05 or CK-13 finding is listed "explained by CK-0x" and is not a CK-01 finding; CK-01 still fires when no other rule explains the item (§3.4, §12 item 13). The B8.3 data already holds both cases: `test_ck_01_is_not_a_separate_finding_when_another_rule_explains_the_item` and `test_ck_01_fires_on_its_own_when_nothing_explains_the_item` (#201) | B2 fixtures; B8.3 `expected-findings.yaml` | FR-C-02, FR-C-03 |
 | Dataset | The checker finds every planted error of B8.3 with the expected rule (§11.3) and nothing on B8.2 | B8.2, B8.3 | FR-C-03, C2.7 |
 | Contract | B1 package parsing, B2 model validation, B3 launch handling, B4 lookup usage and B6/B7 fields relevant to CK-12/CK-11 | Valid and invalid contract examples from the repository | FR-C-01, FR-C-03, FR-C-05, FR-C-09 |
 | Integration (harness) | Sample build, check, restoration on fresh Moodle 4.5 and 5.3, role tests and available module smoke tests | Approved B8 sample courses and lab Moodle environments | FR-C-08 |
@@ -533,7 +557,11 @@ The role-test matrix must cover visitor, signed-in non-member, learner, mentor a
 
 Store test results and reports as CI artefacts where appropriate. Use synthetic data only. Record the environment and tool versions so results can be reproduced.
 
-### 11.3 B8.3 planted-error mapping (Proposal)
+### 11.3 B8.3 planted-error mapping (waits for the design owner's confirmation)
+
+**Status.** The guide decided the four points this mapping depended on (§12 items 12, 13, 17 and 22,
+issue #112, 2026-11-23), and `testdata/b8-3-planted-errors/expected-findings.yaml` follows them (#201).
+The mapping stays `mapping_status: proposed` until Shraddha, as design owner, confirms it.
 
 PRD C2.7 asks the checker to find 100 % of the planted errors in B8.3 with no false error on B8.2. This
 table is the **target mapping** from each CK rule to the planted error that tests it. It is not the
@@ -544,11 +572,11 @@ baseline with zero findings.
 
 | Rule | Planted error | Where it is planted | Input kind | Expected finding | Severity | Testable on its own? |
 |---|---|---|---|---|---|---|
-| CK-01 | Week 3 guide Page opens only before 1 January 2020 (a past date condition) | `.mbz`: the activity's availability. A package can only express `unlock.start_date`, which opens a section, never closes it | `.mbz` | CK-01 on the week 3 guide | error | Yes |
+| CK-01 | Week 3 guide Page opens only before 1 January 2020 (a past date condition) | `.mbz`: the activity's availability. A package can only express `unlock.start_date`, which opens a section, never closes it | `.mbz` | CK-01 on the week 3 guide. No other rule explains it, so CK-01 is its own finding (§12 item 13) | error | Yes |
 | CK-02 | Week 1 guide Page given the completion rule "submit" | Package: `course.yaml`, the week 1 guide Page gets `completion: submit` (the B1 schema allows `completion` on any activity type and requires it only on assignments) | Package | CK-02 on the week 1 guide | error | Yes, if nothing waits on that Page |
 | CK-03 | `total_points` declared as 120; the graded tasks still add up to 100 | Package: `course.yaml` → `course.total_points` | Package | CK-03 (target 120, sum 100) | error | Yes: changing the target, not a task's points, avoids a CK-09 finding |
-| CK-04 | Week 3 unlock waits for an activity that is not in the course | `.mbz`: the section's availability names a removed `cm`. In a package, the B1 validator already rejects an unknown `unlock.after` in full mode | `.mbz` | CK-04 on week 3; also CK-01 for week 3 unless §12 item 13 suppresses it | error | Only with §12 item 13 decided |
-| CK-05 | Week 2 waits for the week 3 task, and week 3 waits for the week 2 task | `.mbz`: two section availabilities. A package rejects a later reference (decision 0003 #23) | `.mbz` | CK-05 on weeks 2 and 3; also CK-01 for both unless suppressed | error | Only with §12 item 13 decided |
+| CK-04 | Week 3 unlock waits for an activity that is not in the course | `.mbz`: the section's availability names a removed `cm`. In a package, the B1 validator already rejects an unknown `unlock.after` in full mode | `.mbz` | CK-04 on week 3. Week 3 is listed "explained by CK-04", not as a CK-01 finding (§12 item 13) | error | Yes |
+| CK-05 | Week 2 waits for the week 3 task, and week 3 waits for the week 2 task | `.mbz`: two section availabilities. A package rejects a later reference (decision 0003 #23) | `.mbz` | CK-05 on weeks 2 and 3. Both are listed "explained by CK-05", not as CK-01 findings (§12 item 13) | error | Yes |
 | CK-06 | Two activities share `wk-01-task`, and one activity has the idnumber `Week 1 Task` | `.mbz`: the activities' ID number fields (two variants, one change each) | `.mbz` (lab) | CK-06 on the two activities; CK-06 on `Week 1 Task` | error | Yes. The package variant `duplicate-id` (#118) is **not** a CK-06 case: it fails B1 and gives `duplicate_idnumber` (B1.2 rule 6) with every CK rule `not checked` (§3.4 boundary) |
 | CK-07 | The Final project's points changed from 100 to 80 after the merge | `.mbz` of a merged course, checked with `--reference-model` (B8.1 model) | `.mbz` + reference model (lab) | CK-07: `final-project` changed, `max_grade` 100 → 80 | error | Yes. A package using `final-project` is rejected by B1 (#118 `protected-id`, `schema_not`): that is a B1 error, not CK-07 |
 | CK-08 | The course completion criteria name an activity deleted from the course | `.mbz`: completion criteria | `.mbz` (lab) | CK-08 on the course completion criteria | error | Yes |
@@ -556,7 +584,7 @@ baseline with zero findings.
 | CK-10 | Week 1 task with marking workflow off | `.mbz`: assignment grade settings | `.mbz` (lab) | CK-10 on `wk-01-task` | error | Yes |
 | CK-11 | A week 1 practice H5P activity with a grade of 10 | `.mbz`: the H5P activity's grade. In a package, `graded: true` on an `h5p` item is rejected by the B1 schema (`graded` must be `false`, PRD B7): that is a B1 error, not CK-11 | `.mbz` (lab) | CK-11 on the practice item | error | Yes |
 | CK-12 | Week 1 guide refers to an image by `https://example.invalid/diagram.png` | Package: `weeks/01-guide.md` body; the builder fills `media_refs` from it (to confirm with FR-C-01) | Package | CK-12 on the week 1 guide | error | Yes, if the builder reads body media (§12 item 19 note) |
-| CK-13 | The week 1 task, which unlocks week 2, has completion tracking off | `.mbz`: the task's completion tracking. A package cannot say it: the B1 schema requires `completion: submit` on every assignment | `.mbz` (lab) | CK-13 on `wk-01-task`; also CK-01 for week 2 unless suppressed | error | Only with §12 item 13 decided |
+| CK-13 | The week 1 task, which unlocks week 2, has completion tracking off | `.mbz`: the task's completion tracking. A package cannot say it: the B1 schema requires `completion: submit` on every assignment | `.mbz` (lab) | CK-13 on `wk-01-task`. Week 2 is listed "explained by CK-13", not as a CK-01 finding (§12 item 13) | error | Yes |
 
 **The four variants already in #118** test the B1 step, not CK rules. Under the §3.4 boundary each gives
 exactly one B1 error and every CK rule `not checked`, exit code `1`:
@@ -569,14 +597,17 @@ exactly one B1 error and every CK rule `not checked`, exit code `1`:
 | `protected-id` | `schema_not` (B1.1; the B1.4 protected idnumber) |
 
 They stay useful as checks that an invalid package is refused with a clear message (C2.8), and they are
-the expected results of `answer.yaml` today. If the guide decides otherwise under §12 item 17, this
-table and the CK-06 row change together.
+the expected results of `answer.yaml`. The guide confirmed this boundary (§12 item 17), so the four
+variants keep these expected results.
 
 **What can be built without the lab:** the package variants (CK-02, CK-03, CK-09, CK-12). The `.mbz`
 variants (CK-01, 04, 05, 06, 07, 08, 10, 11, 13) need a lab session: a course restored from B8.2 with
-one setting changed, and a backup with user data off, recorded as B8.1 records its backup. PRD C-03 asks
-for **Moodle 4.5 and 5.3**, so each `.mbz` variant is made on both, or the guide records an exception in
-the version-exception register (`docs/decisions/README.md`, #130), as he did for B8.1 and B8.2 (§12 item 22).
+one setting changed, and a backup with user data off, recorded as B8.1 records its backup (CK-07 from
+the merged course with the B8.1 template). PRD C-03 asks for **Moodle 4.5 and 5.3**. For Release 0 the
+guide allowed the `.mbz` variants on **Moodle 5.3 only**, ending at the Release 1 restore and role-test
+matrix (§12 item 22). The exception is held in
+[decision 0014](../decisions/0014-b8-3-mbz-variants-moodle-5-3.md) and its row in
+`docs/decisions/README.md`; this design does not repeat it.
 
 ## 12. Risks and open questions
 
@@ -594,17 +625,17 @@ the version-exception register (`docs/decisions/README.md`, #130), as he did for
 | 10 | Exact library versions and licence compatibility remain to be verified | No | Pin dependencies and run the project's dependency and licence checks before release |
 | 11 | CK-07 needs a reference for the template course. Decided by the guide (decision 0003 #21), not yet implemented: the reference is the B2 course model of the B8.1 template, built from its `.mbz` backup by the checker's own builder, and it is supplied per run with `--reference-model <path>` on the check command. If it is absent, CK-07 reports `not checked` for that run, not a fault, and says the protected items were not compared. It is compared field by field, the same way as FR-C-05, and cannot show changes to body text or attached files, which B2 does not hold | Yes | Implement the option and the comparison with CK-07; the B8.1 README then names the model file that the lab run uses |
 
-| 12 | **Severity of each rule.** §3.4 proposes `error` for all thirteen, because each enforces a PRD rule. Does the guide want any rule as a warning? | No | **Needs guide** |
-| 13 | **Rules that fire together.** When an item is unreachable because of a CK-04, CK-05 or CK-13 finding, is CK-01 also reported for it, or suppressed as already explained? The B8.3 expected findings (§11.3) depend on the answer | No | **Needs guide** |
+| 12 | **Severity of each rule.** §3.4 proposes `error` for all thirteen, because each enforces a PRD rule. Does the guide want any rule as a warning? | No | **Decided** ([guide, issue #112, 2026-11-23](https://github.com/narenccode/learnops/issues/112#issuecomment-7095842207)): all thirteen rules are `error`; a rule found too strict in use changes through this design, not in code (§3.4) |
+| 13 | **Rules that fire together.** When an item is unreachable because of a CK-04, CK-05 or CK-13 finding, is CK-01 also reported for it, or suppressed as already explained? The B8.3 expected findings (§11.3) depend on the answer | No | **Decided** ([guide, issue #112, 2026-11-23](https://github.com/narenccode/learnops/issues/112#issuecomment-7095842207)): report the root cause once. The item is listed as unreachable "explained by CK-0x" and is not a separate CK-01 finding; CK-01 still fires when nothing else explains the item (§3.4, §3.5, §3.6, §11, §11.3; B8.3 data in #201) |
 | 14 | **Activities without an `idnumber`** in a hand-made `.mbz` (`idnumber: null`). Is that a CK-06 finding ("invalid"), or allowed for items LearnOps did not generate? PRD A9 identifies activities by `idnumber` | No | **Needs guide** |
 | 15 | **CK-09 "valid marking table".** B2 holds only `present` and `points_total` (decision 15). Are the B1.3 table rules (markers, columns, the C3.5 check names, as in the check-cell vectors of #110) part of CK-09 for a package, and how much of them for an `.mbz`? | No | **Needs guide** |
 | 16 | **CK-10 on package models.** `marking_workflow` is null for a package (decision 0003, unconfirmed item). Should the builder set it from B1.2 rule 4 ("Assignments use marking workflow"), or is CK-10 `not checked` for packages? | No | **Needs guide** (also open in decision 0003) |
-| 17 | **Packages that fail B1.** The design proposes (§3.4 boundary): stop with the B1 validator's errors, build no model, list every CK rule as `not checked`. The alternative is to build a partial model and run the CK rules. The proposal keeps the B8.3 results deterministic (§11.3) | No | **Needs guide** to confirm the proposal |
+| 17 | **Packages that fail B1.** The design proposes (§3.4 boundary): stop with the B1 validator's errors, build no model, list every CK rule as `not checked`. The alternative is to build a partial model and run the CK rules. The proposal keeps the B8.3 results deterministic (§11.3) | No | **Decided** ([guide, issue #112, 2026-11-23](https://github.com/narenccode/learnops/issues/112#issuecomment-7095842207)): the proposal is confirmed; exit code `1`; the four #118 variants keep their expected results |
 | 18 | **Grade conditions in availability.** The path simulation (§3.5) has no grades; items behind a grade condition are `not checked` in this proposal | No | Proposal; confirm with the guide |
 | 19 | **JSON report field names** (§3.6) and whether Course Studio (FR-S-03) reads the checker's JSON, which would make it a shared interface; and where the builder takes `media_refs` from in a package (CK-12) | No | Fix before FR-C-03/04 start; coordinate with M1 |
 | 20 | **`not checked` and the exit code.** Does a `not checked` count against "0 errors" (C2.7, M1's build gate)? Same open question as decision 0003 ("cannot judge" versus "not checked") | No | **Needs guide** |
 | 21 | **Default reference model.** Should `CHECKER_TEMPLATE_MODEL` (§6.4) supply a default for `--reference-model`, or must every run name it (decision 0003 #21 says "per run")? | No | **Needs guide**; until then, no default |
-| 22 | **B8.3 `.mbz` variants on 4.5 and 5.3** (§11.3). Built on both (C-03), or 5.3 only with a recorded exception like B8.1 and B8.2? | Yes | **Needs guide** |
+| 22 | **B8.3 `.mbz` variants on 4.5 and 5.3** (§11.3). Built on both (C-03), or 5.3 only with a recorded exception like B8.1 and B8.2? | Yes | **Decided** ([guide, issue #112, 2026-11-23](https://github.com/narenccode/learnops/issues/112#issuecomment-7095842207)): 5.3 only for Release 0, a new narrow exception ending at the Release 1 restore and role-test matrix; recorded in [decision 0014](../decisions/0014-b8-3-mbz-variants-moodle-5-3.md) |
 | 23 | **`libs/lti` before approval.** Decision record 0001 says neither approval stage is done, and that `libs/lti` waits for stage 2; implementation branches exist (§13 row 6a) | No | **Needs guide**: approve 0001 or change it to the approach the branches use |
 
 **Compared with PRD Appendix D (project risks).** "Undocumented Moodle backup format changes between

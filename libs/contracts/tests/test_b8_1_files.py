@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import io
+import re
 from pathlib import Path
 from types import ModuleType
 
@@ -92,12 +93,20 @@ def release(tmp_path: Path) -> tuple[str, str]:
 
 
 def test_no_recorded_sha_refuses_and_writes_nothing(
-    tmp_path: Path, release: tuple[str, str]
+    tmp_path: Path, release: tuple[str, str], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    assert download.SHA256 is None  # PENDING MOODLE LAB until the .mbz is uploaded
+    # The real SHA-256 is recorded now (2026-11-24); this test sets it to None to keep checking
+    # the guard that a download without a recorded SHA-256 is refused (exit 2, nothing written).
+    monkeypatch.setattr(download, "SHA256", None)
     target = tmp_path / "b.mbz"
     assert download.main([], target=target, source=release[0]) == 2
     assert not target.exists() and not list(tmp_path.glob("*.part"))
+
+
+def test_recorded_sha_is_a_sha256_hex_string() -> None:
+    """The release's SHA-256 is recorded in the script (B8.1 README section 1)."""
+    assert download.SHA256 is not None
+    assert re.fullmatch(r"[0-9a-f]{64}", download.SHA256)
 
 
 def test_download_verifies_and_keeps_no_partial_file(

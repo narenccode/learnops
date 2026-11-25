@@ -1,7 +1,9 @@
 # B8.4 synthetic submissions (PROVISIONAL)
 
-**Status: PROVISIONAL, not complete.** 33 submissions and a proposed format. The count meets the
-PRD §B8 minimum of 30, but **no mentor has graded them**, so B8.4 is not complete. The submissions are
+**Status: PROVISIONAL.** 33 submissions and a proposed format. The count meets the PRD §B8 minimum
+of 30. All 33 have reference grades from `mentor-01`, **a student acting as mentor** (O3, 25 Nov 2026);
+the other points under "Why the set is provisional" still stand, and the guide decides at the
+Release 0 gate whether B8.4 counts as complete. The submissions are
 written against all four tasks of the B8.2 sample course (#61), in the submission form of PRD B1.5 (#87).
 
 | | |
@@ -20,14 +22,15 @@ written against all four tasks of the B8.2 sample course (#61), in the submissio
 | At least 30 submissions | 33 |
 | Each has a repo, a demo link and a short report | Yes, except where a case removes one on purpose (s021 has no `Demo:`): `repo/`, the `Demo:` line of the online text, and a `Report:` section or `report.md` |
 | Across quality levels | strong 8, partial 9, weak 8, incorrect 8 |
-| Reference grades from at least one mentor | **None.** No mentor is named yet (O3). Nothing in this folder is a grade. |
+| Reference grades from at least one mentor | **33 of 33**, in `reference-grades/mentor-01/`, by a student acting as mentor (O3): a recorded deviation from PRD B8.4 and G-5. A second grader is for Release 4 |
 
 ## Why the set is provisional
 
-1. **No reference grades.** PRD B8.4 asks for reference grades from at least one mentor. The guide
-   (issue #186, 23 Nov 2026) will name the mentor. The author's own grades are in `author-grades/`,
-   labelled "author-graded, not reference grades" (see "Author grades" below). Until a mentor has
-   graded, the set is not complete.
+1. **Reference grades by a student acting as mentor.** PRD B8.4 asks for reference grades from at
+   least one mentor. The guide chose a student to act as mentor (O3); her grades for all 33 are in
+   `reference-grades/mentor-01/`, labelled "student acting as mentor", graded blind to the author's
+   expected outcomes and grades and before any AI draft. The author's own grades stay in
+   `author-grades/`, labelled "author-graded, not reference grades" (see "Author grades" below).
 2. **Development split only.** The author wrote every submission, so all are in the development split.
    The sealed test split (design Q47) is to be written by someone else (Student 1 or the guide) where
    possible; authorship is recorded in `manifest.yaml`.
@@ -51,7 +54,7 @@ submissions/sNNN/
   report.md                      the report, only when the online text has no Report: section
   repo/                          the fictional repository content
   expected.yaml                  author's expected outcome per criterion (no scores)
-reference-grades/                mentor reference grades (empty, see its README)
+reference-grades/mentor-01/      mentor reference grades, a student acting as mentor (see its README)
 author-grades/                   the author's own grades, labelled "author", NOT reference grades
 ```
 
@@ -144,9 +147,8 @@ the schema (`schemas/author-grade.schema.json`):
   the tests check that.
 
 The criteria must match the marking table in order, no score may exceed its criterion's points, and
-`total` is the sum, as for a reference grade. The set stays not complete until a mentor, named by the
-guide, has graded it: the mentor's files go in `reference-grades/`, and the author grades stay as
-they are.
+`total` is the sum, as for a reference grade. The mentor's files are in `reference-grades/mentor-01/`,
+and the author grades stay as they are.
 
 ## Provisional rules used by the tests
 
@@ -168,7 +170,7 @@ The guide answered most of these on issue #186 (23 Nov 2026). What is decided is
 |---|---|---|---|
 | O1 | ~~Retarget to the B8.2 marking tables~~ **Done** (all four tasks; B8.2 merged in #61) | §11.3 | Student 1, Student 3 |
 | O2 | ~~Submission-content rule~~ **Decided** in PRD B1.5 (#87); this set follows it for plain text. Editor HTML stays unverified until the lab check | §4.3a, Q32 | Guide, Student 1 |
-| O3 | Reference grades. **Decided (guide):** the author's grades may stay, labelled "author-graded, not reference grades"; **one mentor, whom the guide names, must grade the set** before B8.4 counts as complete. A second mentor on at least 10 is for Release 4, not Release 0 | §11.3, Q13, Q47 | Guide (names the mentor) |
+| O3 | Reference grades. **Decided (guide):** the author's grades may stay, labelled "author-graded, not reference grades"; **a student acting as mentor grades the set** before B8.4 counts as complete: the guide chose the owner of B8.2, who did not write the 33 submissions, and she accepted (issue #186, guide comment 7097143671 and acceptance comment 7128769282). The grades are labelled "student acting as mentor" and are a recorded deviation from PRD B8.4 and G-5. A second grader on at least 10 and the sealed test split are for Release 4, not Release 0 | §11.3, Q13, Q47 | Decided (guide); decision record to follow |
 | O4 | Band definition, whole-number scores and the cap when a required check fails. **Guide:** use the grading design's proposals for now and mark them provisional; settled when the design is approved | §11.2, Q44, Q25 | Guide |
 | O5 | Set size and split. **Decided (guide):** 30 is the minimum, writing 60 can wait; use the seeded development and test split of Q47, with the sealed test split written by Akshita or the guide where possible; record who wrote each submission | Q45, Q47 | Guide |
 | O6 | Lab git server and demo stub hosting; the publish script | §11.3 (lab) | Lab, Student 3 |

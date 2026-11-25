@@ -1,0 +1,19 @@
+# Reference grade by mentor-01, a student acting as mentor (guide, issue #186): a recorded
+# deviation from PRD B8.4 and G-5. Graded on the B8.2 marking table before any AI draft.
+schema: learnops.testdata.b8-4.reference-grade/v1
+submission_id: s011
+rubric: b8-2-wk-01-task
+mentor_ref: mentor-01
+graded_at: '2026-11-25'
+blind_to_drafts: true
+criteria:
+- criterion: Working demo
+  score: 0
+  reason: Demo is unrelated.
+- criterion: Repository and README
+  score: 4
+  reason: Repository is unpublished, but README has setup.
+- criterion: Reflection
+  score: 3
+  reason: Reflection describes the recipe scaler but it is only 71 words.
+total: 7
