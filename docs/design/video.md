@@ -477,5 +477,5 @@ Demonstration code outside this plan: the paths demo (PR #117, merged) and the l
 ## 14. Review and approval
 
 - [x] Owner: I understand and can explain every section.
-- [ ] Peer reviewer: checked against the PRD chapter and the contracts; comments resolved.
+- [x] Peer reviewer: checked against the PRD chapter and the contracts; comments resolved.
 - [ ] Guide: approved (sets `Status: Approved`).
