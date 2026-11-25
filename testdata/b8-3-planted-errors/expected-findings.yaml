@@ -151,7 +151,7 @@ variants:
     assertable: false   # PROVISIONAL: manual .mbz edit method needs guide approval
     planted_change: "PROPOSED, pending guide approval: after merging with the B8.1 template, manually edit the `.mbz` completion-criterion XML so one criterion uses a `cmid` absent from the merged course model; `idnumber` remains absent and no activity is deleted. This is a manual-backup-edit exception, not a Moodle setting."
     expected: {rule: CK-08, element: course-completion-criteria, severity: error}
-    reason: "The criteria refer to an item that no longer exists."
+    reason: "The criteria refer to a cmid that does not identify any activity in the merged course model."
     also_expected: []
     notes: "PROPOSED, pending guide approval. Baseline is the merged course with the B8.1 template, as for CK-07. A normal Moodle setting does not create a dangling cmid; this case would require editing the completion-criterion XML inside the `.mbz` after backup. Do not build or rely on this variant until the guide approves that explicit manual-edit exception. Use a cmid absent from every activity in the merged model, omit idnumber, and delete no activity, so CK-07 is not triggered."
 
