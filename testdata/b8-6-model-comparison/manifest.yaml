@@ -104,7 +104,7 @@ items:
       status: not_reviewed
     authored_by: Student 3
     depends_on:
-      - The practice draft format (FR-S-12 review card, proposed by Student 1 on PR #33) is confirmed by the guide (reported by Harshitha on 18 Nov; the link to his answer is still to be added); design Q12 stays open for the lecture input
+      - The practice draft format (FR-S-12 review card, proposed by Student 1 on PR #33) is approved by Akshita under PRD B.0 rule 3 (issue #186: the guide's rule is item 3 of his comment 7088877318; Akshita's approval is comment 7096886192); design Q12 stays open for the lecture input
       - Student 4 answered on PR #33: t001 stays the provisional input; a B8.5 transcript becomes a second input only after it is marked checked in the B8.5 inventory (testdata/README.md), referenced by its lecture id (lecture-NN)
       - The B7 contract (PR #54) defines no draft format, so the format is B8.6's own test-data shape
     note: Four multiple-choice checkpoint questions (H5P question set) drawn from the fictional transcript t001; author-drafted, NOT REVIEWED. Ordering and the branching scenario are left out of the first version, short answer is not used, and interactive video is for lab demonstrations only.
