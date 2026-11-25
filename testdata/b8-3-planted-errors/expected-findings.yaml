@@ -145,11 +145,11 @@ variants:
     status: pending-lab
     path: null
     element: course-completion-criteria
-    planted_change: "Course completion criteria name an activity that was deleted from the course"
+    planted_change: "One course-completion criterion is changed to reference the nonexistent idnumber `deleted-activity`; no activity is deleted"
     expected: {rule: CK-08, element: course-completion-criteria, severity: error}
     reason: "The criteria refer to an item that no longer exists."
     also_expected: []
-    notes: "Badge criteria could be a second variant; not planted yet."
+    notes: "The referenced idnumber is syntactically valid but absent from the activity list, isolating CK-08 without removing a protected B8.1 item."
 
   - id: ck-09-marking-table-sum
     rule: CK-09
