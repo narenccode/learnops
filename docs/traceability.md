@@ -529,18 +529,18 @@ script exist and are tested (the two rows below that name tests).
 
 These are pending and are not claimed by this change:
 
-- **The release asset (tag `testdata-b8-1-v1`).** The `.mbz` is built (SHA-256 in the B8.1 README §1), but it is
-  not uploaded. It waits for the guide's answer on the Final project completion finding (B8.1 README §8,
-  finding 2): a rebuild would give a new SHA-256. `download.py` and `download.py --check` against the release are
-  run after the upload.
+- **The release asset (tag `testdata-b8-1-v1`) is checked by hand, not in CI.** It was published on 2026-11-24
+  after the rebuild (one asset, 12,612 bytes), and `download.py` and `download.py --check` were run once from
+  `main` at `5488521` (both OK with the recorded SHA-256; decision 0009, "Release"). No CI job downloads it.
 - **The results are recorded, but only partly checked by a machine.** Nothing reads the `.mbz` in an automated
   test (it is not committed). The checks of 2026-11-23 and 2026-11-24 were done by hand: the archive was opened and read, and
   the BEFORE and AFTER tables were written from Moodle's own screens by the operator. The administrator-screen
-  checks (completion tracking, badges and course badges on) are not recorded yet.
+  checks (completion tracking, badges and course badges on) were read on 2026-11-24 and are recorded in decision 0009.
 - **Moodle 4.5 is not tested; waived for Release 0 (B8.1 only; see [0009](decisions/0009-b8-1-template-course.md) and the [register](decisions/README.md))**
   and is not claimed as passed.
-- **Clean-up.** The test courses (8, 9 and 10) are deleted after this change merges (the template, course 7,
-  stays); each deletion and the recycle-bin behaviour are recorded then.
+- **Clean-up is recorded, not verified by a machine.** Test courses 8 to 13 and the six 2026-11-23 backup files
+  were deleted on 2026-11-24 (the template, course 7, stays); the recycle bin showed no retention period
+  (decision 0009, "Test courses"). Exact times were not written down.
 
 ## B8.2 sample course (test data), Release 0 foundation
 
@@ -618,13 +618,14 @@ agreement criterion (G-5), which belongs to Release 4 work that does not exist y
 | Expected outcomes follow the marking table, carry no scores and agree with the files | Proposed (set README) | `test_expected_outcome_follows_the_marking_table`, `test_expected_check_results_agree_with_the_files` |
 | The author's own grades are labelled `author` with `reference_grade: false`, cannot carry a `mentor_ref` or validate as a reference grade, follow the marking table (criteria, score range, total = sum), never give full marks where the expected outcome says a check fails or the criterion is not met, and the eight ungraded submissions are exactly the listed ones | Guide, issue #186; PRD B8.4 (reference grades only from a mentor) | `test_author_grade_files_are_valid_and_labelled`, `test_an_author_grade_cannot_pass_as_a_mentor_grade`, `test_the_ungraded_submissions_are_exactly_the_listed_ones`, `test_a_full_mark_never_contradicts_the_expected_outcome`, `test_the_drift_rule_catches_a_false_full_mark` |
 | Reference-grade cross-field rules (criteria match, score range, total = sum) | PRD B8, C3.3 FR-G-03 (sum) | `test_reference_grade_rules_catch_bad_grades` |
+| Reference grades from at least one mentor: `mentor-01` (a student acting as mentor, O3) has exactly one valid, blind grade per submission, each following its marking table | PRD B8.4; guide, issue #186 | `test_reference_grade_files_are_valid`, `test_mentor_01_graded_every_submission_once_and_blind` |
 | At least 30 submissions, every intended level on each of the four B8.2 tasks, all in the development split (the author wrote them all), no editor-HTML submission | PRD B8.4, B1.5 rule 5, design Q47 | `test_the_set_covers_every_intended_level`, `test_the_set_has_at_least_30_submissions_on_all_four_tasks`, `test_every_submission_is_development_and_none_is_editor_html` |
 | No real learner data (fictional hosts only, no email addresses, small text files) | PRD B8, C-07 | `test_no_real_hosts_or_email_addresses`, `test_files_are_small_text` |
 | Provisional labelling | Set README | `test_provisional_set_marks_everything_provisional`, `test_tags_agree_with_expected_outcomes` |
 
 ### Not met yet, and not tested
 
-- Reference grades from at least one mentor (none; the guide names the mentor, Q13). The set has 33 submissions, so the size is met, but it is not complete without the grades. The sealed test split (Q47) is not written: every submission is by the same author.
+- The reference grades are by a student acting as mentor (O3), a recorded deviation from PRD B8.4 and G-5; whether they are a fair judgement is not tested, and a second grader on at least 10 is for Release 4. The guide decides at the Release 0 gate whether B8.4 counts as complete. The sealed test split (Q47) is not written: every submission is by the same author.
 - Editor HTML as online text (B1.5 rule 5 is unverified until the lab check on Moodle 4.5 and 5.3), and a reader that is not the stand-in: Module 3's extractor does not exist yet.
 - Word-count and heading-matching rules are provisional (Q39). See the open decisions in
   `testdata/b8-4-synthetic-submissions/README.md`.
@@ -1071,8 +1072,8 @@ until it is complete.
 
 ## B8.6 model comparison set (PROVISIONAL), Release 0 foundation
 
-Files: `testdata/b8-6-model-comparison/` (manifest, rubric, six schemas, one transcript input,
-three expected outputs, two PROPOSED mentor review forms), `libs/contracts/tests/test_b8_6_dataset.py`. B8.6 is a test-data set
+Files: `testdata/b8-6-model-comparison/` (manifest, rubric, six schemas, two transcript inputs
+(one fictional, one checked B8.5 lecture with measured chapter starts), five expected outputs, two PROPOSED mentor review forms), `libs/contracts/tests/test_b8_6_dataset.py`. B8.6 is a test-data set
 (PRD B8) with no requirement ID of its own. It is the input of FR-M-03 (Release 4), which is not
 implemented, so no row in the table above maps to it.
 

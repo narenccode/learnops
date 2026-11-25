@@ -1,9 +1,8 @@
 # 0012. App-C item 9: which AI features Moodle 5.3 itself provides
 
 **Date:** 2026-11-22
-**Status:** **Source-checked; NOT verified on the lab Moodle 5.3 site.** This record reads Moodle's own
-source for the 5.3 stable branch. Nobody has yet looked at the lab site's admin settings, so what is
-installed and switched on there is not recorded. No scope change is decided here; the guide decides.
+**Status:** **Source-checked, and checked on the lab Moodle 5.3 site on 2026-11-24** (section "Lab result"
+below). Moodle 4.5 is not tested. No scope change is decided here; the guide decides.
 **Owner:** Student 4 (Video), as the guide set on draft PR #140 (Q16)
 **Requirement:** PRD App-C item 9: "Which AI features Moodle 5.3 itself provides, so LearnOps doesn't
 duplicate them (record any overlap and adjust scope)." App-C and §D1 assign item 9 to Release 0.
@@ -43,6 +42,30 @@ produces chapters, captions or a slide index. A GitHub code search for "transcri
 | FR-S (Course Studio, Module 1): generating course text | `generate_text`, `generate_image` in the editor | **Possible overlap for Module 1**, not for Video. Recorded for the Module 1 owner and the guide; this record does not decide it. |
 | Model and speech providers (`libs/model_interface`) | Seven provider plugins configured in Moodle | **No conflict.** LearnOps does not use Moodle's AI subsystem (C-02 allows only backup and restore, web services, LTI and a browser) and keeps its own provider interface (C-10). |
 
+## Lab result (Moodle 5.3 lab site, 2026-11-24)
+
+Checked by Akshita (Student 1) with an administrator account on the lab 5.3 site, reading the admin
+screens only: no setting was changed, no provider was created and no AI action was run. No address,
+credential or key is recorded. The site runs **Moodle 5.3+ (Build: 20261030), version 2026100500.08**
+(from the B8.1 backup taken on the site the same day). The Notifications page also offers an update to
+5.3.1+ (Build: 20261117), which is not installed; the source read above is that later build.
+
+| What | Where in Site administration | Found on the lab site | Matches the source? |
+|---|---|---|---|
+| Provider plugins | Plugins > Plugins overview > AI provider plugins | Seven, each "Enabled", version 2026100500: `aiprovider_anthropic`, `aiprovider_awsbedrock`, `aiprovider_azureai`, `aiprovider_deepseek`, `aiprovider_gemini`, `aiprovider_ollama`, `aiprovider_openai` | Yes, the same seven |
+| Provider instances | General > AI > AI providers | **None** ("Nothing to display"). No provider is configured, so no AI action can run | Not in the source; a site setting |
+| Placements | General > AI > AI placements | Two, both **disabled**: "Course assistance placement" and "Text editor placement". The TinyMCE plugin "AI placement" is installed and enabled (version 2026100500) | Yes, the same two |
+| Actions, course assistance | the placement's Settings | "Summarise text" and "Explain text", both toggled on, each marked "This action is unavailable. No AI providers are configured for this action." | Yes |
+| Actions, text editor | the placement's Settings | "Generate text" and "Generate image", both toggled on, each with the same "unavailable" message | Yes |
+| Speech, transcription, video or audio action | both placement pages | **None** | Yes, none in the source |
+| Policy acceptance | Reports > AI policy acceptance | The report exists and is empty ("Nothing to display"). Whether acceptance is required cannot be seen while no action can run | Report as in the source; the requirement is not lab-verified |
+| Moodle 4.5 | — | **Not tested; 5.3 lab only** | — |
+
+**What this adds to the overlap table above:** on the lab site Moodle's AI features are installed but
+**cannot run**: there is no provider instance and both placements are off. So nothing in LearnOps can
+overlap with a running Moodle AI feature there today. The overlap rows above still describe what an
+administrator could switch on (EXT-04: LearnOps must not assume either state).
+
 ## Proposed outcome (for the guide)
 
 - **Video scope: no change proposed.** The Video features work on transcripts and video, which Moodle 5.3 does not offer.
@@ -51,14 +74,15 @@ produces chapters, captions or a slide index. A GitHub code search for "transcri
 
 ## Still to do (this record is incomplete until then)
 
-1. Someone with administrator rights on the **lab Moodle 5.3 site** checks Site administration, AI: which
-   providers and placements are installed and enabled, and which Moodle build the site really runs. Record
-   the result here without any address or credential.
+1. ~~Someone with administrator rights on the **lab Moodle 5.3 site** checks Site administration, AI: which
+   providers and placements are installed and enabled, and which Moodle build the site really runs.~~
+   **Done on 2026-11-24:** see "Lab result" above.
 2. Confirm the same on any production-like 5.3 site the guide names.
 3. The guide approves or changes the proposed outcome.
 
 ## What this record does not claim
 
-It does not say the lab site has these features switched on, that they work, or that Moodle 4.5 has them
+It does not say these features work once a provider is configured and a placement is switched on (nobody
+ran one on the lab site), or that Moodle 4.5 has them
 (PRD C-03 still requires both versions; the AI subsystem on 4.5 was not read). It does not measure the
 quality of any Moodle AI output.

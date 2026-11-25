@@ -1,7 +1,7 @@
 # B8.6 model comparison set (PROVISIONAL)
 
-**Status: PROVISIONAL.** A proposed format, a proposed rubric, and one fictional transcript with
-author-drafted expected chapters and summary that are **NOT REVIEWED**. No comparison has been
+**Status: PROVISIONAL.** A proposed format, a proposed rubric, and two transcript inputs (the fictional `t001`, and `t002`, derived
+from the checked B8.5 lecture-05 transcript) with author-drafted expected chapters and summaries that are **NOT REVIEWED**. No comparison has been
 run, and nothing here says how well any model performs.
 
 | | |
@@ -11,7 +11,7 @@ run, and nothing here says how well any model performs.
 | Design | `docs/design/grading.md` §11.2 (measures, Q48), §11.4 (B8.6), Q12 (Draft) |
 | Module rule | `modules/grading/CLAUDE.md` rule 7: the fixed set B8.6 and the same prompts for every provider |
 | Tests | `libs/contracts/tests/test_b8_6_dataset.py` |
-| Source | Written for this project by Student 3. Entirely fictional: no recording, no real lecturer, no real course content, no learner data. |
+| Source | `t001` was written for this project by Student 3 and is entirely fictional: no recording, no real lecturer, no real course content, no learner data. `t002` is the reference transcript of B8.5 lecture-05, typed by its speaker and checked, used with her written consent line (decision 0004): it names a real speaker and comes from a real recording, which stays in lab storage and is not in Git. No learner data. |
 | Licence | Apache-2.0 (decided by the guide, issue #186; PRD C-11) |
 
 ## What PRD §B8 requires, and what this set has
@@ -22,7 +22,9 @@ run, and nothing here says how well any model performs.
 |---|---|---|---|---|
 | Chapters | ch-001 | ready, PROVISIONAL | `inputs/t001/transcript.en.json` | `expected/ch-001/chapters.json`, NOT REVIEWED |
 | Summaries | su-001 | ready, PROVISIONAL | `inputs/t001/transcript.en.json` | `expected/su-001/summary.en.md`, NOT REVIEWED |
-| Grading drafts | gd-001 | **pending** | B8.4 submissions (`inputs/b8-4/source.md`; B8.4 is merged: 33 submissions, #31, #189 and #190) | B8.4 mentor reference grades: **none exist yet** (B8.4 has only the author's own grades, labelled as not reference grades), and the guide names the mentor (Q13). Review form: `templates/` (PROPOSED) |
+| Chapters | ch-002 | ready, PROVISIONAL, chapter starts measured | `inputs/t002/transcript.en.json` (B8.5 lecture-05) | `expected/ch-002/chapters.json`, NOT REVIEWED; chapter starts measured on the recording by the owner, segment times between them synthetic |
+| Summaries | su-002 | ready, PROVISIONAL | `inputs/t002/transcript.en.json` (B8.5 lecture-05) | `expected/su-002/summary.en.md`, NOT REVIEWED |
+| Grading drafts | gd-001 | **pending** | B8.4 submissions (`inputs/b8-4/source.md`; B8.4 is merged: 33 submissions, #31, #189 and #190) | B8.4 mentor reference grades: **none exist yet** (B8.4 has only the author's own grades, labelled as not reference grades), and the student the guide chose to act as mentor (Q13, accepted 24 Nov) has not graded yet. Review form: `templates/` (PROPOSED) |
 | Practice drafts | pr-001 | ready, PROVISIONAL | `inputs/t001/transcript.en.json` | `expected/pr-001/practice.yaml`, NOT REVIEWED. Four multiple-choice checkpoint questions in the review-card shape proposed by Student 1 (FR-S-12); the format is confirmed by the guide (reported by Harshitha on 18 Nov; the link to his answer is still to be added) |
 
 "Ready" means the files exist. It does not mean they are agreed or reviewed.
@@ -35,6 +37,7 @@ rubric.yaml                    review levels and the four FR-M-03 measures (PROV
 schemas/                       manifest, rubric, expected-practice and two review-form schemas (Draft 2020-12)
 templates/                     PROPOSED mentor review forms with invented examples (see templates/README.md)
 inputs/t001/                   transcript.en.json (B5.4 shape) + source.md (provenance)
+inputs/t002/                   B8.5 lecture-05 transcript in the B5.4 shape (chapter starts measured, segment times synthetic) + source.md
 expected/<item id>/            author-drafted expected outputs (see expected/README.md)
 results/                       empty: no comparison has been run
 reviews/                       not created yet: real mentor reviews go here
@@ -78,14 +81,14 @@ The guide answered some of these on issue #186 (23 Nov 2026), and the grading de
 
 | # | Decision | Ref | Who |
 |---|---|---|---|
-| O1 | **Decided (guide, issue #186):** grading inputs come from B8.4 (Student 3), practice inputs from Student 1, chapter and summary inputs from Student 4, and Student 2 coordinates. The input t001 stays for now (Student 4 on PR #33); a checked B8.5 transcript is added later. | design Q12 | Students 1 and 4, integration lead, guide |
+| O1 | **Decided (guide, issue #186):** grading inputs come from B8.4 (Student 3), practice inputs from Student 1, chapter and summary inputs from Student 4, and Student 2 coordinates. The input t001 stays; **t002 (B8.5 lecture-05, a checked transcript) is added** as a second input with its chapters and summary items, authored for Student 4 to review. Its chapter start times (the spoken consent statement at 0 s, then eight lecture chapters) were measured by Student 4 on the recording; the segment times between them are synthetic. | design Q12 | Students 1 and 4, integration lead, guide |
 | O2 | **Decided (guide, issue #186):** the module owner who supplied an input reviews its expected output, and the guide decides any disagreement. How "reviewed" is recorded stays in the manifest (`expected_review`). | — | Guide |
 | O3 | Review rubric: the three output levels and the grading-draft wrong rule | design §11.2, Q48 | Guide |
 | O4 | Agreement for grading drafts: within one band (Q44). For chapters, summaries and practice: **proposed in design §11.4** (#197): a usable share and a strict share, with the wrong-answer rate separate. The guide settles it when he approves the design | Q44, Q48 | Guide |
 | O5 | Mentor review time for non-grading outputs: **proposed in design §11.4** (#197): reuse the grading protocol (Q46) for every task. The guide settles it when he approves the design | Q46 | Guide |
 | O6 | Grading-draft items: B8.4 merged, its submission-content rule (decided: PRD B1.5), reference grades (Q13), `GradeDraftV1` (Q41) | §4.3a, §4.3d | Guide, Students 1 and 3 |
 | O7 | Practice: task shape and output format (B7, FR-S-12, Release 5 stretch). **Proposed by Student 1 on PR #33**: multiple-choice checkpoint questions (H5P question set) in the review-card shape; ordering and the branching scenario left out of the first version, no short answer; B7 defines no draft format. Format confirmed by the guide (reported by Harshitha on 18 Nov; the link to his answer is still to be added); the lecture input is still open | Q12 | Students 1 and 4, guide |
-| O8 | Size of the set per task (the PRD gives none). **Proposed in design §11.4** (#197): five chapters and five summary items (one per B8.5 lecture), five practice items, and the grading items from the B8.4 test split (Q45). The guide settles it when he approves the design | — | Guide |
+| O8 | Size of the set per task (the PRD gives none). **Proposed in design §11.4** (#197): one chapters item and one summary item for one or two of the five B8.5 lectures (Student 4 confirms the number once the timings exist), five practice items, and the grading items from the B8.4 test split (Q45). The guide settles it when he approves the design | — | Guide |
 | O9 | **Decided (guide, issue #186):** Apache-2.0, like the repository (PRD C-11) | root `CLAUDE.md` §2.10 | Guide |
 | O10 | Accept this format as the B8.6 part of the B8 contract before the Release 0 freeze | `contracts/CLAUDE.md` | All four students, guide |
 | O11 | ~~Chapters content schema~~ **Closed:** B6.2 now defines it (`contracts/chapters.v1.schema.json`); this set uses it and keeps no schema of its own | PR #32 | Student 4 |
