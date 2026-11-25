@@ -995,7 +995,7 @@ The service-account visibility requirement remains a lab check.
 
 **Added by B3 in the same section, not part of that confirmation:** the issuer is compared exactly (no trimming, case folding or trailing-slash normalisation), unknown issuers are refused, and the `iss` of an unverified token is used only to locate the candidate registered-platform configuration for signature verification; it is trusted only after the signature verifies. These need the reviewers' agreement with the rest of the contract.
 
-**Approved by the guide (OI-15):** the gateway is approved as a consumer of B4 (guide decision, recorded 18 November 2026; source link to be added). The course-link identity key stays `(iss, context.id)`. **This approval does not approve or freeze the `shared.course_link` columns:** B4 owns them, and their approval is separate. B4 pull request #27 is merged. The columns are to be recorded in a decision record by the B4 owner. The guide confirmed on issue #146 (20 November 2026) that they stay with the B4 owner. They are **not finalised**.
+**Approved by the guide (OI-15):** the gateway is approved as a consumer of B4 (guide decision, 18 November 2026: [comment on PR #83, point 4](https://github.com/narenccode/learnops/pull/83#issuecomment-6967369685)). The course-link identity key stays `(iss, context.id)`. **This approval does not approve or freeze the `shared.course_link` columns:** B4 owns them, and their approval is separate. B4 pull request #27 is merged. The columns are to be recorded in a decision record by the B4 owner. The guide confirmed on issue #146 (20 November 2026) that they stay with the B4 owner. They are **not finalised**.
 
 ---
 
