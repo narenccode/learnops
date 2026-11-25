@@ -26,8 +26,9 @@ A Moodle course backup with the protected items (PRD B1.4), course completion an
 
 ## B8.3 Planted-error courses (owner: Student 2), PARTIAL
 
-Variants of B8.2, each with one known error from the checker catalogue (PRD C2.3), for testing the
-Course Checker in Release 1.
+Variants based on B8.2, each with one known error from the checker catalogue (PRD C2.3), for testing
+the Course Checker in Release 1. CK-07 and the proposed CK-08 case instead use the merged course with
+the B8.1 template as their baseline.
 
 | Item | Value |
 |---|---|
@@ -50,7 +51,7 @@ B8.2 is never changed. The folders `missing-body`, `duplicate-id`, `protected-id
 | `ck-06-duplicate-idnumber` | CK-06 | mbz | pending-lab | two activities share `wk-01-task` |
 | `ck-06-invalid-idnumber` | CK-06 | mbz | pending-lab | idnumber `Week 1 Task` |
 | `ck-07-protected-item-changed` | CK-07 | mbz | pending-lab | Final project max grade 100 to 80 |
-| `ck-08-completion-criteria-missing-item` | CK-08 | mbz | pending-lab | one course-completion criterion has a `cmid` absent from the course model; no activity is deleted |
+| `ck-08-completion-criteria-missing-item` | CK-08 | mbz | pending-lab | proposed manual `.mbz` completion-criterion XML edit to a dangling `cmid`; merged B8.1 baseline; pending guide approval |
 | `ck-09-marking-table-sum` | CK-09 | package | built | table adds to 20, task worth 25 |
 | `ck-10-no-marking-workflow` | CK-10 | mbz | pending-lab | marking workflow off |
 | `ck-11-graded-practice-h5p` | CK-11 | mbz | pending-lab | practice H5P with grade 10 |
