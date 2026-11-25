@@ -68,6 +68,10 @@ CASE_IDS = [
     "misspelled-and-inline-labels",
     "demo-after-report",
     "second-report-line",
+    # The word_count counting rule (#186, proposed by Student 1 through /contract-change).
+    "word-count-punctuation-and-url",
+    "word-count-plain-markdown-kept",
+    "report-md-with-byte-order-mark",
 ]
 README_CASE_IDS = [
     "readme-headings-any-case",
@@ -83,6 +87,13 @@ README_CASE_IDS = [
     "readme-closing-fence-same-character-and-length",
     "readme-fence-needs-three-characters",
     "readme-fence-needs-three-tildes",
+    # The readme_sections matching rule (#186, proposed by Student 1 through /contract-change).
+    "readme-case-folding-and-nfc",
+    "readme-runs-of-spaces-are-one",
+    "readme-inline-markup-is-kept",
+    "readme-byte-order-mark-and-crlf",
+    "readme-repeated-name-reported-once",
+    "readme-non-breaking-space-is-not-a-space",
 ]
 # The machine checks of PRD C3.5. A check that is named in a vector as the unknown one must not be
 # one of these: a known name is not unknown. A test keeps this set equal to the PRD list.
@@ -227,8 +238,11 @@ def _part_problems(part: str, entry: Any, files: list[Case]) -> list[str]:
         problems.append(
             "report: words is not the number of whitespace-separated pieces of value"
         )
+    # A report file is read as UTF-8 with a leading byte-order mark removed (PRD B1.3), so the
+    # report is the file text without it.
     if entry["source"] != "onlinetext" and not any(
-        f["name"] == entry["source"] and f["text"] == entry["value"] for f in files
+        f["name"] == entry["source"] and f["text"].removeprefix("﻿") == entry["value"]
+        for f in files
     ):
         problems.append(
             "report: source names a file that is not in the input with this text"
@@ -617,6 +631,22 @@ def test_prd_b13_has_the_check_formats_and_names_what_it_does_not_define() -> No
         "are not defined here",
         "the argument format of `repo_file:<path>`",
         "the criterion keys",
+        # The matching and counting rule (#186, /contract-change).
+        "compared after Unicode normalisation NFC and case folding",
+        "each run of spaces or tabs inside them treated as one space",
+        "Inline markup is not removed",
+        "A name listed twice must exist once, and a missing name is reported once",
+        "a leading byte-order mark is removed, and LF, CRLF and CR each end a line",
+        "A README that is missing fails the check, with every listed section missing",
+        "README that is not valid UTF-8 is not defined in v1",
+        "Every piece counts, including one that is only punctuation",
+        "a URL is one word",
+        "Online text in plain format has no markup to remove",
+        "A report file is read as UTF-8, and a leading byte-order mark is removed",
+        "A report file that is not valid UTF-8 is not defined in v1",
+        "Space, tab and the line ends separate words",
+        "such as the non-breaking space, separates words is not defined in v1",
+        "a non-breaking space is not a space",
     ):
         assert phrase in text, phrase
     # The finer Markdown details are decided (the guide, 2026-11-16), so they are no longer listed
