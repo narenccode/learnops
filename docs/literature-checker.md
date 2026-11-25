@@ -5,7 +5,7 @@
 **Peer reviewer:** @Akshita21-09
 **Release:** Release 0 research supporting Release 1 implementation
 **Prepared:** 19 November 2026
-**Status:** Complete for Release 0. **13 references were opened and checked directly; three additional MoodleDocs references were checked against archived copies. The final review outcome was an automated-assistant approval, not a separate human peer approval.**
+**Status:** In progress — owner source verification pending.
 
 ## 1. Purpose and scope
 
@@ -17,7 +17,7 @@ The sources comprise official Moodle documentation, the 1EdTech standards, offic
 
 Sources were located through targeted searches of official Moodle, 1EdTech and Playwright documentation sites and scholarly journal/publisher records.
 
-**Source-access and verification record (19 November 2026):** The survey-preparation assistant opened and checked 13 references directly at their publisher or official source URLs: [1], [2], [4]–[9] and [12]–[16]. MoodleDocs references [3], [10] and [11] were not directly accessible to automated clients; their title/content claims were checked against archived copies during the follow-up automated review run by @Akshita21-09. Those three archive-checked references are supplementary and are **not** counted toward the six-source minimum. The minimum is met by the 13 directly opened and checked references. This is the assistant's source-verification record; it is not a claim that the owner personally opened all 13 URLs.
+**Source-access and verification record (19 November 2026):** The survey-preparation assistant opened and checked 13 references directly at their publisher or official source URLs: [1], [2], [4]–[9] and [12]–[16]. MoodleDocs references [3], [10] and [11] were not directly accessible to automated clients; their title/content claims were checked against archived copies during the follow-up automated review run by @Akshita21-09. Those three archive-checked references are supplementary and are **not** counted toward the six-source minimum. The 13 assistant-checked references are research preparation evidence only. They do **not** satisfy CLAUDE.md §6a.5's owner verification requirement. **Owner verification: pending.** Before this survey can be marked complete, the owner must personally open and verify at least six sources (all 16 are preferable), checking each source's title, author or issuing body, and the specific claim used in the survey. Record the reference numbers and verification date here. No owner-opened source list is recorded in this PR yet.
 
 The source versions are not all the same as the target lab versions: the Moodle developer API references are for 5.3, and the Moodle user guides are for 4.5. These sources explain documented behaviour; they do not prove compatibility across LearnOps' 4.5 and 5.3 lab instances. Compatibility must be established by the project tests specified in the PRD. The 13 direct source-page checks were performed on **19 November 2026**.
 
