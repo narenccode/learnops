@@ -170,10 +170,13 @@ for example `1834 s (30 min 34 s)`.
 ## B8.6 Model comparison set (owner: Student 3), PROVISIONAL
 
 - **Where:** `b8-6-model-comparison/` (format, rubric and open decisions in its README).
-- **Source:** written for this project by Student 3. One fictional lecture transcript; no
-  recording, no real lecturer, no real course content, no learner data.
+- **Source:** two transcript inputs. `t001` was written for this project by Student 3 and is fictional (no
+  recording, no real lecturer). `t002` is the checked B8.5 lecture-05 transcript, used with the speaker's
+  consent line (decision 0004); the recording stays in lab storage. No real course content beyond that
+  lecture, no learner data.
 - **Licence:** Apache-2.0 (decided by the guide, issue #186; PRD C-11).
-- **Status:** one chapters item, one summary item and one practice item with author-drafted
-  expected outputs, NOT REVIEWED. The grading-draft item is pending: B8.4 is merged (33
+- **Status:** two chapters items (`ch-001` on `t001`, `ch-002` on `t002`), two summary items (`su-001`,
+  `su-002`) and one practice item (`pr-001`) with author-drafted expected outputs, NOT REVIEWED and
+  provisional; the `ch-002` chapter starts were measured on the lecture-05 recording by Student 4. The grading-draft item is pending: B8.4 is merged (33
   submissions), but it has no mentor reference grades. Who supplies and reviews each input is
   decided (issue #186). No comparison has been run.
