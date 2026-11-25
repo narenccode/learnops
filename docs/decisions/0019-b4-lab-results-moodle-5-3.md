@@ -8,8 +8,8 @@ pass on Moodle 5.3). Moodle 4.5 is out of scope (decision 0017).
 **Requirement:** PRD App-C item 1 and `contracts/moodle-ws.v1.md` section 5 (all 18 checks).
 **Contracts touched:** none by this record. The text changes it suggests (section "What this suggests for
 contract B4") go through `/contract-change`, not through this file.
-**Numbering:** 0019, the next free number when this was written (2026-11-25: `main` has 0017 and 0018; open
-pull requests #209 and #223 take 0015 and 0016). It is taken again at merge if another record has merged first.
+**Numbering:** 0019, the next free number when this was written (2026-11-25: `main` has 0015, 0017 and 0018; open
+pull request #223 takes 0016). It is taken again at merge if another record has merged first.
 
 ## How the checks were run
 
@@ -58,10 +58,12 @@ pull requests #209 and #223 take 0015 and 0016). It is taken again at merge if a
 
 ## Findings for the guide
 
-1. **No `idnumber` for this account (17, 18).** A B1 `idnumber` cannot be matched to an assignment from these two
-   calls. Modules 1 and 2 may not rely on it. As designed (FR-G-01), Module 3 reads the marking table from the
-   description and works from the assignment's Moodle id, so it should not need the `idnumber`; the grading
-   design should say so.
+1. **No `idnumber` for this account (17, 18).** This is the lab result for check 18 that the guide asked for. A B1
+   `idnumber` cannot be matched to an assignment from these two calls, so Modules 1 and 2 may not rely on it.
+   The guide decided on 2026-11-25 ([#186 comment](https://github.com/narenccode/learnops/issues/186#issuecomment-7157135474),
+   item 2) that the key is the course-module id (`cmid`) with a stored mapping to the B1 `idnumber`: no B4
+   function is added and no capability is widened. Where the mapping comes from and who fills it is for the
+   grading design.
 2. **Moodle does not protect locked grades from the web service (4, 5, 15, 16).** Rules R3, R9 and R13 are
    needed in LearnOps because Moodle gives no error in these cases. A write to a released grade pulls it back
    from the gradebook.
