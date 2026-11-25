@@ -8,8 +8,7 @@ pass on Moodle 5.3). Moodle 4.5 is out of scope (decision 0017).
 **Requirement:** PRD App-C item 1 and `contracts/moodle-ws.v1.md` section 5 (all 18 checks).
 **Contracts touched:** none by this record. The text changes it suggests (section "What this suggests for
 contract B4") go through `/contract-change`, not through this file.
-**Numbering:** 0019, the next free number when this was written (2026-11-25: `main` has 0015, 0017 and 0018; open
-pull request #223 takes 0016). It is taken again at merge if another record has merged first.
+**Numbering:** 0019, the next free number when this was written (2026-11-25: `main` has 0015 to 0018). It is taken again at merge if another record has merged first.
 
 ## How the checks were run
 
@@ -17,7 +16,7 @@ pull request #223 takes 0016). It is taken again at merge if another record has 
 - **Conditions:** the guide's answers on issue #112 of 23 and 24 November: the admin login on the lab site only;
   a fresh run of all 18 checks; one custom course role with exactly the six capabilities of contract section 4
   (the Non-editing teacher role removed in course 6; the system role holds only `webservice/rest:use`); the
-  token created by the person running the checks, with a valid-until date; `mod_assign_save_grade` and
+  token created by the person running the checks; `mod_assign_save_grade` and
   `mod_assign_get_grades` added to the test service for the run; only the workflow state `readyforrelease`
   written; a grade that must be released set by a person in Moodle's grading screen, never through the web
   service.
@@ -72,8 +71,10 @@ pull request #223 takes 0016). It is taken again at merge if another record has 
    safeguard.
 4. **Suspended learners are invisible (11).** The omission is silent; only the status call's `nopermission`
    tells a suspended learner from a learner with no submission (rule R5).
-5. **Online text (7).** The parser for B1.5 rule 5 must read HTML: `<p>` and `<br />` end a line, no-break
-   spaces count as spaces, and pasted text may arrive as one paragraph. For the B1 owner and the guide.
+5. **Online text (7), a proposal for the B1 owner and the guide.** Typed lines arrive as `<p>` or `<br />`, with
+   no-break spaces at the end of lines, and pasted text can arrive as one paragraph. A parser for B1.5 rule 5
+   will meet these, so B1 must decide how they are read: where a line ends, and how a no-break space counts
+   (B1.3 says this is not defined in v1). This record decides nothing about B1.
 
 ## What this suggests for contract B4
 
