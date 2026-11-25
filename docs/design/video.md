@@ -12,7 +12,7 @@ status is `Approved` (foundation work listed in §13 under "Release 0" is allowe
 > Reading key: design content marked with a PRD section in brackets is taken from `docs/PRD.md`; the
 > structure follows `docs/design/TEMPLATE.md`. Where the PRD is silent, this revision wrote a
 > **Proposed** design. The guide's assistant answered the numbered questions **Q1–Q16** on 2026-11-19
-> (PR #140, §12); items he confirmed are marked **Confirmed (Qn)**. The answers address those
+> (PR #140); items he confirmed are marked **Confirmed (Qn)**. The answers address those
 > questions, **not the approval**: this document stays `Draft`, the owner marks it `In review`, and
 > only the guide sets `Approved`. Nothing here changes a contract or the PRD.
 
@@ -410,26 +410,7 @@ PRD Appendix C items that affect this module (results in `docs/decisions/`). **P
 
 ### Guide's answers (2026-11-19, PR #140)
 
-The answers address the questions Q1–Q16 and the sections they name; they are not the design approval.
-
-| # | Answer | Where it is applied |
-|---|---|---|
-| Q1 | Yes: `video.job` and `video.step` in PostgreSQL, claimed with `SKIP LOCKED`; no queue product. | §3, §7 |
-| Q2 | Yes: a separate `bbb-poll` worker that only enqueues. | §3, §7 |
-| Q3 | Yes: workers use the storage adapter only; a remote worker needs S3, or a shared mount for local storage. | §3, §7 |
-| Q4 | Confirmed as proposed: columns, states and routes; chapter edits change titles only; re-process is administrator-only. | §5, §6 |
-| Q5 | `source.kind` is `bbb`; omit `uploaded_by`; `created_by_sub` is null for intake. | §4, §5 |
-| Q6 | Yes: `.trash/` with a 30-day restore, and the proposed CLI with `--dry-run`, `--check`, `--config`; every command has its undo. | §6, §7 |
-| Q7 | Plain SQL `up`/`down` scripts with a small runner; no ORM or migration product. | §5, §8 |
-| Q8 | Keep `FEATURE_LOWRES_360P=false` (existing name); `FEATURE_SLIDE_INDEX=true`; `FEATURE_SUMMARIES=false`; add only `FEATURE_BBB_INTAKE=false`. | §6 |
-| Q9 | Same as #98: record the non-secret lab facts (no IPs, VM addresses or credentials); the engine stays PENDING until recorded. *Update 2026-11-23: the guide parked this until the lab speech endpoint exists (PR #98, merged).* | §4 |
-| Q10 | Separate ffmpeg process, never linked; an LGPL build, no GPL-only parts; send the lab image's `ffmpeg -version` configuration before relying on it; H.264/AAC must be possible from the LGPL build; record version and configuration in the decision record and release notes. | §8 |
-| Q11 | A separate `tusd` server; verify its licence before adding it; do not write the tus protocol in FastAPI. | §3, §8 |
-| Q12 | `boto3`; verify the licence and pin it. | §8 |
-| Q13 | No Moodle service-account token; the module calls no Moodle web service. | §9 |
-| Q14 | A hosted production provider stays open; if chosen, lesson audio may go under SEC-07 and the data map. B8.5 audio never goes to a hosted provider. | §9 |
-| Q15 | `shared.audit_log` kept 90 days, including the LTI `sub`; record it in the data map. | §9 |
-| Q16 | App-C 9 is in scope: Student 4 checks Moodle 5.3's own AI features for overlap with chapters and summaries. | §12 |
+The guide's written answers to Q1–Q16 are on the PR #140 thread: the [questions](https://github.com/narenccode/learnops/pull/140#issuecomment-6986610632) and his [answers](https://github.com/narenccode/learnops/pull/140#issuecomment-7005848536). They are not repeated in this document. Where an answer applies, the section says so and marks it **Confirmed (Qn)**. The answers address those questions, not the design approval.
 
 ### Still open after the answers
 
