@@ -488,4 +488,5 @@ Demonstration code outside this plan: the paths demo (PR #117, merged) and the l
 
 - [x] Owner: I understand and can explain every section.
 - [x] Peer reviewer: checked against the PRD chapter and the contracts; comments resolved.
+  - Limits of the peer check: it was a first pass against PRD C4, the contracts the module provides and uses, `modules/video/CLAUDE.md` and the template. It does **not** cover the "verified" library versions and licences, the ffmpeg build (Q10 is the guide's), `tusd` hook behaviour, BigBlueButton metadata (App-C 4, a lab item), the B6 schema details, or `.env.example` against §6. One advice item is still open: what the proxy check does for the creating `POST` (PR #240, not merged). The peer check is not the guide's approval.
 - [ ] Guide: approved (sets `Status: Approved`).
