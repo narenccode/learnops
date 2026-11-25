@@ -52,7 +52,7 @@ other work. Five tasks consume most of their time:
 |---|---|---|---|
 | G-1 Fast course creation | Mentor time to load a 4-week course | ≤ 15 min (vs 2–3 h) | Release 2 |
 | G-2 Course errors caught before learners see them | Planted errors detected (test set B8.3) | 100 % | Release 1 |
-| G-3 Every role works on every screen | Role tests passing: 5 roles × 3 screen profiles × Moodle 4.5 and 5.3 | 100 % | Release 1 |
+| G-3 Every role works on every screen | Role tests passing: 5 roles × 3 screen profiles × Moodle 5.3 | 100 % | Release 1 |
 | G-4 Less grading time | Minutes per submission, assisted vs manual | ≥ 50 % reduction | Release 4 |
 | G-5 Trustworthy grading drafts | Draft grade within one band of the mentor's grade (B8.4) | ≥ 80 % | Release 4 |
 | G-6 Every video usable | Caption word error rate on Indian-English lectures (B8.5) | Measured and reported; target fixed from the first baseline run (App-C 7) | Release 3 |
@@ -129,7 +129,7 @@ The baseline (Releases 0–5) is built so these plug in without rework (§A9).
 |---|---|
 | C-01 | Moodle and BigBlueButton are installed **as released and never modified**. No plugins, no patches, no edits to their code or database. |
 | C-02 | Tools connect to Moodle **only** through: Moodle backup files restored with Moodle's own Restore; Moodle's standard web-services API; LTI 1.3 External tool launches; a browser (tests only). |
-| C-03 | Everything works on **Moodle 4.5 and Moodle 5.3**. |
+| C-03 | Everything works on **Moodle 5.3**. |
 | C-04 | Generated course content follows the course pattern in §B1.2 and never alters protected activities (§B1.4). |
 | C-05 | Every command-line tool supports `--dry-run`, `--check` and has a documented undo. |
 | C-06 | No secrets (API keys, tokens, passwords) in the repository. Configuration through environment variables; `.env.example` documents them. |
@@ -145,7 +145,7 @@ The baseline (Releases 0–5) is built so these plug in without rework (§A9).
 ```mermaid
 flowchart TB
     subgraph PLATFORM["Unmodified platforms"]
-        MOODLE["Moodle 4.5 / 5.3"]
+        MOODLE["Moodle 5.3"]
         BBB["BigBlueButton 3.0"]
     end
     subgraph LEARNOPS["LearnOps (this project)"]
@@ -283,7 +283,7 @@ Moodle sites have: completion tracking on; web services enabled with a dedicated
 ## A15. Assumptions
 
 1. The lab VMs and AI services are available from Release 0.
-2. Moodle's standard web-services functions listed in §B4 exist on 4.5 and 5.3 (verified in the first release that relies on them; see §App-C).
+2. Moodle's standard web-services functions listed in §B4 exist on 5.3 (verified in the first release that relies on them; see §App-C).
 3. Moodle's Restore can merge sections from a backup into an existing course (verified in the first release that relies on it).
 4. Lecture videos with reference transcripts can be obtained with permission (§B8.5).
 5. A hosted-API key with a spending cap is provided by the guide for the comparison study.
@@ -627,7 +627,7 @@ information is lost.
 
 - One dedicated **service account** per Moodle site, with a token restricted to an external service containing only the functions below.
 - The account has only the capabilities those functions need, in the courses where it is enrolled for grading.
-- Function list (each verified on 4.5 and 5.3 in the first release that relies on them; replacements recorded here if names differ):
+- Function list (each verified on 5.3 in the first release that relies on them; replacements recorded here if names differ):
 
 | Purpose | Function |
 |---|---|
@@ -894,15 +894,15 @@ editor stacked; preview behind a tab. Meets A14.
 
 ### C1.5 Technical requirements
 - `.mbz` generation writes Moodle's backup structure for the activity types used (page, assign, url, label, h5pactivity) with completion, availability, grade items and marking workflow.
-- Generated backups target the Moodle 4.5 backup format and must restore on 4.5 **and** 5.3 (C-03).
-- Every build is restored automatically in CI or the harness (M2) on fresh 4.5 and 5.3 sites.
+- Generated backups must restore on Moodle 5.3 (C-03).
+- Every build is restored automatically in CI or the harness (M2) on fresh 5.3 sites.
 - Data: `studio.package` (id, course link, current version), `studio.package_version` (hash, author, created), `studio.build` (mode, mbz path, result).
 
 ### C1.6 Contracts
 Provides: B1, B7. Uses: B2 (validation via checker library), B3, B5 (stretch), B6 (lesson slugs).
 
 ### C1.7 Acceptance criteria
-- [ ] B8.2 sample course: package → `.mbz` (full) → restored on fresh 4.5 and 5.3 → M2 checker reports 0 errors.
+- [ ] B8.2 sample course: package → `.mbz` (full) → restored on fresh 5.3 → M2 checker reports 0 errors.
 - [ ] Sections-only build restored by merge into B8.1 template: protected items unchanged (same idnumbers, same count, badge and completion criteria intact).
 - [ ] A package containing a protected idnumber is rejected with a clear message.
 - [ ] Reverse import of the restored course → package → rebuild produces an equivalent course (checker diff: no differences in structure, rules or points).
@@ -927,7 +927,7 @@ Editing a live Moodle course directly; quizzes and Moodle-stored rubrics; worksh
 ### C1.12 Bloom mapping
 Survey (L2): Moodle backup format, IMS Common Cartridge limits, course-as-code. Analyze (L4): map the
 course pattern to backup elements. Design (L6): schema, validator, generator. Develop (L3): editor,
-generator, reverse import. Integrate (L3): restore on 4.5 and 5.3. Evaluate (L5): restore tests,
+generator, reverse import. Integrate (L3): restore on 5.3. Evaluate (L5): restore tests,
 time-to-load measurement.
 
 ## C2. Module 2 — Course checker, role tests and integration harness (owner: Student 2)
@@ -939,7 +939,7 @@ real browser, and runs the integration test of the whole toolkit. Value: P2; pro
 ### C2.2 User stories
 - As a mentor, I run the checker on my course and get a list of problems with the exact fix.
 - As an administrator, I run role tests after any change and see pass/fail per role and screen size.
-- As the integration lead, I run one command that builds the sample course, checks it, restores it on both Moodle versions and runs all role tests.
+- As the integration lead, I run one command that builds the sample course, checks it, restores it on Moodle 5.3 and runs all role tests.
 
 ### C2.3 Functional requirements
 
@@ -950,9 +950,9 @@ real browser, and runs the integration test of the whole toolkit. Value: P2; pro
 | FR-C-03 | Rule catalogue v1 (each rule with id, severity, message, fix hint): **CK-01** unreachable section or activity; **CK-02** completion rule that can never be met; **CK-03** graded points ≠ target total; **CK-04** unlock rule refers to a missing activity; **CK-05** circular unlock rules; **CK-06** duplicate or invalid idnumber; **CK-07** protected item missing, duplicated or changed; **CK-08** course completion or badge criteria refer to missing items; **CK-09** assignment without a valid marking table, or marking-table points ≠ assignment points; **CK-10** assignment without marking workflow; **CK-11** practice (H5P) activity with a grade item; **CK-12** media referenced by a full fixed URL instead of a relative path; **CK-13** activity used in an unlock rule without completion tracking. | R1 |
 | FR-C-04 | Output: human-readable report (web + CLI) and machine-readable JSON; exit code per OPS-05. | R1 |
 | FR-C-05 | Compare two course models (diff of structure, rules, points), used by M1's reverse-import test. | R1 |
-| FR-C-06 | Role tests (Playwright) for visitor, signed-in non-member, learner, mentor, administrator, on the three screen profiles (UI-02), on Moodle 4.5 and 5.3. | R1 |
+| FR-C-06 | Role tests (Playwright) for visitor, signed-in non-member, learner, mentor, administrator, on the three screen profiles (UI-02), on Moodle 5.3. | R1 |
 | FR-C-07 | Role expectations are data: a YAML file per course listing what each role must see and must **not** see (negative tests are mandatory). | R1 |
-| FR-C-08 | Integration harness: one command runs sample build (M1) → check → restore on fresh 4.5 and 5.3 → role tests → grading and video smoke tests (when those releases exist); produces one report. | R1, extended each release |
+| FR-C-08 | Integration harness: one command runs sample build (M1) → check → restore on fresh 5.3 → role tests → grading and video smoke tests (when those releases exist); produces one report. | R1, extended each release |
 | FR-C-09 | Mentor web view (opened via LTI from the course): run the checker on a course package from Course Studio, or on a `.mbz` the mentor uploads after making it with Moodle's own Backup page (no automatic backups are taken by LearnOps). | R1 |
 
 ### C2.4 UI requirements
@@ -1121,7 +1121,7 @@ Provides: B6. Uses: B3, B5 (model and speech), B7 (stretch), B8.5.
 - [ ] Caption word error rate measured on B8.5 and reported against the target set from the first baseline run (App-C 7).
 - [ ] `lesson.json` validates against B6.3; all paths relative; existing single-track lessons remain valid when `camera`/`screen` tracks are added later.
 - [ ] A BigBlueButton recording from a lab course appears in the correct live-class folder without manual steps.
-- [ ] Pasted snippet plays the video with captions in a Moodle Page on 4.5 and 5.3.
+- [ ] Pasted snippet plays the video with captions in a Moodle Page on 5.3.
 
 ### C4.8 Error handling
 Upload: resumable; clear messages for type/size. Processing: failed step shown with reason and retry;
@@ -1270,7 +1270,7 @@ Each release is **frozen, tagged and adoptable on its own**. Releases are number
 
 | Release | Name | Contents | Depends on |
 |---|---|---|---|
-| **Release 0** | Foundation | Lab VMs ready (A11); repository, CI, coding standards; contracts B1–B8 v1 **frozen**; shared libraries `contracts` and `media_paths`; test data B8 v1; App-C items 6 and 9; design document per module approved. The libraries `lti`, `moodle_ws` and `model_interface` (FR-M-01, FR-M-02) and the other App-C items belong to the first release that uses them; the Release 0 notes list where each one goes. | — |
+| **Release 0** | Foundation | Lab VMs ready (A11); repository, CI, coding standards; contracts B1–B8 v1 **frozen** (B4 freezes separately, after its lab checks pass on 5.3: decision 0018); shared libraries `contracts` and `media_paths`; test data B8 v1; App-C items 6 and 9; design document per module approved. The libraries `lti`, `moodle_ws` and `model_interface` (FR-M-01, FR-M-02) and the other App-C items belong to the first release that uses them; the Release 0 notes list where each one goes. | — |
 | **Release 1** | Course quality | Module 2: checker (FR-C-01…05, 09), role tests (FR-C-06, 07), harness v1 (FR-C-08) | R0 |
 | **Release 2** | Course creation | Module 1: Course Studio (FR-S-01…11); harness extended to build → check → restore | R0, R1 |
 | **Release 3** | Video | Module 4: video pipeline (FR-V-01…13, FR-V-15) incl. BigBlueButton intake, summaries, slide index, manifest, retention; harness smoke test | R0 |
@@ -1291,7 +1291,7 @@ Module 2 finishes Release 1); a release is **frozen** once every release in its 
 
 1. Every FR tagged for the release is implemented and linked to passing tests (traceability, E4).
 2. The module's acceptance criteria (§C.x.7) pass.
-3. Restore and role-test matrix passes on Moodle 4.5 and 5.3 (harness report attached).
+3. Restore and role-test matrix passes on Moodle 5.3 (harness report attached).
 4. Contracts unchanged, or changed only additively under B.0.
 5. README (install, configure, run, check, undo), `.env.example`, changelog updated.
 6. Security items for the release reviewed (A13), dependency scan clean.
@@ -1315,13 +1315,13 @@ Module 2 finishes Release 1); a release is **frozen** once every release in its 
 |---|---|---|
 | Unit | Functions and validators (contracts, rules, parsers) | CI, every PR |
 | Contract | Every example and generated file validates against its schema | CI, every PR |
-| Integration | Harness: build → check → restore (4.5, 5.3) → role tests → module smoke tests | Lab, every two weeks and before each release |
+| Integration | Harness: build → check → restore (5.3) → role tests → module smoke tests | Lab, every two weeks and before each release |
 | End-to-end | Role tests and mentor flows in a real browser | Lab, before each release |
 | Measurement | G-1…G-10 with logged evidence | At the release that delivers each goal |
 
 ## E2. Moodle compatibility matrix
 
-Every release: restore + role tests + module smoke tests on fresh Moodle 4.5 and 5.3 sites,
+Every release: restore + role tests + module smoke tests on fresh Moodle 5.3 sites,
 recorded in the release's harness report.
 
 ## E3. Measurement rules
@@ -1376,11 +1376,11 @@ requests; report chapter; final-demo segment.
 
 ## App-C. To verify (items 6 and 9 in Release 0; each other item in the first release that relies on it; record results in `docs/decisions/`)
 
-1. Every web-services function in B4 exists on 4.5 and 5.3 with the parameters used (incl. `workflowstate` on `mod_assign_save_grade`).
+1. Every web-services function in B4 exists on 5.3 with the parameters used (incl. `workflowstate` on `mod_assign_save_grade`).
 2. Moodle Restore merges a sections-only backup into a template course without touching protected items.
-3. A CLI restore route for the harness (Moodle's admin CLI if available on both versions; otherwise browser automation).
+3. A CLI restore route for the harness (Moodle's admin CLI if available on 5.3; otherwise browser automation).
 4. BigBlueButton recording metadata fields set by Moodle's BigBlueButton activity (for course mapping) and the video-format output location.
-5. Exact H5P content-type versions available on both Moodle versions.
+5. Exact H5P content-type versions available on Moodle 5.3.
 6. The LTI 1.3 library choice and its licence.
 7. Caption word-error-rate target (G-6) from a first baseline run.
 8. Licence or consent for every B8.5 video.
@@ -1391,7 +1391,7 @@ requests; report chapter; final-demo segment.
 
 | Risk | Mitigation |
 |---|---|
-| Undocumented Moodle backup format changes between versions | Restore tests on both versions every build (E2) |
+| Undocumented Moodle backup format changes between versions | Restore tests every build (E2) |
 | Contract drift between modules | Freeze at Release 0; B.0 change rule; contract tests in CI |
 | Sandbox escape in grading | SEC-04; malicious-repository acceptance test |
 | AI drafts wrong | Draft-only (C-09); measured agreement and wrong-answer rate |

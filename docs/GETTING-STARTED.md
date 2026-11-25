@@ -158,7 +158,7 @@ Read in this order. Make a list of anything unclear and send it to your guide (�
 
 ### The rules you can never break (the short version; the full list is in `CLAUDE.md` §2)
 1. **Never modify Moodle or BigBlueButton.** No plugins, themes, patches or database edits. Connect only through Moodle backups, Moodle web services, LTI 1.3, a browser (tests), and BigBlueButton's API.
-2. Everything must work on **Moodle 4.5 and 5.3**.
+2. Everything must work on **Moodle 5.3**.
 3. **No secrets in the repository.** No API keys, tokens or passwords in code, tests, docs or logs. Use environment variables, and document them in `.env.example`.
 4. **Test data only.** No real learner data, real course content or real recordings.
 5. **AI output is always a draft** until a mentor approves it. Tools never release grades.
@@ -226,7 +226,7 @@ First prompt to try in Claude Code: `/design-doc studio`
 First prompt to try in Claude Code: `/design-doc checker`
 
 ### Student 3 (`Harshithamanjunatha`): Grading assistant + model interface
-1. **Contract B4: Moodle web-services usage.** `contracts/moodle-ws.v1.md`: the function list with parameters, the minimum capabilities, and which entries still need checking against Moodle 4.5 and 5.3 once the lab exists (PRD §B4, Appendix C).
+1. **Contract B4: Moodle web-services usage.** `contracts/moodle-ws.v1.md`: the function list with parameters, the minimum capabilities, and which entries still need checking against Moodle 5.3 once the lab exists (PRD §B4, Appendix C).
 2. **Contract B5: model and speech interface.** `contracts/model-interface.v1.schema.json` plus a **skeleton of `libs/model_interface/`**: the task registry, a local provider, a fake provider for tests, the versioned `prompts/` folder, structured-output validation, and unit tests. **No API keys anywhere.**
 3. **Sandbox design** for running untrusted learner code (PRD §C3.5, SEC-04) in your design document.
 4. Plan the **synthetic submissions** (test set B8.4): what a good, average and poor submission looks like; who will write reference grades.

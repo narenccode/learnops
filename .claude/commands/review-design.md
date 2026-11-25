@@ -26,7 +26,7 @@ to save a human's time; it is **not an approval**. **Change no file.** Never set
 
    **Constraints and architecture**
    - Respects C-01…C-12 (no Moodle or BigBlueButton changes; only the allowed integration routes;
-     Moodle 4.5 and 5.3; no secrets; relative media paths; AI output is a draft; model interface only).
+     Moodle 5.3; no secrets; relative media paths; AI output is a draft; model interface only).
    - Uses only the fixed stack; heavy work in workers (OPS-10); extension rules EXT-01…EXT-09 are
      not blocked by any choice.
    - No claim about how Moodle or BigBlueButton behaves unless it is supported by the PRD or listed in

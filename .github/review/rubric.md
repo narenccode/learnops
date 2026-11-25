@@ -10,7 +10,7 @@ Review against these rules (PRD §A7 and CLAUDE.md):
 1. Nothing modifies Moodle or BigBlueButton (no plugins, patches, edits to their code or database).
    Allowed routes only: Moodle backup/Restore, Moodle web services, LTI 1.3, a browser for tests,
    BigBlueButton's API.
-2. Works on Moodle 4.5 and 5.3.
+2. Works on Moodle 5.3.
 3. No secrets, keys, tokens, real learner data, real course content or real recordings.
 4. AI output is always a draft; nothing generated reaches learners or Moodle grades without a
    mentor's approval; grades are never released by the tools.
