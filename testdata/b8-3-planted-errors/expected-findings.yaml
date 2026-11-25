@@ -198,7 +198,7 @@ variants:
     reason: "Media must be a relative path, not a full fixed URL (PRD C-08)."
     also_expected: []
     assertable: false   # PROVISIONAL: not asserted until checker design section 12 item 19 is decided
-    notes: "CK-12 reads media_refs of the B2 model (design section 3.4). Whether the model builder extracts media from a page body into media_refs is open (section 12 item 19). Until it is agreed and tested end to end, this variant only plants the URL in the source file; its expected finding is not asserted."
+    notes: "The intended v1 scope is embedded media only: Markdown images and HTML img/video/audio/source/track references in activity bodies; ordinary links (including PDFs) and iframe embeds are excluded. The builder must populate media_refs using the shared extraction rule. The B2 contract change and test vectors still need guide approval, and end-to-end extraction is not verified; this variant plants the URL in the source file only, so its expected finding is not asserted yet."
 
   - id: ck-13-unlock-without-completion
     rule: CK-13
