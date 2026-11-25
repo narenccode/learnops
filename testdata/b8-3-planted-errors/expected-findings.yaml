@@ -36,7 +36,7 @@ version: 1
 #     item 22  the .mbz variants are built on Moodle 5.3 only for Release 0 (a new narrow exception
 #              that Akshita records); on 4.5 they are a rebuild
 #   Still open: Shraddha, as design owner, confirms the mapping (it stays `proposed` until then);
-#   Akshita updates docs/design/checker.md (it is still Draft); the nine .mbz variants need the lab.
+#   Akshita updates docs/design/checker.md (it is still Draft); nine CK rule categories require `.mbz` inputs, represented by ten separate variants because CK-06 has two independent cases; all ten variants need the lab.
 mapping_status: proposed
 mapping_source: "docs/design/checker.md section 11.3 at commit 4111e0c"
 confirmation: null   # {by: [...], reference: <issue/PR/decision link>, date: <YYYY-MM-DD>}
