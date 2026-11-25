@@ -16,7 +16,7 @@ What the consumers need from the table:
 | Studio | A primary key to refer to (`studio.package.course_link_id`) | Studio design section 5 |
 | Grading | `(site_id, moodle_course_id)`, mapped to the LTI context; read-only access | Grading design sections 5.1 and 5.3 |
 | Video | `iss` and the LTI context id as keys; no Moodle course id stored in its own tables | Video design section 5 |
-| Whoever writes the row (open item 5) | To write one row after the first successful launch for a course, once B4 has confirmed the course | B3 ADR section 14.1 (the first successful launch should write the record), section 14.2 (B4 resolves the course and maintains the mapping) |
+| Whoever writes the row (open item 5) | To write one row after the first successful launch for a course, once B4 has confirmed the course | B3 ADR section 13 (the first successful launch should write the record), section 14.2 (B4 resolves the course and maintains the mapping) |
 
 ## Decision
 
@@ -51,11 +51,11 @@ What the consumers need from the table:
 
 ## Open items
 
-1. **How B4 sends the course id.** The form of `context.id` is decided: B3 section 3.1 (merged in #83 on 18 November 2026, with the guide's approval) makes it a positive integer written as a string in ASCII digits, and refuses anything else (section 8). What is still open is only how B4 sends that value as `value` in `core_course_get_courses_by_field`; B4 section 2b says only that `field` and `value` are sent. This record stores the context id as received (text) and the Moodle id as an integer, so it holds either answer.
+1. **How B4 sends the course id.** The form of `context.id` is decided: B3 section 3.1 (merged in #83 on 18 November 2026, with the guide's approval) makes it a positive integer written as a string in ASCII digits, and refuses anything else (section 8). What remains is not a question for anyone else: the guide decided in B3 ADR section 13 ("`context.id` at the B4 boundary") that B4 owns the form sent to Moodle and may pass the decimal string unchanged, that a value Moodle rejects fails closed at the B4 call, and that B3 sets no numeric-conversion rule. So it is the B4 owner's choice, to be written into B4 (section 2b says only that `field` and `value` are sent). This record stores the context id as received (text) and the Moodle id as an integer, so it holds either answer.
 2. **The form of `site_id`.** `libs/moodle_ws` still has the fixed site ids `moodle45` and `moodle53`. The guide's assistant noted on #112 that the B4 `site_id` should be a value from the platform registration, and the guide decided to use the 5.3 lab only for now. Which one the table uses is not decided here. The type (text) holds either.
 3. **A course B4 cannot see** (deleted, hidden from the service account, or renamed). Not decided. Proposal: keep the row, do not update `last_verified_at`, and let each consumer treat the course as unavailable. It depends on lab check OI-17, whether the service account can see the course.
 4. **Consumers' confirmation.** Student 1 (Studio, `course_link_id`), Student 2 (shared schema, the second unique constraint and the check above) and Student 4 (Video keys) confirm or object before the migration is written. No confirmation is recorded yet; a peer review of this record is not one.
-5. **Which component writes the row.** B3 ADR section 14.1 says the first successful launch should write the record, and section 14.2 says B4 resolves the course and maintains the mapping. Studio design section 12, item 27 lists which component does the lookup and stores it (`libs/lti`, `libs/moodle_ws` or Studio) as "Needs guide". Not decided here. Proposal: the lookup is a B4 call (`libs/moodle_ws`), the gateway calls it after a verified launch, and one writer stores the row.
+5. **Which component writes the row.** B3 ADR section 13 says the first successful launch should write the record, and section 14.2 says B4 resolves the course and maintains the mapping. Studio design section 12, item 27 lists which component does the lookup and stores it (`libs/lti`, `libs/moodle_ws` or Studio) as "Needs guide". Not decided here. Proposal: the lookup is a B4 call (`libs/moodle_ws`), the gateway calls it after a verified launch, and one writer stores the row.
 
 ## What this changes
 
