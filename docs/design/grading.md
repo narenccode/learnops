@@ -79,7 +79,7 @@ column is (proposed) unless the requirement itself states it.
 | FR-G-02 | R4 | One container per submission on a host that runs no other LearnOps service clones the repository, loses its network, then runs the allowed checks (§9.2); `http_ok` runs outside the sandbox (§9.3) (PRD §C3.5) | sandbox worker, http_check worker |
 | FR-G-03 | R4 | Draft job calls `model.run(task="grade_draft")` once per submission version; every criterion is validated in code against the marking table, check results and evidence (§4.3, §9.5); the overall draft grade is the sum of criterion scores (PRD), computed in code, not by the model (proposed) | draft worker, `grade_draft` prompt |
 | FR-G-04 | R4 | Similarity compares fingerprints computed inside the sandbox (code) and from report text; flags pairs above configurable thresholds (PRD); v1 compares only submissions of the same cohort (Student 3's proposed decision, Q68); a mentor reviews every flag, and it is never proof (§3.1) | similarity worker |
-| FR-G-05 | R4 | Review view: submission list, per-submission detail, approve, edit or reject per criterion; bulk approve only for unchanged drafts with no flags (PRD, §6.1) | web service, React UI |
+| FR-G-05 | R4 | Review view: submission list, per-submission detail, approve, edit or reject per criterion; bulk approve for unchanged drafts (PRD); **limiting it to drafts with no flags is a proposal, not PRD text, and the guide decides it separately because it changes mentor minutes** ([comment 7157135474](https://github.com/narenccode/learnops/issues/186#issuecomment-7157135474), item 6) (§6.1) | web service, React UI |
 | FR-G-06 | R4 | Write job sends only approved drafts via `mod_assign_save_grade` with workflow state `readyforrelease`; never released (PRD); guarded by the protocol in §10.1 | write worker, `libs/moodle_ws` |
 | FR-G-07 | R4 | Every approve, edit or reject stored as an append-only event with approver and the change from the draft; audit entry in `shared.audit_log` (OPS-06) | `grading.approval` (append-only), audit |
 | FR-G-08 | R4 | A resubmission creates a new submission version with new checks and drafts; earlier drafts and approvals are kept, never overwritten (proposed); a changed Moodle submission marks older versions stale (§5.4) | data model (§5) |
@@ -87,7 +87,7 @@ column is (proposed) unless the requirement itself states it.
 
 No requirement is proposed for deferral.
 
-**Note on traceability.** The B4 contract and `libs/moodle_ws` are Release 0 work (PRD §D1) but have no
+**Note on traceability.** The B4 contract is Release 0 work that freezes on its own, when its lab checks pass on Moodle 5.3 (PRD §D1, decision 0018); `libs/moodle_ws` is in "the first release that uses it" (PRD §D1), which is Release 4 for this module. Neither has a
 requirement ID of their own, so `docs/traceability.md` (PRD §E4) has nothing to point at. Proposal:
 trace them under FR-G-01 (read side) and FR-G-06 (write side) until the guide decides (Q7).
 
@@ -268,7 +268,7 @@ These are drafts inside this document only. Nothing here changes a contract file
 **(b) Marking-table parser and model** (format owner Student 1; implementation proposed in `libs/contracts` first used by CK-09; Student 3 imports it; no second parser in this module) (Q39).
 - Output: `table_hash`; criteria, each with `key` (slug of the name, unique within the table), `position`, `name`, `points`, `full_marks_when`, `checks` (list of name and argument; empty for judgement only).
 - Rules: criterion names unique after slugging; points sum equals the assignment points; check names limited to the six PRD names; checks separated by `;`; one `:` splits name and argument; `—` alone means no check.
-- Argument formats for `readme_sections` and `word_count` are defined in PRD B1.3 and its shared vectors (`contracts/test-vectors/submission.v1.json`); they are not repeated here, and the rules still being completed in #215 are followed as merged. This module adds only: `repo_file:<path>` is a relative path with no `..`; `command:<name>` is a key in the check config; `http_ok:<field>` is `demo_url` in v1.
+- Argument formats for `readme_sections` and `word_count` are defined in PRD B1.3 and its shared vectors (`contracts/test-vectors/submission.v1.json`); they are not repeated here, and the rules completed in #215 (merged 25 Nov 2026) are followed as merged. This module adds only: `repo_file:<path>` is a relative path with no `..`; `command:<name>` is a key in the check config; `http_ok:<field>` is `demo_url` in v1.
 
 **(c) Check config for `command:<name>`** (owner Student 1 for the schema, Student 3 for the loader) (Q33). A YAML file `GRADING_CHECKS_DIR/<course_shortname>.yaml` on the tools host, validated by a schema: `schema: learnops.checks/v1`; `image` (a key from the configured list of pre-baked check images); `commands` mapping a name to `argv` (a list, never a shell string) and `timeout_s`; optional `starter_hashes` for similarity; optional `limits` that can only reduce platform limits. A name in a marking table that is missing from the file fails with `command_not_configured`. The loader resolves commands when it creates the check job and passes them in the job payload, so the sandbox host never needs the file. Whether this schema is part of B1 or a new contract file is (guide).
 
@@ -509,8 +509,8 @@ Versions: latest release on PyPI on 2026-10-25. Licences: read from PyPI metadat
 | SEC-04 Untrusted code | Sandbox on a dedicated host, §9.2 |
 | SEC-05 Uploads | The module receives no uploads. The only file downloaded from Moodle is `report.md` or `report.txt` (proposed): size-capped, checked by content (it must decode as text, or it is refused), assumed virus-free only because it is never executed or served, read as plain text only, never parsed as another format or executed, stored outside any web root until processed, and kept only as a capped excerpt. No other submission file is downloaded or opened in v1 (Q10) |
 | SEC-06 Personal data | Only what LTI and B4 provide (SEC-06 names LTI only, and B4 data goes beyond it; raised for the guide in §12.2); learner identity inside grading is `learner_ref`; test data only in the lab (C-07) |
-| SEC-07 Data sent to a hosted AI | Only what the task needs (§9.4); listed in `docs/data-map.md` |
-| SEC-08 Dependencies | Scanned in CI; no known critical vulnerabilities at release |
+| SEC-07 Data sent to a hosted AI | Only what the task needs (§9.4); the grading rows are **not yet** in `docs/data-map.md`: §9.4 gives the proposed rows, and the owners add them when each feature is built |
+| SEC-08 Dependencies | CI has **no dependency scan yet** (a CI audit is proposed in PR #227, not merged); no known critical vulnerabilities at release |
 | SEC-09 CSRF and cookies | §6.1 |
 
 ### 9.2 Sandbox for untrusted learner code
@@ -1082,7 +1082,8 @@ The PRD is not edited by this document. These are the changes the proposals abov
 | A11, OPS-01, SEC-04 | Name the host that SEC-04 requires, which runs no other LearnOps service (proposed as a dedicated VM, Q23); sandbox worker starts there; Docker control interface not network-exposed; clone egress limited to allow-listed git hosts | §3, §9.2, §6.4 |
 | SEC-04, §C3.5 | Make the network rule the same in both places. Option for the guide (not chosen here): "no network for learner code; a clone step that runs no learner code may reach approved destinations only" (Q57). Also state what the 10-minute limit covers (Q58) | §9.2 |
 | §C3.7 | State what "reported" means for an attack the host cannot observe directly (Q65) | §9.2.9 |
-| §C3.3, §C3.10 | State the release of FR-M-01 and FR-M-02 the same way as PRD §D1 ("the first release that uses them"); the three texts now disagree | header, §2, §13 |
+| §C3.3, §C3.10 | §C3.3 (the FR-M-01 and FR-M-02 rows) and §C3.10 both say Release 0 and agree with each other; PRD §D1 says "the first release that uses them". State the release the same way in all three | header, §2, §13 |
+| §C3.7, FR-M-03 | Only if the guide accepts the owner's recommendation in §12.5: the comparison report covers "the tasks whose release is frozen; others are reported as not run" | §12.5 |
 | SEC-03, App-C item 1 | Capability list recorded in B4 after lab work; replace item 1 with the 18 checks in B4 §5, plus check E1 of §4.1 if the guide accepts it (Q31) | §4.1 |
 | C-05 | A written grade is undone by the mentor in Moodle while it is unreleased (manual undo, README steps); LearnOps does not write it back (guide, #186, 25 Nov 2026) | §10.1 |
 | B1.1, B1.3, B1 | Submission-content rule, argument formats, criterion key rule, check-config schema; `command:setup` wording to match the dependency policy | §4.3, §9.2 |
@@ -1101,7 +1102,7 @@ The PRD is not edited by this document. These are the changes the proposals abov
 Each row is (provisional): the design proceeds on it until the guide answers the question, and the
 question stays OPEN in §12. Where options exist, the more conservative one is taken: less network,
 less privilege, shorter time, stronger cleanup. The exception is Q66, which is proposed to follow §C3.5's
-literal wording and accepts the risks in §9.2.9. "If the guide decides otherwise" shows how much of the
+literal wording; the risks in §9.2.9 are listed for the guide to accept or not, and nothing here accepts them for him. "If the guide decides otherwise" shows how much of the
 design would change. None of these assumptions permits any learner code, including the malicious test
 repositories, to run before the gate in the last row of this table is met.
 
@@ -1118,7 +1119,7 @@ repositories, to run before the gate in the last row of this table is met.
 | Q65 | "Reported" means: the affected check is `fail` or `error`; its evidence shows the blocked action (for example a refused or unreachable connection in the captured output); and the run records that the container's network removal was confirmed on the host. A4 passes only if the mentor can see all three | (PRD) §C3.7; the host cannot observe a network attempt in a container with no network | A stricter definition would need host-side detection (for example syscall auditing): a new (proposed) item and possibly a new tool |
 | Q66 | One container per submission, as §C3.5 says, cloning and then losing its network | (PRD) §C3.5 | Two containers: the earlier design, in which learner code runs in a container that never had a network; needs the guide to accept the departure from the literal words |
 
-### 12.4 Conflicts in the owner's recommendations (flagged for the guide, not resolved)
+### 12.4 Conflicts in the owner's recommendations (flagged for the guide; rows marked "Resolved in this draft" are the owner's proposals, which the guide confirms when he approves)
 
 | Recommendation | Conflicts with | Question |
 |---|---|---|
