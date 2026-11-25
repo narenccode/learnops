@@ -1232,4 +1232,5 @@ Release 4 work also depends on Release 1 (CK-09) (PRD §D1).
 
 - [x] Owner: I understand and can explain every section.
 - [x] Peer reviewer: checked against the PRD chapter and the contracts; comments resolved.
+  - Limits of the peer check: it does **not** cover §9.2 (the sandbox design, about 270 lines, the SEC-04 part). The independent review of Q30 and Q64 is separate and has not been done. The owner's proposals added in #218 were read as proposals and not verified against a running system; nothing in the grading module has been built or tested. The peer check is not the guide's approval.
 - [ ] Guide: approved (sets `Status: Approved`).
