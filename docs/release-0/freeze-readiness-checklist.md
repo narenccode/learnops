@@ -9,6 +9,8 @@ four more commits, #130, #142, #145 and #147, merged). The first audit was at `3
 relying on it.
 **Refresh 2026-11-23** (`origin/main` `dedf578`, after #169 and #129 merged): only the B8.5 rows, the #129 row and the owner list were updated; no other row was re-read, and the verdict is unchanged.
 **Refresh 2026-11-24** (PR #213, from the lab 5.3 check of 2026-11-24): only the "Lab VMs ready (A11)" row was updated, to point to the new A11 readiness record (the App-C item 9 rows were updated by #212 the same day). No other row was re-read; this is not a re-audit of the checklist, and the verdict (NOT READY) is unchanged.
+**Narrow refresh 2026-11-26** (after PR #142 merged and the subsequent PR #241 review requests): records the M2 survey's source-verification provenance and accurately describes #142's automated review. The survey-preparation assistant directly checked 13 references and used archived copies for MoodleDocs [3], [10] and [11] during research preparation. The owner reports personally opening and verifying all 16 retained references [1]–[16], including the live MoodleDocs pages, on 2026-11-25; this is recorded as the owner's statement in `docs/literature-checker.md`. The Student 2 M2 literature-survey source-verification task is therefore **COMPLETED** on that owner-reported evidence. No separate human peer approval of #142 is claimed. No other row was re-audited; the overall Release 0 verdict remains NOT READY.
+**Narrow refresh 2026-11-26, App-C item 9** (after the guide's answer of 2026-11-26, [comment](https://github.com/narenccode/learnops/issues/186#issuecomment-7186023695)): only the two App-C item 9 rows were updated. No other row was re-read, and the overall Release 0 verdict remains NOT READY.
 
 **What changed in the PRD since the first audit (PRs #113 and #116).** Release 0 (PRD §D1) now
 contains: lab VMs ready (A11); repository, CI, coding standards; contracts B1 to B8 v1 **frozen**;
@@ -36,6 +38,7 @@ to classify the row was not found. A merged PR is not treated as proof of its ac
 | Item | Status | Note |
 |---|---|---|
 | Video design document | **Draft** on `main` | `git log origin/main -- docs/design/video.md` shows #17, #24, #34, #47 and #93; none sets `Approved`. PR #140 (merged 2026-11-22) completed the draft and recorded the guide's answers; the document is still `Draft`, and the design approval is separate and the guide's alone |
+| Student 2 — M2 literature survey | **COMPLETED** | `docs/literature-checker.md` covers PRD C2.12 Survey (L2). The survey-preparation assistant directly checked 13 references and used archived copies for MoodleDocs [3], [10], [11] during research preparation. Owner reports personally opening and verifying all 16 retained references [1]–[16], including the live MoodleDocs pages, on 2026-11-25; see the dated owner-verification record in `docs/literature-checker.md`. PR #142 merged 2026-11-20; its APPROVED result was automated review, not separate human peer approval. |
 | PR #100 (S2 Svarah literature audit) | Merged | T13: 13 owner-verified sources (S2, P1 to P12), requirement of 6 met; coverage gaps remain |
 | PR #103 (G-6 evaluation preparation) | Merged | Preparation only: no official evaluation has run |
 | PR #96 (App-C 4 record) | Merged | Records NOT VERIFIED; no lab observation |
@@ -69,7 +72,7 @@ to classify the row was not found. A merged PR is not treated as proof of its ac
 | Test data B8.5 lecture videos | **Implemented, not verified** | On `main` since #169: five lectures (2380 s), outlines, transcripts marked `checked`, four consent lines; COMPLETE under decision 0004. Not verified: durations, hashes, file names, official-set provenance (G-8) and speaker briefings are the owner's statements; no word error rate. See the B8.5 evidence document (2026-11-20 audit, history) |
 | Test data B8.6 model comparison set | **Not ready** | PR #33 (open, draft): "one transcript" |
 | App-C item 6 (LTI library and licence) | **Awaiting guide** | `docs/decisions/0001-lti-library.md` is `Proposed`, pending the guide's review. Two files are numbered `0001` (`0001-lti-library.md` and `0001-b5-model-interface-v1.md`); the guide decides which to renumber |
-| App-C item 9 (Moodle 5.3 AI features) | **Source-checked and lab-checked on 5.3; guide's approval pending** | The decision record **exists on `main`**: `docs/decisions/0012-app-c-9-moodle-ai-features.md` (PR #156, merged 2026-11-22). It is a research record, not an implementation: it does not show that anything is implemented or verified in LearnOps. Its "Lab result" section (2026-11-24) records the lab 5.3 admin screens: seven provider plugins, no provider instance, both placements disabled, no speech or video action. Moodle 4.5 was not looked at. **Guide approval of its proposed outcome is a separate outstanding action.** The guide's answer on PR #140 put it in scope for Student 4 |
+| App-C item 9 (Moodle 5.3 AI features) | **Complete for the Release 0 freeze (guide, 2026-11-26)** | The decision record **exists on `main`**: `docs/decisions/0012-app-c-9-moodle-ai-features.md` (PR #156, merged 2026-11-22). It is a research record, not an implementation: it does not show that anything is implemented or verified in LearnOps. Its "Lab result" section (2026-11-24) records the lab 5.3 admin screens: seven provider plugins, no provider instance, both placements disabled, no speech or video action. Moodle 4.5 was not looked at. **The guide approved its proposed outcome as written on 2026-11-26** ([comment](https://github.com/narenccode/learnops/issues/186#issuecomment-7186023695)): no scope change, and the lab 5.3 check is sufficient. The guide's answer on PR #140 put it in scope for Student 4 |
 | Lab VMs ready (A11) | **Partly recorded; the guide decides** | `docs/release-0/a11-lab-readiness.md` (2026-11-24) records the 5.3 site: 5.3+ (Build: 20261030), completion tracking, web services, REST, that a dedicated service account with a token exists and which functions its service has, H5P types and badges. Unknown: `moodle45` (not tested), `bbb`, `tools`, the lab AI services, the HTTPS certificate and the LTI registrations. The guide decides whether this is enough for Release 0 |
 | Design document per module approved | **Partly done: 1 of 4** | `studio.md` is `Approved` (PR #147, 2026-11-20); `grading.md` is `In review`; `checker.md` and `video.md` are `Draft`. The guide approves the other three |
 | CI and repository standards | **Completed** | `ci` succeeded on `main` `5f3a794` (and the two commits before it); review bot and CODEOWNERS exist |
@@ -90,10 +93,10 @@ items 1 to 5, 7, 8, 10. The Release 0 notes must list where each one goes (not w
 | 6 | LTI 1.3 library and licence | **Release 0** | **Awaiting guide** | ADR 0001 is Proposed |
 | 7 | Caption WER target from baseline run | Release 3 (G-6) | **Blocked** | B8.5 data is complete (#169); still needs a speech provider, an approved normaliser and ADR 0002 (draft PR #98, lab facts pending); evaluation preparation merged (#103) |
 | 8 | Licence or consent for every B8.5 video | First release that relies on it | **Implemented, not verified** | Four written consent lines for four speakers in decision 0004 (#169); each speaker's briefing and the official-set provenance are the owner's statements |
-| 9 | Moodle 5.3 AI features | **Release 0** | **Source-checked and lab-checked on 5.3; guide's approval pending** | Record `0012` (PR #156, merged 2026-11-22) now has the lab 5.3 result of 2026-11-24: seven provider plugins and two placements as in the source, no provider instance, both placements disabled, no speech or video action. Moodle 4.5 not tested. The guide's approval of its proposed outcome is the remaining action |
+| 9 | Moodle 5.3 AI features | **Release 0** | **Complete for the Release 0 freeze (guide, 2026-11-26)** | Record `0012` (PR #156, merged 2026-11-22) now has the lab 5.3 result of 2026-11-24: seven provider plugins and two placements as in the source, no provider instance, both placements disabled, no speech or video action. Moodle 4.5 not tested. The guide approved its proposed outcome as written on 2026-11-26 ([comment](https://github.com/narenccode/learnops/issues/186#issuecomment-7186023695)) |
 | 10 | Backup/restore roles | First release that relies on it | **Blocked** | Needs lab |
 
-## 5. Pull requests (queried 2026-11-20; 19 open, listed by relevance; the #105 and #106 rows were refreshed on 2026-11-22)
+## 5. Pull requests (base query 2026-11-20; #105 and #106 rows refreshed 2026-11-22; narrow #142 status refresh 2026-11-25)
 
 | PR | State | Review | Note |
 |---|---|---|---|
@@ -101,14 +104,15 @@ items 1 to 5, 7, 8, 10. The Release 0 notes must list where each one goes (not w
 | #105 T19 report and demo | **Merged** 2026-11-22 | Approved (Harshitha) | Documentation against the provisional criteria P1 to P6; not a completion claim |
 | #106 T13 literature (P1 to P12) | Merged 2026-11-22 | Approved (Harshitha, Akshita21-09) | Merged with 1 of 6 verified; since then all of P1 to P12 are owner-verified (owner's statement, 2026-11-23) |
 | #129 Lesson Processor demo | Merged 2026-11-23 | Approved (Harshitha, Akshita21-09, guide) | One-PR exception and the `libx264` exception (decision 0013) from the guide |
+| #142 M2 literature survey (Student 2) | **Merged 2026-11-20** | **Automated review returned APPROVED (Claude Code run by Akshita21-09, 2026-11-19); no separate human peer approval recorded** | Approval is for commit `d6ce2417`; CI passed. The survey-preparation assistant directly opened 13 primary URLs and archive-checked MoodleDocs [3], [10], [11]; owner later reports verifying all 16 retained references, including the live MoodleDocs pages, on 2026-11-25 (owner's statement; see `docs/literature-checker.md`). |
 | #115 CODEOWNERS after the freeze | Draft | Review required | |
 | #31, #33 B8.4, B8.6 datasets | Open / Draft | Review required | Provisional |
 | #35, #63 model-interface and moodle_ws skeletons | Draft | Review required / changes requested | Not Release 0 after the PRD change |
 | #64, #72, #76, #79, #80 B4 and `moodle_ws` | Open | Mixed | B4 follow-ups and stacked library work |
-| #118, #138, #139, #142 | Open | Mixed | Other modules; not assessed |
+| #118, #138, #139 | Open | Mixed | Other modules; not assessed |
 
 Merged and relevant since the first audit: #25, #27, #46, #54, #61, #83, #85, #87, #93, #94, #95,
-#96, #99, #100, #101, #103, #117, #122, #125, #126.
+#96, #99, #100, #101, #103, #117, #122, #125, #126, #142.
 
 ## 6. Approvals and decisions still needed
 

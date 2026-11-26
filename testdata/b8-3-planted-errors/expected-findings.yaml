@@ -1,7 +1,7 @@
 # B8.3 expected findings (PRD B8.3, C2.3, C2.7). One entry per planted error.
 # Source of the mapping: docs/design/checker.md section 11.3 (Proposal, #148). Not yet confirmed by the guide.
 # These entries say what a future checker SHOULD report. No checker exists yet, so nothing here
-# proves detection. Every variant is a copy of B8.2 with ONE change; B8.2 itself is never changed.
+# proves detection. Each variant changes one thing from its applicable baseline: B8.2 for all variants except CK-07 and the proposed CK-08 case, which use the merged course with the B8.1 template. B8.2 itself is never changed.
 #
 # Fields
 #   id              unique variant id (package variants: also the folder name)
@@ -11,7 +11,7 @@
 #                   the B8.3 series) | pending-lab (needs a Moodle lab session; no file yet)
 #   path            package variants: the changed file, relative to the package folder
 #   element         the course element carrying the error, by idnumber
-#   planted_change  the one change made to a B8.2 copy
+#   planted_change  the one change made to the applicable baseline
 #   expected        the finding a checker must report: rule, element, severity
 #   reason          why it must be reported
 #   also_expected   other rules that fire as their own, separate finding on the same variant, or [].
@@ -33,10 +33,11 @@ version: 1
 #              listed as unreachable with its cause, but is NOT a separate CK-01 finding; the report
 #              line says "explained by CK-0x". CK-01 still fires when no other rule explains the item
 #     item 17  confirmed: a package failing B1 stops with the B1 errors, every CK rule is not checked
-#     item 22  the .mbz variants are built on Moodle 5.3 only for Release 0 (a new narrow exception
-#              that Akshita records); on 4.5 they are a rebuild
-#   Still open: Shraddha, as design owner, confirms the mapping (it stays `proposed` until then);
-#   Akshita updates docs/design/checker.md (it is still Draft); the nine .mbz variants need the lab.
+#     item 22  B8.3 .mbz variants use Moodle 5.3 only; decision 0017 later made Moodle 5.3 the
+#              only supported version throughout LearnOps
+#   Still open: Shraddha, as design owner, confirms the mapping after pending guide decisions;
+#   nine CK rule categories require `.mbz` inputs, represented by ten variants because CK-06 has
+#   two independent cases; all ten variants need the lab.
 mapping_status: proposed
 mapping_source: "docs/design/checker.md section 11.3 at commit 4111e0c"
 confirmation: null   # {by: [...], reference: <issue/PR/decision link>, date: <YYYY-MM-DD>}
@@ -97,7 +98,7 @@ variants:
     status: pending-lab
     path: null
     element: "wk-02, wk-03"
-    planted_change: "Week 2 section waits for wk-03-task and week 3 section waits for wk-02-task"
+    planted_change: "Change only Week 2 section to wait for wk-03-task instead of wk-01-task; Week 3 already waits for wk-02-task in the B8.2 baseline"
     expected: {rule: CK-05, element: "wk-02, wk-03", severity: error}
     reason: "Each section waits for the other, so neither can ever open."
     also_expected: []
@@ -145,11 +146,12 @@ variants:
     status: pending-lab
     path: null
     element: course-completion-criteria
-    planted_change: "Course completion criteria name an activity that was deleted from the course"
+    assertable: false   # scripted edit approved in principle (issue #232, point 4); fixture not created, CK-07 check pending
+    planted_change: "Scripted, repeatable edit (approved in principle by the guide, issue #232 point 4): after merging with the B8.1 template, edit the `.mbz` completion-criterion XML so one criterion uses a `cmid` absent from the merged course model; `idnumber` remains absent and no activity is deleted. This is a backup-edit exception, not a Moodle setting."
     expected: {rule: CK-08, element: course-completion-criteria, severity: error}
-    reason: "The criteria refer to an item that no longer exists."
+    reason: "The criteria refer to a cmid that does not identify any activity in the merged course model."
     also_expected: []
-    notes: "Badge criteria could be a second variant; not planted yet."
+    notes: "Approved in principle by the guide (issue #232, comment 7176861868, point 4): a scripted, repeatable edit kept in testdata with its SHA-256 before and after and labelled synthetic, once the editor has checked that the changed criterion does not also fire CK-07. The fixture has not been created or verified. Baseline is the merged course with the B8.1 template, as for CK-07. A normal Moodle setting does not create a dangling cmid; this case would require editing the completion-criterion XML inside the `.mbz` after backup. Do not rely on this variant until the scripted edit exists and the CK-07 check is done. Use a cmid absent from every activity in the merged model, omit idnumber, and delete no activity, so CK-07 is not triggered."
 
   - id: ck-09-marking-table-sum
     rule: CK-09
@@ -197,8 +199,8 @@ variants:
     expected: {rule: CK-12, element: wk-01-guide, severity: error}
     reason: "Media must be a relative path, not a full fixed URL (PRD C-08)."
     also_expected: []
-    assertable: false   # PROVISIONAL: not asserted until checker design section 12 item 19 is decided
-    notes: "CK-12 reads media_refs of the B2 model (design section 3.4). Whether the model builder extracts media from a page body into media_refs is open (section 12 item 19). Until it is agreed and tested end to end, this variant only plants the URL in the source file; its expected finding is not asserted."
+    assertable: false   # CK-12 scope is decided (issue #232, point 6); the shared extractor (FR-C-01) is not implemented, so the finding is not asserted yet
+    notes: "v1 scope decided by the guide (issue #232, point 6; checker design section 12 item 19): embedded Markdown images and HTML img/video/audio/source/track references in activity bodies; data: URIs are not flagged; @@PLUGINFILE@@ references pass; ordinary links (including PDFs) and iframe embeds are not in scope and not checked in v1. Extraction, as confirmed by Akshita as the affected M1 owner (issue #232): every in-scope reference is listed in media_refs as written, including relative paths, @@PLUGINFILE@@ references and data: URIs; the guide's text does not state this listing in so many words. CK-12 flags only the decided full fixed URL forms (http://, https:// and protocol-relative //host/), so relative paths, @@PLUGINFILE@@ references and data: URIs are listed and not flagged; other URI schemes are an open decision. The shared test vectors are in contracts/test-vectors/media-refs.v1.json; the builder's media_refs extraction is not built and Akshita's formal approval of the B2 contract change is given on the pull request, so nothing is verified end to end. This variant plants the URL in the source file only, so its expected finding is not asserted yet."
 
   - id: ck-13-unlock-without-completion
     rule: CK-13

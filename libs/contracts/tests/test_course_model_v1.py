@@ -126,7 +126,8 @@ def test_schema_is_a_valid_draft_2020_12_schema() -> None:
 
 
 def test_draft_and_illustrative_labels(doc: Doc) -> None:
-    assert SCHEMA["description"].startswith("DRAFT, not approved and not frozen")
+    assert SCHEMA["description"].startswith("DRAFT: freeze candidate for Release 0")
+    assert "Not yet approved or frozen" in SCHEMA["description"]
     assert doc["_note"].split(": ")[0].endswith("ILLUSTRATIVE")
 
 

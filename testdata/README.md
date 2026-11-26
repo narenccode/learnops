@@ -26,14 +26,15 @@ A Moodle course backup with the protected items (PRD B1.4), course completion an
 
 ## B8.3 Planted-error courses (owner: Student 2), PARTIAL
 
-Variants of B8.2, each with one known error from the checker catalogue (PRD C2.3), for testing the
-Course Checker in Release 1.
+Variants based on B8.2, each with one known error from the checker catalogue (PRD C2.3), for testing
+the Course Checker in Release 1. CK-07 and the proposed CK-08 case instead use the merged course with
+the B8.1 template as their baseline.
 
 | Item | Value |
 |---|---|
 | Folder | `testdata/b8-3-planted-errors/`; the answer file is `expected-findings.yaml` |
 | Source and licence | Fictional, derived from B8.2 (Apache-2.0, the same as the repository). No real learner data |
-| Status | **PARTIAL.** 4 of 13 rules have a built package variant (CK-02, CK-03, CK-09, CK-12). 9 need a Moodle `.mbz` made in a lab and are `pending-lab`: no file exists for them |
+| Status | **PARTIAL.** 4 of 13 CK rules have built package variants (CK-02, CK-03, CK-09, CK-12). The other 9 CK rule categories require Moodle `.mbz` inputs and are represented by 10 separate variants because CK-06 has two independent cases (duplicate and invalid `idnumber`). All 10 variants are `pending-lab`: no file exists for them |
 | What the tests prove | The dataset is well formed and every entry maps to a valid CK rule. **They do not show that the checker detects anything.** No checker exists yet; the 100 % target (PRD C2.7) is measured in Release 1 |
 
 **Layout.** `<variant-id>/package/` is a full copy of the B8.2 package with exactly one file changed.
@@ -46,18 +47,18 @@ B8.2 is never changed. The folders `missing-body`, `duplicate-id`, `protected-id
 | `ck-02-completion-never-met` | CK-02 | package | built | Page `wk-01-guide` given `completion: submit` |
 | `ck-03-points-total-mismatch` | CK-03 | package | built | `total_points` 120, tasks add to 100 |
 | `ck-04-unlock-missing-activity` | CK-04 | mbz | pending-lab | week 3 waits for a removed activity |
-| `ck-05-circular-unlock` | CK-05 | mbz | pending-lab | weeks 2 and 3 wait for each other |
+| `ck-05-circular-unlock` | CK-05 | mbz | pending-lab | Week 2 is changed to wait for `wk-03-task`; Week 3 already waits for `wk-02-task` in the B8.2 baseline |
 | `ck-06-duplicate-idnumber` | CK-06 | mbz | pending-lab | two activities share `wk-01-task` |
 | `ck-06-invalid-idnumber` | CK-06 | mbz | pending-lab | idnumber `Week 1 Task` |
 | `ck-07-protected-item-changed` | CK-07 | mbz | pending-lab | Final project max grade 100 to 80 |
-| `ck-08-completion-criteria-missing-item` | CK-08 | mbz | pending-lab | completion criteria name a deleted activity |
+| `ck-08-completion-criteria-missing-item` | CK-08 | mbz | pending-lab | scripted, repeatable `.mbz` completion-criterion XML edit to a dangling `cmid` (approved in principle by the guide, issue #232 point 4, subject to confirming CK-07 does not also fire); merged B8.1 baseline; fixture not yet created or verified |
 | `ck-09-marking-table-sum` | CK-09 | package | built | table adds to 20, task worth 25 |
 | `ck-10-no-marking-workflow` | CK-10 | mbz | pending-lab | marking workflow off |
 | `ck-11-graded-practice-h5p` | CK-11 | mbz | pending-lab | practice H5P with grade 10 |
-| `ck-12-full-url-media` | CK-12 | package | built (finding not asserted) | image at `https://example.invalid/diagram.png`; provisional until body-media extraction is decided |
+| `ck-12-full-url-media` | CK-12 | package | built (finding not asserted) | image at `https://example.invalid/diagram.png`; the v1 media scope is decided (issue #232, point 6), but the shared extractor (FR-C-01) is not implemented, so the finding is not asserted |
 | `ck-13-unlock-without-completion` | CK-13 | mbz | pending-lab | unlocking task has completion tracking off |
 
-**The mapping is PROPOSED, not confirmed.** `expected-findings.yaml` says `mapping_status: proposed` (source: `docs/design/checker.md` §11.3 at commit `4111e0c`) and `confirmation: null`. Akshita has confirmed only that the rule-to-variant pairing matches the merged design and that the package variants need no lab; the guide has since answered the four items it was waiting on ([the guide's answers on issue #112](https://github.com/narenccode/learnops/issues/112#issuecomment-7095842207) (2026-11-23)): all rules are `error` (item 12), CK-01 is not a separate finding for an item explained by CK-04, CK-05 or CK-13 (item 13), a package failing B1 is `not checked` for every CK rule (item 17), and the `.mbz` variants are built on Moodle 5.3 only for Release 0 (item 22). Shraddha, as design owner, still has to confirm the mapping, and the checker design is still `Draft`, so the file stays `proposed`. It is not the oracle for the 100 % target until the confirmation is recorded in the file. CK-12 is also marked `assertable: false`: whether the model builder extracts body media into `media_refs` is open (checker design §12 item 19).
+**The mapping is PROPOSED, not confirmed.** `expected-findings.yaml` says `mapping_status: proposed` (source: `docs/design/checker.md` §11.3 at commit `4111e0c`) and `confirmation: null`. Akshita has confirmed only that the rule-to-variant pairing matches the merged design and that the package variants need no lab. The guide answered four points on issue #112 ([guide's answers](https://github.com/narenccode/learnops/issues/112#issuecomment-7095842207), 2026-11-23): all rules are `error` (item 12); an item explained by CK-04, CK-05 or CK-13 is not a separate CK-01 finding (item 13); a package failing B1 has every CK rule marked `not checked` (item 17); and the B8.3 `.mbz` variants are Moodle 5.3 only for Release 0 (item 22). Decision 0017 later made Moodle 5.3 the only supported Moodle version throughout LearnOps. Shraddha, as design owner, still has to confirm the mapping, and the checker design is still `Draft`, so the file stays `proposed`. It is not the oracle for the 100 % target until the confirmation is recorded in the file. CK-08 and CK-12 are both marked `assertable: false` for separate unresolved dependencies: CK-08's scripted `.mbz` edit is approved in principle by the guide (issue #232, point 4) but must first be shown not to fire CK-07, and the fixture does not exist yet; CK-12's v1 media scope is decided (issue #232, point 6), but the shared extractor in the FR-C-01 model builder is not implemented, so its finding is not asserted yet.
 
 **Reading `expected-findings.yaml`.** Each entry gives the variant `id`, the `rule`, the `element`
 (by idnumber), the `expected` finding (rule, element, severity), the `reason`, and `also_expected`:
