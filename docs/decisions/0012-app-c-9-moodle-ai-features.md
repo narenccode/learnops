@@ -3,6 +3,7 @@
 **Date:** 2026-11-22
 **Status:** **Source-checked, and checked on the lab Moodle 5.3 site on 2026-11-24** (section "Lab result"
 below). Moodle 4.5 is not tested. No scope change is decided here; the guide decides.
+**Guide's answer (2026-11-26):** proposed outcome approved as written, no scope change, the lab 5.3 check is sufficient, App-C 9 complete for the Release 0 freeze ([comment](https://github.com/narenccode/learnops/issues/186#issuecomment-7186023695)); it supersedes the open points in this record.
 **Owner:** Student 4 (Video), as the guide set on draft PR #140 (Q16)
 **Requirement:** PRD App-C item 9: "Which AI features Moodle 5.3 itself provides, so LearnOps doesn't
 duplicate them (record any overlap and adjust scope)." App-C and §D1 assign item 9 to Release 0.
