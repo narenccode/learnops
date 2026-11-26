@@ -34,9 +34,9 @@ What the consumers need from the table:
 **Constraints**
 - Primary key `id`.
 - Unique `(iss, lti_context_id)`: the key decided by the guide.
-- Unique `(site_id, moodle_course_id)`: one LTI context per Moodle course on a registered platform. (Proposed. Student 2 confirms with the shared schema.)
+- Unique `(site_id, moodle_course_id)`: one LTI context per Moodle course on a registered platform. (Confirmed by Student 2, 25 Nov, [comment](https://github.com/narenccode/learnops/pull/209#issuecomment-7159602625).)
 - Check `moodle_course_id > 0`.
-- Proposed: check `lti_context_id = moodle_course_id::text`. B3 section 3.1 makes the context id the Moodle course id, a positive integer in ASCII digits with no leading zero, so the two always have the same digits. Both are stored on purpose: `lti_context_id` is the launch value as received and is the lookup key; `moodle_course_id` is the integer that B4 confirmed, which Grading and Video use with `site_id`. The check stops them drifting apart. (Student 2 confirms with the shared schema.)
+- Check `lti_context_id = moodle_course_id::text` (confirmed by Student 2, 25 Nov, same comment). B3 section 3.1 makes the context id the Moodle course id, a positive integer in ASCII digits with no leading zero, so the two always have the same digits. Both are stored on purpose: `lti_context_id` is the launch value as received and is the lookup key; `moodle_course_id` is the integer that B4 confirmed, which Grading and Video use with `site_id`. The check stops them drifting apart. (Student 2 confirms with the shared schema.)
 - One `site_id` per `iss`, taken from the platform registration. A table constraint cannot enforce this, so the gateway does.
 
 **Not stored**
