@@ -704,13 +704,23 @@ def test_r16_reads_before_writing_and_refuses_an_already_graded_learner() -> Non
     r16 = write_rules()["R16"]
     assert "reads `mod_assign_get_grades`" in r16
     assert "refuses the write before anything is sent" in r16
-    assert "A stored `-1` means no grade" in r16
+    assert "A grade value of **0 or more**".replace("**", "") in r16
+    assert (
+        "No row, an empty or null value, or a negative value (such as `-1`) means no grade"
+        in r16
+    )
+    assert "a cleared grade is never refused, whatever form it takes" in r16
     assert "`REFUSED_ALREADY_GRADED` (name proposed" in r16
     assert "release race, which stays accepted as a known risk" in r16
-    assert "Not tested:" in r16 and "no grade row" in r16 and "cleared" in r16
+    assert "no lab run is needed before the freeze" in r16
+    assert "Not tested" in r16 and "no grade row" in r16 and "cleared" in r16
     prd = plain(prd_b4())
     assert (
         "refuses the write, sending nothing, if the learner already has a grade" in prd
+    )
+    assert "a grade of 0 or more is a grade" in prd
+    assert (
+        "an empty or null value or a negative value such as `-1` means no grade" in prd
     )
     assert "LearnOps does not add a second pre-write read" not in prd
     assert "LearnOps does not add a second pre-write read" not in plain(rules())
@@ -763,9 +773,10 @@ def test_the_untested_areas_are_listed_with_a_reason_and_do_not_hold_up_the_free
         assert item in text, item
     assert "None of these holds up the freeze of B4" in text
     assert "None of the items above is a condition for freezing B4" in text
-    assert "does not hold this change" in text
-    # Only the guide's own words are claimed as his: the first two are still a question to him.
-    assert "Asked of the guide on #112 (26 Nov)" in text
+    # The guide answered the first two on #112 (26 Nov, comment 7190567102): no lab run is needed.
+    assert "No lab run needed before the freeze (guide, #112, 26 Nov" in text
+    assert "recorded in 0019" in text
+    assert "put to him" not in text
 
 
 def test_the_decision_lab_checks_name_their_rules() -> None:
