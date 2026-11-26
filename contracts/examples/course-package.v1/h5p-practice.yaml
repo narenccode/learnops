@@ -9,8 +9,8 @@
 #
 # The week keeps its one guide Page and one task Assignment. The H5P practice item is an
 # optional extra. This ordinary practice item comes right after the guide Page (list order; there
-# is no ordering field), and it is never graded. This example has no video lesson: where a video
-# checkpoint goes is an open decision in B7.
+# is no ordering field), and it is never graded. Where a video checkpoint goes is decided (B7
+# section 4, decision 9); this example has no video lesson, so it does not show it.
 #
 # The .h5p file named below is NOT in the repository, on purpose: no real .h5p file is kept
 # here (B7). The file name is illustrative; B7 does not fix a folder or a naming convention.

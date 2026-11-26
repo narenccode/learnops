@@ -113,6 +113,11 @@ defined by B1 (`contracts/course-package.v1.schema.json`), not by this file:
   video". In a course the video is embedded in a Moodle Page (FR-V-13), so the checkpoint goes
   **directly after the Page that embeds the lesson video**, in the same section. If that Page is the
   guide Page, the checkpoint comes **after the practice run** (decision 9).
+- **Several checkpoints for one video** (FR-V-14 makes them per chapter): they form **one run
+  directly after the Page that embeds the video**, in chapter order (the order of `activities`),
+  with nothing between them; on the guide Page that run comes after the practice run. *This is the
+  B7 owner's reading of decisions 8 and 9, asked of the guide on Issue #186; it stays labelled so
+  until he confirms it.*
 - These placement rules are rules for Course Studio (FR-S-12) and the video pipeline (FR-V-14), the
   producers of practice items. They are **not validation errors**: neither B1 nor a validator can
   tell which Page embeds a video, and the guide-Page rule is not checked by any schema or validator
