@@ -458,10 +458,10 @@ def write_rules() -> dict[str, str]:
     return {row[0]: plain(row[1]) for row in rows}
 
 
-def test_the_write_rules_are_exactly_r1_to_r15() -> None:
+def test_the_write_rules_are_exactly_r1_to_r18() -> None:
     """R1 to R11: the guide on PR #64; R12 to R14: the guide on PR #72 (2026-11-15); R15: the
-    guide on PR #64 (2026-11-16)."""
-    assert list(write_rules()) == [f"R{n}" for n in range(1, 16)]
+    guide on PR #64 (2026-11-16); R16 to R18: the guide on #112 (2026-11-26)."""
+    assert list(write_rules()) == [f"R{n}" for n in range(1, 19)]
 
 
 def test_r1_get_grades_is_the_stored_grade_read_back(example: Doc) -> None:
@@ -510,7 +510,11 @@ def test_r3_locked_states_are_refused_before_sending_and_still_verified() -> Non
     assert "lab check 16" in r3
     assert "already `readyforrelease` or `released`" in plain(prd_b4())
     # Guide, 15 Nov (PR #80): R3 holds on 5.3; on 4.5 it is best effort, named in the release notes.
-    assert "R3 holds on 5.3" in r3
+    assert "R3's pre-write check holds on 5.3" in r3
+    # Guide, 26 Nov (#112, point 3): the post-write clause does not catch a write over `released`
+    # (it ends `readyforrelease`), so R16 is the safeguard.
+    assert "does not catch a write over a `released` grade" in r3
+    assert "R16 is the safeguard" in r3
     assert "On 4.5 it is best effort" in r3
     assert "the release notes name this limitation" in r3
     # Guide, 22 Nov (PR #150): a post-write `released` is NOT_VERIFIED, with no new outcome
@@ -681,14 +685,87 @@ def test_the_custom_role_rule_is_stated() -> None:
     assert "non-editing teacher role is **not** used" in capabilities
 
 
-def test_every_lab_check_is_still_open() -> None:
-    """No live check is claimed: every row of the §5 checklist says open on 4.5 and 5.3,
-    including checks 13 to 16 added for the guide's decisions, check 17 (guide, 15 Nov) and
-    check 18 (reviewer on PR #64, 16 Nov)."""
+def test_every_lab_check_has_a_5_3_result_and_4_5_is_out_of_scope() -> None:
+    """The 5.3 run is recorded (decision 0019, accepted by the guide on 26 Nov 2026). The guide did
+    not name which checks pass, so no row says "pass": it says "run", with check 5 half covered
+    and check 18 closed. Moodle 4.5 is out of scope (decision 0017)."""
     rows = lab_checks()
     assert list(rows) == [str(n) for n in range(1, 19)]
-    assert all(row[2:4] == ["open", "open"] for row in rows.values())
-    assert all(row[4] == "—" for row in rows.values()), "no decision record exists yet"
+    assert all(row[2] == "out of scope (0017)" for row in rows.values())
+    expected = {"5": "run, half covered (R16)", "18": "closed"}
+    for number, row in rows.items():
+        assert row[3] == expected.get(number, "run"), number
+        assert not row[3].startswith("open") and "pass" not in row[3]
+    assert all(row[4] == "0019" for row in rows.values())
+    assert (ROOT / "docs" / "decisions" / "0019-b4-lab-results-moodle-5-3.md").is_file()
+
+
+def test_r16_reads_before_writing_and_refuses_an_already_graded_learner() -> None:
+    r16 = write_rules()["R16"]
+    assert "reads `mod_assign_get_grades`" in r16
+    assert "refuses the write before anything is sent" in r16
+    assert "A stored `-1` means no grade" in r16
+    assert "`REFUSED_ALREADY_GRADED` (name proposed" in r16
+    assert "release race, which stays accepted as a known risk" in r16
+    assert "Not tested:" in r16 and "no grade row" in r16 and "cleared" in r16
+    prd = plain(prd_b4())
+    assert (
+        "refuses the write, sending nothing, if the learner already has a grade" in prd
+    )
+    assert "LearnOps does not add a second pre-write read" not in prd
+    assert "LearnOps does not add a second pre-write read" not in plain(rules())
+
+
+def test_r17_and_r18_are_refusals_with_their_own_outcome() -> None:
+    r17, r18 = write_rules()["R17"], write_rules()["R18"]
+    assert "refused before anything is sent" in r17 and "fail closed" in r17
+    assert "`REFUSED_COMMENTS_OFF` (name proposed" in r17
+    assert "refused with its own outcome" in r18
+    assert "`REFUSED_GROUP_MODE` (name proposed" in r18
+    assert "Not run in the lab" in r18
+    prd = plain(prd_b4())
+    assert "A course in separate-groups mode is refused with its own outcome" in prd
+    assert "feedback comments switched off" in prd
+
+
+def test_the_results_that_change_the_text_are_stated_in_the_contract_and_the_prd() -> (
+    None
+):
+    text, prd = plain(rules()), plain(prd_b4())
+    assert "`plugindata[assignfeedbackcomments_editor]`" in text
+    assert "`plugindata[assignfeedbackcomments_editor]`" in prd
+    # Checks 2, 17, 18 and the guide's answer on #186 (25 Nov): cmid with a stored mapping.
+    assert "returns **no `idnumber`**".replace("**", "") in text
+    assert "`cmid` with a stored mapping to the B1 `idnumber`" in text
+    assert "`cmid`) with a stored mapping to the B1 `idnumber`" in prd
+    # Check 9: the System role is prose, not one of the six needed capabilities.
+    assert "System role with only `webservice/rest:use`" in text
+    assert "webservice/rest:use" not in rules_capabilities()[0]
+    # Check 11.
+    assert "(`nopermission`)" in text and "any learner the account cannot view" in text
+
+
+def test_the_untested_areas_are_listed_with_a_reason_and_do_not_hold_up_the_freeze() -> (
+    None
+):
+    """The author asked that "not tested" never be read as a condition for freezing B4 (26 Nov)."""
+    text = plain(section(rules(), "### 5a.", "## 6."))
+    for item in (
+        "A learner with no grade row",
+        "A grade cleared in Moodle's grading screen",
+        "An assignment restored from a Course Studio backup",
+        "A course in separate-groups mode",
+        "Whether each of the six capabilities is needed",
+        "A write over another grader's unreleased grade",
+        "The release race",
+        "Moodle 4.5",
+    ):
+        assert item in text, item
+    assert "None of these holds up the freeze of B4" in text
+    assert "None of the items above is a condition for freezing B4" in text
+    assert "does not hold this change" in text
+    # Only the guide's own words are claimed as his: the first two are still a question to him.
+    assert "Asked of the guide on #112 (26 Nov)" in text
 
 
 def test_the_decision_lab_checks_name_their_rules() -> None:
@@ -961,8 +1038,9 @@ def test_the_contract_is_still_a_draft_and_not_approved() -> None:
     assert "Not approved" in status
 
 
-def test_no_function_is_marked_verified() -> None:
-    """Lab results go to docs/decisions/ first; no §2 row may say yes before that."""
+def test_every_function_is_marked_with_its_5_3_run() -> None:
+    """Lab results are in docs/decisions/0019 (the guide accepted the run on 26 Nov 2026): every §2
+    row says "yes (0019)" on 5.3 and "out of scope (0017)" on 4.5."""
     table = section(rules(), "## 2. Functions", "## 2a.")
     header = next(line for line in table.splitlines() if line.startswith("| Purpose"))
     columns = [cell.strip() for cell in header.strip("|").split("|")]
@@ -970,7 +1048,9 @@ def test_no_function_is_marked_verified() -> None:
     rows = tables(table)["Purpose"]
     assert rows, "the function table is empty"
     for row in rows:
-        assert [row[i] for i in verified] == ["no", "no"], row[1]
+        assert [row[i] for i in verified] == ["out of scope (0017)", "yes (0019)"], row[
+            1
+        ]
 
 
 def test_a_grade_write_never_sends_released() -> None:

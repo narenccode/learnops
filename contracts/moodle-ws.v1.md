@@ -1,16 +1,19 @@
 # B4 Moodle web-services usage (v1)
 
-**Status:** Draft. Not verified on any Moodle site. Not approved.
+**Status:** Draft. Lab checks run on Moodle 5.3 and accepted by the guide (decision 0019). Moodle 4.5 is out of scope (decision 0017). Not approved.
 **Owner:** Student 3. **Used by:** Module 2 (course checker) and Module 3 (grading) (PRD §B.0).
 **Source:** PRD §B4, App-C item 1, SEC-03, C-06, the guide's B4 findings (§4, §7) and the guide's
 decisions on PR #64 (§3a). Where this file and the PRD differ, the PRD wins.
 
 This file says which Moodle web-services functions LearnOps may call, with which account, and what
-still has to be checked on the lab sites. Nothing in it is verified yet: every "verified" cell below
-stays "no" until the check on Moodle 4.5 and 5.3 is recorded in `docs/decisions/`.
+was checked on the lab site. The lab checks were run on Moodle 5.3 on 25 November 2026 and the guide
+accepted the run on 26 November 2026 (`docs/decisions/0019-b4-lab-results-moodle-5-3.md`, section 5).
+A "yes" below means the function answered on 5.3 in that run. Moodle 4.5 is out of scope
+(decision 0017).
 
-Frozen at the end of Release 0 (PRD §B.0 rule 2). After that it changes only through
-`/contract-change`.
+Freezes on its own, when this change merges (decision 0018, PRD D1); it is not frozen with the other
+contracts at the end of Release 0. After that it changes only through `/contract-change` (PRD §B.0
+rule 2).
 
 ## 1. Service account and token
 
@@ -33,30 +36,41 @@ version (PRD §B4).
 
 | Purpose | Function (PRD §B4) | Used by | Parameters used | Verified on 4.5 | Verified on 5.3 |
 |---|---|---|---|---|---|
-| Course structure | `core_course_get_courses_by_field` | M2 course lookup; M3 FR-G-01 | `field`, `value` (by course id; shortname as the alternative; never idnumber, §2b) | no | no |
-| Course structure | `core_course_get_contents` | M2 course structure; M3 FR-G-01 | To verify in the lab | no | no |
-| Enrolled users | `core_enrol_get_enrolled_users` | M3 FR-G-01 | To verify in the lab | no | no |
-| Assignments | `mod_assign_get_assignments` | M3 FR-G-01 | To verify in the lab | no | no |
-| Submissions | `mod_assign_get_submissions` | M3 FR-G-01, FR-G-08 | To verify in the lab | no | no |
-| Submissions | `mod_assign_get_submission_status` | M3 FR-G-01, FR-G-08; read-back after a grade write (§3) | `assignid`, `userid` | no | no |
-| Submission files | Download through the token-authenticated file URL returned by the API | M3 FR-G-01 | How the download authenticates: to verify in the lab | no | no |
-| Write draft grade and feedback | `mod_assign_save_grade` | M3 FR-G-06 | Always sent: `assignmentid`, `userid`, `grade`, `attemptnumber` (explicit, never `-1`), `addattempt`, `workflowstate` (always `readyforrelease`), `applytoall`. Optional: `plugindata`, `advancedgradingdata` | no | no |
-| Stored-grade read-back | `mod_assign_get_grades` | M3 FR-G-06; grade-value read-back after a grade write (§3) | `assignmentids` (the one assignment written; `since` is not sent) | no | no |
+| Course structure | `core_course_get_courses_by_field` | M2 course lookup; M3 FR-G-01 | `field`, `value` (by course id; shortname as the alternative; never idnumber, §2b) | out of scope (0017) | yes (0019) |
+| Course structure | `core_course_get_contents` | M2 course structure; M3 FR-G-01 | No parameters recorded; the call answered on 5.3 (0019, check 1) | out of scope (0017) | yes (0019) |
+| Enrolled users | `core_enrol_get_enrolled_users` | M3 FR-G-01 | No parameters recorded; the call answered on 5.3 (0019, check 1) | out of scope (0017) | yes (0019) |
+| Assignments | `mod_assign_get_assignments` | M3 FR-G-01 | No parameters recorded; the call answered on 5.3 (0019, check 1) | out of scope (0017) | yes (0019) |
+| Submissions | `mod_assign_get_submissions` | M3 FR-G-01, FR-G-08 | No parameters recorded; the call answered on 5.3 (0019, check 1) | out of scope (0017) | yes (0019) |
+| Submissions | `mod_assign_get_submission_status` | M3 FR-G-01, FR-G-08; read-back after a grade write (§3) | `assignid`, `userid` | out of scope (0017) | yes (0019) |
+| Submission files | Download through the token-authenticated file URL returned by the API | M3 FR-G-01 | The token in the site's own file address (0019, check 10) | out of scope (0017) | yes (0019) |
+| Write draft grade and feedback | `mod_assign_save_grade` | M3 FR-G-06 | Always sent: `assignmentid`, `userid`, `grade`, `attemptnumber` (explicit, never `-1`), `addattempt`, `workflowstate` (always `readyforrelease`), `applytoall`. Optional: `plugindata`, `advancedgradingdata` | out of scope (0017) | yes (0019) |
+| Stored-grade read-back | `mod_assign_get_grades` | M3 FR-G-06; grade-value read-back after a grade write (§3) | `assignmentids` (the one assignment written; `since` is not sent) | out of scope (0017) | yes (0019) |
 
 "Used by" for Module 2 comes from `docs/design/checker.md` §4; for Module 3 from
 `docs/design/grading.md` §4.1. Both design documents are drafts.
 
 No parameter name, field name or response shape is listed here unless the PRD names it. The names
-above come from the Moodle 4.5 and 5.3 source (§7) and are in the PRD §B4 parameter table. They are
-**not** verified on a lab site: how Moodle behaves with them is still lab check 1. Functions with
-"To verify in the lab" have no parameters recorded yet.
+above come from the Moodle 4.5 and 5.3 source (§7) and are in the PRD §B4 parameter table. On 5.3
+the site's own documentation listed the seven required `mod_assign_save_grade` parameters and the
+six read functions answered with the parameters LearnOps sends (decision 0019, check 1). Functions
+marked "No parameters recorded" have none listed here, because the PRD names none for them.
+
+**What the assignment functions return (check 2, 5.3).** `mod_assign_get_assignments` returns `intro`
+(HTML, with `introformat`), `grade` (the maximum grade; a positive value means points), `markingworkflow`
+(0 or 1), `cmid` and `coursemodule`, `teamsubmission` and `configs`. It returns **no `idnumber`**, and
+`core_course_get_contents` returns no activity or section `idnumber` to the service account (checks 17
+and 18). So Module 3 identifies an assignment by its course-module id (`cmid`) with a stored mapping to
+the B1 `idnumber`. No function is added and no capability is widened (guide, issue #186, 25 Nov 2026,
+[comment](https://github.com/narenccode/learnops/issues/186#issuecomment-7157135474), item 2). Where
+the mapping comes from and who fills it is for the grading design, not this contract.
 
 `mod_assign_set_user_flags` is **not** allowed (guide's B4 findings). LearnOps sets the workflow state
 only through `mod_assign_save_grade`.
 
 **Feedback comments:** PRD §B4 says `mod_assign_save_grade` is called with "feedback comments". In the
-Moodle source they travel inside `plugindata`; the exact field inside it is not recorded yet (lab
-check 6).
+Moodle source they travel inside `plugindata`. On 5.3 the field is
+`plugindata[assignfeedbackcomments_editor]`, with `text` and `format` (1 = HTML) inside it (decision
+0019, check 1). A comment sent that way was stored and shown by the editor as HTML (check 6).
 
 **Always sent and optional:** "Always sent" parameters are sent on every call; "Optional" ones only
 when needed. "Always sent" is LearnOps's rule, not Moodle's, and the two differ:
@@ -137,7 +151,7 @@ uses; the library's class and code names are not contract text (guide on Q37, PR
 |---|---|
 | R1 | **Stored-grade read-back.** `mod_assign_get_grades` is the grade-value read-back (§3 condition 2). It is in §2 and the allow-list. It needs `mod/assign:viewgrades` or `mod/assign:grade` (already in §4) and its code is the same on 4.5 and 5.3. It returns the grade as text, for example `84.50000`; the number of decimals depends on the database and is not verified (lab check 13). The matching rule is §3b |
 | R2 | **Explicit attempt.** `attemptnumber` is always the explicit attempt being graded, never `-1` ("latest"). The read-back matches that same attempt |
-| R3 | **Locked states.** Before writing, LearnOps reads the learner's state; if it is already `readyforrelease` or `released`, the write is **refused** and nothing is sent. The read-back after the write is still required, because the state can change between the check and the write. On 5.3 a locked submission keeps its old grade value while the call looks successful; on 4.5 the code overwrites the grade without a lock (read from the code, not run: lab check 16). **R3 holds on 5.3. On 4.5 it is best effort:** a grade can become locked between the check and the write, and no allowed function makes the two steps atomic, so the release notes name this limitation (guide, 15 Nov, PR #80). **After the write,** a state that ends `released` is `NOT_VERIFIED` (R8), with no new outcome name; a normal `readyforrelease` write stays verified (guide, PR #80, confirmed on PR #150, 22 Nov) |
+| R3 | **Locked states.** Before writing, LearnOps reads the learner's state; if it is already `readyforrelease` or `released`, the write is **refused** and nothing is sent. The read-back after the write is still required, because the state can change between the check and the write. On 5.3 a locked submission keeps its old grade value while the call looks successful; on 4.5 the code overwrites the grade without a lock (read from the code, not run: lab check 16). **R3's pre-write check holds on 5.3; its post-write clause does not catch a write over a `released` grade, because that write ends `readyforrelease` (lab check 5, decision 0019); R16 is the safeguard (guide, #112, 26 Nov, point 3). On 4.5 it is best effort:** a grade can become locked between the check and the write, and no allowed function makes the two steps atomic, so the release notes name this limitation (guide, 15 Nov, PR #80). **After the write,** a state that ends `released` is `NOT_VERIFIED` (R8), with no new outcome name; a normal `readyforrelease` write stays verified (guide, PR #80, confirmed on PR #150, 22 Nov) |
 | R4 | **Declared capabilities stay out.** `moodle/course:viewhiddencourses`, `moodle/user:viewhiddendetails` and `moodle/course:useremail` are not granted (§4): they cover only hidden courses, hidden profile fields and the email field. That the calls work without them is lab check 14 |
 | R5 | **Suspended learners.** A suspended learner is skipped and reported as **skipped**, separately from the other outcomes. `moodle/course:viewsuspendedusers` is not granted |
 | R6 | **`mod/assign:viewownsubmissionsummary`.** The student role has it by default on both versions, and Moodle checks it for the learner when filling `lastattempt`. A course can change it, so it stays lab check 12. Without it the state cannot be read, and the write is not verified (§3) |
@@ -150,9 +164,13 @@ uses; the library's class and code names are not contract text (guide on Q37, PR
 | R13 | **Marking workflow off** (guide, PR #72, 2026-11-15). With marking workflow off the state is `graded` or `notgraded` (§7), and a saved grade can reach the learner at once, which breaks the draft rule (PRD C-09). The write is **refused before anything is sent**: LearnOps writes only over `notmarked`, `inmarking`, `readyforreview` or `inreview`. Outcome `REFUSED_WORKFLOW_OFF` (name proposed in PR #72). Course Studio builds assignments with marking workflow on (PRD §B1.2 rule 4), so this refusal only meets an assignment created by hand. Lab check 4 stays open |
 | R14 | **Lost answer, matching read-back** (guide, PR #72, 2026-11-15). After an uncertain write (R11), a read-back that matches exactly is **not counted as done until the mentor confirms it**. Outcome `NEEDS_MENTOR_CONFIRMATION` (name proposed in PR #72). This follows R11, "the mentor decides" |
 | R15 | **`applytoall` and `addattempt` are pinned** (guide, PR #64, 2026-11-16). LearnOps always sends `applytoall=0` and `addattempt=0` with `mod_assign_save_grade`, and the client **refuses any other value before anything is sent**, including a missing value or a bool. With `applytoall=1` a grade on a group assignment would be written to every group member, and with `addattempt=1` a new attempt would be opened for the learner, so both change a learner's grade and are not left to the default. What Moodle does with each value is not yet run on a lab site (lab check 1) |
+| R16 | **Read before write** (guide, #112, 26 Nov 2026, point 3). Before writing, LearnOps reads `mod_assign_get_grades` for the one assignment and **refuses the write before anything is sent** if the learner already has a grade for that attempt. A stored `-1` means no grade. Outcome `REFUSED_ALREADY_GRADED` (name proposed in this change). It stops LearnOps overwriting a mentor's own unreleased grade (the half of check 5 that was not run) and narrows the release race, which stays accepted as a known risk on 5.3: a mentor can release between this read and the write. A write that ends `NOT_VERIFIED` tells the mentor to check that learner in Moodle. The rule rests on check 15, where a learner with no grade showed `-1.00000`. **Not tested:** a learner with no grade row, and a grade cleared in Moodle's grading screen |
+| R17 | **Feedback comments off** (guide, #112, 26 Nov 2026, point 4). If a feedback comment is to be sent and the assignment has the feedback-comments plugin switched off (readable from `configs` in `mod_assign_get_assignments`, check 6), the write is **refused before anything is sent**: fail closed, because Moodle would not store the comment. Outcome `REFUSED_COMMENTS_OFF` (name proposed in this change). Feedback comments are on by default on 5.3 (check 6) |
+| R18 | **Separate-groups mode** (guide, #112, 26 Nov 2026, point 4). A course in separate-groups mode is **refused with its own outcome**, `REFUSED_GROUP_MODE` (name proposed in this change), because the service account lacks `moodle/site:accessallgroups` and the 5.3 source returns an empty list with no error for an account in no group, so learners could be missing without a sign. The course's group mode and the participant count in the status answer let the tool detect it. **Not run in the lab** (course 6 is in group mode 0) |
 
-The refusals of R12 and R13 are each their own outcome, separate from `NOT_VERIFIED` (R8, which is
-after a write) and never reported as success (R10).
+The refusals of R12, R13 and R16 to R18 are each their own outcome, separate from `NOT_VERIFIED` (R8,
+which is after a write) and never reported as success (R10). The outcome names of R16 to R18 are
+proposed in this change; the guide confirms them with the PRD text.
 
 Lesson recorded by the guide: when the platform can ignore a write without an error, the only proof
 is a read-back that is compared with what was sent.
@@ -180,6 +198,8 @@ Minimum capabilities, as given by the guide (B4 findings). **Not yet confirmed o
 check 9). SEC-03 refers to this list.
 
 The service account needs a **custom role**. The built-in non-editing teacher role is **not** used.
+The account also holds a System role with only `webservice/rest:use`; the 5.3 run used it (check 9,
+decision 0019). It is not one of the six capabilities in the table below.
 
 | Needed | Why |
 |---|---|
@@ -213,15 +233,17 @@ Also declared by Moodle but **not granted** (guide's decisions R4 and R5):
 | `moodle/course:useremail` | `core_enrol_get_enrolled_users` | Only for the email field (R4) |
 | `moodle/course:viewsuspendedusers` | — | Suspended learners are skipped and reported as skipped instead (R5) |
 
-That the calls work without the first three is lab check 14 (5.3). How suspended learners'
-submissions appear without `moodle/course:viewsuspendedusers` is lab check 11; neither has been
-tested.
+That the calls work without the first three was shown on 5.3 (lab check 14). Without
+`moodle/course:viewsuspendedusers`, `mod_assign_get_submissions` leaves a suspended learner's row out
+with no error, and `mod_assign_get_submission_status` is refused (`nopermission`) for that learner and,
+in the 5.3 source, for any learner the account cannot view (check 11, decision 0019).
 
 ## 5. Lab verification checklist
 
-Each item is checked on Moodle 4.5 **and** 5.3. The result goes into a decision record in
-`docs/decisions/` and then into this file. Until an item is recorded, code that depends on it uses
-fakes only.
+Each item was run on Moodle 5.3 (25 Nov 2026); Moodle 4.5 is out of scope (decision 0017). The results
+are in `docs/decisions/0019-b4-lab-results-moodle-5-3.md`. The guide accepted the run on 26 Nov 2026
+([#112 comment](https://github.com/narenccode/learnops/issues/112#issuecomment-7176860581)) and did not
+name which checks pass, so the 5.3 column says "run" and the record holds each result.
 
 Item 1 is PRD App-C item 1. Items 2 to 10 come from `docs/design/grading.md` §4.1 (a draft).
 Items 11 and 12 come from the guide's B4 findings and the Moodle source (§7). Items 13 to 16 come
@@ -231,32 +253,63 @@ item here is a **live lab** check: reading the source (§7) never closes one.
 
 | # | Check | 4.5 | 5.3 | Decision record |
 |---|---|---|---|---|
-| 1 | Every function in §2 exists with the parameters used, including how the workflow state and feedback comments are passed to `mod_assign_save_grade` | open | open | — |
-| 2 | What the assignment functions return: description text, `idnumber`, grading type and maximum grade, marking-workflow setting. Where one is missing, the replacement function is added to §2 | open | open | — |
-| 3 | What identifies a submission attempt and its last change | open | open | — |
-| 4 | Behaviour when the workflow state is sent for an assignment where marking workflow is off | open | open | — |
-| 5 | Behaviour when saving over a grade that is already released, or that another grader entered | open | open | — |
-| 6 | Whether feedback comments are enabled on assignments built by Course Studio, and which format Moodle stores | open | open | — |
-| 7 | Whether the marking-table markers survive Moodle's HTML handling, and how online text arrives | open | open | — |
-| 8 | How suspended users, group submissions, and draft versus submitted statuses appear in the submission functions | open | open | — |
-| 9 | The capability list in §4 is enough for exactly the functions in §2, and nothing more is needed | open | open | — |
-| 10 | How the file download authenticates | open | open | — |
-| 11 | How submissions of suspended learners appear without `moodle/course:viewsuspendedusers` | open | open | — |
-| 12 | The read-back in §3 returns `lastattempt.gradingstatus` = `readyforrelease` after a write. Moodle returns `lastattempt` only when the learner holds `mod/assign:viewownsubmissionsummary` (§7); the student role has it by default, but a course can change it (R6) | open | open | — |
-| 13 | `mod_assign_get_grades` returns the stored, unreleased grade and the attempt number written, and the §3b matching rule holds; record the text format of `grade` (number of decimals) on each database (R1, R9) | open | open | — |
-| 14 | `core_course_get_contents` and `core_enrol_get_enrolled_users` work for the service account without `moodle/course:viewhiddencourses`, `moodle/user:viewhiddendetails` and `moodle/course:useremail` (R4; the guide asked for this on 5.3) | open | open | — |
-| 15 | A grade below zero or above the maximum is silently ignored by `mod_assign_save_grade` with no error, and the read-back shows it (R9) | open | open | — |
-| 16 | Writing over a submission already in `readyforrelease`: 5.3 keeps the old grade while the call looks successful; 4.5 overwrites it (R3) | open | open | — |
-| 17 | Whether `core_course_get_contents` returns the activity and section `idnumber` to the service account, which has no `moodle/course:update` (item 1 covers the parameters, not these returned fields). Until it is recorded, neither Module 1 nor Module 2 may rely on an `idnumber` from this call | open | open | — |
-| 18 | Whether `mod_assign_get_assignments` returns to the service account a field that maps each assignment to its activity (course-module) `idnumber`, the key of the B1 package (item 1 covers the parameters, not these returned fields). Until it is recorded, Module 3 may not map assignments to B1 idnumbers from this call (reviewer on PR #64, 16 Nov) | open | open | — |
+| 1 | Every function in §2 exists with the parameters used, including how the workflow state and feedback comments are passed to `mod_assign_save_grade` | out of scope (0017) | run | 0019 |
+| 2 | What the assignment functions return: description text, `idnumber`, grading type and maximum grade, marking-workflow setting. Where one is missing, Module 3 uses `cmid` with a stored mapping to the B1 `idnumber` (§2, guide on #186, 25 Nov); no function is added | out of scope (0017) | run | 0019 |
+| 3 | What identifies a submission attempt and its last change | out of scope (0017) | run | 0019 |
+| 4 | Behaviour when the workflow state is sent for an assignment where marking workflow is off | out of scope (0017) | run | 0019 |
+| 5 | Behaviour when saving over a grade that is already released, or that another grader entered | out of scope (0017) | run, half covered (R16) | 0019 |
+| 6 | Whether feedback comments are enabled on assignments built by Course Studio, and which format Moodle stores | out of scope (0017) | run | 0019 |
+| 7 | Whether the marking-table markers survive Moodle's HTML handling, and how online text arrives | out of scope (0017) | run | 0019 |
+| 8 | How suspended users, group submissions, and draft versus submitted statuses appear in the submission functions | out of scope (0017) | run | 0019 |
+| 9 | The capability list in §4 is enough for exactly the functions in §2, and nothing more is needed | out of scope (0017) | run | 0019 |
+| 10 | How the file download authenticates | out of scope (0017) | run | 0019 |
+| 11 | How submissions of suspended learners appear without `moodle/course:viewsuspendedusers` | out of scope (0017) | run | 0019 |
+| 12 | The read-back in §3 returns `lastattempt.gradingstatus` = `readyforrelease` after a write. Moodle returns `lastattempt` only when the learner holds `mod/assign:viewownsubmissionsummary` (§7); the student role has it by default, but a course can change it (R6) | out of scope (0017) | run | 0019 |
+| 13 | `mod_assign_get_grades` returns the stored, unreleased grade and the attempt number written, and the §3b matching rule holds; record the text format of `grade` (number of decimals) on each database (R1, R9) | out of scope (0017) | run | 0019 |
+| 14 | `core_course_get_contents` and `core_enrol_get_enrolled_users` work for the service account without `moodle/course:viewhiddencourses`, `moodle/user:viewhiddendetails` and `moodle/course:useremail` (R4; the guide asked for this on 5.3) | out of scope (0017) | run | 0019 |
+| 15 | A grade below zero or above the maximum is silently ignored by `mod_assign_save_grade` with no error, and the read-back shows it (R9) | out of scope (0017) | run | 0019 |
+| 16 | Writing over a submission already in `readyforrelease`: 5.3 keeps the old grade while the call looks successful; 4.5 overwrites it (R3) | out of scope (0017) | run | 0019 |
+| 17 | Whether `core_course_get_contents` returns the activity and section `idnumber` to the service account, which has no `moodle/course:update` (item 1 covers the parameters, not these returned fields). Until it is recorded, neither Module 1 nor Module 2 may rely on an `idnumber` from this call | out of scope (0017) | run | 0019 |
+| 18 | Whether `mod_assign_get_assignments` returns to the service account a field that maps each assignment to its activity (course-module) `idnumber`, the key of the B1 package (item 1 covers the parameters, not these returned fields). Until it is recorded, Module 3 may not map assignments to B1 idnumbers from this call (reviewer on PR #64, 16 Nov) | out of scope (0017) | closed | 0019 |
+
+### 5a. What the 5.3 run changed in this file, and what it did not test
+
+Changes that come from the run (each is in the section named; the full results are in decision 0019):
+
+| Check | Result | Now stated in |
+|---|---|---|
+| 1 | Feedback comments go in `plugindata[assignfeedbackcomments_editor]` (`text`, `format`) | §2 |
+| 2, 17, 18 | No `idnumber` is returned; Module 3 uses `cmid` with a stored mapping | §2 |
+| 9 | The System role's `webservice/rest:use` is also used | §4 |
+| 11 | A suspended learner's row is left out silently; the status call returns `nopermission` | §4, R5 |
+| 4, 5, 15, 16 | Moodle does not protect locked grades from the web service | R3, R9, R13, R16 |
+
+**Not tested, and why.** None of these holds up the freeze of B4 (see the next paragraph). The reasons come from
+decision 0019 and the guide's answers; where no reason is recorded, the table says so.
+
+| Not tested | Reason | Handled by |
+|---|---|---|
+| A learner with no grade row | The safeguard (R16) was set on 26 Nov, after the run and its clean-up; no `mod_assign_get_grades` answer for such a learner was recorded | Asked of the guide on #112 (26 Nov); R16 rests on check 15 until then |
+| A grade cleared in Moodle's grading screen | Same; clearing a grade by hand came up in the manual-undo check, which made no web-service read | Same |
+| An assignment restored from a Course Studio backup (check 6) | No Studio-built backup exists yet; all lab assignments were made by hand or with default settings | Release 2 harness (guide, #112, 26 Nov) |
+| A course in separate-groups mode | Course 6 is in group mode 0 and was not changed | Refused by R18 (guide, #112, 26 Nov) |
+| Whether each of the six capabilities is needed (check 9) | Only sufficiency was run; no reason recorded | Accepted as it is (guide, #112, 26 Nov) |
+| A write over another grader's unreleased grade (half of check 5) | No reason recorded | Covered by R16 (guide, #112, 26 Nov) |
+| The release race | No reason recorded | Accepted as a known risk on 5.3 (guide, #112, 26 Nov) |
+| Moodle 4.5 | Out of scope | Decision 0017 |
+
+**Effect on the freeze.** None of the items above is a condition for freezing B4. Decision 0018 freezes B4
+when its checks pass on 5.3. The guide accepted the run and said B4 freezes after this change merges
+(#112, 26 Nov 2026). He decided how each item is handled except the first two, which were put to him on
+#112 on 26 Nov. If he wants a lab run for those two, it is done separately and does not hold this change.
 
 ## 6. Open questions
 
-Not decided. This file does not settle it.
+Nothing is open at present. The row below is kept as the record of how the lab question was closed.
 
 | Question | Who decides |
 |---|---|
-| **Lab access.** When the Moodle 4.5 and 5.3 lab sites are available. All checks in §5 wait for them. B4 can be merged as a draft before that, but it cannot be frozen at the end of Release 0 until the checks pass (guide, PR #27). Guide, PR #72, 2026-11-15: the 5.3 lab site is available, and a first live run of the web-service calls was made there on 14 November, but it is not matched to the items in §5, so every item stays open until a decision record names it. 4.5 has no live run and no date. The §5 rule "4.5 and 5.3" stays until the guide decides how the two versions are tested, at the start of Release 1 | Guide |
+| **Lab access.** Closed. The 5.3 lab checks were run on 25 Nov 2026 and accepted by the guide on 26 Nov (decision 0019). Moodle 4.5 is out of scope (decision 0017). B4 freezes on its own after this change merges (decision 0018) | Decided (guide, #112, 26 Nov 2026; #186, 25 Nov 2026) |
 
 **Decided by the guide (PR #27, 2026-10-29):**
 - **Q1:** Markdown for the rules plus a small JSON Schema and one example listing the allowed
