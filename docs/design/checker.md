@@ -557,11 +557,9 @@ The role-test matrix must cover visitor, signed-in non-member, learner, mentor a
 
 Store test results and reports as CI artefacts where appropriate. Use synthetic data only. Record the environment and tool versions so results can be reproduced.
 
-### 11.3 B8.3 planted-error mapping (waits for the design owner's confirmation)
+### 11.3 B8.3 planted-error mapping (design-owner confirmed)
 
-**Status.** The guide decided the four points this mapping depended on (§12 items 12, 13, 17 and 22,
-issue #112, 2026-11-23), and `testdata/b8-3-planted-errors/expected-findings.yaml` follows them (#201).
-The mapping stays `mapping_status: proposed` until Shraddha, as design owner, confirms it.
+**Status — design-owner confirmed, 26 November 2026.** Shraddha (@shraddha0103), as design owner, reviewed and approved all 14 planted-error variant-to-rule mappings in this section. The approval is recorded in [PR #148](https://github.com/narenccode/learnops/pull/148#issuecomment-7194780768). The expected-findings mapping is therefore confirmed; this does not approve the entire checker design, which remains **Draft**, and does not mean the checker is implemented or that the 100 % detection target has been achieved. CK-12 remains unassertable until the shared media extractor is integrated and tested.
 
 PRD C2.7 asks the checker to find 100 % of the planted errors in B8.3 with no false error on B8.2. This
 table is the **target mapping** from each CK rule to the planted error that tests it. It is not the
