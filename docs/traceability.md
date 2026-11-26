@@ -318,6 +318,34 @@ any rule works.
 - Comparing a package model with a `.mbz` model: `cmid` values differ, so FR-C-05 compares
   activities by idnumber and sections by section number; section idnumber is ignored.
 
+### B2: CK-12 `media_refs` shared test vectors
+
+Files: `contracts/test-vectors/media-refs.v1.json` (24 cases) and
+`libs/contracts/tests/test_media_refs_vectors_v1.py`. Sources: the guide's decision on issue #232
+(item 6), Akshita's M1 scope confirmation and review on the same issue, and decision 0003 #16; PRD B2
+does not name `media_refs`, so no PRD text changes. The vectors keep two steps apart: extraction
+(`media_refs` lists every in-scope reference as written) and flagging (CK-12 flags only `http://`,
+`https://` and protocol-relative `//host/`; relative paths, `@@PLUGINFILE@@` and `data:` are listed
+and not flagged). The tests check the vectors as data and text only. No extractor and no CK-12
+exist, so nothing here shows that a media reference is found or reported.
+
+| Rule | Source | Test(s) |
+|---|---|---|
+| The vectors file has the agreed shape; its cases are exactly the expected ones, in order; each case has the exact keys and closed vocabularies, every listed reference is in the body as written, a flagged reference has a documented full-URL form (`http://`, `https://`, protocol-relative `//host/`) and a `data:` URI is never flagged | Guide, issue #232 item 6; decision 0003 #16 | `test_the_vectors_file_has_the_agreed_top_level_shape`, `test_the_cases_are_exactly_the_expected_ones_in_order`, `test_every_case_is_well_formed_and_consistent` |
+| Every rule of the v1 scope is covered (Markdown inline and reference-style images; HTML `img`, `video`, `audio`, `source` and `track` with the listed attributes, one case per element and attribute; `.mbz` HTML bodies; raw HTML inside a Markdown body; `@@PLUGINFILE@@`; the excluded links, PDF links and iframes), and each element case contains what it claims | Guide, issue #232 item 6; Akshita, issue #232 | `test_every_rule_of_the_scope_is_covered`, `test_every_element_and_attribute_of_the_scope_has_its_own_case`, `test_both_input_kinds_are_used_and_mbz_bodies_are_html`, `test_raw_html_inside_a_markdown_body_is_covered` |
+| `media_refs` lists every in-scope reference as written: a `@@PLUGINFILE@@` reference, a plain relative path and a `data:` URI are listed and not flagged; each URL of an `srcset` is its own entry without its descriptor. This is Akshita's reading; the guide's text states only that `data:` is not flagged and `@@PLUGINFILE@@` passes | Akshita, issue #232 (M1 owner); guide, issue #232 item 6 | `test_a_moodle_pluginfile_reference_is_listed_and_never_flagged`, `test_every_in_scope_reference_is_listed_even_when_it_is_not_flagged`, `test_each_url_of_a_srcset_is_its_own_entry_without_the_descriptor`, `test_the_statuses_say_where_each_case_comes_from` |
+| The excluded constructs give no reference and no finding; an embedded image is listed next to excluded constructs; the full-URL forms are http, https and protocol-relative | Guide, issue #232 item 6; checker design CK-12 | `test_the_excluded_constructs_give_no_reference_and_no_finding`, `test_embedded_media_is_listed_next_to_excluded_constructs`, `test_the_full_url_forms_are_http_https_and_protocol_relative` |
+| The undecided point (flagging of a URI scheme other than `http:`, `https:` and `data:`) is an open-point case that leaves only the flagging null, and no other case uses a scheme or form that is not decided | Decision 0003 #16 and section 3 | `test_the_open_point_is_the_flagging_of_other_uri_schemes`, `test_no_other_case_uses_a_scheme_or_form_that_is_not_decided` |
+| The checks catch the mistakes they exist for (negative controls) | n/a | `test_the_checks_catch_the_mistakes_they_exist_for` |
+
+Not claimed:
+
+- The extractor (one implementation in the FR-C-01 model builder, reused by Course Studio) is not
+  implemented; it must pass these vectors. CK-12 itself is FR-C-03, Release 1.
+- One point is undecided: whether CK-12 flags a URI scheme other than `http:`, `https:` and `data:`
+  (decision 0003, section 3).
+- Akshita's formal approval of the B2 contract change is given on the pull request, not here.
+
 ### B2: Not mapped
 
 - **FR-C-01, FR-C-02, FR-C-03, FR-C-05.** They use B2 but need code that does not exist yet, and the

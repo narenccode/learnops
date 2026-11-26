@@ -232,7 +232,7 @@
         "media_refs": {
           "type": "array",
           "items": { "type": "string" },
-          "description": "Optional. Every media reference found in the activity, as written, so that CK-12 can report full URLs. Empty means none found. If absent, CK-12 cannot judge the activity's media references."
+          "description": "Optional. Every in-scope embedded-media reference found in the activity body, as written, including absolute URLs, protocol-relative URLs, relative paths, Moodle @@PLUGINFILE@@/... references and data: URIs. Each URL in an srcset attribute is recorded as a separate entry, without its descriptor.\n\nv1 scope: Markdown images (inline and reference-style); HTML img (src, srcset), video (src, poster), audio (src), source (src, srcset) and track (src), in activity bodies, including raw HTML inside a Markdown body and HTML bodies from .mbz backups.\n\nOrdinary links (including PDF links) and iframe embeds are outside the v1 scope: they are not listed or checked.\n\nCK-12 flagging is a separate rule. In v1, relative paths, Moodle @@PLUGINFILE@@/... references and data: URIs are not flagged. The handling of other URI schemes remains an open decision.\n\nEmpty means no in-scope references were found. If absent, CK-12 cannot judge the activity's media references."
         }
       },
       "if": { "properties": { "type": { "const": "assignment" } }, "required": ["type"] },
