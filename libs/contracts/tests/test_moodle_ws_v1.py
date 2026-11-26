@@ -712,8 +712,9 @@ def test_r16_reads_before_writing_and_refuses_an_already_graded_learner() -> Non
     assert "a cleared grade is never refused, whatever form it takes" in r16
     assert "`REFUSED_ALREADY_GRADED` (name accepted by the guide" in r16
     assert "release race, which stays accepted as a known risk" in r16
-    assert "no lab run is needed before the freeze" in r16
-    assert "Not tested" in r16 and "no grade row" in r16 and "cleared" in r16
+    assert "a learner with no grade has **no row**".replace("**", "") in r16
+    assert "empty string" in r16
+    assert "R16 gives the safe result for all four forms" in r16
     prd = plain(prd_b4())
     assert (
         "refuses the write, sending nothing, if the learner already has a grade" in prd
@@ -761,8 +762,7 @@ def test_the_untested_areas_are_listed_with_a_reason_and_do_not_hold_up_the_free
     """The author asked that "not tested" never be read as a condition for freezing B4 (26 Nov)."""
     text = plain(section(rules(), "### 5a.", "## 6."))
     for item in (
-        "A learner with no grade row",
-        "A grade cleared in Moodle's grading screen",
+        "A grade write on an assignment with marking allocation on",
         "An assignment restored from a Course Studio backup",
         "A course in separate-groups mode",
         "Whether each of the six capabilities is needed",
@@ -773,9 +773,11 @@ def test_the_untested_areas_are_listed_with_a_reason_and_do_not_hold_up_the_free
         assert item in text, item
     assert "None of these holds up the freeze of B4" in text
     assert "None of the items above is a condition for freezing B4" in text
-    # The guide answered the first two on #112 (26 Nov, comment 7190567102): no lab run is needed.
-    assert "No lab run needed before the freeze (guide, #112, 26 Nov" in text
-    assert "recorded in 0019" in text
+    # The two read cases of R16 were run on 26 Nov and are tested now (decision 0019 addendum).
+    assert "R16 read cases (26 Nov)" in text
+    assert "they were run anyway on 26 Nov" in text
+    assert "decision 0019 addendum" in text
+    assert "| A learner with no grade row |" not in text
     assert "put to him" not in text
 
 
