@@ -121,7 +121,7 @@ Run by the B4 owner on the same Moodle 5.3 lab site, course 6, fictional data on
 kept for lab tasks ([#112 comment](https://github.com/narenccode/learnops/issues/112#issuecomment-7176898260)); one
 temporary token created for the job; `mod_assign_get_grades` added to the test service for the job. **No write function
 was added and no grade was written through the web service.** Clean-up: the function removed (the service lists the six
-read functions again), the token deleted (the token page is empty), the shell variables cleared. Evidence (the saved
+read functions again), the shell variables cleared. Evidence (the saved
 answers and screenshots) is kept by the owner outside the repository; no token or address is in this record.
 
 **Why.** (1) The guide's review of the grading design (#186, item 3) asks the design to cover silent partial writes,
@@ -154,10 +154,11 @@ Average mark). `multimarkrounding` has no option in the form as it was used.
 - **Not run:** a grade write on an assignment with allocation on (the design refuses such an assignment, so the write
   does not change the design); the options "Maximum mark" and "Average mark" (so `multimarkrounding` was never seen
   other than 0).
-- **Proposal for the guide, not a decision:** the grading design may allow a write only when `markingallocation` is
-  present and 0, and refuse when it is absent or anything else. It is fail closed and also covers allocation with a single
-  marker. The precise alternative is to refuse only when `markingallocation` is 1 and `markercount` is above 1. This
-  is a design rule (#238); it is not in B4 until the guide says so.
+- **Decided by the guide (26 Nov, [#112 comment](https://github.com/narenccode/learnops/issues/112#issuecomment-7196769553), item 2):** the fail-closed rule. A write is allowed only when `markingallocation` is
+  present and 0, and refused when it is absent or anything else. It also covers allocation with a single marker and does
+  not use `markercount`. The alternative (refuse only when `markingallocation` is 1 and `markercount` is above 1) was not
+  chosen, because a missing or odd value would let a write through. It is a design rule in the grading design (#238), not
+  part of B4.
 - The test assignment "B4 test: multiple marking" (id 34) was **left in course 6** on purpose, as evidence.
 
 ### The two read cases for rule R16
