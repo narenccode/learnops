@@ -710,7 +710,7 @@ def test_r16_reads_before_writing_and_refuses_an_already_graded_learner() -> Non
         in r16
     )
     assert "a cleared grade is never refused, whatever form it takes" in r16
-    assert "`REFUSED_ALREADY_GRADED` (name proposed" in r16
+    assert "`REFUSED_ALREADY_GRADED` (name accepted by the guide" in r16
     assert "release race, which stays accepted as a known risk" in r16
     assert "no lab run is needed before the freeze" in r16
     assert "Not tested" in r16 and "no grade row" in r16 and "cleared" in r16
@@ -729,9 +729,9 @@ def test_r16_reads_before_writing_and_refuses_an_already_graded_learner() -> Non
 def test_r17_and_r18_are_refusals_with_their_own_outcome() -> None:
     r17, r18 = write_rules()["R17"], write_rules()["R18"]
     assert "refused before anything is sent" in r17 and "fail closed" in r17
-    assert "`REFUSED_COMMENTS_OFF` (name proposed" in r17
+    assert "`REFUSED_COMMENTS_OFF` (name accepted by the guide" in r17
     assert "refused with its own outcome" in r18
-    assert "`REFUSED_GROUP_MODE` (name proposed" in r18
+    assert "`REFUSED_GROUP_MODE` (name accepted by the guide" in r18
     assert "Not run in the lab" in r18
     prd = plain(prd_b4())
     assert "A course in separate-groups mode is refused with its own outcome" in prd
