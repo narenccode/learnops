@@ -25,25 +25,25 @@ contract B4") go through `/contract-change`, not through this file.
   `demo/h2-grading-tier1`; their pull request, #139, is closed and was never merged) and by hand.
 - **Write calls:** by hand, with a small helper kept outside the repository that allows only the eight functions
   of section 2. Every write was read back with `mod_assign_get_grades` and `mod_assign_get_submission_status`.
-- **Parameters of the write functions** were read from the site's own web-service documentation, which was
+- **Parameters of `mod_assign_save_grade`** (and of `mod_assign_get_grades`) were read from the site's own web-service documentation, which was
   switched on for the reading and off again.
 - **Evidence:** the full outputs and screenshots are kept by the owner outside the repository. No token, address
   or login is in this record, in any issue or in any pull request.
 - **Clean-up** (posted on issue #112, [comment](https://github.com/narenccode/learnops/issues/112#issuecomment-7163378092)):
-  the two write functions removed from the service, both tokens deleted, the documentation setting off, and
+  the two functions added for the run (`mod_assign_save_grade` and `mod_assign_get_grades`) removed from the service, both tokens deleted, the documentation setting off, and
   the admin login no longer needed.
 
 ## Results
 
 | # | Check (short) | Result on 5.3 |
 |---|---|---|
-| 1 | Functions and parameters | The six read functions answered with the parameters we send. The site documents the seven required parameters of `mod_assign_save_grade` (`assignmentid`, `userid`, `grade`, `attemptnumber`, `addattempt`, `workflowstate`, `applytoall`). The feedback comment goes in `plugindata[assignfeedbackcomments_editor][text]` and `[format]`. Both write functions worked. |
+| 1 | Functions and parameters | The six read functions answered with the parameters we send. The site documents the seven required parameters of `mod_assign_save_grade` (`assignmentid`, `userid`, `grade`, `attemptnumber`, `addattempt`, `workflowstate`, `applytoall`). The feedback comment goes in `plugindata[assignfeedbackcomments_editor][text]` and `[format]`. Both functions added for the run worked (`mod_assign_save_grade` writes; `mod_assign_get_grades` is the read-back). |
 | 2 | What the assignment functions return | `intro` (HTML, with `introformat`), `grade` (the maximum grade; a positive value means points, so the grading type is read from its sign: there is no separate field), `markingworkflow` (0 or 1), `cmid` and `coursemodule`, `teamsubmission`, `configs` (plugin settings). **No `idnumber`.** |
 | 3 | What identifies an attempt and its last change | Submission rows carry `id`, `userid`, `attemptnumber`, `status`, `groupid`, `latest` and `timemodified`. Grade rows carry `id`, `userid`, `attemptnumber`, `timemodified` and `grader`. |
 | 4 | Workflow state sent where marking workflow is off | The call succeeded with no error. The grade was stored (`7.00000`), the status became `graded`, and the grade was **visible to the learner at once**. The state has no effect. |
 | 5 | Saving over a released grade | A person released a grade (6) in the grading screen. A write of 4 returned a success with no error. The grade stayed 6, but the state went back to `readyforrelease` and the grade **left the gradebook** (the final grade became empty). |
 | 6 | Feedback comments and format | Feedback comments are enabled on all five assignments of course 6, including two created with default settings (readable from `configs`). A comment sent in `plugindata` was stored; the editor shows it as HTML (format 1). Tested on hand-made assignments. **Not tested:** an assignment restored from a Course Studio backup (Release 2 harness). |
-| 7 | Markers and online text | The marker comment lines and `data-marking-table="v1"` **survive** in the stored description. Online text arrives as HTML (format 1). Typed with Enter, each line is its own `<p>`; typed with Shift+Enter, lines are separated by `<br />`; no-break spaces (U+00A0) appear at the end of lines. Plain text **pasted** into the editor lost its line structure (one paragraph, runs of no-break spaces). |
+| 7 | Markers and online text | The marker comment lines and `data-marking-table="v1"` **survive** in the stored description. Online text arrives as HTML (format 1). Typed with Enter, each line is its own `<p>`; typed with Shift+Enter, lines are separated by `<br />`; no-break spaces appear at the end of lines (in the saved output they are the character U+00A0, not the `&nbsp;` entity). Plain text **pasted** into the editor lost its line structure (one paragraph, runs of no-break spaces). |
 | 8 | Suspended users, group submissions, draft or submitted | Statuses seen: `new`, `draft`, `submitted`, and no row for a learner who never opened the assignment. For a group assignment (`teamsubmission` = 1) the text sits on a **group row** (`userid` 0, `groupid` 1); the members' own rows say `submitted` with empty text; a default-group row says `new`. |
 | 9 | The capability list is enough | With exactly the six capabilities of section 4, all eight functions of section 2 worked. The only refusal was the status call for a suspended learner, by design (rule R5). Sufficiency was shown; the need for each capability was not tested. |
 | 10 | How the file download authenticates | A submitted file was downloaded with the token in the site's own file address (`demo.txt`, 125 bytes). |
@@ -58,7 +58,7 @@ contract B4") go through `/contract-change`, not through this file.
 
 ## Decided by the guide (2026-11-26, [#112 comment](https://github.com/narenccode/learnops/issues/112#issuecomment-7176860581))
 
-1. **The run is accepted.** Fifteen checks pass, several with a B4 text change, brought in one `/contract-change`:
+1. **The run is accepted.** Fifteen checks pass (his comment does not list which fifteen; the `/contract-change` fills the 5.3 column for every check), several with a B4 text change, brought in one `/contract-change`:
    check 1 (feedback comments go in `plugindata[assignfeedbackcomments_editor]`); checks 2, 17 and 18 (no activity
    `idnumber` is returned; check 2's "a replacement function is added" is replaced by the answer of 2026-11-25,
    `cmid` with a stored mapping); check 9 (section 4 also names the System role's `webservice/rest:use`, which the
@@ -80,7 +80,7 @@ contract B4") go through `/contract-change`, not through this file.
 ## Findings, as put to the guide
 
 1. **No `idnumber` for this account (17, 18).** This is the lab result for check 18 that the guide asked for. A B1
-   `idnumber` cannot be matched to an assignment from these two calls, so Modules 1 and 2 may not rely on it.
+   `idnumber` cannot be matched to an assignment from these two calls, so Modules 1 and 2 may not rely on it (check 17), and Module 3 may not map assignments by `idnumber` (check 18).
    The guide decided on 2026-11-25 ([#186 comment](https://github.com/narenccode/learnops/issues/186#issuecomment-7157135474),
    item 2) that the key is the course-module id (`cmid`) with a stored mapping to the B1 `idnumber`: no B4
    function is added and no capability is widened. Where the mapping comes from and who fills it is for the
