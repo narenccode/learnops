@@ -1,9 +1,10 @@
 # B4 lab checks: results on the Moodle 5.3 lab site (App-C item 1)
 
 **Date:** 2026-11-25
-**Status:** **Results recorded by the B4 owner (Student 3).** This record closes no check by itself: the guide
-records which checks the run covers and whether each one passes (decision 0018: B4 freezes when its checks
-pass on Moodle 5.3). Moodle 4.5 is out of scope (decision 0017).
+**Status:** **Results recorded by the B4 owner (Student 3); the run is accepted by the guide on 2026-11-26**
+([#112 comment](https://github.com/narenccode/learnops/issues/112#issuecomment-7176860581)): fifteen checks pass, several with a B4 text change that comes in one
+`/contract-change`; check 18 is closed; B4 freezes after that change merges (decision 0018). Check 5 is half
+covered (see "Decided by the guide"). Moodle 4.5 is out of scope (decision 0017).
 **Owner:** Student 3 (B4 owner), who ran the checks.
 **Requirement:** PRD App-C item 1 and `contracts/moodle-ws.v1.md` section 5 (all 18 checks).
 **Contracts touched:** none by this record. The text changes it suggests (section "What this suggests for
@@ -55,7 +56,28 @@ contract B4") go through `/contract-change`, not through this file.
 | 17 | `idnumber` from `core_course_get_contents` | **Not returned** to this account, for any section or activity, even after an activity idnumber was set. On 5.3 the section settings form has no ID number field. |
 | 18 | `idnumber` from `mod_assign_get_assignments` | **Not returned.** Only `cmid` and `coursemodule`. |
 
-## Findings for the guide
+## Decided by the guide (2026-11-26, [#112 comment](https://github.com/narenccode/learnops/issues/112#issuecomment-7176860581))
+
+1. **The run is accepted.** Fifteen checks pass, several with a B4 text change, brought in one `/contract-change`:
+   check 1 (feedback comments go in `plugindata[assignfeedbackcomments_editor]`); checks 2, 17 and 18 (no activity
+   `idnumber` is returned; check 2's "a replacement function is added" is replaced by the answer of 2026-11-25,
+   `cmid` with a stored mapping); check 9 (section 4 also names the System role's `webservice/rest:use`, which the
+   run used); check 11 (the status call returns `nopermission` for a suspended learner and, in the 5.3 source, for
+   any learner the account cannot view). Check 5 is half covered: a write over another grader's unreleased grade
+   was not tested, and point 3 covers it.
+2. **Check 18 is closed** on the lab result "no `idnumber` returned", together with the answer of 2026-11-25.
+3. **The release race is accepted as a known risk on 5.3, with one safeguard.** Before writing, LearnOps reads
+   `mod_assign_get_grades` and refuses the write if the learner already has a grade (a stored `-1` means no
+   grade). This narrows the race and stops LearnOps overwriting a mentor's own unreleased grade. A `NOT_VERIFIED`
+   write tells the mentor to check that learner in Moodle. R3's wording "holds on 5.3" is corrected, because its
+   post-write clause does not catch a write over `released` (it ends `readyforrelease`).
+4. **The untested areas.** Feedback comments off on an assignment: the write is refused when a comment is to be
+   sent (a B4 rule, fail closed). A course in separate-groups mode: the course is refused with its own outcome (a
+   B4 rule); the 5.3 source returns an empty list with no error for an account without
+   `moodle/site:accessallgroups` that is in no group. An assignment restored from a Course Studio backup waits
+   for the Release 2 harness. Whether each of the six capabilities is strictly needed: accepted as it is.
+
+## Findings, as put to the guide
 
 1. **No `idnumber` for this account (17, 18).** This is the lab result for check 18 that the guide asked for. A B1
    `idnumber` cannot be matched to an assignment from these two calls, so Modules 1 and 2 may not rely on it.
@@ -67,8 +89,8 @@ contract B4") go through `/contract-change`, not through this file.
    needed in LearnOps because Moodle gives no error in these cases. A write to a released grade pulls it back
    from the gradebook.
 3. **A risk that was inferred, not tested:** if a mentor releases a grade between LearnOps reading the state and
-   writing, the write would pull the released grade back. The guide decides whether to accept this or to add a
-   safeguard.
+   writing, the write would pull the released grade back. Decided by the guide: accepted, with the safeguard
+   above.
 4. **Suspended learners are invisible (11).** The omission is silent; only the status call's `nopermission`
    tells a suspended learner from a learner with no submission (rule R5).
 5. **Online text (7), a proposal for the B1 owner and the guide.** Typed lines arrive as `<p>` or `<br />`, with
@@ -78,20 +100,22 @@ contract B4") go through `/contract-change`, not through this file.
 
 ## What this suggests for contract B4
 
-Not changed here. Each goes through `/contract-change`: section 2 and checks 17 and 18 (the `idnumber` is not
-returned; how Module 3 identifies an assignment), the section 5 table (the 5.3 results and the record number),
-and a note on rule R3 about the release race (finding 3).
+Not changed here. One `/contract-change` carries the guide's list: section 2 and checks 1, 2, 17 and 18 (the
+`plugindata` field; the `idnumber` is not returned; how Module 3 identifies an assignment), section 4 (the System
+role's `webservice/rest:use`), check 11, the section 5 table (the 5.3 results and the record number), the corrected
+R3 wording, the read-before-write safeguard, and the two refusals (feedback comments off, separate-groups mode).
 
 ## Not tested
 
-- A course in separate-groups mode (`moodle/site:accessallgroups` is listed by Moodle for
-  `core_enrol_get_enrolled_users` and the account does not have it). Learners might be missing silently; the
-  group mode of a course and the participant count in the status answer let the tool detect this.
-- An assignment restored from a Course Studio backup (check 6).
-- Whether each of the six capabilities is strictly needed (check 9).
-- The release race (finding 3).
+- A course in separate-groups mode: not run in the lab. The guide decided that such a course is refused (a B4
+  rule); the group mode of a course and the participant count in the status answer let the tool detect it.
+- An assignment restored from a Course Studio backup (check 6): waits for the Release 2 harness.
+- Whether each of the six capabilities is strictly needed (check 9): accepted as it is.
+- A write over another grader's unreleased grade (half of check 5): covered by the read-before-write safeguard.
+- The release race (finding 3): accepted as a known risk.
 
 ## Where it was decided
 
 - Guide, issue #112, 2026-11-23 and 2026-11-24: the conditions of the run.
 - Guide, issue #186, 2026-11-25: decisions 0017 (5.3 only) and 0018 (B4 freezes separately).
+- Guide, issue #112, 2026-11-26: the run is accepted and the four questions are answered ([comment](https://github.com/narenccode/learnops/issues/112#issuecomment-7176860581)).
