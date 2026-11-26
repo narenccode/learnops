@@ -121,7 +121,7 @@ Run by the B4 owner on the same Moodle 5.3 lab site, course 6, fictional data on
 kept for lab tasks ([#112 comment](https://github.com/narenccode/learnops/issues/112#issuecomment-7176898260)); one
 temporary token created for the job; `mod_assign_get_grades` added to the test service for the job. **No write function
 was added and no grade was written through the web service.** Clean-up: the function removed (the service lists the six
-read functions again), the shell variables cleared. Evidence (the saved
+read functions again), the token deleted after the job, the shell variables cleared. Evidence (the saved
 answers and screenshots) is kept by the owner outside the repository; no token or address is in this record.
 
 **Why.** (1) The guide's review of the grading design (#186, item 3) asks the design to cover silent partial writes,
@@ -188,3 +188,4 @@ grade" would have refused the cleared grade. The two cases are therefore no long
 - Guide, issue #186, 2026-11-25: decisions 0017 (5.3 only) and 0018 (B4 freezes separately).
 - Guide, issue #112, 2026-11-26: the run is accepted and the four questions are answered ([comment](https://github.com/narenccode/learnops/issues/112#issuecomment-7176860581)).
 - Guide, issue #112, 2026-11-26: no lab run is needed before the freeze for the two read cases; they are welcome as confirmation, recorded here ([comment](https://github.com/narenccode/learnops/issues/112#issuecomment-7190567102)).
+- Guide, issue #112, 2026-11-26 (15:48): the multiple-marking rule is fail closed on `markingallocation` ([comment](https://github.com/narenccode/learnops/issues/112#issuecomment-7196769553), item 2); it is a design rule for the grading design, not part of B4.
