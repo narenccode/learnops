@@ -5,6 +5,7 @@
 ([#112 comment](https://github.com/narenccode/learnops/issues/112#issuecomment-7176860581)): fifteen checks pass, several with a B4 text change that comes in one
 `/contract-change`; check 18 is closed; B4 freezes after that change merges (decision 0018). Check 5 is half
 covered (see "Decided by the guide"). Moodle 4.5 is out of scope (decision 0017).
+**Addendum 2026-11-26** (end of this file): three more lab reads on the same site, for multiple marking and for the read-before-write safeguard.
 **Owner:** Student 3 (B4 owner), who ran the checks.
 **Requirement:** PRD App-C item 1 and `contracts/moodle-ws.v1.md` section 5 (all 18 checks).
 **Contracts touched:** none by this record. The text changes it suggests (section "What this suggests for
@@ -114,8 +115,75 @@ R3 wording, the read-before-write safeguard, and the two refusals (feedback comm
 - A write over another grader's unreleased grade (half of check 5): covered by the read-before-write safeguard.
 - The release race (finding 3): accepted as a known risk.
 
+## Addendum, 2026-11-26: multiple marking and two read cases
+
+Run by the B4 owner on the same Moodle 5.3 lab site, course 6, fictional data only. Conditions: the admin login the guide
+kept for lab tasks ([#112 comment](https://github.com/narenccode/learnops/issues/112#issuecomment-7176898260)); one
+temporary token created for the job; `mod_assign_get_grades` added to the test service for the job. **No write function
+was added and no grade was written through the web service.** Clean-up: the function removed (the service lists the six
+read functions again), the token deleted (the token page is empty), the shell variables cleared. Evidence (the saved
+answers and screenshots) is kept by the owner outside the repository; no token or address is in this record.
+
+**Why.** (1) The guide's review of the grading design (#186, item 3) asks the design to cover silent partial writes,
+including 5.3 multiple marking. The owner had shown that `markercount` is 2 on every lab assignment and so cannot be the
+signal, and said the real signal was a lab check still to do. (2) The guide said that the two read cases of the
+read-before-write safeguard (a learner with no grade row; a grade cleared in the grading screen) are welcome as
+confirmation, recorded here, and do not block the B4 freeze
+([#112 comment](https://github.com/narenccode/learnops/issues/112#issuecomment-7190567102)).
+
+### Multiple marking: which field shows it
+
+`mod_assign_get_assignments` returns these marking fields on every assignment: `blindmarking`, `markingworkflow`,
+`markingallocation`, `markercount`, `optionalmarkercount`, `multimarkmethod`, `multimarkrounding` and `markinganonymous`.
+
+| Assignment | `markingworkflow` | `markingallocation` | `markercount` | `optionalmarkercount` | `multimarkmethod` |
+|---|---|---|---|---|---|
+| The five existing ones (ids 3, 4, 9, 32, 33) | 1 on id 3, otherwise 0 | 0 | 2 | 0 | `manual` |
+| New "B4 test: multiple marking" (id 34): workflow Yes, allocation Yes, 2 required markers, 0 optional, Calculate grade Manual | 1 | **1** | 2 | 0 | `manual` |
+| Same assignment after the number of required markers was set to 1 | 1 | 1 | **1** | 0 | `manual` |
+
+What the assignment form shows: "Use marking workflow" = Yes reveals "Use marking allocation"; "Use marking allocation" = Yes
+reveals "Number of required markers" (2), "Number of optional markers" (0) and "Calculate grade" (Manual, Maximum mark,
+Average mark). `multimarkrounding` has no option in the form as it was used.
+
+- **`markingallocation` is the field that changes when marking allocation is switched on.** It is 0 on every existing
+  assignment and 1 on the new one.
+- **`markercount` follows "Number of required markers" but keeps the default 2 when allocation is off.** On its own it
+  shows nothing: it is 2 on all five existing assignments, none of which uses multiple marking. Multiple marking itself
+  is `markingallocation` 1 together with `markercount` above 1 (or `optionalmarkercount` above 0).
+- **Not run:** a grade write on an assignment with allocation on (the design refuses such an assignment, so the write
+  does not change the design); the options "Maximum mark" and "Average mark" (so `multimarkrounding` was never seen
+  other than 0).
+- **Proposal for the guide, not a decision:** the grading design may allow a write only when `markingallocation` is
+  present and 0, and refuse when it is absent or anything else. It is fail closed and also covers allocation with a single
+  marker. The precise alternative is to refuse only when `markingallocation` is 1 and `markercount` is above 1. This
+  is a design rule (#238); it is not in B4 until the guide says so.
+- The test assignment "B4 test: multiple marking" (id 34) was **left in course 6** on purpose, as evidence.
+
+### The two read cases for rule R16
+
+`mod_assign_get_grades` on the assignment "Week 1 task" (id 3):
+
+| Case | What Moodle returned |
+|---|---|
+| A learner with no grade (Learners E, F, G) | **No row at all** |
+| A learner whose state was set without a grade (Learner D, check 15) | A row with `-1.00000` and grader `-1` |
+| A learner with a grade (Learners A, B, C) | A row with a decimal, for example `8.00000` |
+| A grade cleared in the grading screen (Learner A, state first set to In marking) | The **row stays**; the grade is an **empty string** (type string, not null); the grader field is unchanged |
+
+R16 (as the guide worded it on 26 Nov: a grade of 0 or more is a grade; no row, an empty or null value, or a negative value
+means no grade, and the write goes ahead) gives the safe result for all four forms. A rule that treated only `-1` as "no
+grade" would have refused the cleared grade. The two cases are therefore no longer "not tested".
+
+### State left on the lab
+
+- Learner A is back to grade 8 with its feedback comment, state Ready for release, nothing released. (A's grader field
+  reads 2, the admin, because the grade was saved through the screen.)
+- The guide does not need to act on this addendum. It changes no contract.
+
 ## Where it was decided
 
 - Guide, issue #112, 2026-11-23 and 2026-11-24: the conditions of the run.
 - Guide, issue #186, 2026-11-25: decisions 0017 (5.3 only) and 0018 (B4 freezes separately).
 - Guide, issue #112, 2026-11-26: the run is accepted and the four questions are answered ([comment](https://github.com/narenccode/learnops/issues/112#issuecomment-7176860581)).
+- Guide, issue #112, 2026-11-26: no lab run is needed before the freeze for the two read cases; they are welcome as confirmation, recorded here ([comment](https://github.com/narenccode/learnops/issues/112#issuecomment-7190567102)).
