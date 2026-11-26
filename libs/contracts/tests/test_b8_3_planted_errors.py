@@ -131,6 +131,14 @@ def test_ck_12_is_not_asserted_until_body_media_extraction_is_decided() -> None:
     assert "item 19" in ck12["notes"]
 
 
+def test_ck_08_is_not_asserted_until_manual_backup_edit_is_approved() -> None:
+    (ck08,) = [
+        v for v in _variants() if v["id"] == "ck-08-completion-criteria-missing-item"
+    ]
+    assert ck08["assertable"] is False
+    assert "pending guide approval" in ck08["notes"]
+
+
 EXPLAINED_BY = {"CK-04", "CK-05", "CK-13"}
 
 
