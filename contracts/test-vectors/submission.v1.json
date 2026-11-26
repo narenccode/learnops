@@ -1,5 +1,5 @@
 {
-  "$comment": "Shared test vectors for the B1 submission-content rules (PRD B1.3 check formats and B1.5). Each case gives a learner's submission (online text and uploaded files) and the parts a reader must find. Pure data: no code. 'status' is 'derived' when the rules are decided by the guide (PR #61, 2026-11-11 and 2026-11-13) but this concrete example and its expected result were derived by the contract owner and still need review, and 'unverified-until-lab' when the expected result depends on how Moodle delivers editor HTML and must be checked on Moodle 4.5 and 5.3 before it is relied on. Behaviour that B1.5 lists as 'Not defined in v1' is not covered by any case. 'readme_cases' has fixtures for the B1.3 readme_sections rules: 'files' is what the repository holds (the README is only README.md at the root), 'check' is the Check cell, and a result is 'pass', 'fail' with the names of the missing sections, or 'invalid' with the unknown check name. 'covers' lists the B1.5 rules whose result the case shows; rules 8 (which check reads which part) and 9 (guidance for task text) cannot be shown in these part-level results and are never listed. All URLs use example.org.",
+  "$comment": "Shared test vectors for the B1 submission-content rules (PRD B1.3 check formats and B1.5). Each case gives a learner's submission (online text and uploaded files) and the parts a reader must find. Pure data: no code. 'status' is 'derived': the rules are decided by the guide (PR #61, 2026-11-11 and 2026-11-13; the editor-HTML rule on #186, 2026-11-26, after the lab check on Moodle 5.3) but this concrete example and its expected result were derived by the contract owner and still need review. No-break spaces are written as \\u00a0. Behaviour that B1.5 lists as 'Not defined in v1' is not covered by any case. 'readme_cases' has fixtures for the B1.3 readme_sections rules: 'files' is what the repository holds (the README is only README.md at the root), 'check' is the Check cell, and a result is 'pass', 'fail' with the names of the missing sections, or 'invalid' with the unknown check name. 'covers' lists the B1.5 rules whose result the case shows; rules 8 (which check reads which part) and 9 (guidance for task text) cannot be shown in these part-level results and are never listed. All URLs use example.org.",
   "version": 1,
   "cases": [
     {
@@ -33,8 +33,8 @@
     },
     {
       "id": "labels-in-html",
-      "title": "Labels in editor HTML (expected result unverified until the lab check)",
-      "status": "unverified-until-lab",
+      "title": "Labels in editor HTML: each paragraph and the line break end a line",
+      "status": "derived",
       "covers": [
         "B1.5-5",
         "B1.5-1",
@@ -469,6 +469,123 @@
           "value": "# Notes\n\nIt works.",
           "source": "report.md",
           "words": 4
+        }
+      }
+    },
+    {
+      "id": "html-br-line-breaks",
+      "title": "Editor HTML typed with Shift+Enter: one paragraph whose lines are separated by <br />",
+      "status": "derived",
+      "covers": [
+        "B1.5-5",
+        "B1.5-1",
+        "B1.5-2",
+        "B1.5-3",
+        "B1.3-word_count"
+      ],
+      "input": {
+        "onlinetext": "<p>Repository: https://example.org/erin/demo-assistant<br />Demo: https://example.org/erin/demo<br />Report: Shift and Enter gave line breaks.<br />The second line is part of the report.</p>",
+        "onlinetext_format": "html",
+        "files": []
+      },
+      "expected": {
+        "repository": {
+          "value": "https://example.org/erin/demo-assistant"
+        },
+        "demo": {
+          "value": "https://example.org/erin/demo"
+        },
+        "report": {
+          "value": "Shift and Enter gave line breaks.\nThe second line is part of the report.",
+          "source": "onlinetext",
+          "words": 14
+        }
+      }
+    },
+    {
+      "id": "html-no-break-spaces",
+      "title": "Editor HTML with no-break spaces at line ends, before a label and between words: each counts as a space",
+      "status": "derived",
+      "covers": [
+        "B1.5-5",
+        "B1.5-1",
+        "B1.5-2",
+        "B1.5-3",
+        "B1.3-word_count"
+      ],
+      "input": {
+        "onlinetext": "<p>Repository: https://example.org/grace/demo-assistant\u00a0</p><p>\u00a0Demo:\u00a0https://example.org/grace/demo\u00a0</p><p>Report: The editor added\u00a0no-break spaces.\u00a0</p><p>They separate words.</p>",
+        "onlinetext_format": "html",
+        "files": []
+      },
+      "expected": {
+        "repository": {
+          "value": "https://example.org/grace/demo-assistant"
+        },
+        "demo": {
+          "value": "https://example.org/grace/demo"
+        },
+        "report": {
+          "value": "The editor added\u00a0no-break spaces.\u00a0\nThey separate words.",
+          "source": "onlinetext",
+          "words": 8
+        }
+      }
+    },
+    {
+      "id": "plain-no-break-spaces",
+      "title": "Plain online text with no-break spaces: they count as spaces there too",
+      "status": "derived",
+      "covers": [
+        "B1.5-1",
+        "B1.5-2",
+        "B1.5-3",
+        "B1.3-word_count"
+      ],
+      "input": {
+        "onlinetext": "Repository: https://example.org/heidi/demo-assistant\u00a0\n\u00a0Demo: https://example.org/heidi/demo\nReport: Copied\u00a0from a word processor.",
+        "onlinetext_format": "plain",
+        "files": []
+      },
+      "expected": {
+        "repository": {
+          "value": "https://example.org/heidi/demo-assistant"
+        },
+        "demo": {
+          "value": "https://example.org/heidi/demo"
+        },
+        "report": {
+          "value": "Copied\u00a0from a word processor.",
+          "source": "onlinetext",
+          "words": 5
+        }
+      }
+    },
+    {
+      "id": "html-pasted-one-paragraph",
+      "title": "Three lines pasted into the editor become one paragraph: only the first label is at the start of a line, and nothing is repaired",
+      "status": "derived",
+      "covers": [
+        "B1.5-5",
+        "B1.5-1",
+        "B1.5-2",
+        "B1.5-6",
+        "B1.5-7"
+      ],
+      "input": {
+        "onlinetext": "<p>Repository: https://example.org/ivan/demo-assistant\u00a0\u00a0Demo: https://example.org/ivan/demo\u00a0\u00a0Report: I pasted all three lines.</p>",
+        "onlinetext_format": "html",
+        "files": []
+      },
+      "expected": {
+        "repository": {
+          "value": "https://example.org/ivan/demo-assistant\u00a0\u00a0Demo: https://example.org/ivan/demo\u00a0\u00a0Report: I pasted all three lines."
+        },
+        "demo": {
+          "error": "field_missing"
+        },
+        "report": {
+          "error": "field_missing"
         }
       }
     }

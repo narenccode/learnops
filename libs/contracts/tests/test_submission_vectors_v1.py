@@ -6,7 +6,8 @@ AUTOMATED here (data and text only; no reader of submissions exists yet):
     each with the exact shape, the closed vocabularies (status, format, source, error code, result)
     and consistent expected values (a word count equals the words of the report, a report file
     named as the source is in the input, a part has a value or an error, never both, a missing
-    README section is named in the check). The HTML case is marked unverified until the lab;
+    README section is named in the check). Every case is `derived`: the editor-HTML rule was
+    decided after the Moodle 5.3 lab check (#186, 2026-11-26), so `unverified-until-lab` is retired;
   * `covers` says what a case shows: rules 8 and 9 are never listed (part-level results cannot show
     them), a word-count entry appears exactly when the report has a word count, an expected error
     lists rule 7, an HTML case lists rule 5, a report from a file lists rule 4, and every other
@@ -19,13 +20,16 @@ AUTOMATED here (data and text only; no reader of submissions exists yet):
     rule that exists;
   * the open points are written down, not decided: the PRD says what v1 does not define, the
     traceability file lists each open decision with who decides it, and no vector covers one
-    (no carriage return, no empty label value, no HTML entity or link, no trailing whitespace);
+    (no carriage return, no empty label value, no HTML entity, link or element other than `<p>`
+    and `<br>`, no no-break space in a report file, no trailing whitespace);
   * the shape and open-point checks catch the mistakes they exist for (negative controls).
 
 NOT automated here, so NOT claimed: that any reader extracts the parts correctly or finds README
 headings correctly. The marking-table parser (Module 2, `libs/contracts`) and the submission
 extractor (Module 3, Release 4) do not exist; they must pass these vectors. There is no test-only
-reader of either, on purpose. The HTML result is unverified until the Moodle lab check.
+reader of either in this file, on purpose; the B8.4 tests have a stand-in reader that is checked
+against every submission case. The HTML cases follow the 5.3 lab result; Moodle 4.5 is out of
+scope (decision 0017).
 """
 
 from __future__ import annotations
@@ -72,6 +76,12 @@ CASE_IDS = [
     "word-count-punctuation-and-url",
     "word-count-plain-markdown-kept",
     "report-md-with-byte-order-mark",
+    # B1.5 rule 5 on Moodle 5.3 and no-break spaces in online text (#186, 2026-11-26, the guide's
+    # answer to Student 1, through /contract-change).
+    "html-br-line-breaks",
+    "html-no-break-spaces",
+    "plain-no-break-spaces",
+    "html-pasted-one-paragraph",
 ]
 README_CASE_IDS = [
     "readme-headings-any-case",
@@ -106,7 +116,7 @@ C35_CHECK_NAMES = {
     "word_count",
 }
 
-STATUSES = {"derived", "unverified-until-lab"}
+STATUSES = {"derived"}
 FORMATS = {"plain", "html"}
 SOURCES = {"onlinetext", "report.md", "report.txt"}
 ERRORS = {"field_missing", "field_repeated"}
@@ -126,6 +136,9 @@ EMPTY_LABEL = re.compile(
     r"^\s*(repository|demo|report):\s*$", re.IGNORECASE | re.MULTILINE
 )
 ENTITY = re.compile(r"&(#\d+|#x[0-9a-fA-F]+|[A-Za-z][A-Za-z0-9]*);")
+# B1.5 rule 5 defines only `<p>` and `<br>` / `<br />`; any other element is not defined in v1.
+OTHER_ELEMENT = re.compile(r"</?(?!(?:p|br)\b)[A-Za-z][^>]*>")
+NO_BREAK_SPACE = "\u00a0"
 URL = re.compile(r"https?://[^\s<]+")
 
 Case = dict[str, Any]
@@ -171,11 +184,6 @@ def case_problems(case: Any) -> list[str]:
         problems.append("onlinetext is not a string")
     if given["onlinetext_format"] not in FORMATS:
         problems.append(f"onlinetext_format is not one of {sorted(FORMATS)}")
-    if (
-        given["onlinetext_format"] == "html"
-        and case["status"] != "unverified-until-lab"
-    ):
-        problems.append("an HTML case must be 'unverified-until-lab'")
     files = given["files"]
     if not (
         isinstance(files, list)
@@ -230,10 +238,9 @@ def _part_problems(part: str, entry: Any, files: list[Case]) -> list[str]:
     problems: list[str] = []
     if entry["source"] not in SOURCES:
         problems.append(f"report: source is not one of {sorted(SOURCES)}")
-    # str.split() with no argument splits on any Unicode whitespace, so a non-breaking space
-    # (U+00A0) also separates words here. The PRD only says "between whitespace"; whether a reader
-    # must split on a non-breaking space is part of the open HTML-details decision, and no vector
-    # contains one, so this does not decide it. The word-count definition is unchanged.
+    # str.split() with no argument splits on any Unicode whitespace. In online text a no-break
+    # space (U+00A0) separates words (PRD B1.5 rule 5, #186), which split() agrees with; in a
+    # report file it is not defined in v1, and open_point_problems keeps it out of every file.
     if entry["words"] != len(entry["value"].split()):
         problems.append(
             "report: words is not the number of whitespace-separated pieces of value"
@@ -264,6 +271,12 @@ def open_point_problems(case: Case) -> list[str]:
             r"<a[\s>]", given["onlinetext"]
         ):
             problems.append("uses an HTML entity or link (not defined in v1)")
+        if OTHER_ELEMENT.search(given["onlinetext"]):
+            problems.append(
+                "uses an element other than <p> and <br> (not defined in v1)"
+            )
+    if any(NO_BREAK_SPACE in f["text"] for f in given["files"]):
+        problems.append("has a no-break space in a report file (not defined in v1)")
     values = [e["value"] for e in case["expected"].values() if "value" in e]
     if any(v != v.strip() for v in values):
         problems.append(
@@ -388,12 +401,23 @@ def test_case_has_the_required_shape_and_consistent_expected_values(
     assert case_problems(_case(case_id)) == []
 
 
-def test_only_the_html_case_is_unverified_until_the_lab() -> None:
-    unverified = [
-        c["id"] for c in _vectors()["cases"] if c["status"] == "unverified-until-lab"
-    ]
-    assert unverified == ["labels-in-html"]
+def test_every_case_is_derived_and_the_html_cases_follow_the_lab_result() -> None:
     assert {c["status"] for c in _vectors()["cases"]} == STATUSES
+    cases = _vectors()["cases"]
+    html = [c["id"] for c in cases if c["input"]["onlinetext_format"] == "html"]
+    assert html == [
+        "labels-in-html",
+        "html-br-line-breaks",
+        "html-no-break-spaces",
+        "html-pasted-one-paragraph",
+    ]
+    # No-break spaces appear in online text, plain and HTML, and in no report file.
+    with_nbsp = {c["id"] for c in cases if NO_BREAK_SPACE in c["input"]["onlinetext"]}
+    assert with_nbsp == {
+        "html-no-break-spaces",
+        "plain-no-break-spaces",
+        "html-pasted-one-paragraph",
+    }
 
 
 @pytest.mark.parametrize("case_id", CASE_IDS)
@@ -504,9 +528,13 @@ SHAPE_EDITS: dict[str, tuple[str, Callable[[Case], None]]] = {
         "all-labels",
         lambda c: c["expected"]["report"].update(source="report.md"),
     ),
-    "an HTML case marked derived": (
+    "the retired status 'unverified-until-lab'": (
         "labels-in-html",
-        lambda c: c.update(status="derived"),
+        lambda c: c.update(status="unverified-until-lab"),
+    ),
+    "an HTML case that does not list rule 5": (
+        "html-br-line-breaks",
+        lambda c: c["covers"].remove("B1.5-5"),
     ),
     "an unknown rule id": ("all-labels", lambda c: c["covers"].append("B1.5-10")),
     "an unknown input key": (
@@ -552,6 +580,24 @@ OPEN_POINT_EDITS: dict[str, tuple[str, Callable[[Case], None]]] = {
         "labels-in-html",
         lambda c: c["input"].update(
             onlinetext=c["input"]["onlinetext"] + '<a href="x">x</a>'
+        ),
+    ),
+    "an element other than p and br": (
+        "labels-in-html",
+        lambda c: c["input"].update(
+            onlinetext=c["input"]["onlinetext"] + "<div>x</div>"
+        ),
+    ),
+    "the &nbsp; reference instead of the character": (
+        "html-no-break-spaces",
+        lambda c: c["input"].update(
+            onlinetext=c["input"]["onlinetext"].replace(NO_BREAK_SPACE, "&nbsp;")
+        ),
+    ),
+    "a no-break space in a report file": (
+        "report-as-file",
+        lambda c: c["input"]["files"][0].update(
+            text=c["input"]["files"][0]["text"].replace(" ", NO_BREAK_SPACE, 1)
         ),
     ),
     "trailing whitespace in an expected value": (
@@ -645,6 +691,8 @@ def test_prd_b13_has_the_check_formats_and_names_what_it_does_not_define() -> No
         "A report file is read as UTF-8, and a leading byte-order mark is removed",
         "A report file that is not valid UTF-8 is not defined in v1",
         "Space, tab and the line ends separate words",
+        "In online text, the no-break space (U+00A0) also separates words",
+        "In a report file, whether other Unicode white space",
         "such as the non-breaking space, separates words is not defined in v1",
         "a non-breaking space is not a space",
     ):
@@ -705,8 +753,18 @@ def test_prd_b15_has_nine_numbered_rules_and_both_reason_codes() -> None:
         "does not stop the others",
     ):
         assert phrase in flat, phrase
-    assert "should tell the learner how to label each part" in " ".join(rules.split())
-    assert "unverified" in " ".join(rules.split())
+    assert "should tell the learner how to label each part" in flat
+    for phrase in (
+        # Rule 5 on Moodle 5.3 and no-break spaces (#186, 2026-11-26).
+        "each paragraph (`<p>`) and each line break (`<br>` or `<br />`) ends a line",
+        "a no-break space (U+00A0) counts as a space for rule 1",
+        "rule 2 (the spaces removed from a value) and `word_count`",
+        "Moodle 4.5 is out of scope (decision 0017)",
+        # Rule 9 guidance for pasted text.
+        "put each label on its own line",
+    ):
+        assert phrase in flat, phrase
+    assert "unverified" not in flat
 
 
 def test_prd_b15_says_what_v1_does_not_define() -> None:
@@ -716,6 +774,7 @@ def test_prd_b15_says_what_v1_does_not_define() -> None:
         "an empty label value",
         "line endings and trailing blank lines",
         "character entities and links",
+        "elements other than `<p>` and `<br>`",
         "only `onlinetext` or only `file`",
         "These are open decisions",
     ):
@@ -745,7 +804,7 @@ def test_prd_examples_are_the_five_required_vectors() -> None:
         "`# Reflection`" in items[3]
         and "I built an assistant and it answered badly at first." in items[3]
     )
-    assert "unverified" in items[1]
+    assert "unverified" not in items[1]
 
 
 def test_every_covers_entry_names_a_rule_the_prd_has() -> None:

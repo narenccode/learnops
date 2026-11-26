@@ -30,7 +30,8 @@ NOT automated, and therefore NOT claimed:
   * the sealed test split (design Q47): every submission is by the same author, so all are
     development;
   * that a submission extractor (Module 3) reads these files: the reader below is a stand-in, checked against the shared vectors;
-  * the Moodle form of a submission as editor HTML (B1.5 rule 5 is unverified until the lab check);
+  * the Moodle form of a submission as editor HTML: the set has none, and the stand-in reader's
+    HTML handling (B1.5 rule 5, Moodle 5.3) is checked only against the shared vectors;
   * machine-check behaviour on real infrastructure (lab git server and demo stubs, not ready);
   * the marking-table parse below is a stand-in for the shared parser planned in libs/contracts
     (design §4.3b); it is not that parser.
@@ -119,16 +120,37 @@ def parse_marking_table(body: str) -> list[tuple[str, int, list[str]]]:
 
 
 SUBMISSION_VECTORS = ROOT / "contracts" / "test-vectors" / "submission.v1.json"
-LABEL_LINE = re.compile(r"^ *(repository|demo|report):(.*)$", re.IGNORECASE)
+# In online text a no-break space counts as a space for rules 1 and 2 and for word_count (PRD
+# B1.5 rule 5). str.split() already splits on it; the label and trim rules name it explicitly.
+NO_BREAK_SPACE = chr(0xA0)
+ONLINE_SPACES = " " + NO_BREAK_SPACE
+LABEL_LINE = re.compile(
+    rf"^[{ONLINE_SPACES}]*(repository|demo|report):(.*)$", re.IGNORECASE
+)
+# B1.5 rule 5 on Moodle 5.3: each paragraph and each line break ends a line, other markup is
+# removed. Elements other than <p> and <br>, and character references, are not defined in v1.
+LINE_END_TAG = re.compile(r"</p\s*>|<br\s*/?>", re.IGNORECASE)
+ANY_TAG = re.compile(r"<[^>]*>")
+
+
+def html_to_text(html: str) -> str:
+    """The online text of editor HTML as lines (B1.5 rule 5). Stand-in, see read_submission."""
+    return ANY_TAG.sub("", LINE_END_TAG.sub("\n", html))
+
+
 FENCE_LINE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
 ATX_LINE = re.compile(r"^ {0,3}(#{1,6})([ \t].*)?$")
 
 
-def read_submission(onlinetext: str, files: dict[str, str]) -> dict[str, Doc]:
-    """Stand-in reader for PRD B1.5 rules 1 to 7, plain online text only (rule 5, editor HTML, is
-    unverified until the lab). It is NOT the submission extractor of Module 3: it exists so that
-    expected.yaml can be derived from the files, and it is checked against every plain case of the
+def read_submission(
+    onlinetext: str, files: dict[str, str], onlinetext_format: str = "plain"
+) -> dict[str, Doc]:
+    """Stand-in reader for PRD B1.5 rules 1 to 7, plain online text and editor HTML as the Moodle
+    5.3 editor sends it (rule 5). It is NOT the submission extractor of Module 3: it exists so that
+    expected.yaml can be derived from the files, and it is checked against every case of the
     shared vectors in contracts/test-vectors/submission.v1.json (see the tests below)."""
+    if onlinetext_format == "html":
+        onlinetext = html_to_text(onlinetext)
     lines = onlinetext.split("\n")
     found: dict[str, list[str]] = {"repository": [], "demo": []}
     report_at: int | None = None
@@ -151,7 +173,7 @@ def read_submission(onlinetext: str, files: dict[str, str]) -> dict[str, Doc]:
         else:
             parts[label] = {"value": values[0]}
     if report_at is not None:
-        text = "\n".join([first.lstrip(" "), *lines[report_at + 1 :]]).strip()
+        text = "\n".join([first.lstrip(ONLINE_SPACES), *lines[report_at + 1 :]]).strip()
         parts["report"] = {
             "value": text,
             "source": "onlinetext",
@@ -739,21 +761,23 @@ def _vectors() -> Doc:
     return loaded
 
 
-PLAIN_CASES = [
-    c for c in _vectors()["cases"] if c["input"]["onlinetext_format"] == "plain"
-]
+SUBMISSION_CASES = _vectors()["cases"]
 README_CASES = [
     c for c in _vectors()["readme_cases"] if c["expected"]["result"] != "invalid"
 ]
 
 
-@pytest.mark.parametrize("case", PLAIN_CASES, ids=[c["id"] for c in PLAIN_CASES])
-def test_the_stand_in_reader_gives_the_expected_parts_of_every_plain_vector(
+@pytest.mark.parametrize(
+    "case", SUBMISSION_CASES, ids=[c["id"] for c in SUBMISSION_CASES]
+)
+def test_the_stand_in_reader_gives_the_expected_parts_of_every_submission_vector(
     case: Doc,
 ) -> None:
-    """The reader below is only trusted as far as it agrees with the shared vectors."""
-    files = {f["name"]: f["text"] for f in case["input"]["files"]}
-    parts = read_submission(case["input"]["onlinetext"], files)
+    """The reader below is only trusted as far as it agrees with the shared vectors, plain and
+    editor HTML (B1.5 rule 5 on Moodle 5.3)."""
+    given = case["input"]
+    files = {f["name"]: f["text"] for f in given["files"]}
+    parts = read_submission(given["onlinetext"], files, given["onlinetext_format"])
     assert parts == case["expected"], case["id"]
 
 
@@ -804,7 +828,7 @@ def test_every_submission_is_development_and_none_is_editor_html(manifest: Doc) 
     for s in manifest["submissions"]:
         folder = SUBMISSIONS_DIR / s["id"]
         assert load_yaml(folder / "submission.yaml")["onlinetext_format"] == "plain"
-        assert not list(folder.glob("*.html")), s["id"]  # B1.5 rule 5: unverified
+        assert not list(folder.glob("*.html")), s["id"]  # the set holds no editor HTML
 
 
 # --- synthetic-data guards -----------------------------------------------------------------

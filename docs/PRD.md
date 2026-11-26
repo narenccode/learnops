@@ -460,8 +460,10 @@ HTML table in the Moodle assignment description; the grading assistant parses it
     underscore, and a value of at least 1. It is the minimum number of words in the report. A
     word is a piece of the report text between whitespace. Markup is removed before counting only
     when the report comes from online text (§B1.5); a report file is counted as it is.
-    - Space, tab and the line ends separate words. Whether other Unicode white space, such as the
-      non-breaking space, separates words is not defined in v1.
+    - Space, tab and the line ends separate words. In online text, the no-break space (U+00A0)
+      also separates words, because the Moodle 5.3 editor adds it by itself (§B1.5 rule 5). In a
+      report file, whether other Unicode white space, such as the non-breaking space, separates
+      words is not defined in v1.
     - Every piece counts, including one that is only punctuation such as `#` or `-`, and a URL is
       one word. Online text in plain format has no markup to remove, so Markdown symbols in it
       are counted as they are, as in a report file.
@@ -516,10 +518,13 @@ includes `file`, may have uploaded files. The online text carries labelled lines
 4. **Report file.** When the online text has no `Report:` section and the assignment accepts
    files, a file named `report.md` is the report; if there is none, a file named `report.txt`.
    Other uploaded files are ignored by grading in v1.
-5. **HTML.** Online text may arrive as editor HTML. The markup is removed first, and each paragraph
-   or line break ends a line. Then rules 1 to 4 apply. *The exact result for HTML is unverified
-   until the lab check on Moodle 4.5 and 5.3 (App-C); the contract can only gain optional fields
-   after the freeze (EXT-02).*
+5. **HTML.** Online text may arrive as editor HTML. The markup is removed first: on Moodle 5.3,
+   each paragraph (`<p>`) and each line break (`<br>` or `<br />`) ends a line. Then rules 1 to 4
+   apply. In online text, plain or HTML, a no-break space (U+00A0) counts as a space for rule 1
+   (spaces before a label), rule 2 (the spaces removed from a value) and `word_count` (§B1.3); the
+   Moodle 5.3 editor adds no-break spaces by itself, for example at the end of a line. *Checked on
+   the lab Moodle 5.3 site (decision 0019, check 7; decided by the guide on #186, 26 November
+   2026). Moodle 4.5 is out of scope (decision 0017).*
 6. **Nothing is repaired.** Text that does not match rule 1, such as a misspelled label or a label
    that is not at the start of a line, is not a label.
 7. **Missing and repeated labels.** The labels `Repository:` and `Demo:` must appear before
@@ -534,11 +539,13 @@ includes `file`, may have uploaded files. The online text carries labelled lines
 8. **What each check reads.** `repo_clone` reads `Repository`; `http_ok:demo_url` reads `Demo`;
    `word_count` reads the report.
 9. **Task text.** A task body should tell the learner how to label each part, for example with the
-   three lines of example 1 below. This is guidance and is not validated.
+   three lines of example 1 below, and say to put each label on its own line. Plain text pasted
+   into the Moodle 5.3 editor becomes one paragraph, so only its first label is at the start of a
+   line (rule 6). This is guidance and is not validated.
 
 **Not defined in v1.** This section does not say how a reader treats an empty label value, line
 endings and trailing blank lines, HTML details beyond rule 5 (such as character entities and
-links), or an assignment whose `submission` has only `onlinetext` or only `file`. These are open
+links, and elements other than `<p>` and `<br>`), or an assignment whose `submission` has only `onlinetext` or only `file`. These are open
 decisions, listed in `docs/traceability.md`.
 
 **Examples.** Shared test cases, with the expected results, are in
@@ -556,7 +563,7 @@ semicolons). The five examples:
 
    All three parts are found. The report has 12 words.
 
-2. *Labels in HTML* (expected result unverified until the lab check).
+2. *Labels in HTML* (paragraphs and a line break, as the Moodle 5.3 editor sends them).
 
    ```text
    <p>Repository: https://example.org/alice/demo-assistant</p><p>Demo: https://example.org/alice/demo</p><p>Report: I built a small assistant.<br>It worked after I fixed the prompt.</p>
