@@ -41,8 +41,9 @@ written against all four tasks of the B8.2 sample course (#61), in the submissio
    real extractor reads these files is Module 3's (Release 4); the tests use a stand-in reader that is
    checked against the shared vectors.
 4. **Format.** B8's contract file is `testdata/README.md` (`contracts/CLAUDE.md`), and it is frozen after
-   Release 0. The schemas here are a proposal that the other owners and the guide have not accepted
-   (O7). The guide said on issue #186 that Akshita or Nagashree approve the formats.
+   Release 0. Akshita approved the formats under PRD B.0 rule 3 (issue #186, comment 7096886192,
+   23 Nov 2026; O7). That is not a guide approval: the guide reviews the whole contract set at the
+   Release 0 gate.
 
 ## Layout
 
