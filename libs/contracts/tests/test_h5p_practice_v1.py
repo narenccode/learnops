@@ -303,6 +303,12 @@ def test_text_pins_the_types_and_has_no_open_decision_left(
         "one run directly after the guide Page",
         "directly after the Page that embeds the lesson video",
         "after the practice run",
+        # Several checkpoints for one video (Nagashree's review of #250): one run after the
+        # Page that embeds the video, in chapter order. The B7 owner's reading of decisions 8
+        # and 9, asked of the guide on Issue #186; the rule is checked here, not its label.
+        "Several checkpoints for one video",
+        "one run directly after the Page that embeds the video",
+        "in chapter order (the order of `activities`)",
         "not validation errors",
         "contracts/cues.v1.schema.json",
         "Complete for Release 0",
