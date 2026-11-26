@@ -199,7 +199,7 @@ variants:
     expected: {rule: CK-12, element: wk-01-guide, severity: error}
     reason: "Media must be a relative path, not a full fixed URL (PRD C-08)."
     also_expected: []
-    assertable: false   # PROVISIONAL: not asserted until checker design section 12 item 19 is decided
+    assertable: false   # CK-12 scope is decided (issue #232, item 6); the shared extractor (FR-C-01) is not implemented, so the finding is not asserted yet
     notes: "v1 scope decided by the guide (issue #232, item 6; checker design section 12 item 19): embedded Markdown images and HTML img/video/audio/source/track references in activity bodies; data: URIs are not flagged; @@PLUGINFILE@@ references pass; ordinary links (including PDFs) and iframe embeds are not in scope and not checked in v1. Extraction, as confirmed by Akshita as the affected M1 owner (issue #232): every in-scope reference is listed in media_refs as written, including relative paths, @@PLUGINFILE@@ references and data: URIs; the guide's text does not state this listing in so many words. CK-12 flags only the decided full fixed URL forms (http://, https:// and protocol-relative //host/), so relative paths, @@PLUGINFILE@@ references and data: URIs are listed and not flagged; other URI schemes are an open decision. The shared test vectors are in contracts/test-vectors/media-refs.v1.json; the builder's media_refs extraction is not built and Akshita's formal approval of the B2 contract change is given on the pull request, so nothing is verified end to end. This variant plants the URL in the source file only, so its expected finding is not asserted yet."
 
   - id: ck-13-unlock-without-completion

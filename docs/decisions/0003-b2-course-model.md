@@ -1,6 +1,6 @@
 # 0003: B2 Course Model Decisions
 
-**Status: Draft contract. Not yet approved or frozen.**
+**Status: Draft contract. Freeze candidate for Release 0, pending the required approvals and merge of the pull request. Not yet approved or frozen.**
 
 This document records the decisions and outstanding verification items for Contract B2 (`learnops.course-model/v1`).
 
@@ -58,10 +58,10 @@ The following items have not yet received explicit confirmation:
 | Item | Current draft | Outstanding question |
 |---|---|---|
 | Other completion properties | `{tracking, view?, submit?, use_grade?, pass_grade?}` | The `submit` mapping and tracking enum are confirmed. The exact semantics and support for the other optional properties still need verification. |
-| `marking_workflow` | Nullable boolean | Confirm whether null is appropriate for package-derived models and whether the current representation covers the required checker behaviour. |
+| `marking_workflow` | Nullable boolean | **Decided** ([guide, issue #232, comment 7176861868](https://github.com/narenccode/learnops/issues/232#issuecomment-7176861868), item 16): for package models it remains `null`, and CK-10 reports it as `not checked`. |
 | `course_completion` and `badges` | Null in package-derived models | Confirm how CK-10 should assess package models when these values are unavailable. |
 | CK-03 comparison of non-integer points | `total_points`, `max_grade` and `points_total` are JSON numbers with a minimum of 0, so decimals are structurally valid; B1 `points` is an integer. The checker design says only: sum `max_grade`, compare with the target; a match is `pass`, a mismatch is `finding`. | **Undecided:** whether the comparison is exact, rounded to a precision or within a tolerance. No rule is specified or implemented. The guide and the checker owner decide this before CK-03 is built. |
-| Report state: `cannot judge` versus `not checked` | Decision 25 and the CK-03 design say `cannot judge`; risk 11 (CK-07) and PRD C2.8 say `not checked`. | **Undecided:** whether these are one report state or two, and how they affect the zero-errors condition. To be defined in the checker design's report section before FR-C-03 starts. |
+| Report state: `cannot judge` versus `not checked` | Decision 25 and the CK-03 design said `cannot judge`; risk 11 (CK-07) and PRD C2.8 say `not checked`. | **Decided** ([guide, issue #232, comment 7176861868](https://github.com/narenccode/learnops/issues/232#issuecomment-7176861868), item 20): there is one state, named `not checked`. The exit code follows error findings only (OPS-05). Reports always show both the error count and the not-checked count. A run with unchecked rules is never described as clean. |
 | CK-12 flagging of other URI schemes | The guide's list flags `http://`, `https://` and protocol-relative `//host/` references; the checker design says "a scheme such as `http:` or `https:`". The vectors list a reference such as `ftp://…` in `media_refs` and leave its flagging null. | **Undecided:** does CK-12 flag every URI scheme other than `data:` (Akshita's proposal: `ftp:` and `file:` are fixed locations, not relative paths, PRD C-08), or only `http:`, `https:` and protocol-relative references, with other schemes written as "not checked in v1"? The guide decides before CK-12 is built. |
 | `fullname` and activity/section `title` | Optional | Retain as optional reporting fields unless further requirements dictate otherwise. `fullname` is never null: a Moodle course always has a full name and B1 requires one. Section and activity titles may be null because the source may not name them. |
 
@@ -110,7 +110,7 @@ The `from-package.json` example is also hand-written and intended for contract t
 - Stable activity identity is based on `idnumber`.
 - Package-derived CMIDs are synthetic and local to their model.
 - Null values represent unavailable or unspecified source information, not false values.
-- Checker rules must distinguish between a confirmed fault and information that cannot be judged.
+- Checker rules must distinguish between a confirmed fault and information that cannot be judged; the latter is reported as `not checked` (section 3).
 
 ## 6. Approval Status
 
@@ -120,4 +120,4 @@ Student 1 has confirmed the B1-to-B2 submission completion mapping in Section 2.
 
 **Release 0 freeze (guide, [issue #232, comment of 2026-11-26](https://github.com/narenccode/learnops/issues/232#issuecomment-7176861868), item 1).** B2 v1 freezes at Release 0 when two conditions are met: (1) the `media_refs` description is narrowed to the CK-12 scope (decision 16), and (2) the completion-criterion shape `{type, cmid, idnumber}` is read from the published Moodle 5.3 B8.1 backup (decision 18; section 4, item 3). Both conditions are satisfied by the change that records this text. The shared CK-12 test vectors (24 cases) have been created and validated (decision 16); the extractor is not implemented. Akshita confirmed the `media_refs` scope as the affected M1 owner on issue #232; her formal approval of the change and the guide's approval are given on the pull request and are not recorded here. This record does not by itself mark B2 as frozen.
 
-The other open items stay as documented limitations and are decided before FR-C-01 and FR-C-03 in Release 1: the other completion properties, `marking_workflow` for packages, CK-03 comparison of non-integer points, `cannot judge` against `not checked`, and `course_completion` and `badges` for packages (section 3). The remaining Moodle verification items in section 4 (1, 2, 4, 5 and 6) are also still unverified and documented; the guide's decision names only item 3 as a freeze condition. Moodle 5.3 is the only supported version (decision 0017).
+The other B2 items stay as documented Release 1 limitations, decided before FR-C-01 and FR-C-03: the other completion properties, CK-03 comparison of non-integer points, `course_completion` and `badges` for packages, and CK-12 flagging of other URI schemes (section 3). Two items formerly listed here are now decided by the guide in the same comment and are no longer open: `marking_workflow` for packages (stays `null`; CK-10 reports `not checked`) and `cannot judge` against `not checked` (one state, `not checked`). The remaining Moodle verification items in section 4 (1, 2, 4, 5 and 6) are also still unverified and documented; the guide's decision names only item 3 as a freeze condition. Moodle 5.3 is the only supported version (decision 0017).

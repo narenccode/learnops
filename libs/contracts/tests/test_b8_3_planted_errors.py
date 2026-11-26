@@ -125,10 +125,13 @@ def test_mapping_stays_proposed_until_confirmation_is_recorded() -> None:
         assert data["confirmation"] is None
 
 
-def test_ck_12_is_not_asserted_until_body_media_extraction_is_decided() -> None:
+def test_ck_12_is_not_asserted_because_the_shared_extractor_is_not_implemented() -> (
+    None
+):
     (ck12,) = [v for v in _variants() if v["id"] == "ck-12-full-url-media"]
     assert ck12["assertable"] is False
     assert "item 19" in ck12["notes"]
+    assert "not implemented" in ck12["notes"] or "not built" in ck12["notes"]
 
 
 def test_ck_08_is_not_asserted_until_manual_backup_edit_is_approved() -> None:
@@ -230,8 +233,8 @@ def test_ck_09_change_is_the_one_declared() -> None:
 
 def test_ck_12_url_is_in_the_source_file_only() -> None:
     # Source-level check only. It does NOT show that the URL reaches media_refs of the B2 model or
-    # that a checker reports CK-12: that depends on checker design section 12 item 19 (open), so
-    # the CK-12 expected finding is marked assertable: false.
+    # that a checker reports CK-12: the CK-12 scope is decided (issue #232, item 6) but the shared
+    # extractor (FR-C-01) is not implemented, so the expected finding is marked assertable: false.
     body = _text("ck-12-full-url-media", "weeks/01-guide.md")
     assert "https://example.invalid/diagram.png" in body
 
