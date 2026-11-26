@@ -25,7 +25,7 @@ What the consumers need from the table:
 | `id` | uuid | no | Primary key. `studio.package.course_link_id` refers to it |
 | `iss` | text | no | The issuer of the verified launch, exactly as received, with no trimming, case folding or other normalisation (B3 section 7.1) |
 | `lti_context_id` | text | no | `context.id` from the verified launch, as a string, as received |
-| `site_id` | text | no | The registered platform, that is the B4 client bound to `iss` (B3 section 7.1). Grading and Video use `(site_id, moodle_course_id)` for a course |
+| `site_id` | text | no | The registered platform, that is the B4 client bound to `iss` (B3 section 7.1). Grading uses `(site_id, moodle_course_id)` for a course; Video does not (it keys on `iss` and `lti_context_id`) |
 | `moodle_course_id` | bigint | no | The Moodle course id, confirmed by B4 with `core_course_get_courses_by_field` (`field` = `id`) at the first launch. Greater than 0 |
 | `course_shortname` | text | yes | For display only. It is never an identifier |
 | `created_at` | timestamptz | no | First successful launch for this course |
@@ -36,7 +36,7 @@ What the consumers need from the table:
 - Unique `(iss, lti_context_id)`: the key decided by the guide.
 - Unique `(site_id, moodle_course_id)`: one LTI context per Moodle course on a registered platform. (Confirmed by Student 2, 25 Nov, [comment](https://github.com/narenccode/learnops/pull/209#issuecomment-7159602625).)
 - Check `moodle_course_id > 0`.
-- Check `lti_context_id = moodle_course_id::text` (confirmed by Student 2, 25 Nov, same comment). B3 section 3.1 makes the context id the Moodle course id, a positive integer in ASCII digits with no leading zero, so the two always have the same digits. Both are stored on purpose: `lti_context_id` is the launch value as received and is the lookup key; `moodle_course_id` is the integer that B4 confirmed, which Grading and Video use with `site_id`. The check stops them drifting apart.
+- Check `lti_context_id = moodle_course_id::text` (confirmed by Student 2, 25 Nov, same comment). B3 section 3.1 makes the context id the Moodle course id, a positive integer in ASCII digits with no leading zero, so the two always have the same digits. Both are stored on purpose: `lti_context_id` is the launch value as received and is the lookup key; `moodle_course_id` is the integer that B4 confirmed, which Grading uses with `site_id` (Video stores no Moodle course id). The check stops them drifting apart.
 - One `site_id` per `iss`, taken from the platform registration. A table constraint cannot enforce this, so the gateway does.
 
 **Not stored**
