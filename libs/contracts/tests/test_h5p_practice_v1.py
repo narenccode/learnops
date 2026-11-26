@@ -8,20 +8,22 @@ AUTOMATED here:
     name, machine name or version, and a swapped pair, are rejected. The pins are written out in
     this file (PINNED) and the schema, the example, the contract text and the decision record
     must each agree with them;
-  * the schema and example define no cue key (cues.json belongs to B6), and the contract text keeps
-    its other open decisions marked and no longer lists the two the lab check settled;
+  * the schema and example define no cue key (cues.json belongs to B6); the contract text has no
+    OPEN DECISION left (the last three were settled on Issue #186, 2026-11-26), states the two
+    placement rules and points to the B6 cue schema, which exists;
   * `file` is defined in the h5p branch of the B1 schema only (guide's decision, Issue #44);
-  * the example package validates against B1; its ordinary practice item is ungraded, names a
-    lowercase .h5p path and comes right after the guide Page; the week keeps one Page and one
+  * the example package validates against B1; its ordinary practice items are ungraded, name a
+    lowercase .h5p path and form one run right after the guide Page; the week keeps one Page and one
     Assignment. These are checks on the EXAMPLE, not general enforcement;
   * no .h5p file exists anywhere in the repository (.gitignore does not block it).
 
-NOT automated here, so NOT claimed (contract text, section 8): placement and the one-Page,
-one-Assignment week in packages in general (B1.2 rule 1); video checkpoint placement (open); that
-the named file exists or really uses a pinned library and version; the lab-only rule for
-interactive video; CK-11 and CK-12 (Release 1); mentor approval of AI drafts; cues.json contents
-(the B6 schema does not exist yet); the number of practice items per week; and the lab check
-itself, which the guide did and this repository holds no evidence of beyond the decision record.
+NOT automated here, so NOT claimed (contract text, section 8): placement (the practice run and
+video checkpoints) and the one-Page, one-Assignment week in packages in general (B1.2 rule 1),
+which are rules for Studio and the video pipeline, not validation errors; that the named file
+exists or really uses a pinned library and version; the lab-only rule for interactive video; CK-11
+and CK-12 (Release 1); mentor approval of AI drafts; cues.json contents (the B6 schema and its
+tests own them); and the lab check itself, which the guide did and this repository holds no
+evidence of beyond the decision record.
 """
 
 from __future__ import annotations
@@ -288,7 +290,7 @@ def test_no_cue_key_is_defined_and_cues_are_left_to_b6(
     assert "defines no second format" in text  # cues.json is B6's
 
 
-def test_text_pins_the_types_and_keeps_only_the_open_decisions_still_open(
+def test_text_pins_the_types_and_has_no_open_decision_left(
     text: str,
 ) -> None:
     prose = " ".join(text.split())  # line wrapping in the Markdown must not matter
@@ -297,9 +299,13 @@ def test_text_pins_the_types_and_keeps_only_the_open_decisions_still_open(
         row = [r for r in rows if r.startswith(f"| {name} |")]
         assert len(row) == 1 and "to verify in the lab" not in row[0], name
     for phrase in (
-        "OPEN DECISION: the `ref` kinds",
-        "OPEN DECISION: several practice items",
-        "OPEN DECISION: video checkpoint placement",
+        # Settled on Issue #186 (guide, 2026-11-26): decisions 8, 9 and 10.
+        "one run directly after the guide Page",
+        "directly after the Page that embeds the lesson video",
+        "after the practice run",
+        "not validation errors",
+        "contracts/cues.v1.schema.json",
+        "Complete for Release 0",
         "Practice is optional",
         "never graded",
         "h5p_files_not_checked",
@@ -309,13 +315,17 @@ def test_text_pins_the_types_and_keeps_only_the_open_decisions_still_open(
         "/contract-change",
     ):
         assert phrase in prose, phrase
-    # The lab check settled these two (guide, 2026-11-11), and the text no longer lists them.
+    # No open decision is left: the lab check settled two (2026-11-11), Issue #186 the last three.
     for phrase in (
-        "OPEN DECISION: library versions",
-        "OPEN DECISION: the second row",
+        "OPEN DECISION",
         "cannot be frozen",
+        "PROVISIONAL",
+        "Draft. Not approved",
     ):
         assert phrase not in prose, phrase
+    assert (
+        CONTRACTS / "cues.v1.schema.json"
+    ).is_file()  # the schema the text points to
 
 
 # --- the B1 side and the example package ---------------------------------------------------
@@ -378,8 +388,9 @@ def test_example_week_is_standard_with_an_optional_practice_item(package: Doc) -
             if act["type"] != "h5p":
                 continue
             practice += 1
-            # Ordinary practice: right after the guide Page, by list order (no ordering field).
-            assert index > 0 and kinds[index - 1] == "page"
+            # Ordinary practice: one run right after the guide Page, by list order (no ordering
+            # field; decisions 3 and 8), so the item before it is the Page or another practice item.
+            assert index > 0 and kinds[index - 1] in {"page", "h5p"}
             assert act["graded"] is False and "points" not in act
             assert act["file"].endswith(".h5p")
             assert not (PACKAGE_DIR / act["file"]).exists()
