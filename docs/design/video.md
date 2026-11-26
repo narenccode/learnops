@@ -3,7 +3,7 @@
 **Module:** video — Student 4, Video Pipeline
 **Owner:** Nagashree V (GitHub: vnaags) · **Peer reviewer:** Harshithamanjunatha
 **Release(s):** Release 3 (core), Release 5 (stretch)
-**Status:** In review
+**Status:** Approved
 
 `Status` values: `Draft` → `In review` (peer reviewing) → `Approved`. **Only the guide sets
 `Approved`**, in a pull request the guide merges. Feature code for this module starts only when the
@@ -13,8 +13,10 @@ status is `Approved` (foundation work listed in §13 under "Release 0" is allowe
 > structure follows `docs/design/TEMPLATE.md`. Where the PRD is silent, this revision wrote a
 > **Proposed** design. The guide's assistant answered the numbered questions **Q1–Q16** on 2026-11-19
 > (PR #140, §12); items he confirmed are marked **Confirmed (Qn)**. The answers address those
-> questions, **not the approval**: the owner marked this document `In review` on 2026-11-25, and
-> only the guide sets `Approved`. Nothing here changes a contract or the PRD.
+> questions, **not the approval**. The owner marked this document `In review` on 2026-11-25; the
+> guide approved it, with his answer to Q17, in [this comment](https://github.com/narenccode/learnops/issues/186#issuecomment-7176861189)
+> (posted 2026-11-26). Only the guide sets `Approved`, by merging the pull request that records it.
+> Items marked **Proposed** keep that label. Nothing here changes a contract or the PRD.
 
 ## 1. Purpose and scope
 
@@ -331,16 +333,16 @@ Other handling:
 - **Test data only:** test data only (§B8) [C-07]; B8.5 lectures are recorded with written consent or openly licensed; no real learner data in any set [§B8].
 - **Untrusted input:** uploads, handled as SEC-05.
 
-**AI output is a draft until a mentor approves it [C-09]** (**Proposed**; how it is recorded is a question for the guide, Q17).
+**AI output is a draft until a mentor approves it [C-09]** (**Proposed**; accepted by the guide as proposed, [Q17 answer](https://github.com/narenccode/learnops/issues/186#issuecomment-7176861189)).
 
 The pipeline produces three kinds of AI output that reach learners: the transcript and captions (speech, B5.4), the chapters (B5.1) and the summary (B5.1, behind a feature flag). Checkpoint questions (FR-V-14, stretch) are already mentor-approved only. Until a mentor approves them, the first three are drafts.
 
 - **Review state.** A lesson is `draft` until a mentor has approved its outputs, and `approved` afterwards. This is separate from its processing state (`ready` still means "processed", as in FR-V-10). Editing a chapter title does not approve it.
-- **Approval.** A mentor of the lesson's course (or an administrator, see Q17) approves from the lesson detail page. The approval records who and when, and writes an audit entry [OPS-06].
+- **Approval.** A mentor of the lesson's course (or an administrator, Q17) approves from the lesson detail page. The approval records who and when, and writes an audit entry [OPS-06].
 - **No snippet before approval.** The embed snippet and path of FR-V-13 are given only for an approved lesson. Before that, the page says "AI draft, not reviewed: approve it to get the embed snippet", and the status list shows "ready (AI draft)".
 - **A re-process never publishes unapproved output.** For a lesson that already has approved outputs, a re-process (FR-V-11) finishes into a waiting place (under a `.pending/` prefix of the course folder, like the `.trash/` prefix used for removal) and the approved outputs keep being served at the lesson path, so a snippet already pasted into a Moodle Page keeps showing approved captions, chapters and summary. The lesson detail page shows "a newer AI version is waiting for approval". Approving swaps the new folder in atomically and records the approver; a later re-process replaces the waiting version. A mentor of the course (or an administrator) can also **discard** a waiting version from the lesson detail page: it is deleted from `.pending/`, `pending_pipeline_version` is cleared, the approved outputs stay served, and an audit entry is written [OPS-06]. If no version is waiting, or a re-process job is still running and has not reached `.pending/`, `discard-pending` answers 409 with a clear message, writes no audit entry and deletes nothing; it never cancels a running job. `approve` and `discard-pending` both check `pending_pipeline_version` in the same transaction, so when two people act on the same waiting version at once exactly one wins and the other gets that 409. Removing a lesson removes its waiting version with it. **Nothing under `.pending/` or `.trash/` is served as media** (**Proposed**): the course folder is the media store that Moodle plays from by relative path, so the web server and proxy configuration must expose lesson folders only, never these two prefixes; otherwise unapproved or removed files would be reachable by anyone who guesses a path.
-- **What this does not do.** It does not change B6: the manifest and the lesson folder stay as the contract says, so the review state lives in `video.lesson`, not in `lesson.json`. For a **first** run, the AI files are written to the lesson folder, which has a predictable path, before anyone approves; the snippet is withheld, but someone who already knows the path could link to the files. That case is part of Q17.
-- **Summary.** `summary.en.md` follows the same rule; if the guide prefers, it is written to the lesson folder only after approval (Q17).
+- **What this does not do.** It does not change B6: the manifest and the lesson folder stay as the contract says, so the review state lives in `video.lesson`, not in `lesson.json`. For a **first** run, the AI files are written to the lesson folder, which has a predictable path, before anyone approves; the snippet is withheld, but someone who already knows or guesses the path could link to the files. **Accepted limitation** ([Q17 answer](https://github.com/narenccode/learnops/issues/186#issuecomment-7176861189)): a first run may sit at its path before approval, so while B6.4 signing is `none` an unapproved first-run output is reachable by anyone who guesses its path. Re-processed output is not affected, because it waits under `.pending/`, which is never served.
+- **Summary.** `summary.en.md` follows the same rule (Q17).
 
 **For `docs/data-map.md`** (every data item stored or sent, where, for how long, and why [§E6]):
 
@@ -443,14 +445,15 @@ The answers address the questions Q1–Q16 and the sections they name; they are 
 | Q15 | `shared.audit_log` kept 90 days, including the LTI `sub`; record it in the data map. | §9 |
 | Q16 | App-C 9 is in scope: Student 4 checks Moodle 5.3's own AI features for overlap with chapters and summaries. | §12 |
 
+**Q17, answered** ([guide's answer](https://github.com/narenccode/learnops/issues/186#issuecomment-7176861189), posted 2026-11-26): how C-09 is met for captions, chapters and summary is accepted as proposed in §9: a `review_state` on the lesson, a snippet given only after approval, and re-processed output that waits aside while the approved version keeps being served. (1) A first run may sit at its path before approval, with the exposure recorded in §9 as an accepted limitation. (2) An administrator may approve. (3) A re-process of an approved lesson waits for approval. The design text keeps its **Proposed** label.
+
 ### Still open after the answers
 
 - **Q9, the speech engine:** stays PENDING. The guide parked ADR 0002 on 2026-11-23 (PR #98, merged): the lab speech endpoint does not exist yet, so there are no lab facts to record, and he will post the non-secret facts when it is built. No engine is chosen.
 - **Q10, the ffmpeg build:** the lab image's `ffmpeg -version` output (with its configuration) must be sent to the guide first; the guide said on 2026-11-23 it is needed when the Release 3 pipeline relies on an LGPL build. Until then the H.264/AAC output from an LGPL build is not shown to be possible. **Compliance status:** the Lesson Processor demo (PR #129) runs whatever ffmpeg is installed locally or by `apt` in CI, and encodes with `libx264`, which is a GPL encoder. The guide recorded a narrow exception for the demo only on 2026-11-22 (decision 0013, PR #129): ffmpeg runs as a separate program, nothing is added to `requirements.txt`, and the status stays "ffmpeg with libx264 is GPL; not an approved production build". The exception ends when the demo is removed or replaced and is not a precedent: the demo is a local demonstration, and its encoder must not be read as the build chosen for the pipeline. The production build is the LGPL build of Q10, once its configuration is shown. **Fallback (Proposed, for the guide):** if the lab build cannot produce H.264/AAC without GPL parts, one of: (a) an LGPL ffmpeg build with an H.264 encoder whose licence the guide approves (the candidate and its licence are read and recorded first, CLAUDE.md §2.10); (b) a narrow written exception for the pipeline, like decision 0013 but limited to it; or (c) a change of the output codec, which is a PRD change that only the guide can make. Until one of them is chosen, the transcode step (work row 9, FR-V-03) does not start.
 - **Q14, a hosted production provider:** not chosen.
-- **Q17, how C-09 is met for captions, chapters and summary (proposed):** a `review_state` on the lesson, a snippet that is given only after a mentor approves, and re-processed output that waits aside until approved while the approved version keeps being served (§9). The guide decides: (1) whether this is enough for a **first** run, where the AI files sit at a predictable path before approval, or whether they must stay out of the lesson folder until approval, which would change when `lesson.json` can be written (FR-V-08) and the 30-minute target for G-7; (2) whether an **administrator** may approve, since C-09 says "mentor"; (3) whether a re-process of an approved lesson should wait for approval at all, which the proposal says yes to.
 - **`tusd` and `boto3`:** licences read on 2026-11-19; versions are pinned in the PR that adds each one.
-- **Approval:** this document is `In review` (marked by the owner on 2026-11-25, with the owner box in §14 ticked). The peer reviewer checks it next; only the guide sets `Approved`, in a pull request he merges.
+- **Approval:** the guide approved this document ([comment](https://github.com/narenccode/learnops/issues/186#issuecomment-7176861189), posted 2026-11-26); it takes effect when he merges the pull request that sets `Status: Approved`.
 
 Other items stay in §4 and §13: the B8.5 evidence, App-C 4 (lab run) and App-C 7 (WER baseline) need lab work, not a decision.
 
@@ -490,4 +493,4 @@ Demonstration code outside this plan: the paths demo (PR #117, merged) and the l
 - [x] Owner: I understand and can explain every section.
 - [x] Peer reviewer: checked against the PRD chapter and the contracts; comments resolved.
   - Limits of the peer check: it was a first pass against PRD C4, the contracts the module provides and uses, `modules/video/CLAUDE.md` and the template. It does **not** cover the "verified" library versions and licences, the ffmpeg build (Q10 is the guide's), `tusd` hook behaviour, BigBlueButton metadata (App-C 4, a lab item), the B6 schema details, or `.env.example` against §6. The design was read as it stands on `main` after #240 (merged; commit `46e6301`), including the check for the creating `POST`, the CSRF and `Origin` rule, the same-platform administrator rule and `last_activity_at`; no advice item is left open. The peer check is not the guide's approval.
-- [ ] Guide: approved (sets `Status: Approved`).
+- [x] Guide: approved (sets `Status: Approved`) ([comment](https://github.com/narenccode/learnops/issues/186#issuecomment-7176861189)).
