@@ -3,7 +3,7 @@
   "$id": "urn:learnops:contract:course-model:v1",
   "title": "LearnOps course model (B2, v1)",
   "description": "DRAFT: freeze candidate for Release 0, pending the required approvals and merge. Not yet approved or frozen. Confirmed decisions and open items are recorded in docs/decisions/0003-b2-course-model.md. Items that are still unresolved are listed only in section 3 of that record, so a field is settled only when the record says so. A normalised JSON description of a course, read by the checker and built from a Moodle backup (.mbz) or a course package (PRD B2). It describes what a course IS, including a broken course, so that the checker can report the problem. This schema checks structure only and must never reject a course-design error.",
-  "$comment": "Unknown fields are allowed on purpose: after Release 0 contracts change only by adding optional fields and readers ignore unknown fields (PRD B.0, A9, EXT-02). A null means the source does not carry the value, for example a package has no Moodle visibility setting, or that the item does not exist, as stated on each field. For visible and completion_enabled, null never means false, and the checker treats it as cannot judge, not as a fault. Deliberately NOT enforced here, because a course that breaks them must still validate so that a rule can report it: unique or well-formed idnumbers (CK-06), protected items (CK-07), points summing to the target (CK-03), references inside availability, criteria or badges pointing at real activities (CK-04, CK-08), circular unlock rules (CK-05), completion rules that can be met (CK-02), a valid marking table with matching points (CK-09), marking workflow being on (CK-10), H5P having no grade item (CK-11), relative media paths (CK-12), and completion tracking on activities used in unlock rules (CK-13). The inner form of availability belongs to Moodle and is not described here. Unique cmid values are not enforced either; the model builder guarantees them. CK-07 compares protected items field by field against a supplied reference model of the template course, using the same comparison as FR-C-05; there are no fingerprints. The model holds no body text or attached files, so a change to those cannot be seen.",
+  "$comment": "Unknown fields are allowed on purpose: after Release 0 contracts change only by adding optional fields and readers ignore unknown fields (PRD B.0, A9, EXT-02). A null means the source does not carry the value, for example a package has no Moodle visibility setting, or that the item does not exist, as stated on each field. For visible and completion_enabled, null never means false, and the checker reports the affected rule as `not checked`, not as a fault. Deliberately NOT enforced here, because a course that breaks them must still validate so that a rule can report it: unique or well-formed idnumbers (CK-06), protected items (CK-07), points summing to the target (CK-03), references inside availability, criteria or badges pointing at real activities (CK-04, CK-08), circular unlock rules (CK-05), completion rules that can be met (CK-02), a valid marking table with matching points (CK-09), marking workflow being on (CK-10), H5P having no grade item (CK-11), relative media paths (CK-12), and completion tracking on activities used in unlock rules (CK-13). The inner form of availability belongs to Moodle and is not described here. Unique cmid values are not enforced either; the model builder guarantees them. CK-07 compares protected items field by field against a supplied reference model of the template course, using the same comparison as FR-C-05; there are no fingerprints. The model holds no body text or attached files, so a change to those cannot be seen.",
   "type": "object",
   "required": ["schema", "source", "course", "sections", "course_completion", "badges"],
   "properties": {
@@ -35,7 +35,7 @@
     },
     "visible": {
       "type": ["boolean", "null"],
-      "description": "null means the source does not say, as in a package. It never means false: the checker treats it as cannot judge, not as a fault."
+      "description": "null means the source does not say, as in a package. It never means false: the checker reports the affected rule as `not checked`, not as a fault."
     },
     "availability": {
       "type": ["object", "null"],
@@ -121,7 +121,7 @@
         },
         "completion_enabled": {
           "type": ["boolean", "null"],
-          "description": "Course-level completion tracking. null means the source does not say, as in a package. It never means false: the checker treats it as cannot judge, not as a fault."
+          "description": "Course-level completion tracking. null means the source does not say, as in a package. It never means false: the checker reports the affected rule as `not checked`, not as a fault."
         },
         "total_points": {
           "type": ["number", "null"],
