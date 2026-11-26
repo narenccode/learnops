@@ -4,8 +4,9 @@ Every AI call in LearnOps goes through this library (root `CLAUDE.md` rule 6, PR
 calls a provider SDK directly.
 
 **Status: partial FR-M-01 skeleton.** It is safe to build and test against with the fake provider.
-It cannot call a real model yet. See [Not implemented](#not-implemented). Speech (FR-M-02) is not
-built.
+It cannot call a real model yet. See [Not implemented](#not-implemented). Speech (FR-M-02) is a skeleton too
+(see [Speech interface](#speech-interface-fr-m-02-skeleton)): the call, the provider rules and the logging exist and
+are mock-tested; no real speech service is called.
 
 Contract: `contracts/model-interface.v1.schema.json`. Guide's decisions:
 `docs/decisions/0001-b5-model-interface-v1.md`.
