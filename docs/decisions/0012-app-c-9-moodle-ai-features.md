@@ -2,8 +2,8 @@
 
 **Date:** 2026-11-22
 **Status:** **Source-checked, and checked on the lab Moodle 5.3 site on 2026-11-24** (section "Lab result"
-below). Moodle 4.5 is not tested. No scope change is decided here; the guide decides.
-**Guide's answer (2026-11-26):** proposed outcome approved as written; the lab 5.3 check is sufficient (no production site is named); App-C 9 complete for the Release 0 freeze ([comment](https://github.com/narenccode/learnops/issues/186#issuecomment-7186023695)). No scope change for Video or Course Studio: Course Studio's only AI feature is FR-S-12 (practice questions, drafted via B5 and reviewed), which is not the editor's free-text "Generate AI content". Moodle's AI features are a site administrator's choice; LearnOps does not assume them on or off (EXT-04). This supersedes the open points below.
+below). Moodle 4.5 is not tested. **The guide approved the proposed outcome on 2026-11-26** ([comment](https://github.com/narenccode/learnops/issues/186#issuecomment-7186023695)): no scope change.
+**Guide's answer (2026-11-26):** proposed outcome approved as written; the lab 5.3 check is sufficient (no production site is named); App-C 9 complete for the Release 0 freeze ([comment](https://github.com/narenccode/learnops/issues/186#issuecomment-7186023695)). No scope change for Video or Course Studio: Course Studio's only AI feature is FR-S-12 (practice questions, drafted via B5 and reviewed), which is not the editor's free-text "Generate AI content". Moodle's AI features are a site administrator's choice; LearnOps does not assume them on or off (EXT-04).
 **Owner:** Student 4 (Video), as the guide set on draft PR #140 (Q16)
 **Requirement:** PRD App-C item 9: "Which AI features Moodle 5.3 itself provides, so LearnOps doesn't
 duplicate them (record any overlap and adjust scope)." App-C and §D1 assign item 9 to Release 0.
@@ -39,8 +39,8 @@ produces chapters, captions or a slide index. A GitHub code search for "transcri
 |---|---|---|
 | FR-V-04 captions and transcript (speech to text) | None | **None.** |
 | FR-V-05 chapters | None | **None.** |
-| FR-V-06 summary of a lesson (draft file `summary.en.md`, mentor-approved, C-09) | `summarise_text` summarises the **text it is given** (in the `courseassist` placement, the course page content), on demand, inside Moodle | **Same kind of capability, different place and purpose.** Moodle's runs live, for a learner or teacher, on text in Moodle; the pipeline writes a draft file from a **video transcript** for a mentor to approve before it reaches learners. It does not replace FR-V-06 and no scope change is proposed for Video. Whether a mentor could instead ask Moodle to summarise a transcript pasted into a Page is outside this record. |
-| FR-S (Course Studio, Module 1): generating course text | `generate_text`, `generate_image` in the editor | **Possible overlap for Module 1**, not for Video. Recorded for the Module 1 owner and the guide; this record did not decide it. **Decided 2026-11-26:** Course Studio's only AI feature is FR-S-12 (practice questions, drafted via B5 and reviewed), not the editor's free-text "Generate AI content"; no scope change. |
+| FR-V-06 summary of a lesson (draft file `summary.en.md`, mentor-approved, C-09) | `summarise_text` summarises the **text it is given** (in the `courseassist` placement, the course page content), on demand, inside Moodle | **Same kind of capability, different place and purpose.** Moodle's runs live, for a learner or teacher, on text in Moodle; the pipeline writes a draft file from a **video transcript** for a mentor to approve before it reaches learners. It does not replace FR-V-06 and there is no scope change for Video. Whether a mentor could instead ask Moodle to summarise a transcript pasted into a Page is outside this record. |
+| FR-S (Course Studio, Module 1): generating course text | `generate_text`, `generate_image` in the editor | **No overlap.** Course Studio's only AI feature is FR-S-12 (practice questions, drafted via B5 and reviewed), which is not the editor's free-text "Generate AI content". No Course Studio scope change ([guide, 2026-11-26](https://github.com/narenccode/learnops/issues/186#issuecomment-7186023695)). |
 | Model and speech providers (`libs/model_interface`) | Seven provider plugins configured in Moodle | **No conflict.** LearnOps does not use Moodle's AI subsystem (C-02 allows only backup and restore, web services, LTI and a browser) and keeps its own provider interface (C-10). |
 
 ## Lab result (Moodle 5.3 lab site, 2026-11-24)
@@ -67,13 +67,13 @@ credential or key is recorded. The site runs **Moodle 5.3+ (Build: 20261030), ve
 overlap with a running Moodle AI feature there today. The overlap rows above still describe what an
 administrator could switch on (EXT-04: LearnOps must not assume either state).
 
-## Proposed outcome (for the guide)
+## Outcome (proposed in this record, approved by the guide on 2026-11-26)
 
-- **Video scope: no change proposed.** The Video features work on transcripts and video, which Moodle 5.3 does not offer.
-- **Module 1:** the guide or the Module 1 owner decides whether Course Studio's text generation duplicates the editor's "Generate AI content". **Decided 2026-11-26:** it does not; Course Studio's only AI feature is FR-S-12 (see the guide's answer above), and its scope does not change.
+- **Video scope: no change.** The Video features work on transcripts and video, which Moodle 5.3 does not offer.
+- **Course Studio (Module 1): no scope change.** Its only AI feature is FR-S-12 (practice questions, drafted via B5 and reviewed), which is not the editor's free-text "Generate AI content" ([guide, 2026-11-26](https://github.com/narenccode/learnops/issues/186#issuecomment-7186023695)).
 - **Moodle's AI features are an administrator's choice** and may be off or unconfigured on a given site; LearnOps must not assume them (EXT-04).
 
-## Still to do (nothing is open since 2026-11-26)
+## Follow-up items (all closed on 2026-11-26)
 
 1. ~~Someone with administrator rights on the **lab Moodle 5.3 site** checks Site administration, AI: which
    providers and placements are installed and enabled, and which Moodle build the site really runs.~~
