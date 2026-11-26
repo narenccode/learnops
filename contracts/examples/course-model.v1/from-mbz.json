@@ -32,7 +32,7 @@
           "availability": null,
           "completion": { "tracking": "manual" },
           "grade_item": null,
-          "media_refs": ["build-ai-assistant/wk-01/slides.pdf"]
+          "media_refs": ["build-ai-assistant/wk-01/diagram.png"]
         },
         {
           "type": "h5p",

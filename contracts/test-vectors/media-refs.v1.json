@@ -1,0 +1,518 @@
+{
+  "$comment": "Shared test vectors for the CK-12 scope of the B2 `media_refs` field (decision 0003 #16; checker design, CK-12). Sources: the guide's decision on issue #232 (https://github.com/narenccode/learnops/issues/232#issuecomment-7176861868), item 6, and the M1 scope confirmation and review by Akshita on the same issue (https://github.com/narenccode/learnops/issues/232#issuecomment-7183976351), which asks for the cases marked 'm1-scope-confirmed'. The guide's decision: the embedded-media scope listed on that issue is the v1 definition; data: URIs are not flagged in v1; ordinary links, PDFs and iframes are not checked in v1; one shared extractor in the FR-C-01 model builder, which Course Studio reuses. Pure data: no code. Each case gives the text of one activity body ('format' markdown or html; 'input_kind' package or mbz, where an .mbz body is the HTML as the builder reads it) and what an extractor must produce and CK-12 must report. 'expected.media_refs' is the exact list of in-scope embedded-media references found, as written, in document order: every in-scope reference is listed, whether it is a full URL, a protocol-relative URL, a relative path, a Moodle @@PLUGINFILE@@/... reference or a data: URI, and each URL of an srcset is its own entry without its descriptor; an excluded construct (an ordinary link, a PDF link or an iframe) is not listed. 'expected.ck12_flagged' is the part of that list CK-12 reports as a full fixed URL: http://, https:// or a protocol-relative //host/ reference (the guide's list; checker design, CK-12). A Moodle @@PLUGINFILE@@/... reference, a relative path and a data: URI are not flagged. A null means the decision does not settle that part: a test must assert nothing about a null field. Status 'derived': follows directly from the guide's scope. Status 'm1-scope-confirmed': follows from Akshita's confirmation of the scope on issue #232 and her reading that media_refs lists every in-scope reference, which the guide's text does not state in so many words (the guide decided only that data: URIs are not flagged and that @@PLUGINFILE@@ paths pass). It is not a formal approval: that is given on the pull request, and these cases need the guide's agreement or Akshita's approval there. Status 'open-point': records a point that is not decided and asserts nothing about the undecided part. In the open-point case the ftp: reference is listed because that follows Akshita's listing interpretation (the same one as for data: and relative paths); only its CK-12 flagging is undecided, so only ck12_flagged is null. Open point: whether CK-12 flags a URI scheme other than http:, https: and data: (for example ftp: or file:). The guide's list names http://, https:// and //host/; Akshita proposes flagging any scheme other than data:, or else writing the other schemes as 'not checked in v1'. Not covered because the decisions do not say: attribute and tag case, quoting styles, Markdown image titles, duplicate references, unescaping of XML in .mbz content, and an img nested in a link. The scope names 'audio' and 'track' with the attribute src, as in the guide's listing; the checker design's CK-12 row names them without attributes. These vectors are not an extractor and there is no test-only extractor: the model-builder extractor (FR-C-01, Release 1) must pass them, and Course Studio reuses that extractor. Approval of the B2 contract change by the affected M1 owner is tracked separately, not in this file.",
+  "version": 1,
+  "cases": [
+    {
+      "id": "markdown-image-inline",
+      "title": "Markdown inline image with a full https URL",
+      "status": "derived",
+      "covers": [
+        "markdown-image-inline",
+        "flag-https"
+      ],
+      "input_kind": "package",
+      "body": {
+        "format": "markdown",
+        "text": "![Diagram](https://example.invalid/media/diagram.png)"
+      },
+      "expected": {
+        "media_refs": [
+          "https://example.invalid/media/diagram.png"
+        ],
+        "ck12_flagged": [
+          "https://example.invalid/media/diagram.png"
+        ]
+      }
+    },
+    {
+      "id": "markdown-image-reference-style",
+      "title": "Markdown reference-style image: the reference is the URL of the definition, as written",
+      "status": "derived",
+      "covers": [
+        "markdown-image-reference-style",
+        "flag-https"
+      ],
+      "input_kind": "package",
+      "body": {
+        "format": "markdown",
+        "text": "![Diagram][fig]\n\n[fig]: https://example.invalid/media/diagram.png"
+      },
+      "expected": {
+        "media_refs": [
+          "https://example.invalid/media/diagram.png"
+        ],
+        "ck12_flagged": [
+          "https://example.invalid/media/diagram.png"
+        ]
+      }
+    },
+    {
+      "id": "html-img-src",
+      "title": "HTML img: src",
+      "status": "derived",
+      "covers": [
+        "html-img-src",
+        "flag-https"
+      ],
+      "input_kind": "package",
+      "body": {
+        "format": "html",
+        "text": "<p><img src=\"https://example.invalid/a.png\" alt=\"A\"></p>"
+      },
+      "expected": {
+        "media_refs": [
+          "https://example.invalid/a.png"
+        ],
+        "ck12_flagged": [
+          "https://example.invalid/a.png"
+        ]
+      }
+    },
+    {
+      "id": "html-img-srcset-single-candidate",
+      "title": "HTML img: srcset with one candidate and no descriptor",
+      "status": "derived",
+      "covers": [
+        "html-img-srcset",
+        "flag-https"
+      ],
+      "input_kind": "package",
+      "body": {
+        "format": "html",
+        "text": "<img srcset=\"https://example.invalid/a.png\" alt=\"A\">"
+      },
+      "expected": {
+        "media_refs": [
+          "https://example.invalid/a.png"
+        ],
+        "ck12_flagged": [
+          "https://example.invalid/a.png"
+        ]
+      }
+    },
+    {
+      "id": "html-video-src",
+      "title": "HTML video: src",
+      "status": "derived",
+      "covers": [
+        "html-video-src",
+        "flag-https"
+      ],
+      "input_kind": "package",
+      "body": {
+        "format": "html",
+        "text": "<video src=\"https://example.invalid/v.mp4\"></video>"
+      },
+      "expected": {
+        "media_refs": [
+          "https://example.invalid/v.mp4"
+        ],
+        "ck12_flagged": [
+          "https://example.invalid/v.mp4"
+        ]
+      }
+    },
+    {
+      "id": "html-video-poster",
+      "title": "HTML video: poster",
+      "status": "derived",
+      "covers": [
+        "html-video-poster",
+        "flag-https"
+      ],
+      "input_kind": "package",
+      "body": {
+        "format": "html",
+        "text": "<video poster=\"https://example.invalid/p.png\"></video>"
+      },
+      "expected": {
+        "media_refs": [
+          "https://example.invalid/p.png"
+        ],
+        "ck12_flagged": [
+          "https://example.invalid/p.png"
+        ]
+      }
+    },
+    {
+      "id": "html-audio-src",
+      "title": "HTML audio: src",
+      "status": "derived",
+      "covers": [
+        "html-audio-src",
+        "flag-https"
+      ],
+      "input_kind": "package",
+      "body": {
+        "format": "html",
+        "text": "<audio src=\"https://example.invalid/a.mp3\"></audio>"
+      },
+      "expected": {
+        "media_refs": [
+          "https://example.invalid/a.mp3"
+        ],
+        "ck12_flagged": [
+          "https://example.invalid/a.mp3"
+        ]
+      }
+    },
+    {
+      "id": "html-source-src",
+      "title": "HTML source (inside video): src",
+      "status": "derived",
+      "covers": [
+        "html-source-src",
+        "flag-https"
+      ],
+      "input_kind": "package",
+      "body": {
+        "format": "html",
+        "text": "<video><source src=\"https://example.invalid/v.webm\"></video>"
+      },
+      "expected": {
+        "media_refs": [
+          "https://example.invalid/v.webm"
+        ],
+        "ck12_flagged": [
+          "https://example.invalid/v.webm"
+        ]
+      }
+    },
+    {
+      "id": "html-source-srcset-single-candidate",
+      "title": "HTML source (inside picture): srcset with one candidate and no descriptor",
+      "status": "derived",
+      "covers": [
+        "html-source-srcset",
+        "flag-https"
+      ],
+      "input_kind": "package",
+      "body": {
+        "format": "html",
+        "text": "<picture><source srcset=\"https://example.invalid/a.webp\"></picture>"
+      },
+      "expected": {
+        "media_refs": [
+          "https://example.invalid/a.webp"
+        ],
+        "ck12_flagged": [
+          "https://example.invalid/a.webp"
+        ]
+      }
+    },
+    {
+      "id": "html-track-src",
+      "title": "HTML track (inside video): src",
+      "status": "derived",
+      "covers": [
+        "html-track-src",
+        "flag-https"
+      ],
+      "input_kind": "package",
+      "body": {
+        "format": "html",
+        "text": "<video><track src=\"https://example.invalid/c.vtt\"></video>"
+      },
+      "expected": {
+        "media_refs": [
+          "https://example.invalid/c.vtt"
+        ],
+        "ck12_flagged": [
+          "https://example.invalid/c.vtt"
+        ]
+      }
+    },
+    {
+      "id": "mbz-html-body-full-url",
+      "title": "HTML body from an .mbz backup: a full https URL is extracted and flagged like a package body",
+      "status": "derived",
+      "covers": [
+        "activity-body-mbz-html",
+        "html-img-src",
+        "flag-https"
+      ],
+      "input_kind": "mbz",
+      "body": {
+        "format": "html",
+        "text": "<div class=\"no-overflow\"><p>See the diagram:</p><p><img src=\"https://example.invalid/diagram.png\" alt=\"Diagram\"></p></div>"
+      },
+      "expected": {
+        "media_refs": [
+          "https://example.invalid/diagram.png"
+        ],
+        "ck12_flagged": [
+          "https://example.invalid/diagram.png"
+        ]
+      }
+    },
+    {
+      "id": "mbz-html-body-pluginfile-is-relative",
+      "title": "HTML body from an .mbz backup: a Moodle @@PLUGINFILE@@ reference is relative: it is listed and it passes",
+      "status": "m1-scope-confirmed",
+      "covers": [
+        "activity-body-mbz-html",
+        "html-img-src",
+        "pluginfile-relative"
+      ],
+      "input_kind": "mbz",
+      "body": {
+        "format": "html",
+        "text": "<p><img src=\"@@PLUGINFILE@@/diagram.png\" alt=\"Diagram\"></p>"
+      },
+      "expected": {
+        "media_refs": [
+          "@@PLUGINFILE@@/diagram.png"
+        ],
+        "ck12_flagged": []
+      }
+    },
+    {
+      "id": "markdown-image-http",
+      "title": "Markdown image with a full http URL",
+      "status": "derived",
+      "covers": [
+        "markdown-image-inline",
+        "flag-http"
+      ],
+      "input_kind": "package",
+      "body": {
+        "format": "markdown",
+        "text": "![Diagram](http://example.invalid/media/diagram.png)"
+      },
+      "expected": {
+        "media_refs": [
+          "http://example.invalid/media/diagram.png"
+        ],
+        "ck12_flagged": [
+          "http://example.invalid/media/diagram.png"
+        ]
+      }
+    },
+    {
+      "id": "html-img-protocol-relative",
+      "title": "HTML img with a protocol-relative URL (//host/...): flagged",
+      "status": "derived",
+      "covers": [
+        "html-img-src",
+        "flag-protocol-relative"
+      ],
+      "input_kind": "package",
+      "body": {
+        "format": "html",
+        "text": "<img src=\"//cdn.example.invalid/a.png\" alt=\"A\">"
+      },
+      "expected": {
+        "media_refs": [
+          "//cdn.example.invalid/a.png"
+        ],
+        "ck12_flagged": [
+          "//cdn.example.invalid/a.png"
+        ]
+      }
+    },
+    {
+      "id": "data-uri-is-listed-and-not-flagged",
+      "title": "A data: URI in an img src is listed in media_refs as written and is not flagged in v1",
+      "status": "m1-scope-confirmed",
+      "covers": [
+        "data-uri-listed-not-flagged",
+        "html-img-src"
+      ],
+      "input_kind": "package",
+      "body": {
+        "format": "html",
+        "text": "<img src=\"data:image/png;base64,iVBORw0KGgo=\" alt=\"dot\">"
+      },
+      "expected": {
+        "media_refs": [
+          "data:image/png;base64,iVBORw0KGgo="
+        ],
+        "ck12_flagged": []
+      }
+    },
+    {
+      "id": "html-img-srcset-several-candidates",
+      "title": "An img srcset with several candidates: each URL is its own media_refs entry, without its descriptor",
+      "status": "m1-scope-confirmed",
+      "covers": [
+        "srcset-one-entry-per-url",
+        "html-img-srcset",
+        "flag-https"
+      ],
+      "input_kind": "package",
+      "body": {
+        "format": "html",
+        "text": "<img srcset=\"https://example.invalid/a.png 1x, https://example.invalid/b.png 2x\" alt=\"A\">"
+      },
+      "expected": {
+        "media_refs": [
+          "https://example.invalid/a.png",
+          "https://example.invalid/b.png"
+        ],
+        "ck12_flagged": [
+          "https://example.invalid/a.png",
+          "https://example.invalid/b.png"
+        ]
+      }
+    },
+    {
+      "id": "relative-path-is-listed-and-not-flagged",
+      "title": "A plain relative media path is listed in media_refs as written and is not flagged",
+      "status": "m1-scope-confirmed",
+      "covers": [
+        "relative-path-listed-not-flagged",
+        "markdown-image-inline"
+      ],
+      "input_kind": "package",
+      "body": {
+        "format": "markdown",
+        "text": "![Diagram](media/week-01/diagram.png)"
+      },
+      "expected": {
+        "media_refs": [
+          "media/week-01/diagram.png"
+        ],
+        "ck12_flagged": []
+      }
+    },
+    {
+      "id": "raw-html-inside-a-markdown-body",
+      "title": "Raw HTML media elements inside a package's Markdown body are covered like an HTML body",
+      "status": "m1-scope-confirmed",
+      "covers": [
+        "html-in-markdown-body",
+        "html-img-src",
+        "html-audio-src",
+        "flag-https"
+      ],
+      "input_kind": "package",
+      "body": {
+        "format": "markdown",
+        "text": "Listen and look:\n\n<img src=\"https://example.invalid/a.png\" alt=\"A\">\n\n<audio src=\"https://example.invalid/a.mp3\"></audio>"
+      },
+      "expected": {
+        "media_refs": [
+          "https://example.invalid/a.png",
+          "https://example.invalid/a.mp3"
+        ],
+        "ck12_flagged": [
+          "https://example.invalid/a.png",
+          "https://example.invalid/a.mp3"
+        ]
+      }
+    },
+    {
+      "id": "other-uri-scheme-flagging-is-open",
+      "title": "A reference with a URI scheme other than http:, https: and data: (ftp:) is listed; whether CK-12 flags it is not decided",
+      "status": "open-point",
+      "covers": [
+        "other-scheme-flagging-open",
+        "html-img-src"
+      ],
+      "input_kind": "package",
+      "body": {
+        "format": "html",
+        "text": "<img src=\"ftp://example.invalid/a.png\" alt=\"A\">"
+      },
+      "expected": {
+        "media_refs": [
+          "ftp://example.invalid/a.png"
+        ],
+        "ck12_flagged": null
+      }
+    },
+    {
+      "id": "excluded-ordinary-link",
+      "title": "An ordinary link (Markdown and HTML) is excluded in v1: not listed, no finding",
+      "status": "derived",
+      "covers": [
+        "excluded-ordinary-link"
+      ],
+      "input_kind": "package",
+      "body": {
+        "format": "markdown",
+        "text": "Read [the guide](https://example.invalid/guide) or <a href=\"https://example.invalid/guide\">open it here</a>."
+      },
+      "expected": {
+        "media_refs": [],
+        "ck12_flagged": []
+      }
+    },
+    {
+      "id": "excluded-pdf-link",
+      "title": "A link to a PDF (Markdown and HTML) is excluded in v1: not listed, no finding",
+      "status": "derived",
+      "covers": [
+        "excluded-pdf-link"
+      ],
+      "input_kind": "package",
+      "body": {
+        "format": "markdown",
+        "text": "Download [the handout](https://example.invalid/handout.pdf) or <a href=\"https://example.invalid/handout.pdf\">the handout</a>."
+      },
+      "expected": {
+        "media_refs": [],
+        "ck12_flagged": []
+      }
+    },
+    {
+      "id": "excluded-iframe-embed",
+      "title": "An iframe embed is excluded in v1: not listed, no finding",
+      "status": "derived",
+      "covers": [
+        "excluded-iframe"
+      ],
+      "input_kind": "package",
+      "body": {
+        "format": "html",
+        "text": "<iframe src=\"https://example.invalid/embed/video\" width=\"560\" height=\"315\"></iframe>"
+      },
+      "expected": {
+        "media_refs": [],
+        "ck12_flagged": []
+      }
+    },
+    {
+      "id": "embedded-media-next-to-excluded-constructs",
+      "title": "One body with an embedded image and the three excluded constructs: only the image is listed and flagged",
+      "status": "derived",
+      "covers": [
+        "markdown-image-inline",
+        "flag-https",
+        "excluded-ordinary-link",
+        "excluded-pdf-link",
+        "excluded-iframe"
+      ],
+      "input_kind": "package",
+      "body": {
+        "format": "markdown",
+        "text": "![Diagram](https://example.invalid/media/diagram.png)\n\nSee [the guide](https://example.invalid/guide) and [the handout](https://example.invalid/handout.pdf).\n\n<iframe src=\"https://example.invalid/embed/video\"></iframe>"
+      },
+      "expected": {
+        "media_refs": [
+          "https://example.invalid/media/diagram.png"
+        ],
+        "ck12_flagged": [
+          "https://example.invalid/media/diagram.png"
+        ]
+      }
+    },
+    {
+      "id": "no-media-in-body",
+      "title": "A body with no media: media_refs is empty, so there is nothing to flag",
+      "status": "derived",
+      "covers": [
+        "empty-means-none"
+      ],
+      "input_kind": "package",
+      "body": {
+        "format": "markdown",
+        "text": "Week 1: set up your tools. No images or media here."
+      },
+      "expected": {
+        "media_refs": [],
+        "ck12_flagged": []
+      }
+    }
+  ]
+}

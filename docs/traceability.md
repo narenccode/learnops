@@ -17,7 +17,7 @@ runs it in CI yet. What is not checked yet is listed in `libs/contracts/README.m
 |---|---|---|
 | Every example (JSON or YAML) is validated against its schema, with every error reported in a fixed order | E1 | `test_check_valid_example_passes`, `test_check_invalid_example_is_one_violation_with_its_place_and_keyword`, `test_check_reports_every_error_in_a_fixed_order`, `test_check_one_failure_among_passing_examples` |
 | Unreadable examples, unusable schemas (unreadable, invalid, a `$schema` that is not a string) and content nested too deeply are reported with a hint instead of a traceback. A `$ref` that cannot be resolved is reported the same way, **but only when an example reaches it** | E1, B.0 rule 4 | `test_check_unreadable_example_is_an_error`, `test_check_non_string_schema_keyword_is_an_invalid_schema`, `test_check_deeply_nested_example_is_unreadable_not_a_traceback`, `test_check_recursion_while_validating_is_reported_for_each_affected_example`, `test_check_deeply_nested_schema_is_reported_and_its_examples_not_validated`, `test_check_examples_of_an_unusable_schema_are_not_validated`, `test_check_reference_reached_by_the_last_example_leaves_none_passed`, `test_check_broken_schema_without_examples_reports_only_the_schema` |
-| Known limits are stated and pinned by tests, so the documents cannot promise more than the code does: a dangling `$ref` no example reaches is not found; `date` is checked but `date-time` is not; `referencing`, imported directly, is a pinned and licensed dependency | CLAUDE.md §2.10 | `test_check_dangling_reference_in_a_branch_no_example_reaches_is_not_found`, `test_check_asserts_date_but_not_date_time`, `test_check_documented_format_lists_match_the_installed_checker`, `test_referencing_is_a_declared_pinned_dependency_with_its_licence` |
+| Known limits are stated and pinned by tests, so the documents cannot promise more than the code does: a dangling `$ref` no example reaches is not found; `date` is checked but `date-time` is not; `referencing`, imported directly, is a pinned and licensed dependency | CLAUDE.md §2.10 | `test_check_dangling_reference_in_a_branch_no_example_reaches_is_not_found`, `test_check_asserts_date_but_not_date_time`, `test_check_documented_format_lists_match_the_configured_checker`, `test_referencing_is_a_declared_pinned_dependency_with_its_licence` |
 
 ## Contract examples validate against their schemas (PRD B.0 rule 1, E1), Release 0 foundation
 
@@ -307,7 +307,7 @@ any rule works.
 - CK-07 reference model (design decision, not implemented; decision 0003 #21, `docs/design/checker.md`
   risk 11): the reference is the B2 model of the B8.1 template built from its `.mbz` backup, supplied
   with `--reference-model <path>`. When it is absent, CK-07 reports `not checked` for the run.
-- Treating a null `visible` or `completion_enabled` as "cannot judge" (the checker's job), and
+- Treating a null `visible` or `completion_enabled` as `not checked` (the checker's job, never a finding), and
   resolving `cm = -1` by decision 0003 #5: the nearest earlier activity in course order with
   manual or automatic completion tracking. Activities without tracking are skipped. If no
   eligible activity exists, the condition cannot be met; an unresolved `-1` is reported as
@@ -317,6 +317,34 @@ any rule works.
 - The inner form of `availability`, which belongs to Moodle.
 - Comparing a package model with a `.mbz` model: `cmid` values differ, so FR-C-05 compares
   activities by idnumber and sections by section number; section idnumber is ignored.
+
+### B2: CK-12 `media_refs` shared test vectors
+
+Files: `contracts/test-vectors/media-refs.v1.json` (24 cases) and
+`libs/contracts/tests/test_media_refs_vectors_v1.py`. Sources: the guide's decision on issue #232
+(item 6), Akshita's M1 scope confirmation and review on the same issue, and decision 0003 #16; PRD B2
+does not name `media_refs`, so no PRD text changes. The vectors keep two steps apart: extraction
+(`media_refs` lists every in-scope reference as written) and flagging (CK-12 flags only `http://`,
+`https://` and protocol-relative `//host/`; relative paths, `@@PLUGINFILE@@` and `data:` are listed
+and not flagged). The tests check the vectors as data and text only. No extractor and no CK-12
+exist, so nothing here shows that a media reference is found or reported.
+
+| Rule | Source | Test(s) |
+|---|---|---|
+| The vectors file has the agreed shape; its cases are exactly the expected ones, in order; each case has the exact keys and closed vocabularies, every listed reference is in the body as written, a flagged reference has a documented full-URL form (`http://`, `https://`, protocol-relative `//host/`) and a `data:` URI is never flagged | Guide, issue #232 point 6; decision 0003 #16 | `test_the_vectors_file_has_the_agreed_top_level_shape`, `test_the_cases_are_exactly_the_expected_ones_in_order`, `test_every_case_is_well_formed_and_consistent` |
+| Every rule of the v1 scope is covered (Markdown inline and reference-style images; HTML `img`, `video`, `audio`, `source` and `track` with the listed attributes, one case per element and attribute; `.mbz` HTML bodies; raw HTML inside a Markdown body; `@@PLUGINFILE@@`; the excluded links, PDF links and iframes), and each element case contains what it claims | Guide, issue #232 point 6; Akshita, issue #232 | `test_every_rule_of_the_scope_is_covered`, `test_every_element_and_attribute_of_the_scope_has_its_own_case`, `test_both_input_kinds_are_used_and_mbz_bodies_are_html`, `test_raw_html_inside_a_markdown_body_is_covered` |
+| `media_refs` lists every in-scope reference as written: a `@@PLUGINFILE@@` reference, a plain relative path and a `data:` URI are listed and not flagged; each URL of an `srcset` is its own entry without its descriptor. This is Akshita's reading; the guide's text states only that `data:` is not flagged and `@@PLUGINFILE@@` passes | Akshita, issue #232 (M1 owner); guide, issue #232 point 6 | `test_a_moodle_pluginfile_reference_is_listed_and_never_flagged`, `test_every_in_scope_reference_is_listed_even_when_it_is_not_flagged`, `test_each_url_of_a_srcset_is_its_own_entry_without_the_descriptor`, `test_the_statuses_say_where_each_case_comes_from` |
+| The excluded constructs give no reference and no finding; an embedded image is listed next to excluded constructs; the full-URL forms are http, https and protocol-relative | Guide, issue #232 point 6; checker design CK-12 | `test_the_excluded_constructs_give_no_reference_and_no_finding`, `test_embedded_media_is_listed_next_to_excluded_constructs`, `test_the_full_url_forms_are_http_https_and_protocol_relative` |
+| The undecided point (flagging of a URI scheme other than `http:`, `https:` and `data:`) is an open-point case that leaves only the flagging null, and no other case uses a scheme or form that is not decided | Decision 0003 #16 and section 3 | `test_the_open_point_is_the_flagging_of_other_uri_schemes`, `test_no_other_case_uses_a_scheme_or_form_that_is_not_decided` |
+| The checks catch the mistakes they exist for (negative controls) | n/a | `test_the_checks_catch_the_mistakes_they_exist_for` |
+
+Not claimed:
+
+- The extractor (one implementation in the FR-C-01 model builder, reused by Course Studio) is not
+  implemented; it must pass these vectors. CK-12 itself is FR-C-03, Release 1.
+- One point is undecided: whether CK-12 flags a URI scheme other than `http:`, `https:` and `data:`
+  (decision 0003, section 3).
+- Akshita's formal approval of the B2 contract change is given on the pull request, not here.
 
 ### B2: Not mapped
 
@@ -594,7 +622,7 @@ PRD G-2 and C2.7 (FR-C-03, rules CK-01 to CK-13), which is made in Release 1.
 | Item | PRD | Test |
 |---|---|---|
 | Package variants, each a B8.2 copy with exactly one changed file, valid under B1. Built: CK-02, CK-03, CK-09, CK-12 | B8.3, FR-C-03 | `test_built_variant_changes_exactly_the_declared_file`, `test_built_variant_is_a_valid_b1_package`, `test_ck_02_change_is_the_one_declared`, `test_ck_03_change_is_the_one_declared`, `test_ck_09_change_is_the_one_declared`, `test_ck_12_url_is_in_the_source_file_only` (source text only; the media_refs path is not tested, see §12 item 19) (in `libs/contracts/tests/test_b8_3_planted_errors.py`) |
-| `expected-findings.yaml` (**proposed**: `mapping_status: proposed` from checker design §11.3 at commit `4111e0c`; the guide answered §12 items 12, 13, 17 and 22 on issue #112 (2026-11-23), CK-01 is not a separate finding for CK-04, 05 and 13, and Shraddha's confirmation is still pending; CK-08 and CK-12 are `assertable: false` pending guide decisions on the manual backup edit and body-media extraction): one entry per planted error with a valid CK rule, element, severity and reason; every CK-01 to CK-13 has a variant | B8.3, C2.3 | `test_entry_is_complete_and_valid`, `test_every_ck_rule_has_at_least_one_variant`, `test_ids_are_unique`, `test_every_variant_folder_has_an_entry_and_back`, `test_mapping_stays_proposed_until_confirmation_is_recorded`, `test_ck_01_is_not_a_separate_finding_when_another_rule_explains_the_item`, `test_ck_01_fires_on_its_own_when_nothing_explains_the_item`, `test_ck_12_is_not_asserted_until_body_media_extraction_is_decided`, `test_ck_08_is_not_asserted_until_manual_backup_edit_is_approved` |
+| `expected-findings.yaml` (**proposed**: `mapping_status: proposed` from checker design §11.3 at commit `4111e0c`; the guide answered §12 items 12, 13, 17 and 22 on issue #112 (2026-11-23), CK-01 is not a separate finding for CK-04, 05 and 13, and Shraddha's confirmation is still pending; CK-08 and CK-12 are `assertable: false` for separate reasons: CK-12's v1 scope is decided (guide, issue #232, comment 7176861868, point 6) but the shared extractor in the FR-C-01 model builder is not implemented; CK-08's scripted, repeatable backup edit is approved in principle by the guide (point 4) subject to confirming that the edit does not also fire CK-07, and the fixture is not yet created or verified): one entry per planted error with a valid CK rule, element, severity and reason; every CK-01 to CK-13 has a variant | B8.3, C2.3 | `test_entry_is_complete_and_valid`, `test_every_ck_rule_has_at_least_one_variant`, `test_ids_are_unique`, `test_every_variant_folder_has_an_entry_and_back`, `test_mapping_stays_proposed_until_confirmation_is_recorded`, `test_ck_01_is_not_a_separate_finding_when_another_rule_explains_the_item`, `test_ck_01_fires_on_its_own_when_nothing_explains_the_item`, `test_ck_12_is_not_asserted_because_the_shared_extractor_is_not_implemented`, `test_ck_08_is_not_asserted_until_the_scripted_edit_is_built_and_checked_against_ck_07` |
 | B8.2 is unchanged (SHA-256 of every file) and B8.3 holds no secrets or email addresses | B8.2, C-07 | `test_b82_is_unchanged`, `test_no_secrets_or_learner_data` |
 | Nine `.mbz` variants (CK-01, 04, 05, 06 twice, 07, 08, 10, 11, 13) from a real lab backup | C-03 | None yet: PENDING MOODLE LAB; built on Moodle 5.3 only for Release 0 (the guide, issue #112, item 22; see [0014](decisions/0014-b8-3-mbz-variants-moodle-5-3.md) and the [register](decisions/README.md)) |
 | The checker finds 100 % of the planted errors and nothing on B8.2 | C2.7, G-2 | **Not tested**: the checker does not exist (Release 1). The tests above check the dataset only |
@@ -808,7 +836,7 @@ approved), none exists yet, and none is claimed as working.
 | Session identity `(iss, sub, context id)`, two-hour idle expiry, course-context isolation | §6, §7, PRD SEC-02 | `libs/lti` and each module's authorisation |
 | `name` and `email` never written to logs | §10.1, PRD SEC-06 | Every module's logging; no test yet |
 | No raw ID token, nonce, state or key material reaches a module | §10 | `libs/lti` |
-| LTI library dependency record: pinned artefact, licences on Python 3.12 (including the LGPL `jwcrypto`), advisory scan and version floors | ADR 0001 Appendix B V1 to V3, PRD C-11, SEC-08 | Stage 1 of ADR 0001, not approved; open item OI-26. Partial evidence only, recorded in ADR 0001 §4.1, §5.2, §5.3, §6.2 and Appendix C. Nothing is installed or pinned; `requirements.txt` does not exist |
+| LTI library dependency record: PyJWT 2.15.1 and `cryptography` 50.0.2 pinned in `requirements.txt`; CI vulnerability audit covers all three maintained requirements manifests | ADR 0001 Appendix B V1 to V3, OI-26, PRD C-11, SEC-08 | Partly implemented. PR #227 pins both runtime packages and configures `pip-audit` for `requirements.txt`, `requirements-dev.txt` and `requirements-video-demo.txt`; the updated CI checks passed on PR head `5fb2fb8` (26 Nov 2026). Condition 1 remains open: the clean Python 3.12 resolved dependency tree and complete licence verification are outstanding, as is the PyJWT version-floor decision. See ADR 0001 Appendix C, V2–V3 |
 
 ### Requirement text changed by this pull request
 
@@ -849,7 +877,7 @@ Structure only. Test names are in `test_model_interface_v1.py`.
 | An example shows times after a chunk boundary, counted from the start of the original audio | B5.4 | `test_chunked_example_keeps_times_from_the_start_of_the_audio` |
 | Unknown fields are accepted (including the Q38 names and `language`, which are not part of v1) | B.0 rule 2, EXT-02 | `test_valid_variation_is_accepted`, `test_valid_variation_is_accepted` |
 | By the guide's decision (15 Nov), not a rule: segments and words may arrive out of time order and a consumer sorts by `start` (PRD B5.4); no rule on times past `duration_s`, and a reader must not fail on one | B5.4, decision 0001 (10, 11) | `test_segments_out_of_time_order_pass_the_schema`, `test_a_segment_past_duration_s_passes_the_schema` |
-| A segment's and a word's `end` is not below its `start` (decision 9): **not a schema rule**; the check is in PR #35 and is not merged yet, so today nothing enforces it | B5.4, decision 0001 (5, 9) | `test_segment_ending_before_it_starts_passes_the_schema`, `test_a_word_ending_before_it_starts_passes_the_schema` (record the gap) |
+| A segment's and a word's `end` is not below its `start` (decision 9): **not a schema rule**; the check is `time_errors` in `libs/model_interface/transcript.py`, called by `speech.py` (PR #35 was closed and replaced by the staged pull requests, merged 22 Nov) | B5.4, decision 0001 (5, 9) | `test_segment_ending_before_it_starts_passes_the_schema`, `test_a_word_ending_before_it_starts_passes_the_schema` (the schema does not enforce it); enforced by `test_segment_ending_before_it_starts_is_rejected` and `test_word_ending_before_it_starts_is_rejected` in `libs/model_interface/tests/test_transcript.py` |
 | The schema is valid, and every example validates against the whole schema and its definition | B.0 rule 1 | `test_schema_is_a_valid_draft_2020_12_schema`, `test_example_is_valid_against_the_whole_schema`, `test_example_is_valid_against_its_definition`, `test_every_example_file_is_listed` |
 
 Chosen in the schema rather than stated in the PRD: token counts and `latency_ms` are non-negative

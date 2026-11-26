@@ -13,9 +13,13 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from jsonschema import FormatChecker
 
-from contracts.example_check import SchemaCheck, check_schema_examples
+from contracts.example_check import (
+    CHECKED_FORMATS,
+    SchemaCheck,
+    check_schema_examples,
+    load_validator,
+)
 
 from .example_helpers import (
     GOOD,
@@ -30,9 +34,9 @@ from .example_helpers import (
 
 REQUIREMENTS = Path(__file__).resolve().parents[3] / "requirements-dev.txt"
 DRAFT = "https://json-schema.org/draft/2020-12/schema"
-# The README lists exactly these formats as checked and as not checked, for the pinned
-# jsonschema and no optional format packages. If an upgrade changes this, update both.
-CHECKED_FORMATS = {
+# The README lists exactly these formats as checked and as not checked. The first set must equal
+# `CHECKED_FORMATS` in the engine; if the policy changes, update both and the README.
+DOCUMENTED_CHECKED_FORMATS = {
     "date",
     "email",
     "idn-email",
@@ -338,9 +342,21 @@ def test_check_asserts_date_but_not_date_time(tmp_path: Path) -> None:
     assert "[format]" in checked.problems[0].message
 
 
-def test_check_documented_format_lists_match_the_installed_checker() -> None:
-    asserted = set(FormatChecker().checkers)
-    assert CHECKED_FORMATS <= asserted
+def test_check_documented_format_lists_match_the_configured_checker(
+    tmp_path: Path,
+) -> None:
+    # Inspect the checker the engine really builds, not a fresh `FormatChecker()`: that one also
+    # asserts `idn-hostname` when `idna` is installed (as `pip-audit` does in CI).
+    schema_file = tmp_path / "schema.json"
+    schema_file.write_text('{"$schema": "%s"}' % DRAFT, encoding="utf-8")
+    validator, problem = load_validator(schema_file, "schema.json")
+    assert problem is None
+    assert validator is not None
+    # The `Validator` protocol does not declare `format_checker`; the concrete classes do.
+    checker = getattr(validator, "format_checker", None)
+    assert checker is not None
+    asserted = set(checker.checkers)
+    assert asserted == set(CHECKED_FORMATS) == DOCUMENTED_CHECKED_FORMATS
     assert not UNCHECKED_FORMATS & asserted
 
 
