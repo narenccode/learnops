@@ -60,6 +60,17 @@ B8.2 is never changed. The folders `missing-body`, `duplicate-id`, `protected-id
 
 **The mapping is confirmed by the design owner.** Shraddha (@shraddha0103) approved all 14 planted-error variant-to-rule mappings on 2026-11-26 in [PR #148](https://github.com/narenccode/learnops/pull/148#issuecomment-7194780768). The confirmation is recorded in `expected-findings.yaml` and checked by `test_mapping_is_confirmed_by_design_owner`. This confirms the expected-finding mapping only; the checker design remains `Draft`, no checker detection is claimed, and the 100 % target is not yet measured. CK-08 remains `assertable: false` until its scripted fixture is created and verified not to trigger CK-07. CK-12 remains `assertable: false` until the shared extractor is implemented and tested.
 
+
+**Reading `expected-findings.yaml`.** Each entry gives the variant `id`, the `rule`, the `element`
+(by idnumber), the `expected` finding (rule, element, severity), the `reason`, and `also_expected`:
+other rules that fire as their own, separate finding on the same variant. A future checker test should
+require the `expected` finding and tolerate nothing outside `expected` and `also_expected`. The guide
+decided that the root cause is reported once (§12 item 13): an item that is unreachable because of CK-04,
+CK-05 or CK-13 is still listed as unreachable with its cause, but it is not a separate CK-01 finding, so
+those entries have `also_expected: []` and say "explained by CK-0x" in `notes`. CK-01 still fires on its
+own variant, where no other rule explains the item. The mapping comes from `docs/design/checker.md` §11.3
+and is confirmed by the design-owner approval recorded above.
+
 ## B8.4 Synthetic submissions (owner: Student 3), PROVISIONAL
 
 - **Where:** `b8-4-synthetic-submissions/` (details, format and open decisions in its README).
