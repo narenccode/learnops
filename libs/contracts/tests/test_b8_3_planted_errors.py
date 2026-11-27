@@ -110,19 +110,16 @@ def test_entry_is_complete_and_valid(v: dict[str, Any]) -> None:
     assert v["id"].startswith(v["rule"].lower())
 
 
-def test_mapping_stays_proposed_until_confirmation_is_recorded() -> None:
+def test_mapping_is_confirmed_by_design_owner() -> None:
     data = yaml.safe_load(EXPECTED.read_text(encoding="utf-8"))
-    assert data["mapping_status"] in {"proposed", "confirmed"}
+    assert data["mapping_status"] == "confirmed"
     assert "4111e0c" in data["mapping_source"]
-    if data["mapping_status"] == "confirmed":
-        confirmation = data["confirmation"] or {}
-        assert (
-            confirmation.get("by")
-            and confirmation.get("reference")
-            and confirmation.get("date")
-        )
-    else:
-        assert data["confirmation"] is None
+    confirmation = data["confirmation"]
+    assert confirmation["by"] == ["shraddha0103"]
+    assert confirmation["reference"] == (
+        "https://github.com/narenccode/learnops/pull/148#issuecomment-7194780768"
+    )
+    assert confirmation["date"] == "2026-11-26"
 
 
 def test_ck_12_is_not_asserted_because_the_shared_extractor_is_not_implemented() -> (
