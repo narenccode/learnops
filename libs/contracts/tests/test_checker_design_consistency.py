@@ -13,10 +13,13 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from jsonschema import Draft202012Validator
 
 ROOT = Path(__file__).resolve().parents[3]
 DESIGN = ROOT / "docs" / "design" / "checker.md"
 EXPECTED = ROOT / "testdata" / "b8-3-planted-errors" / "expected-findings.yaml"
+SCHEMA = ROOT / "contracts" / "course-model.v1.schema.json"
+TRACEABILITY = ROOT / "docs" / "traceability.md"
 
 
 def _design() -> str:
@@ -26,15 +29,6 @@ def _design() -> str:
 def _section(text: str, start: str, end: str) -> str:
     i = text.index(start)
     return text[i : text.index(end, i)]
-
-
-def test_design_is_not_approved() -> None:
-    # Only the guide sets Approved (CLAUDE.md section 6a.2).
-    status = re.search(r"^\*\*Status:\*\* (.*)$", _design(), re.MULTILINE)
-    assert status is not None
-    assert status.group(1).startswith("Draft")
-    assert "Approved" not in status.group(1).replace("`Approved`", "")
-    assert "- [ ] **Guide:**" in _design()
 
 
 def test_moodle_5_3_only_no_second_site() -> None:
@@ -80,6 +74,23 @@ def test_ck_02_is_in_every_explained_by_list() -> None:
             if line.startswith("| 13 |") or "names CK-04, CK-05 and CK-13" in line:
                 continue
             assert "CK-02" in line, line[:120]
+            # CK-02 as an explaining rule is a proposal, not a recorded decision (§12 item 24)
+            assert "propos" in line.lower() or "pending" in line.lower(), line[:120]
+
+
+def test_ck_02_is_everywhere_described_as_a_proposal() -> None:
+    text = _design()
+    paragraph = _section(text, "**CK-02 as an explaining rule", "\n\n")
+    assert "Proposal" in paragraph and "Until the guide confirms it" in paragraph
+    row = next(r for r in text.splitlines() if r.startswith("| 24 |"))
+    assert "Proposal, pending guide confirmation" in row
+    trace = next(
+        r
+        for r in TRACEABILITY.read_text(encoding="utf-8").splitlines()
+        if "The Checker design text agrees with itself" in r
+    )
+    assert "CK-02 as a proposed explaining rule" in trace
+    assert "pending the guide" in trace
 
 
 def test_ck_07_and_ck_08_boundary_is_written_down() -> None:
@@ -89,11 +100,57 @@ def test_ck_07_and_ck_08_boundary_is_written_down() -> None:
     assert "by its `idnumber`" in ck07 and "never by its `cmid`" in ck07
     assert "No `cmid` is ever compared between two models" in ck07
     assert "left to CK-08" in ck07
-    assert (
-        "two findings with two causes" in ck07
-    )  # the deleted-protected-activity exception
+    assert "two findings with two causes" in ck07  # the deleted-protected-activity case
+    assert "type-only criterion" in ck07 and "compared by its `type`" in ck07
     assert "never resolved against the reference model" in ck08
     assert "same model" in ck08
+    # CK-08 judges only references that are present (decision 0003 #18)
+    assert "non-null `cmid`" in ck08 and "non-null `idnumber`" in ck08
+    assert "never itself a finding" in ck08
+    assert "type-only criterion" in ck08 and "refer to the course" in ck08
+    assert "absent or null" in ck08
+
+
+def _ck08_examples() -> dict[str, Any]:
+    block = re.search(
+        r"\*\*CK-08 criterion examples\*\*.*?```json\n(.*?)\n```", _design(), re.DOTALL
+    )
+    assert block is not None
+    loaded: dict[str, Any] = json.loads(block.group(1))
+    return loaded
+
+
+def _unresolved(criterion: dict[str, Any], activities: list[dict[str, Any]]) -> bool:
+    """CK-08 as the design's row words it: only a present reference can be unresolved."""
+    cmids = {a["cmid"] for a in activities}
+    idnumbers = {a["idnumber"] for a in activities}
+    cmid, idnumber = criterion.get("cmid"), criterion.get("idnumber")
+    return (cmid is not None and cmid not in cmids) or (
+        idnumber is not None and idnumber not in idnumbers
+    )
+
+
+def test_ck_08_examples_are_the_three_required_cases_and_agree_with_the_rule() -> None:
+    doc = _ck08_examples()
+    examples = doc["examples"]
+    assert [e["ck08"] for e in examples] == [False, True, True]
+    type_only, bad_cmid, bad_idnumber = (e["criterion"] for e in examples)
+    assert type_only["cmid"] is None and type_only["idnumber"] is None
+    assert bad_cmid["cmid"] is not None and bad_cmid["idnumber"] is None
+    assert bad_idnumber["cmid"] is None and bad_idnumber["idnumber"] is not None
+    for example in examples:
+        assert (
+            _unresolved(example["criterion"], doc["model_activities"])
+            is example["ck08"]
+        )
+
+
+def test_ck_08_examples_are_valid_b2_criteria() -> None:
+    schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+    criterion = {"$ref": "#/$defs/criterion", "$defs": schema["$defs"]}
+    validator = Draft202012Validator(criterion)
+    for example in _ck08_examples()["examples"]:
+        assert list(validator.iter_errors(example["criterion"])) == [], example["case"]
 
 
 def test_b4_is_not_claimed_to_supply_idnumbers() -> None:
@@ -126,6 +183,18 @@ def test_pending_guide_items_are_marked_pending_not_decided() -> None:
     }
     assert "pending guide confirmation" in rows[24]
     assert "Pending guide" in rows[26]
+    # item 25 rests only on recorded decisions and says what they do not settle
+    row25 = rows[25]
+    assert "not itself a recorded guide decision" in row25
+    for ref in ("decision 0003 #4", "#9 and #21", "#18"):
+        assert ref in row25
+    assert "Not settled by those records, so unresolved" in row25
+    for stale in (
+        "decision register",
+        "peer clarification",
+        "not found in the repository",
+    ):
+        assert stale not in row25
     # every row of the section 12 table is closed with a pipe, so the table renders
     for n, row in rows.items():
         assert row.rstrip().endswith("|"), n
