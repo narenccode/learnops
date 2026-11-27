@@ -83,6 +83,9 @@ Location: `scripts/b8_3/` (not inside `testdata/b8-3-planted-errors/`, which its
   script (label, `final_ck08_fixture: false`, well-formed hashes and ids, output hash different from input
   hash); `OUT` matches the manifest hash; and `OUT` passes the full structural check. It never opens the
   input for writing. Exit 0 ok, 1 check failed, 2 could not run.
+- **Known limit (no size cap):** the whole archive is decompressed into memory with no size limit, so a
+  decompression bomb could exhaust memory. The inputs are small lab backups from a trusted source (B8.1 is
+  12,612 bytes); do not use the script on an untrusted file. No cap was added, to keep the script simple.
 - **Known limit:** `--undo` cannot prove who made a file; a hand-made file that has a valid fixture
   structure, a matching hash and a well-formed manifest beside it would be removed. Only point `--out` at
   files in a scratch folder.
@@ -121,9 +124,11 @@ been done.
 ## 3. CK-07 comparison note (DRAFT; a reasoned note, nothing here was run against a checker)
 
 Sources: decision 0003 #4 (idnumber is the stable identity; never compare cmids between models), #18
-(criterion shape) and #21 (`--reference-model`), and `docs/design/checker.md` on `main` (§3.4 table, §11.3).
-The sharper CK-07/CK-08 boundary wording ("an unresolved criterion is CK-08's only") is from **open PR #255,
-not merged**: treat it as the intended rule, not as settled text on `main`.
+(criterion shape) and #21 (`--reference-model`), and `docs/design/checker.md` on `main` (§3.4 table, §11.3,
+§12 item 25). The CK-07/CK-08 boundary ("CK-07 judges identity and configuration of protected items; CK-08
+judges criterion references that are present but unresolved") is documented in `docs/design/checker.md`
+(merged in #255). **The Checker design is still Draft and not approved by the guide**, so treat the boundary
+as the documented design rule, not as an approved decision.
 
 - A protected item is identified by **`idnumber`** (`final-project`, `course-feedback`, or a configured
   one) in the reference model (B8.1) and the checked model.

@@ -23,6 +23,10 @@ Modes
 
 Exit codes: 0 = done or check passed; 1 = a check failed; 2 = could not run (bad input, refused).
 
+Known limits: the whole archive is read into memory, with no decompression size cap (the inputs are
+small lab backups from a trusted source; do not point this at an untrusted file). `--undo` cannot prove
+who made a file, only that it has the structure, hash and manifest of a generated output.
+
 The result is a candidate, not the final CK-08 fixture: the final one must be made from the merged
 B8.1 + B8.2 baseline (see docs/runbooks/b8-3-moodle-lab-offline-prep.md).
 """
@@ -52,7 +56,7 @@ MSG_NO_INPUT = "Input backup not found: {path}. Download it with testdata/b8-1-t
 MSG_EXISTS = "Refusing to overwrite {path}. Choose a new --out, or run --undo first."
 MSG_SAME = "--out must not be the input file. The input is never changed."
 MSG_NO_MANIFEST = "No manifest next to {path}. Nothing to check or undo here."
-MSG_UNDO_REFUSED = "Refusing to delete {path}: its SHA-256 does not match the manifest, so this script did not make it."
+MSG_UNDO_REFUSED = "Refusing to delete {path}: it is not a file this script generated ({reasons}). Nothing was deleted."
 
 
 class FixtureError(Exception):
@@ -408,10 +412,14 @@ def main(argv: list[str] | None = None) -> int:
             manifest = load_manifest(manifest_file)
             out_bytes = a.out.read_bytes()
             # Delete only a file that is exactly what this script generated: hash, then full verify.
-            if sha256(out_bytes) != manifest["output_sha256"] or verify(
-                None, out_bytes, manifest
-            ):
-                raise FixtureError(MSG_UNDO_REFUSED.format(path=a.out))
+            if sha256(out_bytes) != manifest["output_sha256"]:
+                reasons = ["its SHA-256 differs from the manifest"]
+            else:
+                reasons = verify(None, out_bytes, manifest)
+            if reasons:
+                raise FixtureError(
+                    MSG_UNDO_REFUSED.format(path=a.out, reasons="; ".join(reasons))
+                )
             a.out.unlink()
             manifest_file.unlink()
             print(

@@ -132,7 +132,11 @@ def test_check_fails_on_tamper_and_undo_only_removes_own_files(tmp_path: Path) -
     good = out.read_bytes()
     out.write_bytes(good + b"x")
     assert _run("--out", str(out), "--check").returncode == 1
-    assert _run("--out", str(out), "--undo").returncode == 2 and out.exists()
+    r = _run("--out", str(out), "--undo")
+    assert r.returncode == 2 and out.exists()
+    assert (
+        "its SHA-256 differs from the manifest" in r.stderr
+    )  # the hash is what failed
     out.write_bytes(good)
     assert _run("--out", str(out), "--undo").returncode == 0
     assert not out.exists() and src.exists()
@@ -243,9 +247,13 @@ def test_undo_never_touches_the_input_even_with_a_forged_manifest(
         "completion_xml_sha256_after": "2" * 64,
     }
     (tmp_path / "in.mbz.manifest.json").write_text(json.dumps(forged))
+    r = _run("--out", str(src), "--undo")  # content does not verify as a fixture
+    assert r.returncode == 2
+    assert "not a file this script generated" in r.stderr
     assert (
-        _run("--out", str(src), "--undo").returncode == 2
-    )  # content does not verify as a fixture
+        "its SHA-256 differs" not in r.stderr
+    )  # the hash matches; the structure fails
+    assert "criterion list is not as planned" in r.stderr
     assert (
         _run("--input", str(src), "--out", str(src), "--undo").returncode == 2
     )  # same file as input
