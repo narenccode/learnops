@@ -137,7 +137,8 @@ EMPTY_LABEL = re.compile(
 )
 ENTITY = re.compile(r"&(#\d+|#x[0-9a-fA-F]+|[A-Za-z][A-Za-z0-9]*);")
 # B1.5 rule 5 defines only `<p>` and `<br>` / `<br />`; any other element is not defined in v1.
-OTHER_ELEMENT = re.compile(r"</?(?!(?:p|br)\b)[A-Za-z][^>]*>")
+# HTML element names are case-insensitive, so `<DIV>` is caught and `<P>` and `<BR />` are allowed.
+OTHER_ELEMENT = re.compile(r"</?(?!(?:p|br)\b)[A-Za-z][^>]*>", re.IGNORECASE)
 NO_BREAK_SPACE = "\u00a0"
 URL = re.compile(r"https?://[^\s<]+")
 
@@ -588,6 +589,13 @@ OPEN_POINT_EDITS: dict[str, tuple[str, Callable[[Case], None]]] = {
             onlinetext=c["input"]["onlinetext"] + "<div>x</div>"
         ),
     ),
+    # Harshitha's review of #248: element names are case-insensitive in HTML.
+    "an element other than p and br in capitals": (
+        "labels-in-html",
+        lambda c: c["input"].update(
+            onlinetext=c["input"]["onlinetext"] + "<DIV>x</DIV>"
+        ),
+    ),
     "the &nbsp; reference instead of the character": (
         "html-no-break-spaces",
         lambda c: c["input"].update(
@@ -624,6 +632,17 @@ def test_the_open_point_check_catches_what_it_exists_for(name: str) -> None:
     assert open_point_problems(case) == []
     edit(case)
     assert open_point_problems(case)
+
+
+def test_the_open_point_check_allows_p_and_br_in_capitals() -> None:
+    # The other side of the case-insensitive check: `<P>` and `<BR>` are still `<p>` and `<br>`.
+    case = copy.deepcopy(_case("labels-in-html"))
+    text = case["input"]["onlinetext"]
+    for tag in ("<p>", "</p>", "<br>"):
+        text = text.replace(tag, tag.upper())
+    case["input"].update(onlinetext=text)
+    assert "<P>" in text and "<BR>" in text
+    assert open_point_problems(case) == []
 
 
 def test_the_duplicate_id_check_catches_a_repeated_id() -> None:
