@@ -50,6 +50,7 @@ Decided later, on Issue #186 ([guide's answer, 2026-11-26](https://github.com/na
 | 8 | Any number of practice items in a week. They form one run directly after the guide Page, in the order of `activities`, with nothing between them. | Section 4 |
 | 9 | A video checkpoint goes directly after the Page that embeds the lesson video, in the same section; if that Page is the guide Page, it comes after the practice run. A rule for Course Studio and the video pipeline, not a validation error. | Sections 4 and 6 |
 | 10 | Close the `ref` kinds point by pointing to the B6 cue schema; set the Status line; leave the 4.5 lab record as it is (decision 0017). An affected owner approves under PRD B.0 rule 3; no PRD text changes. | Header, sections 3 and 6 |
+| 11 | Several checkpoints for one video (FR-V-14) form one run directly after the Page that embeds the video, in chapter order (the order of `activities`), with nothing between them; on the guide Page, that run comes after the practice run. A placement rule for Studio and the video pipeline, not a validation error, like decision 9. Raised in Nagashree's review of #250; [confirmed by the guide, 2026-11-26](https://github.com/narenccode/learnops/issues/186#issuecomment-7196770239). | Section 4 |
 
 ## 3. Content types
 
@@ -115,9 +116,7 @@ defined by B1 (`contracts/course-package.v1.schema.json`), not by this file:
   guide Page, the checkpoint comes **after the practice run** (decision 9).
 - **Several checkpoints for one video** (FR-V-14 makes them per chapter): they form **one run
   directly after the Page that embeds the video**, in chapter order (the order of `activities`),
-  with nothing between them; on the guide Page that run comes after the practice run. *This is the
-  B7 owner's reading of decisions 8 and 9, asked of the guide on Issue #186; it stays labelled so
-  until he confirms it.*
+  with nothing between them; on the guide Page that run comes after the practice run (decision 11).
 - These placement rules are rules for Course Studio (FR-S-12) and the video pipeline (FR-V-14), the
   producers of practice items. They are **not validation errors**: neither B1 nor a validator can
   tell which Page embeds a video, and the guide-Page rule is not checked by any schema or validator

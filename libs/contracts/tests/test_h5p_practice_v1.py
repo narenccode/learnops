@@ -304,8 +304,8 @@ def test_text_pins_the_types_and_has_no_open_decision_left(
         "directly after the Page that embeds the lesson video",
         "after the practice run",
         # Several checkpoints for one video (Nagashree's review of #250): one run after the
-        # Page that embeds the video, in chapter order. The B7 owner's reading of decisions 8
-        # and 9, asked of the guide on Issue #186; the rule is checked here, not its label.
+        # Page that embeds the video, in chapter order. B7 decision 11, confirmed by the guide
+        # on Issue #186 (2026-11-26).
         "Several checkpoints for one video",
         "one run directly after the Page that embeds the video",
         "in chapter order (the order of `activities`)",
