@@ -1,5 +1,5 @@
 # B8.3 expected findings (PRD B8.3, C2.3, C2.7). One entry per planted error.
-# Source of the mapping: docs/design/checker.md section 11.3 (Proposal, #148). Not yet confirmed by the guide.
+# Source of the mapping: docs/design/checker.md section 11.3 (design-owner confirmed, #148).
 # These entries say what a future checker SHOULD report. No checker exists yet, so nothing here
 # proves detection. Each variant changes one thing from its applicable baseline: B8.2 for all variants except CK-07 and the proposed CK-08 case, which use the merged course with the B8.1 template. B8.2 itself is never changed.
 #
@@ -20,27 +20,25 @@
 #   assertable      optional; false = the expected finding is provisional and must not be asserted by a checker test yet
 
 version: 1
-# PROPOSED, not confirmed. This mapping is the proposal in docs/design/checker.md section 11.3, as
-# merged in commit 4111e0c (#148). It is NOT an approved expected-results baseline and must not be
-# used as the oracle for the 100 % target (PRD C2.7). Per the checker design's author (Akshita), it
-# stays `proposed` until the guide has answered the items below and the design owner (Shraddha)
-# confirms it. Then set mapping_status to confirmed and fill in `confirmation`.
-#   Confirmed by Akshita for the proposal: the rule-to-variant pairing matches the design as merged
-#   in #148, and the package variants (CK-02, 03, 09, 12) can be built without the lab.
-#   Answered by the guide on 2026-11-23 (https://github.com/narenccode/learnops/issues/112#issuecomment-7095842207):
-#     item 12  severity: all thirteen rules are error
-#     item 13  report the root cause once: an item unreachable because of CK-04, CK-05 or CK-13 is still
-#              listed as unreachable with its cause, but is NOT a separate CK-01 finding; the report
-#              line says "explained by CK-0x". CK-01 still fires when no other rule explains the item
-#     item 17  confirmed: a package failing B1 stops with the B1 errors, every CK rule is not checked
-#     item 22  B8.3 .mbz variants use Moodle 5.3 only; decision 0017 later made Moodle 5.3 the
-#              only supported version throughout LearnOps
-#   Still open: Shraddha, as design owner, confirms the mapping after pending guide decisions;
-#   nine CK rule categories require `.mbz` inputs, represented by ten variants because CK-06 has
-#   two independent cases; all ten variants need the lab.
-mapping_status: proposed
+# DESIGN-OWNER CONFIRMED, 26 November 2026. All 14 mappings were approved by
+# Shraddha (@shraddha0103) in the PR #148 approval comment linked below.
+# This confirms the expected-finding mapping only; it does not prove checker detection
+# or completion of the 100 % target. CK-08 and CK-12 remain separately unassertable
+# until their fixture/extractor prerequisites are implemented and verified.
+# The guide's decisions on items 12, 13, 17 and 22 remain recorded below:
+#   item 12  severity: all thirteen rules are error
+#   item 13  report the root cause once: an item unreachable because of CK-04, CK-05 or CK-13 is still
+#            listed as unreachable with its cause, but is NOT a separate CK-01 finding; the report
+#            line says "explained by CK-0x". CK-01 still fires when no other rule explains the item
+#   item 17  confirmed: a package failing B1 stops with the B1 errors, every CK rule is not checked
+#   item 22  B8.3 .mbz variants use Moodle 5.3 only; decision 0017 later made Moodle 5.3 the
+#            only supported version throughout LearnOps
+mapping_status: confirmed
 mapping_source: "docs/design/checker.md section 11.3 at commit 4111e0c"
-confirmation: null   # {by: [...], reference: <issue/PR/decision link>, date: <YYYY-MM-DD>}
+confirmation:
+  by: ["shraddha0103"]
+  reference: "https://github.com/narenccode/learnops/pull/148#issuecomment-7194780768"
+  date: "2026-11-26"
 baseline: testdata/b8-2-sample-course   # must report zero findings
 variants:
 
