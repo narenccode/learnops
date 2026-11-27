@@ -421,13 +421,14 @@ Exact HTTP route names and request/response schemas will be recorded after the s
 Proposed command structure:
 
 ```text
-checker check <input> [--reference-model <path>] --config <file>
-checker diff <model-a> <model-b> --config <file>
-checker roles --config <file>
-checker integration --config <file>
+checker check <input> [--reference-model <path>] [--config <file>]
+checker diff <model-a> <model-b> [--config <file>]
+checker roles [--config <file>]
+checker integration [--config <file>]
 ```
 
-Each command must support the common CLI options:
+Every command supports the three common options of PRD OPS-05 (they are required of every CLI, not
+optional for some commands):
 
 ```text
 --dry-run
@@ -438,8 +439,20 @@ Each command must support the common CLI options:
 Expected behaviour:
 
 - `--dry-run`: Print the intended operations without making changes.
-- `--check`: Perform read-only validation; exit with code `0` if no problems are found, `1` if problems are found and `2` for an execution error.
-- `--config`: Read configuration from the specified file.
+- `--check` (PRD OPS-05: read-only status; exit `0` = OK, `1` = problems found, `2` = error): changes
+  nothing. `checker check` and `checker diff` are already read-only, so `--check`
+  adds **no separate exit-code contract**: the normal result applies. For `check`, the exit code is `1`
+  when at least one **error** finding exists, `0` otherwise, and `2` for an execution error. What
+  counts as "problems found" for `diff` (a difference is not an error finding) is not specified in
+  the PRD and is a **Proposal** to settle in FR-C-05's pull request. A rule reported `not checked` does not change the exit code; the report
+  still shows the error count and the not-checked count (§3.6, §12 item 20; OPS-05). For `roles` and
+  `integration`, which do act on a lab site, `--check` is the read-only status form: it makes no
+  change and uses the same `0` / `1` / `2` codes. What exactly it reports there (for example whether
+  recorded runs or restored courses are still present, as §6.3 specifies for `checker runs delete` and
+  `checker integration --undo`) is a **Proposal**, fixed in the pull request that implements those
+  commands.
+- `--config` (PRD OPS-05: supported by every CLI, so optional in the synopsis): read configuration
+  from the file; environment variables (§6.4) remain the other source.
 - `--reference-model <path>` (`checker check` only): supplies the B2 course model of the B8.1 template course, built from its `.mbz` backup. CK-07 uses it to compare protected items field by field (decision 0003 #21). If it is absent, CK-07 reports `not checked` for that run, not a fault, and the report says the protected items were not compared (decision 0003 #21; §12 item 11). CK-08 does not use the reference model. Planned, not implemented.
 - Normal execution: Perform the requested operation and save the results.
 
@@ -502,7 +515,8 @@ The decision records should be added under `docs/decisions/` using the repositor
 
 ## 8. Libraries and licences
 
-Proposed pins. Versions and licences were read from PyPI on 2026-11-20. Each line goes into the root
+Proposed pins. Versions and licences were read from PyPI on 2026-11-20 and re-read from the PyPI JSON
+API on 2026-11-27 (see "Re-check" below). Each line goes into the root
 `requirements.txt` (runtime) or `requirements-dev.txt` (tests) in the pull request that first uses it,
 with its licence as a comment (root `CLAUDE.md` rule 10). Where the repository already pins a package,
 the same pin is used.
@@ -516,7 +530,25 @@ the same pin is used.
 | `playwright` | 1.65.2 | Apache-2.0 | Browser automation for role tests (FR-C-06, PRD §A10) | None: the PRD fixes Playwright |
 | `pytest-playwright` | 0.10.0 | Apache-2.0 | Runs Playwright role tests under pytest with fixtures per screen profile | Plain Playwright API calls from pytest |
 | `pytest` | 9.1.1 (already pinned) | MIT | Unit, contract, dataset and harness tests | None needed |
-| FastAPI and its server | The repository pins, once `libs/lti` adds them (#136 proposes `fastapi==0.116.1`, MIT) | MIT / BSD-3-Clause | Mentor web interface (FR-C-09) | None: the PRD fixes FastAPI |
+| FastAPI and its server | **Not pinned yet.** Neither `requirements.txt` nor `requirements-dev.txt` lists FastAPI or a server on `main` (checked 2026-11-27); #136, which proposed `fastapi==0.116.1`, is closed, so that number is stale. The first pull request that imports FastAPI (the LTI gateway or FR-C-09) chooses one pin, with its licence as a comment, in the root `requirements.txt` | MIT (FastAPI, PyPI) | Mentor web interface (FR-C-09) | None: the PRD fixes FastAPI |
+
+**Re-check, 2026-11-27 (source: `https://pypi.org/pypi/<package>/json`, read once; no vulnerability scan
+was run, CI's `pip-audit` does that when a package is added, SEC-08).** `playwright` 1.65.2 is the latest
+release (uploaded 2026-11-14, Apache-2.0); `pytest-playwright` 0.10.0 is the latest (2026-10-08,
+Apache-2.0); `defusedxml` 0.7.1 is the latest (PSF-2.0); `PyYAML` 6.0.3 stays as pinned (6.0.4 exists
+and is not adopted here: the pin follows `docs/design/studio.md`). FastAPI's latest was 0.165.0 (MIT);
+no FastAPI pin is proposed here. None of Playwright, pytest-playwright, `defusedxml` or FastAPI is
+declared in the repository yet. `PyYAML` is only in `requirements-dev.txt`; the role-expectation loader
+(FR-C-07) reads YAML at run time, so its pull request must also add it to `requirements.txt`, with the
+two pins changed together. No LTI dependency is added or changed by this document.
+
+**The CK-08 fixture maker is not the checker's parser.** `testdata/b8-3-planted-errors/make_ck08_fixture.py`
+(PR #262) is a trusted, offline test-data tool: a person runs it once on a copy of the approved B8.1 +
+B8.2 backup, and it is never part of the checker or a web request. It uses the standard-library XML
+parser and, so that this choice stays safe, refuses any XML that contains a DOCTYPE or ENTITY
+declaration, refuses unsafe archive paths, links and duplicate or oversized entries, and never
+overwrites a file. This is **not** a pattern for ingesting an uploaded `.mbz`: the checker reads
+untrusted backups with `defusedxml` and the limits of §9.2, as the table above says.
 
 All licences are allowed by PRD C-11 (MIT, BSD, Apache-2.0, PSF-2.0). Playwright downloads browser
 binaries at install time; they are not Python packages and are not committed. Re-check each version for
@@ -712,7 +744,7 @@ Implement one requirement or tightly related group per pull request. The order b
 | 4 | Rule catalogue v1 | FR-C-03 | B2; B6 and B7 fields as needed | Implement CK-01 through CK-13 with rule-level unit tests. |
 | 5 | Reports and course-model diff | FR-C-04, FR-C-05 | Course-model parser and rule engine | Provide web/CLI/JSON reports and structural, rule and point comparisons. |
 | 6 | Role expectations and browser tests | FR-C-06, FR-C-07 | Lab Moodle setup and test accounts | Implement YAML expectations, Playwright coverage, negative tests and failure screenshots. |
-| 6a | LTI gateway and launch validation (`libs/lti`) | B3, SEC-01, SEC-02, EXT-07 | ADR 0001 §0 (library settled; the independent `launch.py` review gates the merge) | Owned by this module (B3). In progress as the `integration/lti-session-routing` and `integration/lti-authentication` branches; first used by row 7, so it belongs to Release 1 (PRD §D1) |
+| 6a | LTI gateway and launch validation (`libs/lti`) | B3, SEC-01, SEC-02, EXT-07 | ADR 0001 §0 (library settled; the independent `launch.py` review gates the merge) | **Outside the Student 2 Release 0 completion count; kept only for architectural traceability** (the mentor interface in row 7 depends on it; PRD D1: the `lti` library belongs to the first release that uses it, and the Release 0 notes say where it goes). No LTI code or B3 change is part of this document's pull requests. Owned by this module (B3). In progress as the `integration/lti-session-routing` and `integration/lti-authentication` branches; first used by row 7, so it belongs to Release 1 (PRD §D1) |
 | 7 | Mentor-facing checker interface | FR-C-09 | B3, checker library and approved web conventions | Support authenticated launches and the two permitted input types. |
 | 8 | Initial integration harness | FR-C-08 | M1 build output, checker, Moodle 5.3 and role tests | Run from a clean state and produce one consolidated report. |
 | 9 | Harness extensions | FR-C-08 | M3 and M4 smoke-test interfaces | Add grading and video smoke tests when those releases exist. |
@@ -729,3 +761,5 @@ The PRD places the core Course Checker requirements in Release 1 and extends the
 The document remains in `Draft` until the guide approves it. Feature implementation must follow the repository's approval process.
 
 **Review status (27 November 2026).** Not approved. The guide has not approved this document, and none of the three boxes above is ticked. The corrections for Harshitha's first-pass review (five blocking findings, §12 items 24 to 26 and the sections they touch) are made and are ready for her **second-pass peer review**. The detailed 12-recommendation attachment of that review was not available in the repository or on the issues and pull requests the author could read, so its dispositions are listed in the pull request as pending until the attachment is supplied. Items still waiting for the guide: §12 item 24 (CK-02 as an explaining rule), item 26 (PRD C2.7 wording), the JSON field names (item 19), and the guide's view of the CK-07/CK-08 rule, which the recorded decisions support only in part (item 25). Nothing in this document claims that the checker, the media extractor, the CK-08 fixture or the 100 % detection target is implemented or achieved.
+
+**Self-review (27 November 2026, not a human review).** The repository's first-pass `/review-design checker` found no blocking item and six advice items. Four are addressed in this revision: `--check` and `--config` in §6.2 (PRD OPS-05), the dependency status and the trusted-tool parser note in §8 (re-checked on PyPI on 2026-11-27, no vulnerability scan run), and row 6a of §13 (outside the Student 2 Release 0 completion count). Two wait for the guide: the PRD C2.7 wording (item 26) and CK-02 as an explaining rule (item 24). Items not verifiable offline (Moodle 5.3 behaviour, role capabilities) stay in §12. Status remains `Draft`.
