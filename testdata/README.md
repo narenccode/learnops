@@ -58,6 +58,35 @@ B8.2 is never changed. The folders `missing-body`, `duplicate-id`, `protected-id
 | `ck-12-full-url-media` | CK-12 | package | built (finding not asserted) | image at `https://example.invalid/diagram.png`; the v1 media scope is decided (issue #232, point 6), but the shared extractor (FR-C-01) is not implemented, so the finding is not asserted |
 | `ck-13-unlock-without-completion` | CK-13 | mbz | pending-lab | unlocking task has completion tracking off |
 
+**CK-08 fixture maker** (`b8-3-planted-errors/make_ck08_fixture.py`, PRD B8.3, C2.3; scripted edit approved
+by the guide, issue #232 point 4). It makes the synthetic CK-08 `.mbz` from a **copy** of the merged
+B8.2 + B8.1 backup and never touches Moodle:
+
+```bash
+python testdata/b8-3-planted-errors/make_ck08_fixture.py --input merged.mbz \
+    --target-idnumber wk-01-task --output ck-08.synthetic.mbz   # writes it and <output>.report.json
+# add --dry-run to write nothing; run again with --check (no --target-idnumber) to verify the result
+```
+
+- It finds the activity ids in the backup itself (`activities/<module>_<cmid>/`); it does not assume
+  the B8.1 reference ids. One criterion in `course/completion.xml` gets an id no activity has
+  (highest id + 1). The activity stays. No `idnumber` is added. Every other file is copied byte for
+  byte and the archive is written deterministically, so the same input gives the same SHA-256.
+- The report records the SHA-256 of the input, of `completion.xml` before and after, and of the
+  output, and says `fixture: synthetic`. The output name must end in `.synthetic.mbz`.
+- It refuses unsafe archive paths, links, duplicates, oversized members and XML with a DOCTYPE or
+  ENTITY. It never overwrites a file. **Undo:** delete `<output>` and `<output>.report.json`; the
+  input is never modified.
+- **Not done here (needs the approved merged backup and a Moodle lab):** running it on the real
+  B8.2 + B8.1 backup, and confirming that the result does not also fire CK-07 (by the design §3.4
+  boundary it should not: the criterion does not resolve, so it is CK-08's alone and `also_expected`
+  stays `[]`). Until then CK-08 stays `assertable: false` and the variant `pending-lab`. The
+  tests (`libs/contracts/tests/test_b8_3_ck08_fixture_maker.py`) use a synthetic backup built in a
+  temporary folder and say nothing about the real one. The backup layout they assume (course-level
+  `course/completion.xml`, `moduleinstance` holding the cmid, `module.xml` with the cmid as `id`)
+  must be confirmed on the real B8.1 backup.
+- The generated `.mbz` and its report are not committed.
+
 **The mapping is confirmed by the design owner.** Shraddha (@shraddha0103) approved all 14 planted-error variant-to-rule mappings on 2026-11-26 in [PR #148](https://github.com/narenccode/learnops/pull/148#issuecomment-7194780768). The confirmation is recorded in `expected-findings.yaml` and checked by `test_mapping_is_confirmed_by_design_owner`. This confirms the expected-finding mapping only; the checker design remains `Draft`, no checker detection is claimed, and the 100 % target is not yet measured. CK-08 remains `assertable: false` until its scripted fixture is created and verified not to trigger CK-07. CK-12 remains `assertable: false` until the shared extractor is implemented and tested.
 
 
