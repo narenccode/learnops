@@ -9,6 +9,8 @@
 `Approved`**, in a pull request the guide merges. Feature code for this module starts only when the
 status is `Approved` (foundation work listed in §13 under "Release 0" is allowed earlier).
 
+**Moodle version.** LearnOps supports **Moodle 5.3 only** (decision 0017, `docs/decisions/0017-moodle-5-3-only.md`; PRD C-03). Some older statements below still mention Moodle 4.5: the locked-grades paragraph in §10.1 and its release note, the "best effort on 4.5" line in §4.1, risk R4 and questions Q14 and Q21. They are history and are not requirements: 4.5 is not built for, tested or required. They have not been rewritten, as decision 0017 allows.
+
 **How to read this document.** Each design statement carries one of five labels:
 
 | Label | Meaning |
@@ -95,7 +97,7 @@ trace them under FR-G-01 (read side) and FR-G-06 (write side) until the guide de
 
 ```mermaid
 flowchart LR
- MENTOR(["Mentor"]) -- "launch from course (new window)" --> MOODLE["Moodle 4.5 / 5.3"]
+ MENTOR(["Mentor"]) -- "launch from course (new window)" --> MOODLE["Moodle 5.3"]
  MOODLE -- "LTI 1.3 (B3)" --> WEB["grading web service<br/>FastAPI + static React<br/>(review only)"]
  WEB --> DB[("PostgreSQL 16<br/>schema grading + shared<br/>incl. job queue")]
  DB --> FETCH["fetch worker"]
@@ -200,7 +202,7 @@ describes a contract file or `.env.example` as changed, that change is not on `m
 service that contains only the functions below. The account has only the capabilities those functions
 need, in the courses where it is enrolled for grading.
 
-| Purpose | Function (PRD §B4) | Used by | Exists with these parameters on 4.5 / 5.3? |
+| Purpose | Function (PRD §B4) | Used by | Exists with these parameters on 5.3? |
 |---|---|---|---|
 | Course structure | `core_course_get_courses_by_field`, `core_course_get_contents` | FR-G-01; B3 course binding | (lab) / (lab) |
 | Enrolled users | `core_enrol_get_enrolled_users` | FR-G-01 | (lab) / (lab) |
