@@ -1,0 +1,81 @@
+# Expected results for the four B1-level planted-error packages used by the D2 demo
+# (scripts/demos/demo_d2_course_package_checker.py). One entry per package, plus the clean baseline.
+#
+# These are B1-level cases, a subset of B8.3: the B1 validator (libs/contracts) rejects each package.
+# They are not CK-01..CK-13 cases. The full CK mapping is in expected-findings.yaml and does not
+# include these four (checker design §3.4 boundary and §11.3: a package that fails B1 reports only
+# the B1 errors; every CK rule is `not checked`).
+#
+# Fields
+#   id                   folder name under testdata/b8-3-planted-errors/; the package is <id>/package/
+#   layer                B1 = the shared B1 validator reports it (guide, issue #118, 20 November 2026)
+#   planted_change       the one change from the B8.2 sample package, which stays unchanged
+#   expected_exit_code   exit code of `checker check <package> --json` (0 = no error, 1 = error)
+#   expected_error_count exactly this many errors, so no unrelated rule fires
+#   errors               the validator's own code, rule, location (path in course.yaml) and idnumber,
+#                        and the exact message. `rule` is a B1 rule, not a CK id.
+#
+# The report's `not_checked` list (rules that did not run) is not pinned here: it follows the
+# validator. The tests check that it is present and that summary.not_checked equals its length.
+
+version: 1
+baseline:
+  id: b8-2-sample-course
+  package: ../b8-2-sample-course/package
+  layer: B1
+  expected_exit_code: 0
+  expected_error_count: 0
+  errors: []
+
+cases:
+  - id: missing-body
+    package: missing-body/package
+    layer: B1
+    planted_change: "weeks/02-task.md is deleted; the Week 2 task still names it as its body"
+    expected_exit_code: 1
+    expected_error_count: 1
+    errors:
+      - code: body_file_missing
+        rule: "B1.1"
+        location: [sections, 1, activities, 1, body]
+        idnumber: wk-02-task
+        message: "sections[1].activities[1].body: the file 'weeks/02-task.md' does not exist in the package."
+
+  - id: duplicate-id
+    package: duplicate-id/package
+    layer: B1
+    planted_change: "The Week 2 guide Page (wk-02-guide) is given the idnumber wk-01-guide, which the Week 1 guide Page already has. A guide is chosen because no unlock rule names a guide, so no second rule fires."
+    expected_exit_code: 1
+    expected_error_count: 1
+    errors:
+      - code: duplicate_idnumber
+        rule: "B1.2 rule 6"
+        location: [sections, 1, activities, 0, idnumber]
+        idnumber: wk-01-guide
+        message: "sections[1].activities[0].idnumber: the idnumber 'wk-01-guide' is already used at sections[0].activities[0].idnumber. Idnumbers must be unique in the course."
+
+  - id: protected-id
+    package: protected-id/package
+    layer: B1
+    planted_change: "The Week 4 task (wk-04-task) is given the protected idnumber final-project (PRD B1.4)"
+    expected_exit_code: 1
+    expected_error_count: 1
+    errors:
+      - code: schema_not
+        rule: "B1.1"
+        location: [sections, 3, activities, 1, idnumber]
+        idnumber: null
+        message: "sections[3].activities[1].idnumber: 'final-project' is a protected idnumber and cannot be used in a package."
+
+  - id: invalid-mode
+    package: invalid-mode/package
+    layer: B1
+    planted_change: "course.mode is changed from full to everything"
+    expected_exit_code: 1
+    expected_error_count: 1
+    errors:
+      - code: schema_enum
+        rule: "B1.1"
+        location: [course, mode]
+        idnumber: null
+        message: "course.mode: 'everything' is not one of ['full', 'sections-only']"
