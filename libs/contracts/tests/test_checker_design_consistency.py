@@ -182,7 +182,11 @@ def test_pending_guide_items_are_marked_pending_not_decided() -> None:
         if (m := re.match(r"\| (\d+) \|", r))
     }
     assert "pending guide confirmation" in rows[24]
-    assert "Pending guide" in rows[26]
+    # item 26: the guide decided it (issue #112, comment 7221502371, item 10); the PRD edit is in
+    # draft pull request #259 and must still be described as not merged
+    assert "Decided by the guide" in rows[26]
+    assert "7221502371" in rows[26]
+    assert "#259" in rows[26] and "not merged yet" in rows[26]
     # item 25 rests only on recorded decisions and says what they do not settle
     row25 = rows[25]
     assert "not itself a recorded guide decision" in row25
