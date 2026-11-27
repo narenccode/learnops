@@ -15,7 +15,7 @@
 #   expected        the finding a checker must report: rule, element, severity
 #   reason          why it must be reported
 #   also_expected   other rules that fire as their own, separate finding on the same variant, or [].
-#                   CK-01 is never listed here for an item explained by CK-04, CK-05 or CK-13 (guide, item 13)
+#                   CK-01 is never listed here for an item explained by CK-04, CK-05 or CK-13 (guide, item 13) or by CK-02 (design section 12 item 24, a proposal pending the guide)
 #   notes           open points
 #   assertable      optional; false = the expected finding is provisional and must not be asserted by a checker test yet
 
@@ -29,7 +29,9 @@ version: 1
 #   item 12  severity: all thirteen rules are error
 #   item 13  report the root cause once: an item unreachable because of CK-04, CK-05 or CK-13 is still
 #            listed as unreachable with its cause, but is NOT a separate CK-01 finding; the report
-#            line says "explained by CK-0x". CK-01 still fires when no other rule explains the item
+#            line says "explained by CK-0x". CK-01 still fires when no other rule explains the item.
+#            Design section 12 item 24 proposes CK-02 as a fourth explaining rule (pending the guide);
+#            no variant below plants an item that waits for a CK-02 activity, so nothing here changes
 #   item 17  confirmed: a package failing B1 stops with the B1 errors, every CK rule is not checked
 #   item 22  B8.3 .mbz variants use Moodle 5.3 only; decision 0017 later made Moodle 5.3 the
 #            only supported version throughout LearnOps
@@ -64,7 +66,7 @@ variants:
     expected: {rule: CK-02, element: wk-01-guide, severity: error}
     reason: "A Page has nothing to submit, so the completion rule can never be met."
     also_expected: []
-    notes: "Nothing unlocks from the Page (week 2 waits for wk-01-task), so CK-13 and CK-01 do not interact."
+    notes: "Nothing unlocks from the Page (week 2 waits for wk-01-task), so CK-13 and CK-01 do not interact, and no item is listed as explained by CK-02 (design section 3.4, section 12 item 24)."
 
   - id: ck-03-points-total-mismatch
     rule: CK-03
@@ -147,7 +149,7 @@ variants:
     assertable: false   # scripted edit approved in principle (issue #232, point 4); fixture not created, CK-07 check pending
     planted_change: "Scripted, repeatable edit (approved in principle by the guide, issue #232 point 4): after merging with the B8.1 template, edit the `.mbz` completion-criterion XML so one criterion uses a `cmid` absent from the merged course model; `idnumber` remains absent and no activity is deleted. This is a backup-edit exception, not a Moodle setting."
     expected: {rule: CK-08, element: course-completion-criteria, severity: error}
-    reason: "The criteria refer to a cmid that does not identify any activity in the merged course model."
+    reason: "The criterion's cmid is not the cmid of any activity in the same (merged) course model; the criterion is resolved with that model's own cmid values only, never against the B8.1 reference model, so it does not resolve. Unresolved criterion references are CK-08's; CK-07 leaves an unresolved criterion alone, so only CK-08 fires (design section 3.4)."
     also_expected: []
     notes: "Approved in principle by the guide (issue #232, comment 7176861868, point 4): a scripted, repeatable edit kept in testdata with its SHA-256 before and after and labelled synthetic, once the editor has checked that the changed criterion does not also fire CK-07. The fixture has not been created or verified. Baseline is the merged course with the B8.1 template, as for CK-07. A normal Moodle setting does not create a dangling cmid; this case would require editing the completion-criterion XML inside the `.mbz` after backup. Do not rely on this variant until the scripted edit exists and the CK-07 check is done. Use a cmid absent from every activity in the merged model, omit idnumber, and delete no activity, so CK-07 is not triggered."
 
