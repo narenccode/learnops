@@ -389,7 +389,7 @@ Test names are in `test_moodle_ws_v1.py`.
 | R3: a write is refused before sending when the state is already `readyforrelease` or `released`, and is still read back; the 4.5 / 5.3 difference is recorded for the lab; R3's pre-write check holds on 5.3 and is best effort on 4.5, named in the release notes (guide, 15 Nov); its post-write clause does not catch a write over `released`, so R16 is the safeguard (guide, #112, 26 Nov); a state that ends `released` after the write is `NOT_VERIFIED` and a normal `readyforrelease` write stays verified (guide, 22 Nov) | B4 draft rule | `test_r3_locked_states_are_refused_before_sending_and_still_verified` |
 | R4: `viewhiddencourses`, `viewhiddendetails` and `useremail` are not granted | B4, SEC-03 | `test_r4_declared_capabilities_are_not_granted` |
 | R5: suspended learners are skipped and reported as skipped; `viewsuspendedusers` is not granted | B4 | `test_r5_suspended_learners_are_skipped_and_reported` |
-| R6: `viewownsubmissionsummary` stays lab check 12 | B4, App-C 1 | `test_r6_view_own_submission_summary_stays_a_lab_check` |
+| R6: `viewownsubmissionsummary` was confirmed on 5.3 (lab check 12, decision 0019); a course can change it | B4, App-C 1 | `test_r6_view_own_submission_summary_was_confirmed_on_5_3` |
 | R7: `mod/assign:reviewgrades` is granted on both versions | B4, SEC-03 | `test_r7_review_grades_is_granted_on_both_versions` |
 | R8: a failed read-back is `NOT_VERIFIED` and the write is never repeated | B4 draft rule | `test_r8_failed_read_back_is_not_verified_and_never_rewrites` |
 | R9: exact numeric match after parsing, no tolerance; range checked before writing | B4 draft rule | `test_r9_exact_numeric_match_and_range_check_before_writing` |

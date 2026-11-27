@@ -475,6 +475,8 @@ def test_r1_get_grades_is_the_stored_grade_read_back(example: Doc) -> None:
     r1 = write_rules()["R1"]
     assert "`mod_assign_get_grades` is the grade-value read-back" in r1
     assert "lab check 13" in r1
+    assert "on the 5.3 lab site it was five" in r1
+    assert "is not verified (lab check 13)" not in r1
     draft_rule = plain(section(rules(), "## 3. Draft rule", "## 4."))
     assert "read with `mod_assign_get_grades`" in draft_rule
     assert "pending" not in draft_rule.casefold()
@@ -542,9 +544,9 @@ def test_r5_suspended_learners_are_skipped_and_reported() -> None:
     assert "Suspended learners are skipped and reported as skipped" in plain(prd_b4())
 
 
-def test_r6_view_own_submission_summary_stays_a_lab_check() -> None:
+def test_r6_view_own_submission_summary_was_confirmed_on_5_3() -> None:
     r6 = write_rules()["R6"]
-    assert "stays lab check 12" in r6
+    assert "confirmed on 5.3 (lab check 12" in r6
     assert "the write is not verified" in r6
     rows = lab_checks()
     assert "`mod/assign:viewownsubmissionsummary`" in rows["12"][1]
