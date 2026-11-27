@@ -10,8 +10,9 @@ cannot be resolved. What it does not promise:
 
 - A `$ref` is resolved only when an example reaches it, so a dangling reference in a branch that no
   example uses (an optional property, one arm of `oneOf`) is not found.
-- Only the formats that `jsonschema.FormatChecker` asserts with the pinned packages are checked
-  (see the README); others, such as `date-time` and `uri`, are accepted without validation.
+- Only the formats listed in `CHECKED_FORMATS` are checked, whatever optional packages are
+  installed (see the README); others, such as `date-time`, `uri` and `idn-hostname`, are
+  accepted without validation.
 - Time and memory are not bounded: a huge file or a pathological regular expression can exhaust
   them.
 
@@ -40,6 +41,12 @@ EXAMPLE_SUFFIXES = frozenset({".json", ".yaml", ".yml"})
 YAML_SUFFIXES = frozenset({".yaml", ".yml"})
 # A schema error can repeat a whole document; keep the report readable.
 MAX_DETAIL = 300
+# The formats we assert. An explicit list, because the default `FormatChecker()` also checks
+# whatever optional packages happen to be installed (for example `idn-hostname` with `idna`),
+# which would make the result depend on the environment.
+CHECKED_FORMATS = frozenset(
+    {"date", "email", "idn-email", "ipv4", "ipv6", "regex", "time", "uuid"}
+)
 
 
 @dataclass(frozen=True)
@@ -137,7 +144,7 @@ def load_validator(
             schema=schema_rel,
         )
     # The format checker is on so that impossible dates are rejected, as in the B1 tests.
-    return cls(schema, format_checker=FormatChecker()), None
+    return cls(schema, format_checker=FormatChecker(formats=CHECKED_FORMATS)), None
 
 
 def check_example(

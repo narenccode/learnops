@@ -134,13 +134,16 @@ raised" is not "everything is checked": read the limits below.
     pass with a broken `$ref` that a later example would hit. `unresolvable_reference` means "an
     example reached a reference that cannot be resolved", not "the schema has no dangling
     reference".
-  - **Formats.** With the pinned `jsonschema` and no optional format packages, these formats are
-    checked: `date`, `email`, `idn-email`, `ipv4`, `ipv6`, `regex`, `time`, `uuid`. These are
-    **not** checked, so any string passes: `date-time`, `duration`, `hostname`, `idn-hostname`,
-    `iri`, `iri-reference`, `json-pointer`, `relative-json-pointer`, `uri`, `uri-reference`,
-    `uri-template`. For example `completed_at` in `lesson-manifest.v1` is a `date-time`, so a wrong
-    value in a B6 example is not caught. Checking more formats means adding a pinned package
-    (CLAUDE.md §2.10), which is not done here.
+  - **Formats.** The explicit `CHECKED_FORMATS` policy in `example_check.py` decides which formats
+    are checked. Exactly these eight are: `date`, `email`, `idn-email`, `ipv4`, `ipv6`, `regex`,
+    `time`, `uuid`. These are **not** checked, so any string passes: `date-time`, `duration`,
+    `hostname`, `idn-hostname`, `iri`, `iri-reference`, `json-pointer`, `relative-json-pointer`,
+    `uri`, `uri-reference`, `uri-template`. Optional packages that other tools install (for
+    example `idna`, which `pip-audit` brings in) do not change this, and a test checks it. For
+    example `completed_at` in `lesson-manifest.v1` is a `date-time`, so a wrong value in a B6
+    example is not caught. Checking one more format is a deliberate change: add it to
+    `CHECKED_FORMATS`, update the tests and this list, and add any pinned package it needs
+    (CLAUDE.md §2.10). None is added here.
   - **Time and memory are not bounded.** A huge file or a pathological regular expression can
     still exhaust them.
 - YAML is parsed exactly as PyYAML's safe loader does, so an unquoted date stays a date and B1
