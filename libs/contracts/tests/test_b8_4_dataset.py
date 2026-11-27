@@ -30,7 +30,8 @@ NOT automated, and therefore NOT claimed:
   * the sealed test split (design Q47): every submission is by the same author, so all are
     development;
   * that a submission extractor (Module 3) reads these files: the reader below is a stand-in, checked against the shared vectors;
-  * the Moodle form of a submission as editor HTML (B1.5 rule 5 is unverified until the lab check);
+  * the Moodle form of a submission as editor HTML: the set has none, and the stand-in reader's
+    HTML handling (B1.5 rule 5, Moodle 5.3) is checked only against the shared vectors;
   * machine-check behaviour on real infrastructure (lab git server and demo stubs, not ready);
   * the marking-table parse below is a stand-in for the shared parser planned in libs/contracts
     (design §4.3b); it is not that parser.
@@ -119,16 +120,55 @@ def parse_marking_table(body: str) -> list[tuple[str, int, list[str]]]:
 
 
 SUBMISSION_VECTORS = ROOT / "contracts" / "test-vectors" / "submission.v1.json"
-LABEL_LINE = re.compile(r"^ *(repository|demo|report):(.*)$", re.IGNORECASE)
+# In online text a no-break space counts as a space for rules 1 and 2 and for word_count (PRD
+# B1.5 rule 5). str.split() already splits on it; the label and trim rules name it explicitly.
+NO_BREAK_SPACE = chr(0xA0)
+ONLINE_SPACES = " " + NO_BREAK_SPACE
+LABEL_LINE = re.compile(
+    rf"^[{ONLINE_SPACES}]*(repository|demo|report):(.*)$", re.IGNORECASE
+)
+# B1.5 rule 5 on Moodle 5.3: each paragraph and each line break ends a line. Only <p> (with or
+# without attributes), </p> and <br> / <br /> are defined; any other element, and any character
+# reference, is not defined in v1, so the stand-in refuses it instead of giving it a result.
+LINE_END_TAG = re.compile(r"</p\s*>|<br\s*/?>", re.IGNORECASE)
+P_OPEN_TAG = re.compile(r"<p(\s[^>]*)?>", re.IGNORECASE)
+ANY_TAG = re.compile(r"<[^>]*>")
+CHARACTER_REFERENCE = re.compile(r"&(#\d+|#x[0-9a-fA-F]+|[A-Za-z][A-Za-z0-9]*);")
+
+
+class UndefinedHtmlError(ValueError):
+    """Editor HTML that B1.5 v1 does not define: an element other than <p> and <br>, or a
+    character reference. The stand-in has no agreed result for it."""
+
+
+class UndefinedReportFileError(ValueError):
+    """A report file holding a no-break space (U+00A0). PRD B1.3 leaves whether it separates
+    words in a report file not defined in v1, and str.split() would silently count it as a
+    space, so the stand-in refuses the file instead of giving it a word count."""
+
+
+def html_to_text(html: str) -> str:
+    """The online text of editor HTML as lines (B1.5 rule 5). Stand-in, see read_submission."""
+    text = P_OPEN_TAG.sub("", LINE_END_TAG.sub("\n", html))
+    other = ANY_TAG.search(text) or CHARACTER_REFERENCE.search(text)
+    if other:
+        raise UndefinedHtmlError(f"not defined in B1.5 v1: {other.group(0)!r}")
+    return text
+
+
 FENCE_LINE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
 ATX_LINE = re.compile(r"^ {0,3}(#{1,6})([ \t].*)?$")
 
 
-def read_submission(onlinetext: str, files: dict[str, str]) -> dict[str, Doc]:
-    """Stand-in reader for PRD B1.5 rules 1 to 7, plain online text only (rule 5, editor HTML, is
-    unverified until the lab). It is NOT the submission extractor of Module 3: it exists so that
-    expected.yaml can be derived from the files, and it is checked against every plain case of the
+def read_submission(
+    onlinetext: str, files: dict[str, str], onlinetext_format: str = "plain"
+) -> dict[str, Doc]:
+    """Stand-in reader for PRD B1.5 rules 1 to 7, plain online text and editor HTML as the Moodle
+    5.3 editor sends it (rule 5). It is NOT the submission extractor of Module 3: it exists so that
+    expected.yaml can be derived from the files, and it is checked against every case of the
     shared vectors in contracts/test-vectors/submission.v1.json (see the tests below)."""
+    if onlinetext_format == "html":
+        onlinetext = html_to_text(onlinetext)
     lines = onlinetext.split("\n")
     found: dict[str, list[str]] = {"repository": [], "demo": []}
     report_at: int | None = None
@@ -151,7 +191,7 @@ def read_submission(onlinetext: str, files: dict[str, str]) -> dict[str, Doc]:
         else:
             parts[label] = {"value": values[0]}
     if report_at is not None:
-        text = "\n".join([first.lstrip(" "), *lines[report_at + 1 :]]).strip()
+        text = "\n".join([first.lstrip(ONLINE_SPACES), *lines[report_at + 1 :]]).strip()
         parts["report"] = {
             "value": text,
             "source": "onlinetext",
@@ -162,6 +202,12 @@ def read_submission(onlinetext: str, files: dict[str, str]) -> dict[str, Doc]:
         if name in files:
             # Read as UTF-8 with a leading byte-order mark removed (PRD B1.3, word_count).
             text = files[name].removeprefix("﻿")
+            # The U+00A0 rule of B1.5 rule 5 is for online text only; in a report file it is
+            # not defined in v1 (Harshitha's review of #248).
+            if NO_BREAK_SPACE in text:
+                raise UndefinedReportFileError(
+                    f"{name} contains a no-break space (not defined in B1.3 v1)"
+                )
             parts["report"] = {
                 "value": text,
                 "source": name,
@@ -739,22 +785,65 @@ def _vectors() -> Doc:
     return loaded
 
 
-PLAIN_CASES = [
-    c for c in _vectors()["cases"] if c["input"]["onlinetext_format"] == "plain"
-]
+SUBMISSION_CASES = _vectors()["cases"]
 README_CASES = [
     c for c in _vectors()["readme_cases"] if c["expected"]["result"] != "invalid"
 ]
 
 
-@pytest.mark.parametrize("case", PLAIN_CASES, ids=[c["id"] for c in PLAIN_CASES])
-def test_the_stand_in_reader_gives_the_expected_parts_of_every_plain_vector(
+@pytest.mark.parametrize(
+    "case", SUBMISSION_CASES, ids=[c["id"] for c in SUBMISSION_CASES]
+)
+def test_the_stand_in_reader_gives_the_expected_parts_of_every_submission_vector(
     case: Doc,
 ) -> None:
-    """The reader below is only trusted as far as it agrees with the shared vectors."""
-    files = {f["name"]: f["text"] for f in case["input"]["files"]}
-    parts = read_submission(case["input"]["onlinetext"], files)
+    """The reader below is only trusted as far as it agrees with the shared vectors, plain and
+    editor HTML (B1.5 rule 5 on Moodle 5.3)."""
+    given = case["input"]
+    files = {f["name"]: f["text"] for f in given["files"]}
+    parts = read_submission(given["onlinetext"], files, given["onlinetext_format"])
     assert parts == case["expected"], case["id"]
+
+
+@pytest.mark.parametrize(
+    "html",
+    [
+        "<div>Repository: https://example.org/x</div>",
+        '<p>Demo: <a href="https://example.org/d">link</a></p>',
+        "<p>Report: one</p><ul><li>two</li></ul>",
+        "<p>Report: fish &amp; chips</p>",
+        "<p>Report: a&nbsp;b</p>",
+    ],
+)
+def test_the_stand_in_refuses_html_that_b15_does_not_define(html: str) -> None:
+    """B1.5 v1 defines only <p> and <br>: the stand-in must not give an implicit result for other
+    elements or character references (Harshitha's review of #248)."""
+    with pytest.raises(UndefinedHtmlError):
+        read_submission(html, {}, "html")
+
+
+@pytest.mark.parametrize("name", ["report.md", "report.txt"])
+def test_the_stand_in_refuses_a_report_file_with_a_no_break_space(name: str) -> None:
+    """B1.3 leaves U+00A0 in a report file not defined in v1, so the stand-in gives it no word
+    count (Harshitha's review of #248). Online text keeps the decided rule (next test)."""
+    onlinetext = "Repository: https://example.org/r\nDemo: https://example.org/d"
+    with pytest.raises(UndefinedReportFileError):
+        read_submission(onlinetext, {name: f"one{NO_BREAK_SPACE}two three"}, "plain")
+
+
+def test_the_stand_in_keeps_the_no_break_space_rule_for_online_text() -> None:
+    onlinetext = f"Repository: x\nDemo: y\nReport: one{NO_BREAK_SPACE}two three"
+    report = read_submission(onlinetext, {}, "plain")["report"]
+    assert report["source"] == "onlinetext" and report["words"] == 3
+
+
+def test_the_stand_in_accepts_p_with_attributes_and_both_br_forms() -> None:
+    # Moodle's editor writes attributes on <p>; that is still the paragraph element.
+    html = '<p dir="ltr">Repository: https://example.org/r</p><p>Demo: x<br>Report: a<br />b</p>'
+    assert (
+        html_to_text(html)
+        == "Repository: https://example.org/r\nDemo: x\nReport: a\nb\n"
+    )
 
 
 @pytest.mark.parametrize("case", README_CASES, ids=[c["id"] for c in README_CASES])
@@ -804,7 +893,7 @@ def test_every_submission_is_development_and_none_is_editor_html(manifest: Doc) 
     for s in manifest["submissions"]:
         folder = SUBMISSIONS_DIR / s["id"]
         assert load_yaml(folder / "submission.yaml")["onlinetext_format"] == "plain"
-        assert not list(folder.glob("*.html")), s["id"]  # B1.5 rule 5: unverified
+        assert not list(folder.glob("*.html")), s["id"]  # the set holds no editor HTML
 
 
 # --- synthetic-data guards -----------------------------------------------------------------

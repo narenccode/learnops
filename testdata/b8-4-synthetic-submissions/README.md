@@ -36,8 +36,8 @@ written against all four tasks of the B8.2 sample course (#61), in the submissio
    possible; authorship is recorded in `manifest.yaml`.
 3. **Submission form.** Each `submission.yaml` carries the online text with the `Repository:`, `Demo:`
    and `Report:` lines of PRD B1.5, and a `report.md` only when the online text has no `Report:`
-   section. Plain text only: editor HTML (B1.5 rule 5) is unverified until the lab check, so **no case
-   uses it**. A submission written as editor HTML (s028) was left out; its id is not reused. How the
+   section. Plain text only: **no case uses editor HTML**. B1.5 rule 5 was decided for Moodle 5.3 on
+   #186 (26 Nov 2026), after this set was written; adding an HTML case is the set owner's choice. A submission written as editor HTML (s028) was left out; its id is not reused. How the
    real extractor reads these files is Module 3's (Release 4); the tests use a stand-in reader that is
    checked against the shared vectors.
 4. **Format.** B8's contract file is `testdata/README.md` (`contracts/CLAUDE.md`), and it is frozen after
@@ -127,7 +127,7 @@ answer depends on a rubric reading that is not decided. Those cases are left to 
 | s034 | wk-02 | partial | label repeated (B1.5 rule 7); ambiguous judgement; two `Repository:` lines: `field_repeated`, the first does not win (B1.5 rule 7) |
 
 Not covered yet: a resubmission (needs the submission-version rules, design §5.4), online text as editor
-HTML (B1.5 rule 5; add a case only after the lab check), and a `command:<name>` check (B8.2 uses none,
+HTML (B1.5 rule 5, decided for Moodle 5.3 on #186; the set owner decides whether to add a case), and a `command:<name>` check (B8.2 uses none,
 so the tag `command_check_undetermined` is not exercised either). s028 is left out for the HTML reason.
 
 ## Author grades (not reference grades)
@@ -155,9 +155,9 @@ and the author grades stay as they are.
 
 These are not decided. They exist only so that `expected.yaml` can be checked against the files.
 
-- **Reading the online text:** B1.5 rules 1 to 7 on plain text, by a stand-in reader in the test file.
-  It is checked against the 12 plain cases of `contracts/test-vectors/submission.v1.json`; it is not
-  Module 3's extractor.
+- **Reading the online text:** B1.5 rules 1 to 7, by a stand-in reader in the test file, for plain
+  text and for editor HTML as Moodle 5.3 sends it (rule 5). It is checked against every submission case
+  of `contracts/test-vectors/submission.v1.json`; it is not Module 3's extractor.
 - **Word count:** whitespace-separated pieces of the report: the `Report:` text, or the whole report file as it is (B1.3).
 - **`readme_sections`:** the B1.3 heading rule (ATX headings of 1 to 6 `#`, at most three leading spaces, closing `#` sequence removed, backtick and tilde fences, an unclosed fence runs to the end, Setext headings do not count), checked against the 12 README cases of the same vectors file. Whole heading text, case-insensitive.
 - **`command:<name>`:** `undetermined`, because no check config exists (§4.3c, Q33). It is `error` when the repository cannot be cloned.
@@ -170,7 +170,7 @@ The guide answered most of these on issue #186 (23 Nov 2026). What is decided is
 | # | Decision | Design ref | Who |
 |---|---|---|---|
 | O1 | ~~Retarget to the B8.2 marking tables~~ **Done** (all four tasks; B8.2 merged in #61) | §11.3 | Student 1, Student 3 |
-| O2 | ~~Submission-content rule~~ **Decided** in PRD B1.5 (#87); this set follows it for plain text. Editor HTML stays unverified until the lab check | §4.3a, Q32 | Guide, Student 1 |
+| O2 | ~~Submission-content rule~~ **Decided** in PRD B1.5 (#87); this set follows it for plain text. Editor HTML (rule 5) was decided for Moodle 5.3 on #186 (26 Nov 2026); the set has no HTML case | §4.3a, Q32 | Guide, Student 1 |
 | O3 | Reference grades. **Decided (guide):** the author's grades may stay, labelled "author-graded, not reference grades"; **a student acting as mentor grades the set** before B8.4 counts as complete: the guide chose the owner of B8.2, who did not write the 33 submissions, and she accepted (issue #186, guide comment 7097143671 and acceptance comment 7128769282). The grades are labelled "student acting as mentor" and are a recorded deviation from PRD B8.4 and G-5. A second grader on at least 10 and the sealed test split are for Release 4, not Release 0 | §11.3, Q13, Q47 | Decided (guide); decision record to follow |
 | O4 | Band definition, whole-number scores and the cap when a required check fails. **Guide:** use the grading design's proposals for now and mark them provisional; settled when the design is approved | §11.2, Q44, Q25 | Guide |
 | O5 | Set size and split. **Decided (guide):** 30 is the minimum, writing 60 can wait; use the seeded development and test split of Q47, with the sealed test split written by Akshita or the guide where possible; record who wrote each submission | Q45, Q47 | Guide |
