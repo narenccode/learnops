@@ -127,15 +127,27 @@ ONLINE_SPACES = " " + NO_BREAK_SPACE
 LABEL_LINE = re.compile(
     rf"^[{ONLINE_SPACES}]*(repository|demo|report):(.*)$", re.IGNORECASE
 )
-# B1.5 rule 5 on Moodle 5.3: each paragraph and each line break ends a line, other markup is
-# removed. Elements other than <p> and <br>, and character references, are not defined in v1.
+# B1.5 rule 5 on Moodle 5.3: each paragraph and each line break ends a line. Only <p> (with or
+# without attributes), </p> and <br> / <br /> are defined; any other element, and any character
+# reference, is not defined in v1, so the stand-in refuses it instead of giving it a result.
 LINE_END_TAG = re.compile(r"</p\s*>|<br\s*/?>", re.IGNORECASE)
+P_OPEN_TAG = re.compile(r"<p(\s[^>]*)?>", re.IGNORECASE)
 ANY_TAG = re.compile(r"<[^>]*>")
+CHARACTER_REFERENCE = re.compile(r"&(#\d+|#x[0-9a-fA-F]+|[A-Za-z][A-Za-z0-9]*);")
+
+
+class UndefinedHtmlError(ValueError):
+    """Editor HTML that B1.5 v1 does not define: an element other than <p> and <br>, or a
+    character reference. The stand-in has no agreed result for it."""
 
 
 def html_to_text(html: str) -> str:
     """The online text of editor HTML as lines (B1.5 rule 5). Stand-in, see read_submission."""
-    return ANY_TAG.sub("", LINE_END_TAG.sub("\n", html))
+    text = P_OPEN_TAG.sub("", LINE_END_TAG.sub("\n", html))
+    other = ANY_TAG.search(text) or CHARACTER_REFERENCE.search(text)
+    if other:
+        raise UndefinedHtmlError(f"not defined in B1.5 v1: {other.group(0)!r}")
+    return text
 
 
 FENCE_LINE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
@@ -779,6 +791,32 @@ def test_the_stand_in_reader_gives_the_expected_parts_of_every_submission_vector
     files = {f["name"]: f["text"] for f in given["files"]}
     parts = read_submission(given["onlinetext"], files, given["onlinetext_format"])
     assert parts == case["expected"], case["id"]
+
+
+@pytest.mark.parametrize(
+    "html",
+    [
+        "<div>Repository: https://example.org/x</div>",
+        '<p>Demo: <a href="https://example.org/d">link</a></p>',
+        "<p>Report: one</p><ul><li>two</li></ul>",
+        "<p>Report: fish &amp; chips</p>",
+        "<p>Report: a&nbsp;b</p>",
+    ],
+)
+def test_the_stand_in_refuses_html_that_b15_does_not_define(html: str) -> None:
+    """B1.5 v1 defines only <p> and <br>: the stand-in must not give an implicit result for other
+    elements or character references (Harshitha's review of #248)."""
+    with pytest.raises(UndefinedHtmlError):
+        read_submission(html, {}, "html")
+
+
+def test_the_stand_in_accepts_p_with_attributes_and_both_br_forms() -> None:
+    # Moodle's editor writes attributes on <p>; that is still the paragraph element.
+    html = '<p dir="ltr">Repository: https://example.org/r</p><p>Demo: x<br>Report: a<br />b</p>'
+    assert (
+        html_to_text(html)
+        == "Repository: https://example.org/r\nDemo: x\nReport: a\nb\n"
+    )
 
 
 @pytest.mark.parametrize("case", README_CASES, ids=[c["id"] for c in README_CASES])
