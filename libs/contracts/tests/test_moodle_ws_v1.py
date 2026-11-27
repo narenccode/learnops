@@ -29,8 +29,8 @@ AUTOMATED here:
 
 NOT automated, and therefore NOT claimed:
   * that any function exists on Moodle 4.5 or 5.3, or behaves as expected with the parameters
-    used: the names come from the Moodle source (rules §7), and all lab checks in §5 are open;
-  * that the capability list is enough or minimal: lab check 9 is open;
+    used: the names come from the Moodle source (rules §7), and the lab results of 5.3 are recorded in decision 0019, not tested here;
+  * that the capability list is enough or minimal: lab check 9 showed sufficiency only;
   * any 4.5 / 5.3 behaviour behind R1, R3, R4 and R9 (the grade text format, locked-state
     handling, calls without the declared capabilities, out-of-range grades): lab checks 13 to 16;
   * that libs/moodle_ws refuses functions outside this list, or enforces the draft rule and the
@@ -626,7 +626,8 @@ def test_r13_marking_workflow_off_is_refused_before_sending() -> None:
     assert "refused before anything is sent" in r13
     assert "`notmarked`, `inmarking`, `readyforreview` or `inreview`" in r13
     assert "`REFUSED_WORKFLOW_OFF`" in r13
-    assert "Lab check 4 stays open" in r13
+    assert "Lab check 4 was run on 5.3" in r13
+    assert "stays open" not in r13
 
 
 def test_r14_a_matching_read_back_after_a_lost_answer_needs_the_mentor() -> None:
