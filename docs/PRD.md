@@ -969,7 +969,7 @@ Provides: B2, B3 (as integration lead). Uses: B1, B4 (course lookup), B6 (CK-12)
 
 ### C2.7 Acceptance criteria
 - [ ] Detects 100 % of planted errors in B8.3, with no false errors on B8.2.
-- [ ] Role tests: 5 roles × 3 profiles × 2 Moodle versions, all passing on the restored sample course; at least one negative check per role.
+- [ ] Role tests: 5 roles × 3 profiles on Moodle 5.3, all passing on the restored sample course; at least one negative check per role.
 - [ ] Harness runs end to end from a clean state with one command and produces a single report.
 
 ### C2.8 Error handling
@@ -1017,8 +1017,8 @@ the local-vs-hosted model comparison. Value: P3.
 | FR-G-06 | Write **only approved** drafts to Moodle via B4 (grade + feedback, workflow state `readyforrelease`); never release. | R4 |
 | FR-G-07 | Record who approved what and what changed from the draft (audit, OPS-06). | R4 |
 | FR-G-08 | Re-run a submission after resubmission without losing earlier approvals' history. | R4 |
-| FR-M-01 | Shared model interface library (B5.1–B5.3) used by every AI step. | R0 |
-| FR-M-02 | Speech interface library (B5.4). | R0 |
+| FR-M-01 | Shared model interface library (B5.1–B5.3) used by every AI step. | R3 (first use: Video, FR-V-05 and FR-V-06) |
+| FR-M-02 | Speech interface library (B5.4). | R3 (first use: Video, FR-V-04) |
 | FR-M-03 | Comparison study: run B8.6 on the local small model and the hosted API; report quality (wrong-answer rate, agreement), mentor review time and cost per task. | R4 |
 
 ### C3.4 UI requirements
@@ -1058,7 +1058,7 @@ retry button; never partial writes.
 Agreement rate; minutes per submission; edits per draft; check failure rate; cost per submission.
 
 ### C3.10 Releases
-Release 0 (model and speech interfaces); Release 4 (grading assistant, comparison report).
+Release 3 (model and speech interface libraries, first used by Video); Release 4 (grading assistant, comparison report).
 
 ### C3.11 Out of scope
 Automatic release of grades; plagiarism decisions (flags only); grading quizzes or workshops.
