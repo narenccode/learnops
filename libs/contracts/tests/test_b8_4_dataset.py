@@ -141,6 +141,12 @@ class UndefinedHtmlError(ValueError):
     character reference. The stand-in has no agreed result for it."""
 
 
+class UndefinedReportFileError(ValueError):
+    """A report file holding a no-break space (U+00A0). PRD B1.3 leaves whether it separates
+    words in a report file not defined in v1, and str.split() would silently count it as a
+    space, so the stand-in refuses the file instead of giving it a word count."""
+
+
 def html_to_text(html: str) -> str:
     """The online text of editor HTML as lines (B1.5 rule 5). Stand-in, see read_submission."""
     text = P_OPEN_TAG.sub("", LINE_END_TAG.sub("\n", html))
@@ -196,6 +202,12 @@ def read_submission(
         if name in files:
             # Read as UTF-8 with a leading byte-order mark removed (PRD B1.3, word_count).
             text = files[name].removeprefix("﻿")
+            # The U+00A0 rule of B1.5 rule 5 is for online text only; in a report file it is
+            # not defined in v1 (Harshitha's review of #248).
+            if NO_BREAK_SPACE in text:
+                raise UndefinedReportFileError(
+                    f"{name} contains a no-break space (not defined in B1.3 v1)"
+                )
             parts["report"] = {
                 "value": text,
                 "source": name,
@@ -808,6 +820,21 @@ def test_the_stand_in_refuses_html_that_b15_does_not_define(html: str) -> None:
     elements or character references (Harshitha's review of #248)."""
     with pytest.raises(UndefinedHtmlError):
         read_submission(html, {}, "html")
+
+
+@pytest.mark.parametrize("name", ["report.md", "report.txt"])
+def test_the_stand_in_refuses_a_report_file_with_a_no_break_space(name: str) -> None:
+    """B1.3 leaves U+00A0 in a report file not defined in v1, so the stand-in gives it no word
+    count (Harshitha's review of #248). Online text keeps the decided rule (next test)."""
+    onlinetext = "Repository: https://example.org/r\nDemo: https://example.org/d"
+    with pytest.raises(UndefinedReportFileError):
+        read_submission(onlinetext, {name: f"one{NO_BREAK_SPACE}two three"}, "plain")
+
+
+def test_the_stand_in_keeps_the_no_break_space_rule_for_online_text() -> None:
+    onlinetext = f"Repository: x\nDemo: y\nReport: one{NO_BREAK_SPACE}two three"
+    report = read_submission(onlinetext, {}, "plain")["report"]
+    assert report["source"] == "onlinetext" and report["words"] == 3
 
 
 def test_the_stand_in_accepts_p_with_attributes_and_both_br_forms() -> None:
