@@ -8,8 +8,9 @@
 #
 # Reference grades exist for all 33 (reference-grades/mentor-01/, written on 25 Nov 2026 by a student
 # acting as mentor, as the guide decided on issue #186: a recorded deviation from PRD B8.4 and G-5,
-# which say "mentor"). The set stays provisional: format acceptance (O7), the band definition and the
-# split are open, and the guide decides whether it counts as complete. s028 (online text as editor
+# which say "mentor"). The set stays provisional: the band definition and the split are open, and the
+# guide decides whether it counts as complete. Akshita approved the format under PRD B.0 rule 3
+# (issue #186, comment 7096886192, 23 Nov 2026; O7). s028 (online text as editor
 # HTML) is left out: B1.5 rule 5 is unverified until the lab check. Its id is not reused.
 #
 # All content is fictional and written for this project. No real learner data.
