@@ -85,6 +85,12 @@ python testdata/b8-3-planted-errors/make_ck08_fixture.py --input merged.mbz \
   temporary folder and say nothing about the real one. The backup layout they assume (course-level
   `course/completion.xml`, `moduleinstance` holding the cmid, `module.xml` with the cmid as `id`)
   must be confirmed on the real B8.1 backup.
+- **A trusted, offline tool, not a model for the checker.** A person runs it once on a copy of the
+  approved backup. It uses the standard-library XML parser, which is acceptable only because it also
+  refuses any XML with a DOCTYPE or ENTITY declaration and refuses unsafe archive paths, links,
+  duplicates and oversized entries. Do not copy this approach to read an uploaded `.mbz`: the checker
+  uses `defusedxml` and the limits of the design (`docs/design/checker.md` §8, §9.2). These
+  restrictions must not be weakened.
 - The generated `.mbz` and its report are not committed.
 
 **The mapping is confirmed by the design owner.** Shraddha (@shraddha0103) approved all 14 planted-error variant-to-rule mappings on 2026-11-26 in [PR #148](https://github.com/narenccode/learnops/pull/148#issuecomment-7194780768). The confirmation is recorded in `expected-findings.yaml` and checked by `test_mapping_is_confirmed_by_design_owner`. This confirms the expected-finding mapping only; the checker design remains `Draft`, no checker detection is claimed, and the 100 % target is not yet measured. CK-08 remains `assertable: false` until its scripted fixture is created and verified not to trigger CK-07. CK-12 remains `assertable: false` until the shared extractor is implemented and tested.

@@ -2,7 +2,10 @@
 """Make the synthetic CK-08 fixture from a COPY of the merged B8.2 + B8.1 backup (PRD B8.3, C2.3).
 
 The guide approved this as a scripted, repeatable edit of the backup file (issue #232, point 4).
-It never touches Moodle. It reads an input `.mbz` and writes a new one; the input is never changed.
+It never touches Moodle.
+This is a trusted, offline test-data tool: it uses the standard-library XML parser only because it also
+refuses any DOCTYPE or ENTITY declaration, unsafe paths, links, duplicates and oversized entries. Do
+not reuse it for uploaded backups (the checker uses defusedxml); do not weaken these checks. It reads an input `.mbz` and writes a new one; the input is never changed.
 
 What it does, and nothing else: in `completion.xml`, ONE criterion's `<moduleinstance>` is set to
 an activity id (cmid) that no activity in the backup has. The original activity stays in the
