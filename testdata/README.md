@@ -39,7 +39,7 @@ the B8.1 template as their baseline.
 
 **Layout.** `<variant-id>/package/` is a full copy of the B8.2 package with exactly one file changed.
 B8.2 is never changed. The folders `missing-body`, `duplicate-id`, `protected-id` and `invalid-mode`
-(PR #118) test the B1 validator, not CK rules, and are listed in its `answer.yaml`.
+(PR #118) test the B1 validator, not CK rules, and are listed in its `answer.yaml`, with a `layer: B1` field. They are four B1-level cases, a subset of B8.3, used by the D2 demo (`docs/demos/d2-course-package-checker.md`); `duplicate-id` renames a guide, not a task, so that exactly one error fires.
 
 | Variant | Rule | Kind | Status | Planted change |
 |---|---|---|---|---|
