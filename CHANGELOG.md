@@ -38,4 +38,5 @@ state of each item, and what is still missing, is in `docs/releases/r0.md` and
 ### Known limitations
 
 See `docs/releases/r0.md`. In short: no Course Checker code, role tests or harness (Release 1); no restore or
-role matrix has run on the lab; the B8.1 and B8.2 `.mbz` and the nine B8.3 `.mbz` variants are lab work.
+role matrix has run on the lab; the B8.2 `.mbz` and the 10 B8.3 `.mbz` variants (nine, plus CK-08) are lab
+work. The B8.1 backup is already built and published (release `testdata-b8-1-v1`, 24 November 2026).
