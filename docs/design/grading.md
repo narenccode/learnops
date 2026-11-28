@@ -3,7 +3,7 @@
 **Module:** grading
 **Owner:** @Harshithamanjunatha · **Peer reviewer:** @vnaags
 **Release(s):** Release 0 (contracts B4 and B5; test sets B8.4 and B8.6 v1), Release 4 (FR-G-01…08, FR-M-03). FR-M-01 and FR-M-02 (the model and speech interface libraries) belong to the first release that uses them, **Release 3**, where Video first uses them (FR-V-04, FR-V-05, FR-V-06); PRD §D1 wins and the "R0" tags in PRD §C3.3 and §C3.10 are corrected in PR #259 (guide, #112, 27 Nov, item 8, [comment 7221502371](https://github.com/narenccode/learnops/issues/112#issuecomment-7221502371)). They were built early.
-**Status:** In review
+**Status:** Approved
 
 `Status` values: `Draft` → `In review` (peer reviewing) → `Approved`. **Only the guide sets
 `Approved`**, in a pull request the guide merges. Feature code for this module starts only when the
@@ -1261,4 +1261,4 @@ Release 4 work also depends on Release 1 (CK-09) (PRD §D1).
 - [x] Owner: I understand and can explain every section.
 - [x] Peer reviewer: checked against the PRD chapter and the contracts; comments resolved.
   - Limits of the peer check: it does **not** cover §9.2 (the sandbox design, about 270 lines, the SEC-04 part). The independent review of Q30 and Q64 is separate and has not been done. The owner's proposals added in #218 were read as proposals and not verified against a running system; nothing in the grading module has been built or tested. The peer check is not the guide's approval.
-- [ ] Guide: approved (sets `Status: Approved`).
+- [x] Guide: approved (sets `Status: Approved`), in [comment 7221502371](https://github.com/narenccode/learnops/issues/112#issuecomment-7221502371) (27 Nov 2026, item 3). **Scope:** section 9.2 is outside the approval ([comment 7157135474](https://github.com/narenccode/learnops/issues/186#issuecomment-7157135474), item 3, 25 Nov 2026; confirmed 27 Nov, item 4); the rows about it (Q57, Q58, Q62, Q66) and the Release 4 comparison note in §12.5 stay open. The approval does not confirm any row marked "Resolved in this draft" in §12.4 that is not already in the guide's answers on #186; those stay proposals until he says so.
