@@ -32,6 +32,7 @@ import gzip
 import hashlib
 import io
 import json
+import os
 import re
 import sys
 import tarfile
@@ -248,7 +249,8 @@ def write_archive(archive: Archive, data: dict[str, bytes], path: Path) -> None:
                     tar.addfile(info, io.BytesIO(data[name]))
                 else:
                     tar.addfile(info)
-    path.write_bytes(buffer.getvalue())
+    with open(path, "xb") as handle:
+        handle.write(buffer.getvalue())
 
 
 def build(
@@ -345,6 +347,14 @@ def check_fixture(input_path: Path, output_path: Path) -> list[str]:
         problems.append(
             "A field other than moduleinstance changed (or an idnumber was added)."
         )
+    if value.isdigit():
+        # Exact check: rebuild the expected completion.xml from the input and compare every byte, so a
+        # change anywhere else in the file (another criterion, whitespace, an added element) is caught.
+        expected = _replace_kth(before.data[changed[0]], differing[0], int(value))
+        if after.data[changed[0]] != expected:
+            problems.append(
+                "completion.xml differs from the input by more than the one moduleinstance value."
+            )
     return problems
 
 
@@ -386,16 +396,24 @@ def main(argv: list[str] | None = None) -> int:
             return 1 if problems else 0
         if not args.target_idnumber:
             parser.error("--target-idnumber is required unless --check is used")
-        if args.output.exists() and not args.dry_run:
-            raise FixtureError(
-                f"{args.output} exists. Delete it first (that is the undo); never overwritten."
-            )
+        report_path = Path(f"{args.output}.report.json")
+        if not args.dry_run:
+            for existing in (args.output, report_path):
+                if os.path.lexists(existing):  # also a dangling symlink
+                    raise FixtureError(
+                        f"{existing} exists. Delete it first (that is the undo); never overwritten."
+                    )
         archive, data, report = build(args.input, args.target_idnumber)
         if args.dry_run:
             print(json.dumps({**report, "dry_run": True}, indent=2))
             return 0
         args.output.parent.mkdir(parents=True, exist_ok=True)
-        write_archive(archive, data, args.output)
+        try:
+            write_archive(archive, data, args.output)
+        except OSError as error:
+            raise FixtureError(
+                f"Could not create {args.output} ({error}). Nothing was overwritten."
+            ) from error
         report["output_sha256"] = sha256(args.output.read_bytes())
         problems = check_fixture(args.input, args.output)
         if problems:
@@ -403,9 +421,15 @@ def main(argv: list[str] | None = None) -> int:
             raise FixtureError(
                 "Self-check failed, output removed: " + " ".join(problems)
             )
-        Path(f"{args.output}.report.json").write_text(
-            json.dumps(report, indent=2) + "\n", "utf-8"
-        )
+        try:
+            with open(report_path, "x", encoding="utf-8") as handle:
+                handle.write(json.dumps(report, indent=2) + "\n")
+        except OSError as error:
+            args.output.unlink(missing_ok=True)  # no fixture without its report
+            raise FixtureError(
+                f"Could not write {report_path} ({error}); the fixture was removed. "
+                "Fix the cause and run again."
+            ) from error
         print(json.dumps(report, indent=2))
         return 0
     except FixtureError as error:

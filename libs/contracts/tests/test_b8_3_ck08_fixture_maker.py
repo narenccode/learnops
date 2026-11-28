@@ -6,6 +6,7 @@ do NOT show that the real fixture avoids CK-07 or that the checker finds anythin
 
 from __future__ import annotations
 
+import builtins
 import gzip
 import hashlib
 import importlib.util
@@ -449,3 +450,88 @@ def test_not_a_gzip_tar_is_refused(tmp_path: Path) -> None:
         )
         == 1
     )
+
+
+def _build(source: Path, out: Path) -> None:
+    assert (
+        _run(
+            "--input",
+            str(source),
+            "--output",
+            str(out),
+            "--target-idnumber",
+            "wk-01-task",
+        )
+        == 0
+    )
+
+
+def test_check_rejects_a_change_elsewhere_in_completion_xml(
+    source: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Review finding 1: --check must accept only the exact expected output, byte for byte.
+
+    The tampering below changes the SECOND criterion's text by one space, which the field-by-field
+    comparison of the edited criterion alone does not see.
+    """
+    out = tmp_path / "ck-08.synthetic.mbz"
+    _build(source, out)
+    assert _run("--input", str(source), "--output", str(out), "--check") == 0
+    members = _read(out)
+    members["course/completion.xml"] = members["course/completion.xml"].replace(
+        b"<id>2</id>", b"<id>2 </id>"
+    )
+    tampered = _make_mbz(tmp_path / "tampered.synthetic.mbz", members)
+    capsys.readouterr()
+    assert _run("--input", str(source), "--output", str(tampered), "--check") == 1
+    assert "more than the one moduleinstance value" in capsys.readouterr().out
+
+
+def test_existing_report_file_is_never_overwritten(
+    source: Path, tmp_path: Path
+) -> None:
+    """Review finding 2: a leftover <output>.report.json stops the run before anything is written."""
+    out = tmp_path / "ck-08.synthetic.mbz"
+    report = Path(f"{out}.report.json")
+    report.write_text("keep me", encoding="utf-8")
+    assert (
+        _run(
+            "--input",
+            str(source),
+            "--output",
+            str(out),
+            "--target-idnumber",
+            "wk-01-task",
+        )
+        == 1
+    )
+    assert report.read_text(encoding="utf-8") == "keep me"
+    assert not out.exists()
+
+
+def test_failed_report_write_removes_the_output(
+    source: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    out = tmp_path / "ck-08.synthetic.mbz"
+    real_open = builtins.open
+
+    def failing_open(file: object, *args: object, **kwargs: object) -> object:
+        if str(file).endswith(".report.json"):
+            raise OSError("disk full (simulated)")
+        return real_open(file, *args, **kwargs)  # type: ignore[call-overload]
+
+    monkeypatch.setattr(builtins, "open", failing_open)
+    assert (
+        _run(
+            "--input",
+            str(source),
+            "--output",
+            str(out),
+            "--target-idnumber",
+            "wk-01-task",
+        )
+        == 1
+    )
+    monkeypatch.undo()
+    assert not out.exists()
+    assert not Path(f"{out}.report.json").exists()
