@@ -30,8 +30,9 @@ No code checks the rest yet. The validator lists each of them as "not checked" i
     it for a package folder (test_validate_package.py);
   * B7: that the .h5p file named by an h5p activity exists (no real .h5p is kept in the
     repository);
-  * B7: that an ordinary optional h5p practice entry comes right after the week's guide Page
-    (list order). Video checkpoint placement is an open decision and is not covered.
+  * B7: that h5p practice entries form one run right after the week's guide Page (list order),
+    and where video checkpoints go (B7 section 4, decisions 8 and 9). These are rules for Course
+    Studio and the video pipeline, not validation errors, so no test here covers them.
 Until they are implemented they are checked by hand, not by this file.
 
 Each invalid case below must fail at the expected place with the expected schema keyword, so a

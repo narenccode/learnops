@@ -468,7 +468,7 @@ not recorded: lab checks 4 and 12 to 16 are open.
 Not covered: all of this runs against a scripted fake transport. No real transport exists, and nothing
 has been checked against Moodle (every check in `contracts/moodle-ws.v1.md` §5 is open).
 
-## B7 H5P practice output contract (v1), Release 0 foundation, DRAFT
+## B7 H5P practice output contract (v1), Release 0 foundation
 
 Files: `contracts/h5p-practice.v1.md` (normative text), `contracts/h5p-practice.v1.schema.json`,
 `contracts/examples/h5p-practice.v1/content-types.json` (the B7 example), the B1 example package
@@ -481,9 +481,11 @@ requirement ID of its own in the
 PRD (it is a contract, PRD B.0). It is used by FR-S-12 and FR-V-14 (Release 5, stretch) and by
 FR-C-03 CK-11 (Release 1). No row in the table at the top maps to it.
 
-**Status: draft and not approved.** The H5P library versions were verified in the lab on 2026-11-11
-(the guide's lab check, reported on this pull request; PRD App-C item 5) and are pinned in the B7
-schema. Whether the open decisions below block the freeze is the guide's decision. The B1 section
+**Status: complete for Release 0, no open decision left.** The H5P library versions were verified in
+the lab on 2026-11-11 (the guide's lab check; PRD App-C item 5) and are pinned in the B7 schema. The
+last three open decisions were settled on Issue #186 (2026-11-26; B7 decisions 8 to 10, and 11 for several checkpoints of one video): the two
+placement rules by the guide, and the cue `ref` kinds by the B6 cue schema. The approval is an
+affected owner's under PRD B.0 rule 3, on the `/contract-change` pull request. The B1 section
 above is on main; the B1 `file` field added with B7 is covered in the first table below.
 
 ### Enforced by the B1 schema; tests in `test_course_package_v1.py`
@@ -505,9 +507,9 @@ Rows that say "example only" check the example package, not packages in general.
 | The schema allows exactly the five names, requires `name`, `machine_name` and `version`, and pins each name to the library and exact version of the guide's lab check (written out in the test as `PINNED`); the names are words PRD B7 uses; the example lists exactly the five pinned entries; the contract text says interactive video is for lab demonstrations only (a rule of the text, not a schema field) | B7, App-C item 5 | `test_schema_pins_exactly_the_guides_table`, `test_example_lists_exactly_the_pinned_entries` |
 | The contract text table and the decision record hold the same five pairs as the test, so a swapped version in any of the four places fails; the text, the schema and this file point to the decision record | App-C item 5 | `test_contract_text_and_decision_record_agree_with_the_pins`, `test_text_schema_and_traceability_point_to_the_decision_record` |
 | The schema and example define no key `cue`, `cues` or `ref` (cues belong to B6), and the text says B7 defines no second format | B6.2 | `test_no_cue_key_is_defined_and_cues_are_left_to_b6` |
-| The text no longer marks a content type "to verify in the lab" and no longer lists the two decisions the lab check settled; it keeps the other open decisions marked, says each practice item uses one type, that ordering is done with Drag and Drop, that a later type is an optional entry and that a version change needs a `/contract-change`, and says practice is optional and never graded | B7 | `test_text_pins_the_types_and_keeps_only_the_open_decisions_still_open` |
+| The text no longer marks a content type "to verify in the lab" and has no OPEN DECISION, PROVISIONAL block or draft status left; it states the practice run after the guide Page, the video checkpoint placement (Issue #186, 2026-11-26) and the run of several checkpoints for one video (decision 11, confirmed by the guide on Issue #186) as rules for Studio and the pipeline, not validation errors, and points to the B6 cue schema, which exists; it says each practice item uses one type, that ordering is done with Drag and Drop, that a later type is an optional entry and that a version change needs a `/contract-change`, and says practice is optional and never graded | B7 | `test_text_pins_the_types_and_has_no_open_decision_left` |
 | `file` is defined in the `h5p` branch of the B1 schema only | Issue #44 answer 2 | `test_file_is_defined_in_the_h5p_branch_only` |
-| Example only: the package validates against B1; its week has one Page and one Assignment; its ordinary practice item is ungraded, names a lowercase `.h5p` path that does not exist, and comes right after the guide Page | B1, B7 | `test_example_package_validates_against_b1`, `test_example_week_is_standard_with_an_optional_practice_item` |
+| Example only: the package validates against B1; its week has one Page and one Assignment; its ordinary practice items are ungraded, name a lowercase `.h5p` path that does not exist, and form one run right after the guide Page | B1, B7 | `test_example_package_validates_against_b1`, `test_example_week_is_standard_with_an_optional_practice_item` |
 | Example layout for the shared example validator (PR #68): the B7 folder `examples/h5p-practice.v1/` holds only valid B7 documents, and the example B1 package is a top-level file in `examples/course-package.v1/` with its bodies in a subfolder, so the B1 example is untouched | B.0 rule 1, EXT-09 | `test_b7_example_folder_holds_only_b7_documents`, `test_example_package_sits_in_the_b1_example_folder` |
 | No `.h5p` file exists anywhere in the repository | Issue #44 answer 7 | `test_no_h5p_file_is_kept_in_the_repository` |
 
@@ -515,23 +517,24 @@ Rows that say "example only" check the example package, not packages in general.
 
 | Rule | PRD | Where the PRD places it |
 |---|---|---|
-| An ordinary practice entry comes right after the week's guide Page, and a week has one Page and one Assignment, in a package in general | B7, B1.2 rule 1 | Needs validator code; B1.2 rule 1 is itself not enforced yet |
-| Where a video checkpoint goes | B7 | Open decision; PRD B7 says "after the video" |
+| Practice items form one run right after the week's guide Page, and a week has one Page and one Assignment, in a package in general | B7 (decisions 3 and 8), B1.2 rule 1 | A rule for Course Studio and the video pipeline, not a validation error (guide, Issue #186); B1.2 rule 1 is itself not enforced yet |
+| A video checkpoint goes directly after the Page that embeds the lesson video, after the practice run if that Page is the guide Page | B7 (decision 9) | A rule for Course Studio and the video pipeline, not a validation error: nothing can tell which Page embeds a video (guide, Issue #186) |
+| Several checkpoints for one video form one run directly after the Page that embeds the video, in chapter order (the order of `activities`), with nothing between them; on the guide Page, after the practice run | B7 section 4, decision 11 (raised in Nagashree's review of #250; confirmed by the guide on Issue #186, 2026-11-26) | A rule for Course Studio and the video pipeline, not a validation error. The text is checked by `test_text_pins_the_types_and_has_no_open_decision_left` |
 | A practice (H5P) activity has no grade item | B7 | CK-11 (FR-C-03, Release 1), on the course model (B2) |
 | Media referenced by a full fixed URL instead of a relative path | C-08 | CK-12 (FR-C-03, Release 1) |
 | The file named by `file` exists, is valid, and uses one of the pinned libraries at its pinned version | B7 | Held rule `h5p_files_not_checked`, listed in every report; no check exists (`test_h5p_files_are_listed_as_not_checked_and_never_looked_for`) |
 | Interactive video only in lab demonstrations | B7 | A rule of the contract text, named in the same held rule; no check exists |
 | AI-drafted items are approved by a mentor before they reach learners | C-09, FR-S-12 | A process rule of Studio, not a data rule |
-| `cues.json` entries are valid | B6.2, FR-V-14 | The B6 cues schema does not exist yet. Student 4 proposes `type: "h5p"` with `ref` = the practice item's `idnumber`; this is provisional, quoted in B7 section 6, and not enforced here |
+| `cues.json` entries are valid | B6.2, FR-V-14 | The B6 cue schema `contracts/cues.v1.schema.json` and its tests (Student 4); a practice-item cue is `type: "h5p"` with `ref` = the item's `idnumber` (B7 section 6). That the `ref` names an activity in the course is not checked by the schema (see the B6 rows) |
 
 ### Open decisions and not mapped
 
 Closed by the guide's lab check of 2026-11-11 (App-C item 5; `docs/decisions/0008-h5p-content-types.md`):
 the H5P library versions, and whether "drag-the-words or drag-and-drop / ordering" is one type (it is
-two entries). Open: the `ref` kinds and the cue fields (Student 4, in the B6 cues schema, still to
-come; her `h5p` + `idnumber` encoding is only a proposal); several practice items in one week and
-video checkpoint placement (the guide has not decided; B7 makes no rule); and whether a data field
-should mark interactive video as lab-only (a question for reviewers). Not mapped: a
+two entries). Closed on Issue #186 (2026-11-26): the `ref` kinds and the cue fields (the B6 cue
+schema), several practice items in one week and video checkpoint placement (the guide, B7 decisions
+8 and 9). No data field marks interactive video as lab-only in v1; a later release can add one as
+an optional field. Nothing is open. Not mapped: a
 row, demo step and Bloom level for FR-S-12 and FR-V-14, because the PRD does not say schema tests
 count towards them. This pull request adds M2 to the B7 "Used by" row in PRD B.0 (guide, Issue #44).
 
@@ -626,6 +629,7 @@ PRD G-2 and C2.7 (FR-C-03, rules CK-01 to CK-13), which is made in Release 1.
 | B8.2 is unchanged (SHA-256 of every file) and B8.3 holds no secrets or email addresses | B8.2, C-07 | `test_b82_is_unchanged`, `test_no_secrets_or_learner_data` |
 | Nine `.mbz` variants (CK-01, 04, 05, 06 twice, 07, 08, 10, 11, 13) from a real lab backup | C-03 | None yet: PENDING MOODLE LAB; built on Moodle 5.3 only for Release 0 (the guide, issue #112, item 22; see [0014](decisions/0014-b8-3-mbz-variants-moodle-5-3.md) and the [register](decisions/README.md)) |
 | D2 demo: `checker check <package> --json` runs the B1 validator on a package; four B1-level planted packages (`missing-body`, `duplicate-id`, `protected-id`, `invalid-mode`, a subset of B8.3) each give exactly one error, listed in `answer.yaml` with `layer: B1`. No CK rule runs; no requirement ID is implemented (interim demo, issue #107) | B8.3, C2.3; OPS-05, C-05 (CLI options) | `libs/contracts/tests/test_b8_3_planted_errors.py` (folders listed as B1 variants) and `scripts/demos/tests/test_demo_d2_course_package_checker.py` (37 tests) |
+| The Checker design text agrees with itself and with the decisions it cites (Moodle 5.3 only; CK-02 as a proposed explaining rule, pending the guide, §12 item 24; the CK-07/CK-08 boundary as a design rule derived from decision 0003 #4, #9, #18 and #21, with its unsettled points listed in §12 item 25; CK-08 judging only references that are present, with three criterion examples valid against the B2 schema; one `not checked` state with an item in every JSON entry; the B4 boundary), and the CK-08 expected reason keeps `also_expected: []`. Text consistency only: no checker exists. Approval of the design is the guide's decision and no test enforces it | C2.3, C2.7, C-03; FR-C-03, FR-C-04 (design, Release 1) | `test_moodle_5_3_only_no_second_site`, `test_json_example_summary_matches_its_entries`, `test_report_never_says_clean`, `test_ck_02_is_in_every_explained_by_list`, `test_ck_02_is_everywhere_described_as_a_proposal`, `test_ck_07_and_ck_08_boundary_is_written_down`, `test_ck_08_examples_are_the_three_required_cases_and_agree_with_the_rule`, `test_ck_08_examples_are_valid_b2_criteria`, `test_b4_is_not_claimed_to_supply_idnumbers`, `test_ck_08_expected_reason_keeps_also_expected_empty`, `test_ck_02_variant_does_not_claim_an_explained_item`, `test_pending_guide_items_are_marked_pending_not_decided` (in `libs/contracts/tests/test_checker_design_consistency.py`) |
 | The checker finds 100 % of the planted errors and nothing on B8.2 | C2.7, G-2 | **Not tested**: the checker does not exist (Release 1). The tests above check the dataset only |
 
 ## B8.4 synthetic submissions (PROVISIONAL), Release 0 foundation
