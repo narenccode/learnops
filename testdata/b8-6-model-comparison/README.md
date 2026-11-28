@@ -29,6 +29,8 @@ run, and nothing here says how well any model performs.
 
 "Ready" means the files exist. It does not mean they are agreed or reviewed.
 
+**Release 0 position** (guide, issue #112, comment 7221502371, item 7): B8.6 v1 counts for Release 0, with `gd-001` left for Release 4. `gd-001` cannot run until `GradeDraftInputV1` and `GradeDraftV1` are agreed (design §4.3d, Q41). Every expected output is "not reviewed"; the module owner who supplied the input reviews it before the first comparison run.
+
 ## Layout
 
 ```

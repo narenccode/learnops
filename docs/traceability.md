@@ -858,8 +858,8 @@ Wording only. These changes carry no new tests, because no code implements the r
 Files: `contracts/model-interface.v1.schema.json`, `contracts/examples/model-interface.v1.*.json`
 (flat, one file per case), `libs/contracts/tests/test_model_interface_v1.py`. Guide decisions: `docs/decisions/0001-b5-model-interface-v1.md`.
 
-FR-M-01 ("Shared model interface library (B5.1–B5.3)", R0) and FR-M-02 ("Speech interface library
-(B5.4)", R0) are deliberately not in the table above. This work covers the data shapes and two
+FR-M-01 ("Shared model interface library (B5.1–B5.3)", R3) and FR-M-02 ("Speech interface library
+(B5.4)", R3) are deliberately not in the table above. This work covers the data shapes and two
 rules the libraries must follow. It does not implement FR-M-01 or FR-M-02, which still need the
 `model.run` call, the providers themselves, one retry, versioned prompts, logging, and
 `speech.transcribe`. FR-M-01 and FR-M-02 get their rows in the pull request that completes them.
@@ -915,7 +915,7 @@ No code checks these yet. The schema's `$comment` lists them too.
 | Times count from the start of the original audio after chunking (the schema sees only numbers) | B5.4 |
 | A word ends at or after its start; segments are in time order | Not in the PRD; not decided |
 
-## FR-M-01 shared model interface library (skeleton, partial), Release 0 foundation
+## FR-M-01 shared model interface library (skeleton, partial), built early for Release 3
 
 Files: `libs/model_interface/` (`runner.py`, `registry.py`, `prompts.py`, `prompts/example_echo/v1.md`
 (test-only), `providers/`, `call_log.py`, `errors.py`, `messages.py`), tests in
@@ -924,7 +924,7 @@ Files: `libs/model_interface/` (`runner.py`, `registry.py`, `prompts.py`, `promp
 `libs/model_interface/README.md`.
 Builds on the B5 contract section above (PR #25). It does not change `config.py`; it adds the word-time check to `transcript.py`.
 
-FR-M-01 ("Shared model interface library (B5.1–B5.3)", R0) is still deliberately not in the table
+FR-M-01 ("Shared model interface library (B5.1–B5.3)", R3) is still deliberately not in the table
 at the top: this skeleton does not complete it. Missing: the real local transport (the lab
 endpoint's protocol, design Q19), the real hosted transport (Q19), and logging `meta` to
 `shared.model_calls` (migration tool and shared schema, Q36). FR-M-01 gets its row in the pull
@@ -1079,9 +1079,9 @@ reported by `pytest -rs`, when ffmpeg or ffprobe is not installed.
 | FR-V-03 (R3) | **In part** | Always converts the upload to `720p.mp4` (H.264/AAC, 720 lines high; it does not check whether the source already qualifies) and extracts `poster.jpg` from 10 % into the video. It checks the result is H.264, 720 lines, AAC when the source has audio, and within 2 s of the source length. **Not implemented:** the optional `360p.mp4` copy and its feature flag, and "when needed" (no skip when the source is already 720p H.264/AAC). | `test_end_to_end_conversion_poster_manifest`, `test_truncated_video_leaves_no_lesson`, `test_real_ffmpeg_failure_cleans_up`, `test_ffmpeg_failure_is_reported_and_cleaned` |
 | FR-V-08 (R3) | **In part** | Writes `lesson.json` last, in a temporary folder, only when `720p.mp4`, `poster.jpg`, `captions.en.vtt`, `transcript.en.json` and `chapters.json` exist and the manifest validates against the B6.3 schema; then moves the folder into place with one rename. A failed run leaves no lesson folder. **Not met in full:** three of the required files are empty placeholders, `slides`, `cues` and `summary` are not produced, and the step is not a retryable job. | `test_end_to_end_conversion_poster_manifest`, `test_truncated_video_leaves_no_lesson`, `test_real_ffmpeg_failure_cleans_up`, `test_ffmpeg_failure_is_reported_and_cleaned`, `test_manifest_without_required_field_is_rejected`, `test_list_lessons_ignores_unfinished_folder`, `test_second_lesson_does_not_overwrite_first` |
 
-## FR-M-02 speech interface library (skeleton, partial), Release 0 foundation
+## FR-M-02 speech interface library (skeleton, partial), built early for Release 3
 
-FR-M-02 ("Speech interface library (B5.4)", R0) is partial: the call, the provider rules and the
+FR-M-02 ("Speech interface library (B5.4)", R3) is partial: the call, the provider rules and the
 checks exist and are mock-tested; no real speech service is called. It is not in the top table
 until it is complete.
 
