@@ -444,7 +444,7 @@ Expected behaviour:
   adds **no separate exit-code contract**: the normal result applies. For `check`, the exit code is `1`
   when at least one **error** finding exists, `0` otherwise, and `2` for an execution error. What
   counts as "problems found" for `diff` (a difference is not an error finding) is not specified in
-  the PRD and is a **Proposal** to settle in FR-C-05's pull request. A rule reported `not checked` does not change the exit code; the report
+  the PRD and is a **Proposal** to settle in FR-C-05's pull request. In a `check` run, a rule reported `not checked` does not change the exit code; the report
   still shows the error count and the not-checked count (§3.6, §12 item 20; OPS-05). For `roles` and
   `integration`, which do act on a lab site, `--check` is the read-only status form: it makes no
   change and uses the same `0` / `1` / `2` codes. What exactly it reports there (for example whether
