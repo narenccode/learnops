@@ -183,7 +183,7 @@ def test_pending_guide_items_are_marked_pending_not_decided() -> None:
     }
     assert "pending guide confirmation" in rows[24]
     # item 26: the guide decided it (issue #112, comment 7221502371, item 10); the PRD edit is in
-    # draft pull request #259 and must still be described as not merged
+    # open pull request #259 and must still be described as not merged
     assert "Decided by the guide" in rows[26]
     assert "7221502371" in rows[26]
     assert "#259" in rows[26] and "not merged yet" in rows[26]
